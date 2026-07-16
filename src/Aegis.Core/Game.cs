@@ -35,6 +35,10 @@ public sealed class Game
     public event Action<char>? KeyApplied;
 
     private Rng _combatRng;
+    private readonly StoryletEngine _storylets;
+
+    /// <summary>Total storylets fired this character, all worlds (observability).</summary>
+    public int StoryletsFired => _storylets.TotalFired;
 
     public Game(ulong seed)
     {
@@ -42,12 +46,14 @@ public sealed class Game
         // Cycle 1 uses the master seed directly, so pre-crossing saves stay replayable.
         World = WorldGen.Generate(seed);
         _combatRng = new Rng(SeedTree.Derive(World.Seed, "combat"));
+        _storylets = new StoryletEngine(World.Seed, StoryletCatalog.All);
         Player.Pos = World.ShrinePos;
         SpawnMonsters();
 
         Log.Add(0, $"You wake at the shrine of {World.SettlementName}, in the world called {World.Name}.");
         Log.Add(0, "A voice, close as your own pulse: \"Walk. I hold this place. I will catch you.\"", LogTone.Aegis);
         Log.Add(0, $"Rumor: goblins from a cave to the {Compass(World.ShrinePos, World.CampPos)} raid {World.SettlementName}'s stores by night.");
+        _storylets.TryFire(this, StoryletTrigger.Arrival);
     }
 
     private void SpawnMonsters()
@@ -140,6 +146,11 @@ public sealed class Game
         Player.Pos = target;
         Player.Stamina = Math.Min(Player.MaxStamina, Player.Stamina + 1);
         DescribeTileIfNotable(target);
+
+        _storylets.TryFire(this, StoryletTrigger.EnterTile, map[target]);
+        if (Mode == MapMode.Overworld && Directions.All8.Any(d =>
+                map.InBounds(target.Plus(d.dx, d.dy)) && map[target.Plus(d.dx, d.dy)] == Terrain.House))
+            _storylets.TryFire(this, StoryletTrigger.NearHouse);
         return true;
     }
 
@@ -222,6 +233,7 @@ public sealed class Game
         Cycle++;
         World = WorldGen.Generate(SeedTree.Derive(MasterSeed, "cycle", Cycle), tier: Cycle);
         _combatRng = new Rng(SeedTree.Derive(World.Seed, "combat"));
+        _storylets.OnCrossing(World.Seed);
         Monsters.Clear();
         SpawnMonsters();
         ChestLooted = false;
@@ -257,6 +269,7 @@ public sealed class Game
         Log.Add(Turn, "The air is older here, and hungrier.", LogTone.Danger);
         Log.Add(Turn, $"In {World.SettlementName} they already sing of a stranger who emptied a goblin cave, in a world called {prevWorld}.");
         Log.Add(Turn, $"Rumor: goblins from a cave to the {Compass(World.ShrinePos, World.CampPos)} raid {World.SettlementName}'s stores by night.");
+        _storylets.TryFire(this, StoryletTrigger.Arrival);
     }
 
     private bool DoExit()
@@ -313,6 +326,7 @@ public sealed class Game
         InShrineMenu = true;
         Log.Add(Turn, "You rest at the shrine. Warmth returns to you.", LogTone.Info);
         Log.Add(Turn, "\"Be still. Let me count what you have earned.\"", LogTone.Aegis);
+        _storylets.TryFire(this, StoryletTrigger.Rest);
         return true;
     }
 
@@ -390,6 +404,7 @@ public sealed class Game
         Log.Add(Turn, "The camp falls silent. The raids on " + World.SettlementName + " are ended.", LogTone.Reward);
         Log.Add(Turn, "\"A deed with weight. It is counted.\"", LogTone.Aegis);
         Log.Add(Turn, $"\"And far to the {Compass(World.CampPos, World.GatePos)} of this cave, something old has unlocked. I feel it the way you feel a door open in a dark house.\"", LogTone.Aegis);
+        _storylets.TryFire(this, StoryletTrigger.DeedWritten);
     }
 
     private void AdvanceTurn()
@@ -409,6 +424,9 @@ public sealed class Game
                 Player.Hp = Math.Min(Player.Hp, Player.EffectiveMaxHp);
             }
         }
+
+        if (Mode == MapMode.Overworld && Player.Hp > 0)
+            _storylets.TryFire(this, StoryletTrigger.AmbientTurn);
 
         if (Player.Hp <= 0) HandleDeath();
     }
@@ -561,6 +579,7 @@ public sealed class Game
         WoundedTurns: Player.WoundedTurns,
         Deaths: Player.Deaths,
         MonstersAlive: Monsters.Count(m => m.Alive),
+        StoryletsFired: StoryletsFired,
         CampCleared: CampCleared,
         RemnantExists: Remnant is not null,
         RemnantMap: Remnant?.MapId ?? "",
@@ -608,6 +627,7 @@ public sealed record Snapshot(
     int WoundedTurns,
     int Deaths,
     int MonstersAlive,
+    int StoryletsFired,
     bool CampCleared,
     bool RemnantExists,
     string RemnantMap,

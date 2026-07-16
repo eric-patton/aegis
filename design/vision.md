@@ -165,19 +165,20 @@ And the loop closes on itself: **your finished characters enter the mythology.**
 - **C# / .NET**, NativeAOT single-file publish. TUI via a lean custom render layer (or Terminal.Gui v2); the hard 80% is the deterministic simulation core, not the rendering.
 - **Save architecture**: versioned seed contract for regenerable content, delta journal for authored/player-mutated state.
 - **RNG**: hierarchical seed tree (master seed hashed with stable subsystem/region/site identifiers); subsystems never share a stream.
-- **Content**: storylets and line banks as data files; format TBD.
+- **Content**: storylets and line banks; format v1 spec'd in `storylets.md` (C# catalog now, designed to map 1:1 onto data files when volume demands).
 
 ## 12. Open Items
 
 - Final race list (which originals join the anchors)
 - Spell list and magic-school content design
-- Storylet data format and fact-graph schema
+- Storylet external data-file format and condition/effect vocabulary (v1 C# format spec'd; see `storylets.md` sec. 6)
 - Covenant, scar, Legend-boon, and hostility-tier content catalogs
 - Story content open items: final names for the arc's entities, bottle-episode playability, threshold-scene dressing, templates 4-5 (see `story/aegis-arc.md` sec. 11, `story/world-story-templates.md` sec. 9)
 
 ## 13. Document Map
 
-- `decisions.md`: the decision audit trail with rationale (26 and counting)
+- `decisions.md`: the decision audit trail with rationale (30 and counting)
+- `storylets.md`: storylet format and fact-graph schema spec (D-030)
 - `story/aegis-arc.md`: the trans-world Aegis arc spec (Canon: The Ledger; D-026)
 - `story/world-story-templates.md`: the world-story template contract, iron rules, and three launch templates
 - `../research/00-overview.md`: research synthesis; `01`-`06`: narrative, progression, death, NG+, tech, quests; `07`-`10`: magic, factions, companions, economy

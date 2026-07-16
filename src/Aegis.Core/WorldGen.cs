@@ -3,6 +3,7 @@ namespace Aegis.Core;
 public sealed class World
 {
     public required ulong Seed { get; init; }
+    public required int Tier { get; init; }
     public required string Name { get; init; }
     public required string SettlementName { get; init; }
     public required FactGraph Facts { get; init; }
@@ -11,6 +12,7 @@ public sealed class World
     public required Pos ShrinePos { get; init; }
     public required Pos CampPos { get; init; }
     public required Pos CampEntryPos { get; init; }
+    public required Pos GatePos { get; init; }
     public required List<Pos> GoblinSpawns { get; init; }
     public required Pos ChestPos { get; init; }
 }
@@ -27,16 +29,22 @@ public static class WorldGen
     public const int CampW = 30;
     public const int CampH = 18;
 
-    public static World Generate(ulong masterSeed)
+    /// <summary>
+    /// Generates a world at a Hostility Tier (D-011): the tier is a GENERATION input
+    /// (more and tougher goblins), never a post-hoc multiplier. Tier 1 with a given
+    /// seed produces exactly what earlier versions produced from that seed alone,
+    /// which is what keeps old save journals replayable.
+    /// </summary>
+    public static World Generate(ulong worldSeed, int tier = 1)
     {
         var facts = new FactGraph();
 
-        var nameRng = new Rng(SeedTree.Derive(masterSeed, "names"));
+        var nameRng = new Rng(SeedTree.Derive(worldSeed, "names"));
         string worldName = NameGen.World(ref nameRng);
         string settlementName = NameGen.Settlement(ref nameRng);
 
-        var overworld = GenerateOverworld(masterSeed);
-        var placeRng = new Rng(SeedTree.Derive(masterSeed, "placement"));
+        var overworld = GenerateOverworld(worldSeed);
+        var placeRng = new Rng(SeedTree.Derive(worldSeed, "placement"));
 
         Pos settlement = FindOpenSpot(overworld, ref placeRng, new Pos(OverworldW / 4, OverworldH / 2), 12);
         PlaceSettlement(overworld, settlement);
@@ -47,17 +55,26 @@ public static class WorldGen
         overworld[camp] = Terrain.CampEntrance;
         CarvePathIfDisconnected(overworld, shrine, camp);
 
-        var (campMap, entry, goblinSpawns, chest) = GenerateCamp(masterSeed);
+        Pos gate = FindDistantSpot(overworld, ref placeRng, settlement, minDistance: 22);
+        while (gate == camp || gate.Manhattan(camp) < 5)
+            gate = FindDistantSpot(overworld, ref placeRng, settlement, minDistance: 22);
+        overworld[gate] = Terrain.Waygate;
+        CarvePathIfDisconnected(overworld, shrine, gate);
+
+        int goblinCount = Math.Min(3 + (tier - 1), 6);
+        var (campMap, entry, goblinSpawns, chest) = GenerateCamp(worldSeed, goblinCount);
 
         facts.Add("world_name", worldName, "");
         facts.Add("settlement", settlementName, $"{settlement.X},{settlement.Y}", "A small stead under the Aegis-shrine.");
         facts.Add("rest_point", "shrine", $"{shrine.X},{shrine.Y}", $"The shrine at {settlementName}. The Aegis anchors here.");
         facts.Add("site", "goblin_camp", $"{camp.X},{camp.Y}", "A cave the goblins have made their own.");
+        facts.Add("site", "waygate", $"{gate.X},{gate.Y}", "An arch of black iron links, older than the stones around it.");
         facts.Add("grievance", "goblin_camp", settlementName, $"Goblins from the cave raid {settlementName}'s stores by night.");
 
         return new World
         {
-            Seed = masterSeed,
+            Seed = worldSeed,
+            Tier = tier,
             Name = worldName,
             SettlementName = settlementName,
             Facts = facts,
@@ -66,6 +83,7 @@ public static class WorldGen
             ShrinePos = shrine,
             CampPos = camp,
             CampEntryPos = entry,
+            GatePos = gate,
             GoblinSpawns = goblinSpawns,
             ChestPos = chest,
         };
@@ -199,9 +217,9 @@ public static class WorldGen
         return false;
     }
 
-    private static (GameMap Map, Pos Entry, List<Pos> Goblins, Pos Chest) GenerateCamp(ulong masterSeed)
+    private static (GameMap Map, Pos Entry, List<Pos> Goblins, Pos Chest) GenerateCamp(ulong worldSeed, int goblinCount)
     {
-        var rng = new Rng(SeedTree.Derive(masterSeed, "site-goblin-camp"));
+        var rng = new Rng(SeedTree.Derive(worldSeed, "site-goblin-camp"));
         var map = new GameMap("goblin-camp", CampW, CampH, Terrain.Wall);
 
         var entry = new Pos(2, CampH / 2);
@@ -233,7 +251,7 @@ public static class WorldGen
         if (deep.Count < 5) deep = carved;
 
         var goblins = new List<Pos>();
-        while (goblins.Count < 3)
+        while (goblins.Count < goblinCount)
         {
             var p = rng.Pick(deep);
             if (p != entry && !goblins.Contains(p)) goblins.Add(p);

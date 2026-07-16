@@ -9,7 +9,13 @@ public enum MapMode { Overworld, Site }
 /// </summary>
 public sealed class Game
 {
-    public World World { get; }
+    /// <summary>The save identity: every world in this game derives from it.</summary>
+    public ulong MasterSeed { get; }
+
+    /// <summary>Which world of the chain this is, 1-based. Also the Hostility Tier (D-011).</summary>
+    public int Cycle { get; private set; } = 1;
+
+    public World World { get; private set; }
     public Player Player { get; } = new();
     public MessageLog Log { get; } = new();
     public List<Monster> Monsters { get; } = [];
@@ -32,16 +38,24 @@ public sealed class Game
 
     public Game(ulong seed)
     {
+        MasterSeed = seed;
+        // Cycle 1 uses the master seed directly, so pre-crossing saves stay replayable.
         World = WorldGen.Generate(seed);
-        _combatRng = new Rng(SeedTree.Derive(seed, "combat"));
+        _combatRng = new Rng(SeedTree.Derive(World.Seed, "combat"));
         Player.Pos = World.ShrinePos;
-
-        foreach (var spawn in World.GoblinSpawns)
-            Monsters.Add(new Monster { Kind = MonsterKind.Goblin, Pos = spawn });
+        SpawnMonsters();
 
         Log.Add(0, $"You wake at the shrine of {World.SettlementName}, in the world called {World.Name}.");
         Log.Add(0, "A voice, close as your own pulse: \"Walk. I hold this place. I will catch you.\"", LogTone.Aegis);
         Log.Add(0, $"Rumor: goblins from a cave to the {Compass(World.ShrinePos, World.CampPos)} raid {World.SettlementName}'s stores by night.");
+    }
+
+    private void SpawnMonsters()
+    {
+        // Tier hardens each goblin as a generation-time stat, not a live multiplier.
+        int hp = 8 + 2 * (World.Tier - 1);
+        foreach (var spawn in World.GoblinSpawns)
+            Monsters.Add(new Monster { Kind = MonsterKind.Goblin, Pos = spawn, Hp = hp });
     }
 
     internal static string Compass(Pos from, Pos to)
@@ -138,6 +152,10 @@ public sealed class Game
                 Log.Add(Turn, "A cave mouth, littered with gnawed bones. Press > to descend.", LogTone.Danger);
             else if (t == Terrain.Shrine)
                 Log.Add(Turn, "The shrine hums faintly. The Aegis anchors here. Press r to rest.", LogTone.Aegis);
+            else if (t == Terrain.Waygate)
+                Log.Add(Turn, CampCleared
+                    ? "An arch of black iron links. It hums, and the air beyond it is not this world's. Press > to cross."
+                    : "An arch of black iron links, older than the stones around it. It is shut.", LogTone.Aegis);
         }
         else
         {
@@ -165,8 +183,80 @@ public sealed class Game
             Log.Add(Turn, "You descend into the goblin cave. The dark smells of smoke and old meat.", LogTone.Danger);
             return true;
         }
+        if (Mode == MapMode.Overworld && Player.Pos == World.GatePos)
+        {
+            if (!CampCleared)
+            {
+                Log.Add(Turn, "The arch does not stir.", LogTone.Info);
+                Log.Add(Turn, $"\"{AegisVoice.GateShutLine}\"", LogTone.Aegis);
+                return false;
+            }
+            CrossToNextWorld();
+            return true;
+        }
         Log.Add(Turn, "There is nothing to enter here.");
         return false;
+    }
+
+    /// <summary>
+    /// The NG+ crossing (D-011): character carries, coin converts to Legend, an
+    /// unreclaimed remnant is forfeited, and the next world generates one tier
+    /// deeper from a seed derived off the master. The completed deed is pressed
+    /// into the new world's facts (D-013's mythology pipe).
+    /// </summary>
+    private void CrossToNextWorld()
+    {
+        string prevWorld = World.Name;
+        string prevSettlement = World.SettlementName;
+
+        if (Remnant is not null)
+        {
+            Log.Add(Turn, $"\"{AegisVoice.ForfeitLine}\"", LogTone.Aegis);
+            Remnant = null;
+        }
+
+        int converted = Player.Coin;
+        Player.Legend += converted;
+        Player.Coin = 0;
+
+        Cycle++;
+        World = WorldGen.Generate(SeedTree.Derive(MasterSeed, "cycle", Cycle), tier: Cycle);
+        _combatRng = new Rng(SeedTree.Derive(World.Seed, "combat"));
+        Monsters.Clear();
+        SpawnMonsters();
+        ChestLooted = false;
+        CampCleared = false;
+        InShrineMenu = false;
+
+        Mode = MapMode.Overworld;
+        Player.Pos = World.ShrinePos;
+        Player.WoundedTurns = 0;
+        Player.Hp = Player.MaxHp;
+        Player.Stamina = Player.MaxStamina;
+
+        World.Facts.Add("echo", "deed", prevSettlement,
+            $"In a world called {prevWorld}, the bearer emptied a goblin cave, and {prevSettlement} slept safe.");
+
+        Log.Add(Turn, $"You step through the arch, and {prevWorld} folds shut behind you like a closed book.", LogTone.Danger);
+        if (Cycle == 2)
+        {
+            Log.Add(Turn, $"\"{AegisVoice.FirstCrossingLine1}\"", LogTone.Aegis);
+            Log.Add(Turn, $"\"{AegisVoice.FirstCrossingLine2}\"", LogTone.Aegis);
+        }
+        else
+        {
+            Log.Add(Turn, $"\"{AegisVoice.LaterCrossingLine}\"", LogTone.Aegis);
+        }
+        if (converted > 0)
+        {
+            Log.Add(Turn, $"\"{AegisVoice.CoinConvertedLine}\"", LogTone.Aegis);
+            Log.Add(Turn, $"Your {converted} coin is weighed at the threshold and taken. Legend grows by {converted}.", LogTone.Reward);
+        }
+
+        Log.Add(Turn, $"You wake at the shrine of {World.SettlementName}, in the world called {World.Name}.");
+        Log.Add(Turn, "The air is older here, and hungrier.", LogTone.Danger);
+        Log.Add(Turn, $"In {World.SettlementName} they already sing of a stranger who emptied a goblin cave, in a world called {prevWorld}.");
+        Log.Add(Turn, $"Rumor: goblins from a cave to the {Compass(World.ShrinePos, World.CampPos)} raid {World.SettlementName}'s stores by night.");
     }
 
     private bool DoExit()
@@ -299,6 +389,7 @@ public sealed class Game
             $"The goblin cave was emptied. {World.SettlementName}'s stores are safe.");
         Log.Add(Turn, "The camp falls silent. The raids on " + World.SettlementName + " are ended.", LogTone.Reward);
         Log.Add(Turn, "\"A deed with weight. It is counted.\"", LogTone.Aegis);
+        Log.Add(Turn, $"\"And far to the {Compass(World.CampPos, World.GatePos)} of this cave, something old has unlocked. I feel it the way you feel a door open in a dark house.\"", LogTone.Aegis);
     }
 
     private void AdvanceTurn()
@@ -428,9 +519,16 @@ public sealed class Game
     internal void Debug_SetMode(MapMode mode) => Mode = mode;
     internal void Debug_HurtPlayer(int damage) => Player.Hp -= damage;
     internal void Debug_ForceDeathCheck() { if (Player.Hp <= 0) HandleDeath(); }
+    internal void Debug_ClearCamp()
+    {
+        foreach (var monster in Monsters) monster.Hp = 0;
+        CheckCampCleared();
+    }
 
     public Snapshot TakeSnapshot() => new(
-        Seed: World.Seed,
+        Seed: MasterSeed,
+        Cycle: Cycle,
+        Tier: World.Tier,
         Turn: Turn,
         Running: Running,
         Mode: Mode.ToString(),
@@ -442,12 +540,15 @@ public sealed class Game
         ShrineY: World.ShrinePos.Y,
         CampX: World.CampPos.X,
         CampY: World.CampPos.Y,
+        GateX: World.GatePos.X,
+        GateY: World.GatePos.Y,
         Hp: Player.Hp,
         MaxHp: Player.EffectiveMaxHp,
         Stamina: Player.Stamina,
         MaxStamina: Player.MaxStamina,
         Coin: Player.Coin,
         Essence: Player.Essence,
+        Legend: Player.Legend,
         Might: Player.Attributes[Attr.Might],
         Grace: Player.Attributes[Attr.Grace],
         Vigor: Player.Attributes[Attr.Vigor],
@@ -473,6 +574,8 @@ public sealed class Game
 /// <summary>Flat, serialization-friendly view of game state for pilot/sim consumers.</summary>
 public sealed record Snapshot(
     ulong Seed,
+    int Cycle,
+    int Tier,
     int Turn,
     bool Running,
     string Mode,
@@ -484,12 +587,15 @@ public sealed record Snapshot(
     int ShrineY,
     int CampX,
     int CampY,
+    int GateX,
+    int GateY,
     int Hp,
     int MaxHp,
     int Stamina,
     int MaxStamina,
     int Coin,
     int Essence,
+    int Legend,
     int Might,
     int Grace,
     int Vigor,

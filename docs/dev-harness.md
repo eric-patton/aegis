@@ -26,12 +26,31 @@ and quitting at any moment loses nothing. `--save-dir` overrides the directory
 old saves until a migration exists. Checkpoint compression is a later optimization,
 not a format change.
 
+## NG+ crossings (D-011 / D-029)
+
+Each world has a waygate (`O` on the map), shut until the camp is cleared, then `>` on
+it crosses: attributes/essence carry, coin converts to Legend, the next world generates
+one Hostility Tier deeper from a seed derived off the master. A crossing is just more
+keys in the journal, so saves span world boundaries with no extra machinery. The pilot
+status line shows `cyc N leg N` once either is nonzero; `state` carries `cycle`, `tier`,
+`legend`, and `gateX/gateY`.
+
 Build and run from the repo root:
 
 ```
 dotnet build
 .\src\Aegis.Cli\bin\Debug\net10.0\aegis.exe --headless --pilot --seed 42
 ```
+
+Native (AOT) publish, from a shell where `vswhere.exe` is on PATH (the VS installer
+does not add it; it lives in `C:\Program Files (x86)\Microsoft Visual Studio\Installer`):
+
+```
+dotnet publish src\Aegis.Cli\Aegis.Cli.csproj -c Release -r win-x64
+```
+
+This produces a self-contained ~3 MB `aegis.exe` under `bin\Release\...\publish\` whose
+sim output is byte-identical to the Debug build (verified on seed 42).
 
 ## The pilot channel
 

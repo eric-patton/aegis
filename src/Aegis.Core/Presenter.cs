@@ -83,7 +83,7 @@ public static class Presenter
 
     private static void DrawHeader(Frame frame, Game game)
     {
-        string header = $" AEGIS | {game.World.Name} | {game.World.SettlementName} | T{game.Turn}";
+        string header = $" AEGIS | {game.World.Name} | {game.World.SettlementName} | Cycle {game.Cycle} | T{game.Turn}";
         frame.Write(0, 0, header.PadRight(frame.Width), Hue.Black, Hue.DarkCyan);
     }
 
@@ -143,6 +143,7 @@ public static class Presenter
         Terrain.Wall => ('#', Hue.DarkGray, Hue.Black),
         Terrain.Floor => ('.', Hue.Gray, Hue.Black),
         Terrain.ExitLadder => ('<', Hue.White, Hue.Black),
+        Terrain.Waygate => ('O', Hue.Magenta, Hue.Black),
         _ => ('?', Hue.Magenta, Hue.Black),
     };
 
@@ -162,6 +163,7 @@ public static class Presenter
         Line($"ST  {Bar(p.Stamina, p.MaxStamina, 10)} {p.Stamina}/{p.MaxStamina}", Hue.Gray);
         Line($"Coin    {p.Coin}", Hue.Yellow);
         Line($"Essence {p.Essence}", Hue.Cyan);
+        if (p.Legend > 0) Line($"Legend  {p.Legend}", Hue.Magenta);
         if (p.WoundedTurns > 0) Line($"WOUNDED ({p.WoundedTurns})", Hue.Red);
         y++;
 
@@ -179,6 +181,8 @@ public static class Presenter
             var here = game.CurrentMap[p.Pos];
             if (here == Terrain.Shrine) Line("At the shrine: r rests", Hue.Cyan);
             if (here == Terrain.CampEntrance) Line("Cave mouth: > enters", Hue.Red);
+            if (here == Terrain.Waygate)
+                Line(game.CampCleared ? "Waygate hums: > crosses" : "Waygate: shut", Hue.Magenta);
         }
 
         if (game.Remnant is { } remnant)

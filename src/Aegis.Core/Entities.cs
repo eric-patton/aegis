@@ -8,6 +8,10 @@ public sealed class Player
     public int Stamina { get; set; } = 10;
     public int Coin { get; set; }
     public int Essence { get; set; }
+
+    /// <summary>Meta-currency minted from coin at each crossing (D-011); never raw power.</summary>
+    public int Legend { get; set; }
+
     public int WoundedTurns { get; set; }
     public int Deaths { get; set; }
 

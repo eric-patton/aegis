@@ -72,7 +72,8 @@ public static class PilotClient
         {
             var s = response.State;
             Console.WriteLine($"-- T{s.Turn} {s.Mode} @({s.X},{s.Y}) hp {s.Hp}/{s.MaxHp} st {s.Stamina}/{s.MaxStamina} " +
-                              $"coin {s.Coin} ess {s.Essence}{(s.WoundedTurns > 0 ? $" WOUNDED({s.WoundedTurns})" : "")}" +
+                              $"coin {s.Coin} ess {s.Essence}{(s.Cycle > 1 || s.Legend > 0 ? $" cyc {s.Cycle} leg {s.Legend}" : "")}" +
+                              $"{(s.WoundedTurns > 0 ? $" WOUNDED({s.WoundedTurns})" : "")}" +
                               $"{(s.RemnantExists ? $" remnant@{s.RemnantMap}({s.RemnantX},{s.RemnantY})" : "")}");
         }
 

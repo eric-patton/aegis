@@ -24,4 +24,18 @@ public static class AegisVoice
 
     public static string DeathLine(int deathCount)
         => deathCount <= 1 ? FirstDeathLine : DeathLinesRegisterOne[(deathCount - 2) % DeathLinesRegisterOne.Length];
+
+    // Crossing lines (arc sec 5). The first crossing carries rung 1 of the reveal
+    // ladder: there are other worlds, and this has happened before. Later crossings
+    // reuse a holding line until their rungs are written.
+    public const string FirstCrossingLine1 = "There are other worlds. This has happened before.";
+
+    public const string FirstCrossingLine2 =
+        "I have carried others. I do not remember how many. That frightens me, and I do not remember how to be frightened.";
+
+    public const string LaterCrossingLine = "Deeper, then. Hold fast to me.";
+
+    public const string CoinConvertedLine = "Coin is of a world; it stays. The name it bought you, you keep.";
+
+    public const string GateShutLine = "Not yet. This world's tally is unfinished.";
 }

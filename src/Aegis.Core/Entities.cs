@@ -3,14 +3,25 @@ namespace Aegis.Core;
 public sealed class Player
 {
     public Pos Pos { get; set; }
-    public int MaxHp { get; set; } = 20;
+    public AttributeSet Attributes { get; } = new();
     public int Hp { get; set; } = 20;
-    public int MaxStamina { get; set; } = 10;
     public int Stamina { get; set; } = 10;
     public int Coin { get; set; }
     public int Essence { get; set; }
     public int WoundedTurns { get; set; }
     public int Deaths { get; set; }
+
+    /// <summary>Derived from Vigor (D-015): the humble baseline of 5 gives 20.</summary>
+    public int MaxHp => 10 + Attributes[Attr.Vigor] * 2;
+
+    /// <summary>Derived from Vigor: baseline 5 gives 10.</summary>
+    public int MaxStamina => 5 + Attributes[Attr.Vigor];
+
+    /// <summary>Flat melee bonus from Might above baseline.</summary>
+    public int MeleeBonus => Math.Max(0, (Attributes[Attr.Might] - AttributeSet.Baseline) / 2);
+
+    /// <summary>Chance to slip a direct (non-telegraphed) attack, from Grace. Telegraphs are dodged by feet, not stats.</summary>
+    public double DodgeChance => Math.Clamp((Attributes[Attr.Grace] - AttributeSet.Baseline) * 0.04, 0, 0.4);
 
     /// <summary>Effective max HP while Wounded: the Aegis is spent (D-008).</summary>
     public int EffectiveMaxHp => WoundedTurns > 0 ? Math.Max(1, MaxHp * 4 / 5) : MaxHp;

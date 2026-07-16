@@ -89,8 +89,11 @@ public static class PilotClient
         pipe.Connect(timeout: 2000);
         Trace("connected");
 
-        using var reader = new StreamReader(pipe, PilotWire.Utf8NoBom, leaveOpen: true);
-        using var writer = new StreamWriter(pipe, PilotWire.Utf8NoBom, leaveOpen: true) { AutoFlush = true };
+        // Deliberately not disposing the wrappers: AutoFlush already pushed every byte,
+        // and a dispose-time flush would throw if the server (e.g. on "quit") closed first.
+        // Disposing the pipe itself closes the handle.
+        var reader = new StreamReader(pipe, PilotWire.Utf8NoBom, leaveOpen: true);
+        var writer = new StreamWriter(pipe, PilotWire.Utf8NoBom, leaveOpen: true) { AutoFlush = true };
         Trace("streams ready");
 
         writer.WriteLine(PilotWire.Serialize(request));

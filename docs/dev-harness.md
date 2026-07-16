@@ -1,16 +1,30 @@
 # Dev Harness: Headless Sim and the Pilot Channel
 
-How to run, drive, and observe Aegis without touching the game window. Design rationale is logged as D-027 in `../design/decisions.md`.
+How to run, drive, and observe Aegis without touching the game window. Design rationale is logged as D-027 and D-028 in `../design/decisions.md`.
 
 ## Run modes
 
 ```
 aegis                            play normally in the terminal
 aegis --seed 42                  play a specific world
+aegis --save myslot              play in a named save slot (load-or-create)
+aegis saves                      list save slots
 aegis --pilot                    play, with the control channel open alongside
 aegis --headless --pilot         no console at all; driven entirely via the pilot
 aegis --session name             name the pilot channel (default: "default")
 ```
+
+## Saves (D-012 / D-028)
+
+A save is the seed plus the input journal: because the engine is deterministic and
+advances only on keys, replaying every applied key IS loading. `--save slot` appends
+each key to `%LOCALAPPDATA%\Aegis\saves\slot.aegis` and flushes immediately, so death
+consequences are durable the instant they happen (autosave-on-death by construction)
+and quitting at any moment loses nothing. `--save-dir` overrides the directory
+(useful for tests). A slot open in a running game is locked against double-opening;
+`aegis saves` can still list it. The format is versioned; a version bump invalidates
+old saves until a migration exists. Checkpoint compression is a later optimization,
+not a format change.
 
 Build and run from the repo root:
 

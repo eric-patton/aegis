@@ -19,6 +19,14 @@ public sealed class Game
     public bool Running { get; private set; } = true;
     public bool ChestLooted { get; private set; }
     public bool CampCleared { get; private set; }
+    public bool InShrineMenu { get; private set; }
+
+    /// <summary>
+    /// Fired for every key that reached the engine while running (including menu keys
+    /// and refused moves, which still write log entries). The save journal records
+    /// exactly these; replaying them reproduces this game bit for bit.
+    /// </summary>
+    public event Action<char>? KeyApplied;
 
     private Rng _combatRng;
 
@@ -52,9 +60,29 @@ public sealed class Game
     public IEnumerable<Monster> LiveMonstersHere =>
         Mode == MapMode.Site ? Monsters.Where(m => m.Alive) : [];
 
-    /// <summary>Applies one key press. Convenience wrapper over <see cref="Apply(Command)"/>.</summary>
-    public void ApplyKey(char key) => Apply(CommandMap.FromKey(key));
+    /// <summary>
+    /// Applies one key press: the single entry point every frontend and the save
+    /// journal share. Menu keys are routed before command mapping.
+    /// </summary>
+    public void ApplyKey(char key)
+    {
+        if (!Running) return;
 
+        if (InShrineMenu)
+        {
+            HandleShrineMenuKey(key);
+            KeyApplied?.Invoke(key);
+            return;
+        }
+
+        var cmd = CommandMap.FromKey(key);
+        if (cmd == Command.None) return;
+
+        Apply(cmd);
+        if (cmd != Command.Quit) KeyApplied?.Invoke(key);
+    }
+
+    /// <summary>Applies a command directly (tests). Frontends use <see cref="ApplyKey"/>.</summary>
     public void Apply(Command cmd)
     {
         if (!Running || cmd == Command.None) return;
@@ -71,6 +99,7 @@ public sealed class Game
             Command.Enter => DoEnter(),
             Command.Exit => DoExit(),
             Command.Grab => DoGrab(),
+            Command.Rest => DoRest(),
             _ => CommandMap.Delta(cmd) is { } d && DoMove(d.dx, d.dy),
         };
 
@@ -108,7 +137,7 @@ public sealed class Game
             if (t == Terrain.CampEntrance)
                 Log.Add(Turn, "A cave mouth, littered with gnawed bones. Press > to descend.", LogTone.Danger);
             else if (t == Terrain.Shrine)
-                Log.Add(Turn, "The shrine hums faintly. The Aegis anchors here.", LogTone.Aegis);
+                Log.Add(Turn, "The shrine hums faintly. The Aegis anchors here. Press r to rest.", LogTone.Aegis);
         }
         else
         {
@@ -178,6 +207,57 @@ public sealed class Game
         return false;
     }
 
+    /// <summary>Global rising cost per raise (D-014's Essence economy, Souls-style curve).</summary>
+    public int NextRaiseCost => 10 + 5 * Player.Attributes.TotalRaises;
+
+    private bool DoRest()
+    {
+        if (!(Mode == MapMode.Overworld && CurrentMap[Player.Pos] == Terrain.Shrine))
+        {
+            Log.Add(Turn, "You may only rest where the Aegis anchors.");
+            return false;
+        }
+
+        Player.Hp = Player.EffectiveMaxHp;
+        Player.Stamina = Player.MaxStamina;
+        InShrineMenu = true;
+        Log.Add(Turn, "You rest at the shrine. Warmth returns to you.", LogTone.Info);
+        Log.Add(Turn, "\"Be still. Let me count what you have earned.\"", LogTone.Aegis);
+        return true;
+    }
+
+    private void HandleShrineMenuKey(char key)
+    {
+        if (key >= '1' && key <= '7')
+        {
+            TryRaise((Attr)(key - '1'));
+            return;
+        }
+
+        InShrineMenu = false;
+        Log.Add(Turn, "You rise from the shrine.");
+    }
+
+    private void TryRaise(Attr attr)
+    {
+        int cost = NextRaiseCost;
+        if (Player.Essence < cost)
+        {
+            Log.Add(Turn, $"Raising {AttributeSet.NameOf(attr)} asks {cost} essence; you hold {Player.Essence}.");
+            return;
+        }
+
+        Player.Essence -= cost;
+        Player.Attributes[attr] = Player.Attributes[attr] + 1;
+        if (attr == Attr.Vigor)
+        {
+            // Growing tougher heals the difference immediately.
+            Player.Hp = Math.Min(Player.Hp + 2, Player.EffectiveMaxHp);
+            Player.Stamina = Math.Min(Player.Stamina + 1, Player.MaxStamina);
+        }
+        Log.Add(Turn, $"\"{cost} essence, spent well.\" {AttributeSet.NameOf(attr)} is now {Player.Attributes[attr]}.", LogTone.Aegis);
+    }
+
     private bool AttackMonster(Monster target)
     {
         const int staminaCost = 3;
@@ -185,7 +265,7 @@ public sealed class Game
         if (Player.Stamina >= staminaCost)
         {
             Player.Stamina -= staminaCost;
-            damage = _combatRng.Range(2, 5);
+            damage = _combatRng.Range(2, 5) + Player.MeleeBonus;
         }
         else
         {
@@ -276,9 +356,16 @@ public sealed class Game
             }
             else
             {
-                int damage = _combatRng.Range(1, 3);
-                Player.Hp -= damage;
-                Log.Add(Turn, $"The {monster.Name} bites you for {damage}.", LogTone.Combat);
+                if (_combatRng.Chance(Player.DodgeChance))
+                {
+                    Log.Add(Turn, $"The {monster.Name}'s bite finds only air.", LogTone.Combat);
+                }
+                else
+                {
+                    int damage = _combatRng.Range(1, 3);
+                    Player.Hp -= damage;
+                    Log.Add(Turn, $"The {monster.Name} bites you for {damage}.", LogTone.Combat);
+                }
             }
             return;
         }
@@ -305,6 +392,7 @@ public sealed class Game
     private void HandleDeath()
     {
         Player.Deaths++;
+        InShrineMenu = false;
 
         bool forfeited = Remnant is not null;
         if (forfeited)
@@ -360,6 +448,15 @@ public sealed class Game
         MaxStamina: Player.MaxStamina,
         Coin: Player.Coin,
         Essence: Player.Essence,
+        Might: Player.Attributes[Attr.Might],
+        Grace: Player.Attributes[Attr.Grace],
+        Vigor: Player.Attributes[Attr.Vigor],
+        Wits: Player.Attributes[Attr.Wits],
+        Mind: Player.Attributes[Attr.Mind],
+        Will: Player.Attributes[Attr.Will],
+        Presence: Player.Attributes[Attr.Presence],
+        NextRaiseCost: NextRaiseCost,
+        InShrineMenu: InShrineMenu,
         WoundedTurns: Player.WoundedTurns,
         Deaths: Player.Deaths,
         MonstersAlive: Monsters.Count(m => m.Alive),
@@ -393,6 +490,15 @@ public sealed record Snapshot(
     int MaxStamina,
     int Coin,
     int Essence,
+    int Might,
+    int Grace,
+    int Vigor,
+    int Wits,
+    int Mind,
+    int Will,
+    int Presence,
+    int NextRaiseCost,
+    bool InShrineMenu,
     int WoundedTurns,
     int Deaths,
     int MonstersAlive,

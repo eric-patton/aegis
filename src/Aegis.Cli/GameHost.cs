@@ -14,9 +14,9 @@ public sealed class GameHost
     private readonly ConsoleRenderer? _renderer;
     private readonly Channel<HostMessage> _channel = Channel.CreateUnbounded<HostMessage>();
 
-    public GameHost(ulong seed, ConsoleRenderer? renderer)
+    public GameHost(Game game, ConsoleRenderer? renderer)
     {
-        _game = new Game(seed);
+        _game = game;
         _renderer = renderer;
     }
 

@@ -43,7 +43,42 @@ public static class Presenter
         DrawMap(frame, game, layout);
         DrawSidebar(frame, game, layout);
         DrawLog(frame, game, layout);
+        if (game.InShrineMenu) DrawShrineMenu(frame, game, layout);
         return frame;
+    }
+
+    private static void DrawShrineMenu(Frame frame, Game game, Layout layout)
+    {
+        const int boxW = 42;
+        int boxH = 6 + AttributeSet.Count;
+        int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
+        int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
+
+        for (int y = 0; y < boxH; y++)
+            for (int x = 0; x < boxW; x++)
+            {
+                bool border = y == 0 || y == boxH - 1 || x == 0 || x == boxW - 1;
+                frame.Put(x0 + x, y0 + y, border ? (y is 0 || y == boxH - 1 ? '-' : '|') : ' ',
+                    border ? Hue.Cyan : Hue.Gray, Hue.Black);
+            }
+        frame.Put(x0, y0, '+', Hue.Cyan);
+        frame.Put(x0 + boxW - 1, y0, '+', Hue.Cyan);
+        frame.Put(x0, y0 + boxH - 1, '+', Hue.Cyan);
+        frame.Put(x0 + boxW - 1, y0 + boxH - 1, '+', Hue.Cyan);
+
+        frame.Write(x0 + 2, y0 + 1, $"The Shrine of {game.World.SettlementName}", Hue.White);
+        frame.Write(x0 + 2, y0 + 2, $"Essence {game.Player.Essence}   next raise costs {game.NextRaiseCost}", Hue.Cyan);
+
+        for (int i = 0; i < AttributeSet.Count; i++)
+        {
+            var attr = (Attr)i;
+            bool affordable = game.Player.Essence >= game.NextRaiseCost;
+            frame.Write(x0 + 2, y0 + 4 + i,
+                $"{i + 1}) {AttributeSet.NameOf(attr),-9} {game.Player.Attributes[attr],2}",
+                affordable ? Hue.White : Hue.DarkGray);
+        }
+
+        frame.Write(x0 + 2, y0 + boxH - 2, "1-7 raise; any other key to rise", Hue.DarkGray);
     }
 
     private static void DrawHeader(Frame frame, Game game)
@@ -142,7 +177,7 @@ public static class Presenter
         {
             Line(game.World.SettlementName, Hue.White);
             var here = game.CurrentMap[p.Pos];
-            if (here == Terrain.Shrine) Line("At the shrine (+)", Hue.Cyan);
+            if (here == Terrain.Shrine) Line("At the shrine: r rests", Hue.Cyan);
             if (here == Terrain.CampEntrance) Line("Cave mouth: > enters", Hue.Red);
         }
 

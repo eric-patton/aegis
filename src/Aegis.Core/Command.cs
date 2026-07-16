@@ -8,6 +8,7 @@ public enum Command
     Enter,
     Exit,
     Grab,
+    Rest,
     Quit,
 }
 
@@ -28,6 +29,7 @@ public static class CommandMap
         '>' => Command.Enter,
         '<' => Command.Exit,
         'g' => Command.Grab,
+        'r' => Command.Rest,
         'q' => Command.Quit,
         _ => Command.None,
     };

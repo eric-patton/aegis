@@ -23,6 +23,8 @@ dotnet build
 
 A named-pipe control server (`aegis.pilot.<session>`) that a shell, script, or agent uses to drive a live game. The game renders to an in-memory frame; the pilot serves that exact frame as text, so observing the game never involves screenshots or window focus.
 
+The TUI itself scales to the terminal window (the map viewport flexes; sidebar and log stay fixed; below 80x24 the layout crops), and repaints on resize. **The pilot always renders at the fixed 80x24 baseline regardless of any window**, so agent-visible screens and screen-based tests stay deterministic.
+
 Client commands (each connects, acts, prints, exits):
 
 ```

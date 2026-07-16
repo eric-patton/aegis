@@ -48,12 +48,21 @@ public sealed class GameHost
                     completion.TrySetResult(HandlePilot(request));
                     Render();
                     break;
+
+                case HostMessage.Redraw:
+                    Render();
+                    break;
             }
         }
         _channel.Writer.TryComplete();
     }
 
-    private void Render() => _renderer?.Draw(Presenter.Render(_game));
+    private void Render()
+    {
+        if (_renderer is null) return;
+        var (width, height) = _renderer.CurrentSize;
+        _renderer.Draw(Presenter.Render(_game, width, height));
+    }
 
     private PilotResponse HandlePilot(PilotRequest request)
     {
@@ -102,4 +111,8 @@ public abstract record HostMessage
 {
     public sealed record Key(char Char) : HostMessage;
     public sealed record Pilot(PilotRequest Request, TaskCompletionSource<PilotResponse> Completion) : HostMessage;
+    public sealed record Redraw : HostMessage
+    {
+        public static readonly Redraw Instance = new();
+    }
 }

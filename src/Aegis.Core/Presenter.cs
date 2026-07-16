@@ -2,29 +2,47 @@ namespace Aegis.Core;
 
 /// <summary>
 /// Renders game state into a <see cref="Frame"/>. Pure function of state; owns the
-/// layout (header, map viewport, sidebar, message log) at a fixed 80x24 baseline.
+/// layout (header, map viewport, sidebar, message log). The map viewport flexes to
+/// absorb any size beyond the 80x24 baseline; the sidebar keeps a fixed width on the
+/// right and the log a fixed line count at the bottom. Below the baseline, layout is
+/// computed at 80x24 and the frame simply crops.
 /// </summary>
 public static class Presenter
 {
     public const int DefaultWidth = 80;
     public const int DefaultHeight = 24;
 
-    private const int MapX = 0;
-    private const int MapY = 1;
-    private const int MapW = 55;
-    private const int MapH = 17;
-    private const int SideX = 57;
-    private const int LogY = MapY + MapH + 1;
+    private const int SidebarWidth = 23;
+    private const int LogLines = 5;
+
+    /// <summary>Computed per-render region geometry.</summary>
+    private readonly record struct Layout(int MapX, int MapY, int MapW, int MapH, int SideX, int LogY)
+    {
+        public static Layout For(int width, int height)
+        {
+            int w = Math.Max(width, DefaultWidth);
+            int h = Math.Max(height, DefaultHeight);
+            int logY = h - LogLines;
+            return new Layout(
+                MapX: 0,
+                MapY: 1,
+                MapW: w - SidebarWidth - 2,
+                MapH: logY - 2,
+                SideX: w - SidebarWidth,
+                LogY: logY);
+        }
+    }
 
     public static Frame Render(Game game) => Render(game, DefaultWidth, DefaultHeight);
 
     public static Frame Render(Game game, int width, int height)
     {
-        var frame = new Frame(width, height);
+        var frame = new Frame(Math.Max(width, 1), Math.Max(height, 1));
+        var layout = Layout.For(width, height);
         DrawHeader(frame, game);
-        DrawMap(frame, game);
-        DrawSidebar(frame, game);
-        DrawLog(frame, game, height);
+        DrawMap(frame, game, layout);
+        DrawSidebar(frame, game, layout);
+        DrawLog(frame, game, layout);
         return frame;
     }
 
@@ -34,29 +52,30 @@ public static class Presenter
         frame.Write(0, 0, header.PadRight(frame.Width), Hue.Black, Hue.DarkCyan);
     }
 
-    private static void DrawMap(Frame frame, Game game)
+    private static void DrawMap(Frame frame, Game game, Layout layout)
     {
         var map = game.CurrentMap;
+        var (mapX, mapY, mapW, mapH) = (layout.MapX, layout.MapY, layout.MapW, layout.MapH);
 
-        int camX = Math.Clamp(game.Player.Pos.X - MapW / 2, 0, Math.Max(0, map.Width - MapW));
-        int camY = Math.Clamp(game.Player.Pos.Y - MapH / 2, 0, Math.Max(0, map.Height - MapH));
+        int camX = Math.Clamp(game.Player.Pos.X - mapW / 2, 0, Math.Max(0, map.Width - mapW));
+        int camY = Math.Clamp(game.Player.Pos.Y - mapH / 2, 0, Math.Max(0, map.Height - mapH));
 
-        for (int sy = 0; sy < MapH; sy++)
+        for (int sy = 0; sy < mapH; sy++)
         {
-            for (int sx = 0; sx < MapW; sx++)
+            for (int sx = 0; sx < mapW; sx++)
             {
                 var p = new Pos(camX + sx, camY + sy);
                 if (!map.InBounds(p)) continue;
                 var (ch, fg, bg) = Glyph(map[p]);
-                frame.Put(MapX + sx, MapY + sy, ch, fg, bg);
+                frame.Put(mapX + sx, mapY + sy, ch, fg, bg);
             }
         }
 
         void PutWorld(Pos p, char ch, Hue fg, Hue bg = Hue.Black)
         {
             int sx = p.X - camX, sy = p.Y - camY;
-            if (sx >= 0 && sx < MapW && sy >= 0 && sy < MapH)
-                frame.Put(MapX + sx, MapY + sy, ch, fg, bg);
+            if (sx >= 0 && sx < mapW && sy >= 0 && sy < mapH)
+                frame.Put(mapX + sx, mapY + sy, ch, fg, bg);
         }
 
         // Telegraphed intent cells: the readable danger the combat design runs on.
@@ -92,13 +111,13 @@ public static class Presenter
         _ => ('?', Hue.Magenta, Hue.Black),
     };
 
-    private static void DrawSidebar(Frame frame, Game game)
+    private static void DrawSidebar(Frame frame, Game game, Layout layout)
     {
         var p = game.Player;
         int y = 1;
         void Line(string text, Hue fg = Hue.Gray)
         {
-            if (y < LogY - 1) frame.Write(SideX, y, text, fg);
+            if (y < layout.LogY - 1) frame.Write(layout.SideX, y, text, fg);
             y++;
         }
 
@@ -146,12 +165,12 @@ public static class Presenter
         return new string('=', filled) + new string(' ', slots - filled);
     }
 
-    private static void DrawLog(Frame frame, Game game, int height)
+    private static void DrawLog(Frame frame, Game game, Layout layout)
     {
-        int lines = height - LogY;
-        frame.Write(0, LogY - 1, new string('-', frame.Width), Hue.DarkGray);
-        int y = LogY;
-        foreach (var entry in game.Log.Recent(lines))
+        int logY = layout.LogY;
+        frame.Write(0, logY - 1, new string('-', frame.Width), Hue.DarkGray);
+        int y = logY;
+        foreach (var entry in game.Log.Recent(LogLines))
         {
             var fg = entry.Tone switch
             {

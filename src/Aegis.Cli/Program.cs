@@ -59,7 +59,10 @@ if (pilot)
 }
 
 if (!headless)
+{
     ConsoleInput.Start(host.Writer, cts.Token);
+    ResizeWatcher.Start(host.Writer, cts.Token);
+}
 
 await host.RunAsync();
 

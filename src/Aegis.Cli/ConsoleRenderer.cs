@@ -19,10 +19,27 @@ public sealed class ConsoleRenderer : IDisposable
         Console.Write("\x1b[?1049h\x1b[?25l\x1b[2J");
     }
 
+    /// <summary>Current console size, floored at 1x1 (the presenter handles small-window cropping).</summary>
+    public (int Width, int Height) CurrentSize
+    {
+        get
+        {
+            try
+            {
+                return (Math.Max(1, Console.WindowWidth), Math.Max(1, Console.WindowHeight));
+            }
+            catch (IOException)
+            {
+                return (Presenter.DefaultWidth, Presenter.DefaultHeight);
+            }
+        }
+    }
+
     public void Draw(Frame frame)
     {
         _sb.Clear();
         bool full = _last is null || _last.Width != frame.Width || _last.Height != frame.Height;
+        if (full) _sb.Append("\x1b[2J");
 
         for (int y = 0; y < frame.Height; y++)
         {

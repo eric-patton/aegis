@@ -75,7 +75,8 @@ and waits for the next moment.
 - `Type` is a lower_snake noun naming the relation. Reserved types so far:
   `world_name`, `settlement`, `rest_point`, `site`, `grievance`, `deed`, `echo`,
   `person`, `wanderer`; from storylets: `met`, `boon`, `noticed`; from templates
-  (D-032): `role`, `promise`, `story_complete`.
+  (D-032, D-035): `story`, `role`, `promise`, `story_complete`, `history`,
+  `evidence`, `coda`.
 - `Subject` is the thing the fact is about (a site id, a settlement name, a storylet id).
 - `Object` is the other party or a coordinate pair, `""` when unary.
 - `Detail` is prose for surfacing in content; never parsed, never load-bearing.
@@ -114,5 +115,7 @@ draw count, and therefore every later draw, deterministic as the catalog grows.
 - ~~Role casting and template compilation~~ Landed as v0 in D-032: a template compiles
   at worldgen into role facts plus cast-bound storylets (`WorldStory.cs`), merged with
   the global catalog per world. The storylet format did not change, as predicted.
+  D-035 added selection: templates declare eligibility, the generator picks one per
+  world from the world-story stream, and a `story` fact names the choice.
 - Dialogue trees: storylets deliver beats as log lines today. When a scene UI exists,
   `Lines` grows scene directions without changing gating.

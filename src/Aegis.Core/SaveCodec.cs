@@ -11,11 +11,13 @@ namespace Aegis.Core;
 /// Version history: v1 launch format; v2 when D-033 changed tier 2+ worldgen
 /// (journals that crossed a waygate would replay into a different world);
 /// v3 when D-034 added the Unbinder to every world at every tier (a v2 journal
-/// walking their tile would open a talk menu that did not exist when it was played).
+/// walking their tile would open a talk menu that did not exist when it was played);
+/// v4 when D-035 added template selection (tier 2+ worlds draw to choose a story,
+/// so a v3 journal that crossed would replay against different content).
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 3;
+    public const int Version = 4;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

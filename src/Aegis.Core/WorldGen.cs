@@ -165,10 +165,11 @@ public static class WorldGen
 
         var npcs = CastNpcs(overworld, ref placeRng, ref nameRng, settlement, shrine);
 
-        // The template compiles against the villagers only: the Unbinder (cast below)
-        // must never be picked for a world-story role.
+        // The story template selects and compiles against the villagers only: the
+        // Unbinder (cast below) must never be picked for a world-story role.
         var storyRng = new Rng(SeedTree.Derive(worldSeed, "world-story"));
-        var storyStorylets = RaidedSteadTemplate.Compile(ref storyRng, npcs, settlementName, facts);
+        var storyStorylets = WorldStories.CompileForWorld(ref storyRng,
+            new StoryTemplateContext(npcs, settlementName, facts, sites, tier));
 
         // The Unbinder (D-034): a fresh guise every world, its own seed stream, placed
         // well away from the stead. Their tile stays plain ground: nothing on the map

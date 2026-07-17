@@ -45,6 +45,14 @@ is optional: only the camp deed opens the waygate. Worldgen for tier 2+ changed 
 D-033, so saves are format v2 (v1 journals that had crossed would replay wrong and
 are refused).
 
+## World stories and template selection (D-035)
+
+Each world tells one story, chosen at worldgen among eligible templates (tier 1:
+always the Raided Stead; tier 2+ worlds with a barrow may draw the Creeping Blight
+instead). `state` carries `storyTemplate`. Blight worlds: the plea comes from the
+cast "afflicted" villager, evidence deep in the barrow (x >= 19) changes the ending
+the deed fires, and saves are format v4 (the tier-2+ selection draw).
+
 ## The Unbinder and respec (D-034)
 
 Every world casts a wandering mender (`p`, camped away from the stead; villagers'

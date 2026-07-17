@@ -35,6 +35,29 @@ public static class AegisVoice
 
     public const string LaterCrossingLine = "Deeper, then. Hold fast to me.";
 
+    /// <summary>The Aegis's forge-name, recovered in cycle 2 (working placeholder, arc sec 11).</summary>
+    public const string ForgeName = "Skeld";
+
+    // Crossing rung "the failures" (arc sec 6, cycle 2): the stranger-kind named
+    // for what they are, the two ways they are made, and the first admission of
+    // guilt. Gated on the post-fight truth, spoken once ever.
+    public static readonly string[] CrossingGuiltLines =
+    [
+        "The one at the fire. You have earned the whole of it, so hear it now, between worlds, where nothing else is listening.",
+        "The stranger-kind are bearers. Mine, some of them. Some cut themselves loose. Some were dropped, when their ward broke, and went on falling without it.",
+        "A ward that fails does not die of it. Its bearer does worse than die. Now you know what walks the deep worlds wearing faces like yours.",
+    ];
+
+    // Crossing rung "the forging" (arc sec 6, cycle 3): the ledger. The tithe
+    // named, and the bearer's own grind recontextualized in one line. Gated on
+    // the shrine vision, spoken once ever.
+    public static readonly string[] CrossingLedgerLines =
+    [
+        "I said all is counted. Bearer, hear the part I could not remember: counted, and tithed.",
+        "A share of every deed's weight has gone out of us at every crossing, down the chain, the whole time. Your essence, and mine. I do not yet remember to what.",
+        "I did not lie to you. I did not remember. I am not certain which is worse.",
+    ];
+
     public const string CoinConvertedLine = "Coin is of a world; it stays. The name it bought you, you keep.";
 
     public const string GateShutLine = "Not yet. This world's tally is unfinished.";

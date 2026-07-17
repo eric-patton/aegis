@@ -53,6 +53,18 @@ instead). `state` carries `storyTemplate`. Blight worlds: the plea comes from th
 cast "afflicted" villager, evidence deep in the barrow (x >= 19) changes the ending
 the deed fires, and saves are format v4 (the tier-2+ selection draw).
 
+## The arc ladder and the hollow (D-037)
+
+Tier 2+ worlds hold the hollow (`o` on the map): a stone ring with a single
+severed one. It pursues at full speed with proper pathing, telegraphs a
+sundering cut (always dodge it), and its bare touch drains 1 essence along with
+hp; felling it pays 15 essence and no coin, and it is the hardest optional
+fight in the band. `state` carries `hollowX/hollowY` (`-1` when absent),
+`hollowCleared`, and `arcProgress`: a comma list of spoiler-free rung flags
+(`truth`, `guilt`, `vision`, `ledger`, `tier1`) that live tests should assert
+instead of echoing story prose. Story beats gate on earlier flags, not cycle
+counts. Saves are format v6 (tier-2+ worldgen and villager topics changed).
+
 ## Trade and provisions (D-036)
 
 The steadholder sells rations (talk menu, last entries after the topics; the menu

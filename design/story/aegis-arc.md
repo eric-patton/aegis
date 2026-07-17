@@ -73,6 +73,8 @@ Each rung is a complete micro-reveal. "Crossing N" means the scene between world
 - Ambient: one Severed appears once, unlabeled: a stranger who looks at the player too long, says the motif wrong, and leaves. No fight, no explanation (significance withheld).
 - Crossing 1 micro-reveal: **there are other worlds, and this has happened before.** "I have carried others. I do not remember how many. That frightens me, and I do not remember how to be frightened."
 
+*Implementation status (D-037): cycle 1's ambient Severed, all of cycle 2, and cycle 3's vision + Unbinder tier 1 + ledger crossing are live as flag-gated content (rungs gate on Player arc flags, not cycle counts). The cycle-2 Severed is arc-cast into its own site (the hollow, tier 2+, recurring) rather than template-cast, preserving the delete test. The cycle-3 bottle landed as a witnessed text vision at the shrine. Crossing scenes are AegisVoice line banks keyed to pending flags.*
+
 **Cycle 2: the failures.**
 - Cold open: the Aegis has recovered a fragment: its maker's word for itself (a forge-name), which it turns over like a coin all cycle.
 - Ambient: bearer-myths begin surfacing in topic systems: tombs of "those who did not die", ballads that are recognizably about past player characters where they exist, authored prior bearers where they do not.
@@ -140,8 +142,8 @@ Either way, the diegetic frame for **covenants** upgrades at resolution: the ter
 
 ## 11. Open questions for a future session
 
-- Final names: Aegis's forge-name, the Shieldwrights, the Chain, the Hearth, the Severed, the Unbinder (all placeholders).
+- Final names: Aegis's forge-name, the Shieldwrights, the Chain, the Hearth, the Severed, the Unbinder (all placeholders). *D-037 picked "Skeld" as the forge-name working placeholder (AegisVoice.ForgeName); still revisable with the rest.*
 - The Unbinder's guise design per world: how strongly disguised, and what constant tells (a phrase, a service, a mannerism) let attentive players clock them early. Early-clocking should be possible and rewarded (the study's hindsight-reread principle).
-- Whether the cycle-3 bottle vision is playable (the player briefly acts in the memory) or witnessed (text vision). Playable is stronger and costlier.
+- Whether the cycle-3 bottle vision is playable (the player briefly acts in the memory) or witnessed (text vision). Playable is stronger and costlier. *D-037 shipped witnessed for v1; upgrading to playable remains open.*
 - The exact mechanical dressing of the threshold scene (pure dialogue, or a final trial fight against a designed Severed "gatekeeper").
 - Whether multiple player characters share Unbinder reveal-tier progress (world mythology already crosses characters via D-013; reveal tiers probably should not).

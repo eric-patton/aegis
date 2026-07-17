@@ -193,8 +193,18 @@ public static class Presenter
 
         foreach (var monster in game.LiveMonstersHere)
         {
-            char ch = monster.Kind == MonsterKind.Wight ? 'w' : 'g';
-            var calm = monster.Kind == MonsterKind.Wight ? Hue.Cyan : Hue.Red;
+            char ch = monster.Kind switch
+            {
+                MonsterKind.Wight => 'w',
+                MonsterKind.Severed => 's',
+                _ => 'g',
+            };
+            var calm = monster.Kind switch
+            {
+                MonsterKind.Wight => Hue.Cyan,
+                MonsterKind.Severed => Hue.Magenta,
+                _ => Hue.Red,
+            };
             PutWorld(monster.Pos, ch, monster.Intent is null ? calm : Hue.White,
                 monster.Intent is null ? Hue.Black : Hue.DarkRed);
         }
@@ -216,6 +226,7 @@ public static class Presenter
         Terrain.ExitLadder => ('<', Hue.White, Hue.Black),
         Terrain.Waygate => ('O', Hue.Magenta, Hue.Black),
         Terrain.BarrowEntrance => ('n', Hue.DarkYellow, Hue.Black),
+        Terrain.HollowEntrance => ('o', Hue.White, Hue.Black),
         _ => ('?', Hue.Magenta, Hue.Black),
     };
 
@@ -242,12 +253,21 @@ public static class Presenter
 
         if (game.Mode == MapMode.Site)
         {
-            Line(game.CurrentSite!.Kind == SiteKind.Barrow ? "The barrow" : "Goblin cave", Hue.White);
+            Line(game.CurrentSite!.Kind switch
+            {
+                SiteKind.Barrow => "The barrow",
+                SiteKind.Hollow => "The stone ring",
+                _ => "Goblin cave",
+            }, Hue.White);
             int alive = game.LiveMonstersHere.Count();
             Line($"Foes here: {alive}", alive > 0 ? Hue.Red : Hue.DarkGreen);
             foreach (var monster in game.LiveMonstersHere.Where(m => m.Intent is not null))
-                Line(monster.Intent!.Kind == IntentKind.BarrowBlade
-                    ? "! barrow blade poised" : "! crushing blow poised", Hue.Red);
+                Line(monster.Intent!.Kind switch
+                {
+                    IntentKind.BarrowBlade => "! barrow blade poised",
+                    IntentKind.SunderingCut => "! sundering cut poised",
+                    _ => "! crushing blow poised",
+                }, Hue.Red);
         }
         else
         {
@@ -256,6 +276,7 @@ public static class Presenter
             if (here == Terrain.Shrine) Line("At the shrine: r rests", Hue.Cyan);
             if (here == Terrain.CampEntrance) Line("Cave mouth: > enters", Hue.Red);
             if (here == Terrain.BarrowEntrance) Line("Barrow mouth: > enters", Hue.DarkYellow);
+            if (here == Terrain.HollowEntrance) Line("Stone ring: > enters", Hue.White);
             if (here == Terrain.Waygate)
                 Line(game.CampCleared ? "Waygate hums: > crosses" : "Waygate: shut", Hue.Magenta);
             foreach (var npc in game.World.Npcs)

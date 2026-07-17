@@ -166,6 +166,115 @@ public static class StoryletCatalog
                 "The bearer has marked the wandering menders: in every world one waits, and knows the bearer on sight."),
         },
 
+        // ---- The arc ladder, rungs 2 and 3 (D-037, design/story/aegis-arc.md sec 6).
+        // Every rung gates on the previous rung's flag, never on a cycle count.
+
+        // Cycle 1 ambient: one stranger, once, unlabeled. The motif said wrong and
+        // never explained: significance withheld, to be re-filed by rung 2.
+        new Storylet
+        {
+            Id = "stranger-on-the-road",
+            Trigger = StoryletTrigger.AmbientTurn,
+            Scope = StoryletScope.Character,
+            Priority = 5,
+            Weight = 100,
+            When = g => g.Cycle == 1 && g.Turn >= 30,
+            Lines =
+            [
+                ("A traveler passes the other way: neither old nor young, dressed a little wrong for the season. They look at you too long, and not at your face.", LogTone.Info),
+                ("As they pass: \"All is counted, little shield.\" Said kindly. Said wrong. When you look back, the road is empty.", LogTone.Danger),
+            ],
+        },
+
+        // Cycle 2 ambient anchor: bearer-myths surfacing in settlement talk. The
+        // fact is planted by worldgen in tier 2+ worlds; delivered as ambient
+        // voice rather than a topic so villager menus stay within their digits.
+        new Storylet
+        {
+            Id = "tomb-of-the-undying",
+            Trigger = StoryletTrigger.NearHouse,
+            Requires = [new FactPattern("bearer_myth")],
+            Weight = 5,
+            Lines =
+            [
+                ("Two elders argue by the well, clearly not for the first time. \"{r0.detail}\"", LogTone.Info),
+                ("\"Your kind is sung about before it arrives, bearer. I begin to suspect the songs are not wrong.\"", LogTone.Aegis),
+            ],
+        },
+
+        // Cycle 2 cold open: the forge-name fragment, turned over like a coin.
+        new Storylet
+        {
+            Id = "forge-name-recovered",
+            Trigger = StoryletTrigger.Arrival,
+            Scope = StoryletScope.Character,
+            Priority = 10,
+            When = g => g.Cycle >= 2,
+            Lines =
+            [
+                ($"\"A word came back to me in the crossing. {AegisVoice.ForgeName}. It is mine: my maker's word for me, the way a smith names a blade.\"", LogTone.Aegis),
+                ("\"I will turn it over a while. A name is a small thing to be handed back. It does not feel small.\"", LogTone.Aegis),
+            ],
+        },
+
+        // Rung 2's micro-reveal, paid at the moment it is earned (the study's
+        // complete-every-touch rule): the stranger-kind are former bearers. The
+        // crossing scene confirms and deepens it; this is where it lands.
+        new Storylet
+        {
+            Id = "severed-truth",
+            Trigger = StoryletTrigger.DeedWritten,
+            Scope = StoryletScope.Character,
+            Priority = 20,
+            Requires = [new FactPattern("deed", "severed_laid")],
+            Lines =
+            [
+                ("It spoke while it came apart, without rancor, finishing a story told many times: \"A new grip on the old shield. It carried me once, what you carry. Ask it where it put me down.\"", LogTone.Danger),
+                ("\"Bearer. The stranger-kind. I remember now what they are, and I would rather have remembered anything else. At the next crossing, where nothing listens, I will say all of it.\"", LogTone.Aegis),
+            ],
+            Effect = g => g.Player.SeveredTruthHeard = true,
+        },
+
+        // Rung 3's bottle beat (witnessed vision, arc sec 11's cheaper option):
+        // what the Aegis is, cut off before what the orders were for.
+        new Storylet
+        {
+            Id = "vision-of-the-forging",
+            Trigger = StoryletTrigger.Rest,
+            Scope = StoryletScope.Character,
+            Priority = 20,
+            When = g => g.Player.CrossingGuiltHeard,
+            Lines =
+            [
+                ("The shrine's hum deepens, and the Aegis pulls you under, into a memory that is not yours:", LogTone.Aegis),
+                ("A hall of anvils beneath a sky the color of quenching-water. Rows of shields being made: not hammered but argued into being, by smiths who speak each blow. The Shieldwrights.", LogTone.Info),
+                ("One of the shields is yours. You watch words laid into it like inlay: catch, carry, count. And over the anvil a commission is spoken: \"Find and temper a soul fit to keep the...\"", LogTone.Info),
+                ("The memory frays there, mid-word. The Aegis reaches after it and closes on nothing.", LogTone.Info),
+                ("\"A made thing. That much I knew. I did not remember being made. There were orders, bearer: I heard every word except what they were for.\"", LogTone.Aegis),
+            ],
+            Effect = g => g.Player.VisionSeen = true,
+        },
+
+        // Reveal tier 1: the Unbinder confronted knowingly for the first time,
+        // gated on the vision. They admit their age, decline the rest, and aim
+        // the player back at the Aegis. Unlocks the "long road" topic.
+        new Storylet
+        {
+            Id = "unbinder-known",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.Character,
+            Priority = 20,
+            When = g => g.TalkNpc?.Kind == NpcKind.Unbinder && g.Player.VisionSeen,
+            Lines =
+            [
+                ("You describe what the shrine showed you: the hall of anvils, the argued shields. The mender goes very still, and for a moment the guise sits on them like a coat on a chairback.", LogTone.Info),
+                ("\"So it is remembering. Slower than I hoped. Faster than I feared.\" They feed the fire a stick. \"I am older than this world, bearer. Older than several. That is all you get from me today.\"", LogTone.Info),
+                ("\"You want the rest? Ask it what it counts. Make it say the word aloud.\"", LogTone.Info),
+                ("The Aegis is silent in a way that has a temperature.", LogTone.Aegis),
+            ],
+            Effect = g => g.Player.UnbinderRevealTier = Math.Max(g.Player.UnbinderRevealTier, 1),
+        },
+
         // Ambient flavor: repeatable, cooldown-gated, deliberately slight.
         new Storylet
         {

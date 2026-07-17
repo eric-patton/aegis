@@ -27,6 +27,26 @@ public sealed class Player
     /// </summary>
     public int Rations { get; set; }
 
+    // Arc-ladder state (D-037, design/story/aegis-arc.md sec 6). The fact graph is
+    // per-world, so rung progress lives on the character. Each flag is set by the
+    // storylet or crossing scene that completes its rung; later rungs gate on
+    // earlier flags, never on cycle counts (the ladder's timing-tolerance rule).
+
+    /// <summary>Rung 2a: the post-fight truth about the stranger-kind has been heard.</summary>
+    public bool SeveredTruthHeard { get; set; }
+
+    /// <summary>Rung 2b: the Aegis's crossing-scene admission has been spoken.</summary>
+    public bool CrossingGuiltHeard { get; set; }
+
+    /// <summary>Rung 3a: the shrine vision of the forging has been witnessed.</summary>
+    public bool VisionSeen { get; set; }
+
+    /// <summary>Rung 3c: the crossing-scene ledger reveal has been spoken.</summary>
+    public bool LedgerHeard { get; set; }
+
+    /// <summary>The Unbinder's layered identity, by trust not clock (0 = guise only).</summary>
+    public int UnbinderRevealTier { get; set; }
+
     /// <summary>Derived from Vigor (D-015): the humble baseline of 5 gives 20.</summary>
     public int MaxHp => 10 + Attributes[Attr.Vigor] * 2;
 
@@ -43,7 +63,7 @@ public sealed class Player
     public int EffectiveMaxHp => WoundedTurns > 0 ? Math.Max(1, MaxHp * 4 / 5) : MaxHp;
 }
 
-public enum MonsterKind { Goblin, Wight }
+public enum MonsterKind { Goblin, Wight, Severed }
 
 public sealed class Monster
 {
@@ -60,6 +80,7 @@ public sealed class Monster
     {
         MonsterKind.Goblin => "goblin",
         MonsterKind.Wight => "wight",
+        MonsterKind.Severed => "severed one",
         _ => "creature",
     };
 }
@@ -75,7 +96,7 @@ public sealed class Intent
     public int TurnsUntilResolve { get; set; } = 1;
 }
 
-public enum IntentKind { CrushingBlow, BarrowBlade }
+public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut }
 
 /// <summary>
 /// Villagers live beside their houses; the Unbinder (D-034) is the wandering

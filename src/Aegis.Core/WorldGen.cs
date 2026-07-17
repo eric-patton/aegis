@@ -1,6 +1,6 @@
 namespace Aegis.Core;
 
-public enum SiteKind { GoblinCamp, Barrow }
+public enum SiteKind { GoblinCamp, Barrow, Hollow }
 
 /// <summary>A monster placed at generation time: kind, cell, and generated stats (D-011).</summary>
 public readonly record struct MonsterSpawn(MonsterKind Kind, Pos Pos, int Hp);
@@ -43,6 +43,9 @@ public sealed class World
 
     /// <summary>The wandering mender (D-034): cast into every world, every tier.</summary>
     public Npc Unbinder => Npcs.First(n => n.Kind == NpcKind.Unbinder);
+
+    /// <summary>The stone ring where a severed one waits (D-037, tier 2+).</summary>
+    public Site? HollowSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Hollow);
 
     // Convenience views of the camp, the site every world has (and tests lean on).
     public GameMap Camp => CampSite.Map;
@@ -190,6 +193,37 @@ public static class WorldGen
             Kind = NpcKind.Unbinder,
         };
         npcs.Add(unbinder);
+
+        // The hollow (D-037): tier 2+, on its own stream so every existing draw
+        // stays put. A severed one keeps the ring's fire in every world deep
+        // enough to hold one; the encounter is optional, like the barrow.
+        if (tier >= 2)
+        {
+            var hollowRng = new Rng(SeedTree.Derive(worldSeed, "hollow"));
+            Pos hollowPos = FindDistantSpot(overworld, ref hollowRng, settlement, minDistance: 14);
+            while (hollowPos == camp || hollowPos == gate || hollowPos == barrow
+                   || hollowPos.Manhattan(camp) < 5 || hollowPos.Manhattan(gate) < 5
+                   || hollowPos.Manhattan(barrow) < 5 || npcs.Any(n => n.Pos == hollowPos))
+                hollowPos = FindDistantSpot(overworld, ref hollowRng, settlement, minDistance: 14);
+            overworld[hollowPos] = Terrain.HollowEntrance;
+            CarvePathIfDisconnected(overworld, shrine, hollowPos);
+
+            var (hollowMap, hollowEntry, severedPos, hollowChest) = GenerateHollow();
+            sites.Add(new Site
+            {
+                Id = "hollow",
+                Kind = SiteKind.Hollow,
+                Map = hollowMap,
+                OverworldPos = hollowPos,
+                EntryPos = hollowEntry,
+                Spawns = [new MonsterSpawn(MonsterKind.Severed, severedPos, 16 + 2 * (tier - 2))],
+                ChestPos = hollowChest,
+            });
+            facts.Add("site", "hollow", $"{hollowPos.X},{hollowPos.Y}",
+                "A ring of standing stones, older than the barrow's lintels. Someone keeps a fire there who never buys food, never ages, and never leaves.");
+            facts.Add("bearer_myth", "tomb_of_the_undying", settlementName,
+                "In the hills stands a tomb raised for one who, the old folk swear, did not die. Its door has never been opened, because it has never been needed.");
+        }
 
         facts.Add("world_name", worldName, "");
         facts.Add("settlement", settlementName, $"{settlement.X},{settlement.Y}", "A small stead under the Aegis-shrine.");
@@ -487,6 +521,37 @@ public static class WorldGen
         }
 
         return (map, entry, wights, chest);
+    }
+
+    public const int HollowW = 21;
+    public const int HollowH = 11;
+
+    /// <summary>
+    /// The hollow (D-037): a broken ring of standing stones with its tenant at the
+    /// center. Authored layout, no carve RNG: the arc's recurring encounter ground
+    /// reads the same in every world, the way its keeper does.
+    /// </summary>
+    private static (GameMap Map, Pos Entry, Pos SeveredPos, Pos Chest) GenerateHollow()
+    {
+        var map = new GameMap("hollow", HollowW, HollowH, Terrain.Floor);
+        for (int x = 0; x < HollowW; x++)
+        {
+            map[new Pos(x, 0)] = Terrain.Wall;
+            map[new Pos(x, HollowH - 1)] = Terrain.Wall;
+        }
+        for (int y = 0; y < HollowH; y++)
+        {
+            map[new Pos(0, y)] = Terrain.Wall;
+            map[new Pos(HollowW - 1, y)] = Terrain.Wall;
+        }
+
+        var center = new Pos(14, 5);
+        foreach (var (dx, dy) in ((int, int)[])[(3, 0), (-3, 0), (0, 3), (0, -3), (2, 2), (-2, 2), (2, -2), (-2, -2)])
+            map[center.Plus(dx, dy)] = Terrain.Wall;
+
+        var entry = new Pos(2, 5);
+        map[entry] = Terrain.ExitLadder;
+        return (map, entry, center, new Pos(17, 7));
     }
 }
 

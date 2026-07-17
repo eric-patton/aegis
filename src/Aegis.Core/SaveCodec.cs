@@ -15,11 +15,14 @@ namespace Aegis.Core;
 /// v4 when D-035 added template selection (tier 2+ worlds draw to choose a story,
 /// so a v3 journal that crossed would replay against different content);
 /// v5 when D-036 added trade (villager talk menus gained purchase entries, so a
-/// v4 journal digit that merely closed a menu could now buy something).
+/// v4 journal digit that merely closed a menu could now buy something);
+/// v6 when D-037 added the hollow to tier 2+ worlds and new villager topics
+/// (talk-menu digits shifted, and old journals never walked a world that held
+/// the stone ring).
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 5;
+    public const int Version = 6;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

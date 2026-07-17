@@ -241,15 +241,22 @@ public sealed class Game
                 Log.Add(Turn, World.BarrowSite!.Cleared
                     ? "The long mound. Its stones are only stones now."
                     : "A long mound of turf over lintel stones. The passage under it exhales cold. Press > to stoop in.", LogTone.Danger);
+            else if (t == Terrain.HollowEntrance)
+                Log.Add(Turn, World.HollowSite!.Cleared
+                    ? "The stone ring. Its fire is out, and the stones hold nothing now but weather."
+                    : "A ring of standing stones. Inside it a small fire burns, though no one gathers wood. Press > to step in.", LogTone.Danger);
         }
         else
         {
             if (Remnant is not null && Remnant.MapId == CurrentMapId && Remnant.Pos == p)
                 Log.Add(Turn, "Your remnant lies here: what you dropped when you fell. Press g to reclaim it.", LogTone.Reward);
             else if (!CurrentSite!.ChestLooted && p == CurrentSite.ChestPos)
-                Log.Add(Turn, CurrentSite.Kind == SiteKind.Barrow
-                    ? "Grave goods lie here on a stone shelf, dressed in dust. Press g to take them."
-                    : "A battered strongbox sits here. Press g to open it.", LogTone.Reward);
+                Log.Add(Turn, CurrentSite.Kind switch
+                {
+                    SiteKind.Barrow => "Grave goods lie here on a stone shelf, dressed in dust. Press g to take them.",
+                    SiteKind.Hollow => "A bundle of kept things lies here, wrapped against rain with great care. Press g to take it.",
+                    _ => "A battered strongbox sits here. Press g to open it.",
+                }, LogTone.Reward);
             else if (t == Terrain.ExitLadder)
                 Log.Add(Turn, "Daylight above. Press < to climb out.");
         }
@@ -271,8 +278,14 @@ public sealed class Game
             Log.Add(Turn, site.Kind switch
             {
                 SiteKind.Barrow => "You stoop under the lintel stone. The air inside is still, and cold, and does not want you.",
+                SiteKind.Hollow => "You step between the stones. The air changes, the way a room changes when someone in it has been waiting.",
                 _ => "You descend into the goblin cave. The dark smells of smoke and old meat.",
             }, LogTone.Danger);
+            if (site.Kind == SiteKind.Hollow && !site.Cleared)
+            {
+                Log.Add(Turn, "At the fire, a figure rises: neither old nor young, dressed out of no living fashion. It looks at your collarbone before it looks at your face.", LogTone.Danger);
+                Log.Add(Turn, "\"All is counted, little shield.\" Courteous, and wrong, like a bell with a hairline crack.", LogTone.Danger);
+            }
             return true;
         }
         if (Mode == MapMode.Overworld && Player.Pos == World.GatePos)
@@ -334,10 +347,25 @@ public sealed class Game
             $"In a world called {prevWorld}, the bearer emptied a goblin cave, and {prevSettlement} slept safe.");
 
         Log.Add(Turn, $"You step through the arch, and {prevWorld} folds shut behind you like a closed book.", LogTone.Danger);
+        // The crossing is the arc's guaranteed real estate (arc sec 5). Rungs are
+        // gated on earlier rungs' flags, never on cycle counts, so slow players and
+        // beeliners climb the same ladder in the same order.
         if (Cycle == 2)
         {
             Log.Add(Turn, $"\"{AegisVoice.FirstCrossingLine1}\"", LogTone.Aegis);
             Log.Add(Turn, $"\"{AegisVoice.FirstCrossingLine2}\"", LogTone.Aegis);
+        }
+        else if (Player.SeveredTruthHeard && !Player.CrossingGuiltHeard)
+        {
+            Player.CrossingGuiltHeard = true;
+            foreach (string line in AegisVoice.CrossingGuiltLines)
+                Log.Add(Turn, $"\"{line}\"", LogTone.Aegis);
+        }
+        else if (Player.VisionSeen && !Player.LedgerHeard)
+        {
+            Player.LedgerHeard = true;
+            foreach (string line in AegisVoice.CrossingLedgerLines)
+                Log.Add(Turn, $"\"{line}\"", LogTone.Aegis);
         }
         else
         {
@@ -355,6 +383,8 @@ public sealed class Game
         Log.Add(Turn, $"Rumor: goblins from a cave to the {Compass(World.ShrinePos, World.CampPos)} raid {World.SettlementName}'s stores by night.");
         if (World.BarrowSite is { } barrow)
             Log.Add(Turn, $"They speak lower of the long mound to the {Compass(World.ShrinePos, barrow.OverworldPos)}, where the dead do not lie easy.");
+        if (World.HollowSite is { } hollow)
+            Log.Add(Turn, $"And of the stone ring to the {Compass(World.ShrinePos, hollow.OverworldPos)} they say only this: leave the fire there to its keeper.");
         _storylets.TryFire(this, StoryletTrigger.Arrival);
     }
 
@@ -386,13 +416,20 @@ public sealed class Game
 
         if (Mode == MapMode.Site && !CurrentSite!.ChestLooted && Player.Pos == CurrentSite.ChestPos)
         {
-            bool barrow = CurrentSite.Kind == SiteKind.Barrow;
-            int coin = barrow ? _combatRng.Range(15, 27) : _combatRng.Range(10, 21);
+            int coin = CurrentSite.Kind switch
+            {
+                SiteKind.Barrow => _combatRng.Range(15, 27),
+                SiteKind.Hollow => _combatRng.Range(4, 10),
+                _ => _combatRng.Range(10, 21),
+            };
             Player.Coin += coin;
             CurrentSite.ChestLooted = true;
-            Log.Add(Turn, barrow
-                ? $"Grave-gold: {coin} coin struck for rulers whose names did not keep."
-                : $"The strongbox yields {coin} coin.", LogTone.Reward);
+            Log.Add(Turn, CurrentSite.Kind switch
+            {
+                SiteKind.Barrow => $"Grave-gold: {coin} coin struck for rulers whose names did not keep.",
+                SiteKind.Hollow => $"What they kept: a child's wooden horse, a ring sized for a thinner hand, and {coin} coin of a mint no one living has seen.",
+                _ => $"The strongbox yields {coin} coin.",
+            }, LogTone.Reward);
             return true;
         }
 
@@ -466,6 +503,11 @@ public sealed class Game
                 ? " \"Quiet up there now, first time in living memory. Whoever settled them, the stead owes a debt it cannot name.\""
                 : " \"None go up. Of late there are lights along the mound at night, and the dogs will not face that way.\"")));
 
+        if (World.HollowSite is { } hollowSite && World.Facts.Find("site", "hollow") is { } hollowFact)
+            topics.Add(("The stone ring", hollowFact.Detail + (hollowSite.Cleared
+                ? " \"The fire up there is out. First time in anyone's memory. We are not sure we are glad.\""
+                : " \"Leave it be, stranger. Whoever keeps that fire has kept it longer than the stead has stood.\"")));
+
         if (World.Facts.Find("wanderer", "npc_unbinder") is { } wanderer)
             topics.Add(("The wanderer", $"\"{wanderer.Detail} Not the first such to pass through, if the old folk are believed.\""));
 
@@ -491,6 +533,11 @@ public sealed class Game
 
         if (World.Facts.Exists("noticed", "unbinder"))
             topics.Add(("The one before", "\"The one before. Hm. Roads repeat their travelers, or travelers their roads. When you can tell those two apart, come and ask me again.\""));
+
+        // Reveal tier 1 (D-037): unlocked by the confrontation, restated on demand,
+        // and never advanced by asking twice (trust and escalation, not a clock).
+        if (Player.UnbinderRevealTier >= 1)
+            topics.Add(("The long road", "\"How long have I walked? Longer than this world has had a name. You knew that before you asked. What you want to know is whether it can be borne. It can. Ask your keeper what it counts, and then ask it again.\""));
 
         return topics;
     }
@@ -742,15 +789,28 @@ public sealed class Game
         }
         else
         {
-            // Wights hold little a living hand would spend, but they are dense with essence.
-            bool wight = target.Kind == MonsterKind.Wight;
-            int coin = wight ? _combatRng.Range(0, 3) : _combatRng.Range(2, 7);
-            int essence = wight ? 8 : 5;
+            // The dead hold little a living hand would spend, but they are dense
+            // with essence; a severed one is nothing else at all.
+            int coin = target.Kind switch
+            {
+                MonsterKind.Wight => _combatRng.Range(0, 3),
+                MonsterKind.Severed => 0,
+                _ => _combatRng.Range(2, 7),
+            };
+            int essence = target.Kind switch
+            {
+                MonsterKind.Wight => 8,
+                MonsterKind.Severed => 15,
+                _ => 5,
+            };
             Player.Coin += coin;
             Player.Essence += essence;
-            Log.Add(Turn, wight
-                ? $"The wight comes apart into grave-dust and quiet. You take {coin} coin and {essence} essence."
-                : $"The {target.Name} falls. You take {coin} coin and {essence} essence.", LogTone.Reward);
+            Log.Add(Turn, target.Kind switch
+            {
+                MonsterKind.Wight => $"The wight comes apart into grave-dust and quiet. You take {coin} coin and {essence} essence.",
+                MonsterKind.Severed => $"The severed one comes apart slowly, almost gratefully. What it held pours into the Aegis: {essence} essence, and no coin at all.",
+                _ => $"The {target.Name} falls. You take {coin} coin and {essence} essence.",
+            }, LogTone.Reward);
             CheckSiteCleared(CurrentSite!);
         }
         return true;
@@ -769,12 +829,19 @@ public sealed class Game
             Log.Add(Turn, "\"A deed with weight. It is counted.\"", LogTone.Aegis);
             Log.Add(Turn, $"\"And far to the {Compass(World.CampPos, World.GatePos)} of this cave, something old has unlocked. I feel it the way you feel a door open in a dark house.\"", LogTone.Aegis);
         }
-        else
+        else if (site.Kind == SiteKind.Barrow)
         {
             World.Facts.Add("deed", "barrow_stilled", World.SettlementName,
                 $"The barrow's dead were put to rest. The lights on the mound above {World.SettlementName} have gone out.");
             Log.Add(Turn, "The passage is still. Whatever the dead here were set to hold, no one is holding it now.", LogTone.Reward);
             Log.Add(Turn, "\"They were given a task and no release. I remember the shape of that arrangement. It is counted, bearer, twice over.\"", LogTone.Aegis);
+        }
+        else
+        {
+            World.Facts.Add("deed", "severed_laid", World.SettlementName,
+                "The keeper of the stone ring was laid down at last. The fire in the ring is out.");
+            Log.Add(Turn, "The ring is empty. What leaves it is not quite silence: more like a debt being read out.", LogTone.Reward);
+            Log.Add(Turn, "\"...I know this one. I do not want to know this one. Give me a moment, bearer.\"", LogTone.Aegis);
         }
         _storylets.TryFire(this, StoryletTrigger.DeedWritten);
     }
@@ -812,26 +879,37 @@ public sealed class Game
             if (intent.TurnsUntilResolve <= 0)
             {
                 monster.Intent = null;
-                bool blade = intent.Kind == IntentKind.BarrowBlade;
                 if (Player.Pos == intent.TargetCell)
                 {
-                    int damage = blade ? _combatRng.Range(5, 9) : _combatRng.Range(4, 7);
+                    int damage = intent.Kind switch
+                    {
+                        IntentKind.BarrowBlade => _combatRng.Range(5, 9),
+                        IntentKind.SunderingCut => _combatRng.Range(7, 11),
+                        _ => _combatRng.Range(4, 7),
+                    };
                     Player.Hp -= damage;
-                    Log.Add(Turn, blade
-                        ? $"The wight's barrow blade opens you for {damage}!"
-                        : $"The {monster.Name}'s crushing blow lands for {damage}!", LogTone.Danger);
+                    Log.Add(Turn, intent.Kind switch
+                    {
+                        IntentKind.BarrowBlade => $"The wight's barrow blade opens you for {damage}!",
+                        IntentKind.SunderingCut => $"The severed one's cut goes through guard, cloth, and certainty for {damage}!",
+                        _ => $"The {monster.Name}'s crushing blow lands for {damage}!",
+                    }, LogTone.Danger);
                 }
                 else
                 {
-                    Log.Add(Turn, blade
-                        ? "The wight's bronze blade shears cold, empty air."
-                        : $"The {monster.Name}'s crushing blow splinters empty stone.", LogTone.Combat);
+                    Log.Add(Turn, intent.Kind switch
+                    {
+                        IntentKind.BarrowBlade => "The wight's bronze blade shears cold, empty air.",
+                        IntentKind.SunderingCut => "The severed one's cut parts the air where you stood, without hurry and without regret.",
+                        _ => $"The {monster.Name}'s crushing blow splinters empty stone.",
+                    }, LogTone.Combat);
                 }
             }
             return;
         }
 
         if (monster.Kind == MonsterKind.Wight) { ActWight(monster); return; }
+        if (monster.Kind == MonsterKind.Severed) { ActSevered(monster); return; }
 
         int dist = monster.Pos.Chebyshev(Player.Pos);
 
@@ -890,15 +968,48 @@ public sealed class Game
             return;
         }
 
-        if (dist <= 8 && Turn % 2 == 0) StepWightToward(monster);
+        if (dist <= 8 && Turn % 2 == 0) StepBfsToward(monster);
     }
 
     /// <summary>
-    /// Wights path properly (BFS, cardinal steps): they have walked these halls for an
-    /// age and do not fumble at their own doorways. Goblins keep their greedy stumble;
-    /// slowness, not stupidity, is the wight's weakness.
+    /// The severed one (D-037): a former bearer, unraveling. Walks at full speed
+    /// with a walker's sureness, telegraphs a heavy cut, and its bare touch thins
+    /// essence: what it takes from you is what it is starving for.
     /// </summary>
-    private void StepWightToward(Monster monster)
+    private void ActSevered(Monster monster)
+    {
+        int dist = monster.Pos.Chebyshev(Player.Pos);
+
+        if (dist == 1)
+        {
+            if (_combatRng.Chance(0.35))
+            {
+                monster.Intent = new Intent { Kind = IntentKind.SunderingCut, TargetCell = Player.Pos };
+                Log.Add(Turn, "The severed one draws back its arm, unhurried, certain of you!", LogTone.Danger);
+            }
+            else if (_combatRng.Chance(Player.DodgeChance))
+            {
+                Log.Add(Turn, "The severed one's reach closes on the place you were.", LogTone.Combat);
+            }
+            else
+            {
+                int damage = _combatRng.Range(2, 6);
+                Player.Hp -= damage;
+                if (Player.Essence > 0) Player.Essence--;
+                Log.Add(Turn, $"The severed one's touch takes {damage}, and something thinner than blood with it.", LogTone.Combat);
+            }
+            return;
+        }
+
+        if (dist <= 8) StepBfsToward(monster);
+    }
+
+    /// <summary>
+    /// Proper pathing (BFS, cardinal steps) for the dead and the severed: they have
+    /// walked their halls for an age and do not fumble at their own doorways.
+    /// Goblins keep their greedy stumble.
+    /// </summary>
+    private void StepBfsToward(Monster monster)
     {
         var map = CurrentSite!.Map;
         var from = monster.Pos;
@@ -1021,6 +1132,17 @@ public sealed class Game
         BarrowX: World.BarrowSite?.OverworldPos.X ?? -1,
         BarrowY: World.BarrowSite?.OverworldPos.Y ?? -1,
         BarrowCleared: World.BarrowSite?.Cleared ?? false,
+        HollowX: World.HollowSite?.OverworldPos.X ?? -1,
+        HollowY: World.HollowSite?.OverworldPos.Y ?? -1,
+        HollowCleared: World.HollowSite?.Cleared ?? false,
+        ArcProgress: string.Join(",", new[]
+        {
+            Player.SeveredTruthHeard ? "truth" : null,
+            Player.CrossingGuiltHeard ? "guilt" : null,
+            Player.VisionSeen ? "vision" : null,
+            Player.LedgerHeard ? "ledger" : null,
+            Player.UnbinderRevealTier >= 1 ? $"tier{Player.UnbinderRevealTier}" : null,
+        }.Where(s => s is not null)),
         CurrentSite: CurrentSite?.Id ?? "",
         UnbinderX: World.Unbinder.Pos.X,
         UnbinderY: World.Unbinder.Pos.Y,
@@ -1083,6 +1205,10 @@ public sealed record Snapshot(
     int BarrowX,
     int BarrowY,
     bool BarrowCleared,
+    int HollowX,
+    int HollowY,
+    bool HollowCleared,
+    string ArcProgress,
     string CurrentSite,
     int UnbinderX,
     int UnbinderY,

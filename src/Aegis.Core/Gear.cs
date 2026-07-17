@@ -54,10 +54,11 @@ public sealed class GearItem
 }
 
 /// <summary>
-/// The authored gear catalog (D-041). Five items, each with one home: the smith
-/// stocks the plain three; the grave-iron blade waits in the barrow's chest and
-/// the carver's maul in the quarry's toolcache (site loot beyond coin, the D-033
-/// deferral). Instances are minted fresh so wear never leaks between games.
+/// The authored gear catalog (D-041). Six items, each with one home: the smith
+/// stocks the plain three; the grave-iron blade waits in the barrow's chest,
+/// the carver's maul in the quarry's toolcache, and the wright's mail in the
+/// fallen hall's coffer (site loot beyond coin, the D-033 deferral). Instances
+/// are minted fresh so wear never leaks between games.
 /// </summary>
 public static class GearCatalog
 {
@@ -92,6 +93,11 @@ public static class GearCatalog
             Id = id, Name = "carver's maul", Slot = GearSlot.Weapon,
             Bonus = 5, ReqAttr = Attr.Might, Req = 8, Value = 26, MaxWear = 45,
             Family = SkillId.Hafted,
+        },
+        "wrights_mail" => new GearItem
+        {
+            Id = id, Name = "wright's mail", Slot = GearSlot.Armor,
+            Bonus = 3, ReqAttr = Attr.Vigor, Req = 9, Value = 34, MaxWear = 55,
         },
         _ => throw new ArgumentException($"Unknown gear id: {id}"),
     };

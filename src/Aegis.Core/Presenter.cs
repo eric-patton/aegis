@@ -293,6 +293,7 @@ public static class Presenter
                 MonsterKind.Wight => 'w',
                 MonsterKind.Severed => 's',
                 MonsterKind.Graven => 'm',
+                MonsterKind.Hound => 'd',
                 _ => 'g',
             };
             var calm = monster.Kind switch
@@ -301,6 +302,7 @@ public static class Presenter
                 MonsterKind.Severed => Hue.Magenta,
                 // A sleeping graven man is drawn like the stone it is pretending to be.
                 MonsterKind.Graven => monster.Dormant ? Hue.DarkGray : Hue.DarkYellow,
+                MonsterKind.Hound => Hue.DarkCyan,
                 _ => Hue.Red,
             };
             PutWorld(monster.Pos, ch, monster.Intent is null ? calm : Hue.White,
@@ -328,6 +330,7 @@ public static class Presenter
         Terrain.ThresholdEntrance => ('v', Hue.Magenta, Hue.Black),
         Terrain.Hearth => ('*', Hue.Yellow, Hue.Black),
         Terrain.QuarryEntrance => ('x', Hue.DarkYellow, Hue.Black),
+        Terrain.HallEntrance => ('H', Hue.DarkCyan, Hue.Black),
         _ => ('?', Hue.Magenta, Hue.Black),
     };
 
@@ -362,6 +365,7 @@ public static class Presenter
                 SiteKind.Hollow => "The stone ring",
                 SiteKind.Threshold => "The last stair",
                 SiteKind.Quarry => "The old quarry",
+                SiteKind.Hall => "The fallen hall",
                 _ => "Goblin cave",
             }, Hue.White);
             int alive = game.LiveMonstersHere.Count();
@@ -373,6 +377,7 @@ public static class Presenter
                     IntentKind.SunderingCut => "! sundering cut poised",
                     IntentKind.HurledStone => "! hurled stone incoming",
                     IntentKind.GravenFist => "! graven fist poised",
+                    IntentKind.ThroatLunge => "! throat-lunge gathering",
                     _ => "! crushing blow poised",
                 }, Hue.Red);
         }
@@ -385,6 +390,7 @@ public static class Presenter
             if (here == Terrain.BarrowEntrance) Line("Barrow mouth: > enters", Hue.DarkYellow);
             if (here == Terrain.HollowEntrance) Line("Stone ring: > enters", Hue.White);
             if (here == Terrain.QuarryEntrance) Line("Quarry rim: > descends", Hue.DarkYellow);
+            if (here == Terrain.HallEntrance) Line("Fallen gate: > enters", Hue.DarkCyan);
             if (here == Terrain.ThresholdEntrance)
                 Line(game.Player.CommissionHeard ? "Deep stair: > descends" : "Deep stair: shut", Hue.Magenta);
             if (here == Terrain.Waygate)

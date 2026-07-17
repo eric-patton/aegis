@@ -33,7 +33,7 @@ public sealed class Player
     public GearItem? Weapon { get; set; }
     public GearItem? Armor { get; set; }
 
-    /// <summary>Gear owned but not worn. Small by design: five items exist in the world.</summary>
+    /// <summary>Gear owned but not worn. Small by design: six items exist in the world.</summary>
     public List<GearItem> Pack { get; } = [];
 
     /// <summary>Everything owned, equipped first, in the gear menu's stable order.</summary>
@@ -115,7 +115,7 @@ public sealed class Player
 /// <summary>How the threshold resolved (D-039): unresolved, the keeping taken up, or laid down.</summary>
 public enum Resolution { None, Kept, Refused }
 
-public enum MonsterKind { Goblin, Wight, Severed, Graven }
+public enum MonsterKind { Goblin, Wight, Severed, Graven, Hound }
 
 public sealed class Monster
 {
@@ -141,6 +141,7 @@ public sealed class Monster
         MonsterKind.Wight => "wight",
         MonsterKind.Severed => "severed one",
         MonsterKind.Graven => "graven man",
+        MonsterKind.Hound => "iron hound",
         _ => "creature",
     };
 }
@@ -156,7 +157,7 @@ public sealed class Intent
     public int TurnsUntilResolve { get; set; } = 1;
 }
 
-public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut, HurledStone, GravenFist }
+public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut, HurledStone, GravenFist, ThroatLunge }
 
 /// <summary>
 /// Villagers live beside their houses; the Unbinder (D-034) is the wandering

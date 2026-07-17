@@ -175,6 +175,36 @@ public static class StoryletCatalog
             ],
         },
 
+        // Deep in the fallen hall (D-044, tier 4+ worlds): the motif inscription
+        // the arc plants in old stone (arc sec 4). The Aegis reads it and offers
+        // nothing else; what the words are worth is the player's to notice.
+        new Storylet
+        {
+            Id = "the-lintel-script",
+            Trigger = StoryletTrigger.EnterTile,
+            Tile = Terrain.Floor,
+            Priority = 5,
+            When = g => g.CurrentSite?.Kind == SiteKind.Hall && g.Player.Pos.X >= 27,
+            Lines =
+            [
+                ("Over the chamber door, sheltered from an age of weather, a line of script survives: fine strokes, sure hands, no language the stead ever spoke.", LogTone.Info),
+                ("\"I can read this, bearer. It says: all is counted. ...I do not remember learning this script. Take what you came for, and we will go.\"", LogTone.Aegis),
+            ],
+        },
+
+        // The stead's answer to the pack going quiet: dusk stops being a debt.
+        new Storylet
+        {
+            Id = "the-quiet-dusk",
+            Trigger = StoryletTrigger.NearHouse,
+            Requires = [new FactPattern("deed", "pack_broken")],
+            Lines =
+            [
+                ("The shepherd is at the well before anyone else wakes, telling it to each comer like a riddle: dusk came, the byre stayed quiet, and the dogs would not stop wagging.", LogTone.Info),
+                ("The herbwife hears it through twice. \"Quiet at dusk,\" she says at last, trying the words for cracks. \"Well. Some of us will remember how to sleep, then.\"", LogTone.Info),
+            ],
+        },
+
         // Meeting the wandering mender in a LATER world than the first meeting: the
         // first thread a player can pull that runs between worlds. Completes its own
         // small answer (these wanderers know you) and unlocks asking about it.

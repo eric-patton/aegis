@@ -33,10 +33,13 @@ namespace Aegis.Core;
 /// deep chests hand out iron, and 'i' plus new menu digits carry meaning.
 /// v11 when D-042 added use-grown skills: swings and turned blows now change
 /// later damage, and 'c' (the sheet) gained meaning as a journaled key.
+/// v12 when D-044 added the fallen hall to tier 4+ worlds (a v11 journal deep
+/// enough would walk tiles that now hold the hall's gate, against a pack that
+/// did not exist when it was played).
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 11;
+    public const int Version = 12;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

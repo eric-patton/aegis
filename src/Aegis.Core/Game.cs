@@ -304,6 +304,10 @@ public sealed class Game
                 Log.Add(Turn, World.QuarrySite!.Cleared
                     ? "The old quarry. Broken stone below, and stillness that is only stillness now."
                     : "An old quarry, open to the sky. Below, half-cut figures stand among the spoil heaps, and none of them is leaning. Press > to climb down.", LogTone.Danger);
+            else if (t == Terrain.HallEntrance)
+                Log.Add(Turn, World.HallSite!.Cleared
+                    ? "The fallen hall. Grey stone open to the sky, and nothing comes out to pace you."
+                    : "A roofless hall of grey stone, its gate long fallen. In the shadow of the columns, low shapes stand watching the doorway, and none of them breathes. Press > to go in.", LogTone.Danger);
             else if (t == Terrain.ThresholdEntrance)
                 Log.Add(Turn, !Player.CommissionHeard
                     ? "A stair descends into the hill, cut clean and swept clean, though nothing lives near to sweep it. The dark below is not night-dark."
@@ -321,6 +325,7 @@ public sealed class Game
                     SiteKind.Barrow => "Grave goods lie here on a stone shelf, dressed in dust. Press g to take them.",
                     SiteKind.Hollow => "A bundle of kept things lies here, wrapped against rain with great care. Press g to take it.",
                     SiteKind.Quarry => "The carvers' toolcache sits under a shelf of slate, sealed tight against an age of dust. Press g to open it.",
+                    SiteKind.Hall => "A warded coffer stands against the chamber wall, its clasp unrusted after an age. Press g to open it.",
                     _ => "A battered strongbox sits here. Press g to open it.",
                 }, LogTone.Reward);
             else if (t == Terrain.ExitLadder)
@@ -366,6 +371,7 @@ public sealed class Game
                     SiteKind.Barrow => "You stoop under the lintel stone. The air inside is still, and cold, and does not want you.",
                     SiteKind.Hollow => "You step between the stones. The air changes, the way a room changes when someone in it has been waiting.",
                     SiteKind.Quarry => "You climb down into the old quarry. Half-cut figures stand about the pit in no order, and the silence has a mineral patience to it.",
+                    SiteKind.Hall => "You pass under the fallen gate. Grass in the floor-cracks, sky where the roof was, and from the far end of the hall, the click of claws on stone.",
                     _ => "You descend into the goblin cave. The dark smells of smoke and old meat.",
                 }, LogTone.Danger);
             if (site.Kind == SiteKind.Hollow && !site.Cleared)
@@ -494,6 +500,8 @@ public sealed class Game
             Log.Add(Turn, $"And of the stone ring to the {Compass(World.ShrinePos, hollow.OverworldPos)} they say only this: leave the fire there to its keeper.");
         if (World.QuarrySite is { } quarry)
             Log.Add(Turn, $"Of the old quarry to the {Compass(World.ShrinePos, quarry.OverworldPos)} they say the carvers left mid-stroke, and that the figures in the pit are never quite where the last teller said they stood.");
+        if (World.HallSite is { } hall)
+            Log.Add(Turn, $"Of the fallen hall to the {Compass(World.ShrinePos, hall.OverworldPos)} the counsel is old and short: bar the byre at dusk, count the flock at dawn, and never go counting what runs between.");
         if (World.SeveredNpc is { } calm)
             Log.Add(Turn, $"A hermit called {calm.Name} keeps a fire to the {Compass(World.ShrinePos, calm.Pos)}. The stead trades them nothing, owes them nothing, and minds them not at all: they have simply always been there.");
         _storylets.TryFire(this, StoryletTrigger.Arrival);
@@ -532,6 +540,7 @@ public sealed class Game
                 SiteKind.Barrow => _combatRng.Range(15, 27),
                 SiteKind.Hollow => _combatRng.Range(4, 10),
                 SiteKind.Quarry => _combatRng.Range(12, 24),
+                SiteKind.Hall => _combatRng.Range(13, 25),
                 _ => _combatRng.Range(10, 21),
             };
             Player.Coin += coin;
@@ -541,16 +550,18 @@ public sealed class Game
                 SiteKind.Barrow => $"Grave-gold: {coin} coin struck for rulers whose names did not keep.",
                 SiteKind.Hollow => $"What they kept: a child's wooden horse, a ring sized for a thinner hand, and {coin} coin of a mint no one living has seen.",
                 SiteKind.Quarry => $"Chisels still sharp under their oilcloth, and the crew's unpaid wages beside them: {coin} coin no one came back for.",
+                SiteKind.Hall => $"Under an oiled cloth folded by patient hands: {coin} coin of a mint older than the quarry's wages.",
                 _ => $"The strongbox yields {coin} coin.",
             }, LogTone.Reward);
 
             // Site loot beyond coin (D-041, the D-033 deferral): the deep chests
             // each hold one signature piece. A bearer who already owns its like
-            // leaves the twin where it lies: five items exist, not five per world.
+            // leaves the twin where it lies: six items exist, not six per world.
             string? gearId = CurrentSite.Kind switch
             {
                 SiteKind.Barrow => "grave_iron",
                 SiteKind.Quarry => "carvers_maul",
+                SiteKind.Hall => "wrights_mail",
                 _ => null,
             };
             if (gearId is not null)
@@ -558,16 +569,22 @@ public sealed class Game
                 if (!Player.OwnsGear(gearId))
                 {
                     var item = GearCatalog.Create(gearId);
-                    Log.Add(Turn, CurrentSite.Kind == SiteKind.Barrow
-                        ? $"Beneath the gold, wrapped in oiled wool, a blade of grave-iron: unrusted, and colder than the room. The {item.Name} is yours."
-                        : $"And under the chisels, the master carver's own: a maul with a head like a closing verdict. The {item.Name} is yours.", LogTone.Reward);
+                    Log.Add(Turn, CurrentSite.Kind switch
+                    {
+                        SiteKind.Barrow => $"Beneath the gold, wrapped in oiled wool, a blade of grave-iron: unrusted, and colder than the room. The {item.Name} is yours.",
+                        SiteKind.Hall => $"And beneath the coin, folded shirt-wise as if put away for morning: rings of grey iron finer than any smith of this age draws. The {item.Name} is yours.",
+                        _ => $"And under the chisels, the master carver's own: a maul with a head like a closing verdict. The {item.Name} is yours.",
+                    }, LogTone.Reward);
                     AcquireGear(item);
                 }
                 else
                 {
-                    Log.Add(Turn, CurrentSite.Kind == SiteKind.Barrow
-                        ? "Beneath the gold lies a blade the twin of your own. You leave it with its dead."
-                        : "The master carver's maul lies here too, twin to the one you carry. You leave it to the pit.", LogTone.Info);
+                    Log.Add(Turn, CurrentSite.Kind switch
+                    {
+                        SiteKind.Barrow => "Beneath the gold lies a blade the twin of your own. You leave it with its dead.",
+                        SiteKind.Hall => "Folded beneath the coin lies mail the twin of your own. You leave it put away.",
+                        _ => "The master carver's maul lies here too, twin to the one you carry. You leave it to the pit.",
+                    }, LogTone.Info);
                 }
             }
             return true;
@@ -1214,6 +1231,7 @@ public sealed class Game
                 MonsterKind.Wight => _combatRng.Range(0, 3),
                 MonsterKind.Severed => 0,
                 MonsterKind.Graven => _combatRng.Range(1, 5),
+                MonsterKind.Hound => _combatRng.Range(1, 4),
                 _ => _combatRng.Range(2, 7),
             };
             int essence = target.Kind switch
@@ -1221,6 +1239,7 @@ public sealed class Game
                 MonsterKind.Wight => 8,
                 MonsterKind.Severed => 15,
                 MonsterKind.Graven => 10,
+                MonsterKind.Hound => 6,
                 _ => 5,
             };
             Player.Coin += coin;
@@ -1230,6 +1249,7 @@ public sealed class Game
                 MonsterKind.Wight => $"The wight comes apart into grave-dust and quiet. You take {coin} coin and {essence} essence.",
                 MonsterKind.Severed => $"The severed one comes apart slowly, almost gratefully. What it held pours into the Aegis: {essence} essence, and no coin at all.",
                 MonsterKind.Graven => $"The graven man breaks along its chisel-lines and stands again as what it always was: quarry-stone. You take {coin} coin and {essence} essence.",
+                MonsterKind.Hound => $"The iron hound drops mid-stride and lies still: a made thing, and whatever ran it has run out. You take {coin} coin and {essence} essence.",
                 _ => $"The {target.Name} falls. You take {coin} coin and {essence} essence.",
             }, LogTone.Reward);
             CheckSiteCleared(CurrentSite!);
@@ -1317,6 +1337,13 @@ public sealed class Game
             Log.Add(Turn, "The pit is still. Broken stone everywhere, and not one figure left standing that should not.", LogTone.Reward);
             Log.Add(Turn, "\"Set to watch a working no one finished, and never told to stop. There is a lot of that, this deep. It is counted.\"", LogTone.Aegis);
         }
+        else if (site.Kind == SiteKind.Hall)
+        {
+            World.Facts.Add("deed", "pack_broken", World.SettlementName,
+                "The iron hounds of the fallen hall run no more. The dusk belongs to the flocks again.");
+            Log.Add(Turn, "The hall is quiet. Wind over the wall-tops, and nothing pacing you behind the columns.", LogTone.Reward);
+            Log.Add(Turn, "\"They were not wicked, bearer. They were hungry, and everyone whose work it was to feed them is gone. It is counted.\"", LogTone.Aegis);
+        }
         else
         {
             World.Facts.Add("deed", "severed_laid", World.SettlementName,
@@ -1368,6 +1395,7 @@ public sealed class Game
                         IntentKind.SunderingCut => _combatRng.Range(7, 11),
                         IntentKind.HurledStone => _combatRng.Range(4, 8),
                         IntentKind.GravenFist => _combatRng.Range(6, 10),
+                        IntentKind.ThroatLunge => _combatRng.Range(6, 10),
                         _ => _combatRng.Range(4, 7),
                     });
                     Player.Hp -= damage;
@@ -1377,6 +1405,7 @@ public sealed class Game
                         IntentKind.SunderingCut => $"The severed one's cut goes through guard, cloth, and certainty for {damage}!",
                         IntentKind.HurledStone => $"The hurled stone takes you square for {damage}!",
                         IntentKind.GravenFist => $"The graven fist comes down like a falling lintel for {damage}!",
+                        IntentKind.ThroatLunge => $"The iron hound hits you full-length, jaws first, for {damage}!",
                         _ => $"The {monster.Name}'s crushing blow lands for {damage}!",
                     }, LogTone.Danger);
                 }
@@ -1388,6 +1417,7 @@ public sealed class Game
                         IntentKind.SunderingCut => "The severed one's cut parts the air where you stood, without hurry and without regret.",
                         IntentKind.HurledStone => "The stone bursts on the floor where you stood, loud as the quarry's last working day.",
                         IntentKind.GravenFist => "The graven fist cracks the floor where you stood.",
+                        IntentKind.ThroatLunge => "The hound's lunge carries it through the space you left; it lands badly and comes up snarling.",
                         _ => $"The {monster.Name}'s crushing blow splinters empty stone.",
                     }, LogTone.Combat);
                 }
@@ -1398,6 +1428,7 @@ public sealed class Game
         if (monster.Kind == MonsterKind.Wight) { ActWight(monster); return; }
         if (monster.Kind == MonsterKind.Severed) { ActSevered(monster); return; }
         if (monster.Kind == MonsterKind.Graven) { ActGraven(monster); return; }
+        if (monster.Kind == MonsterKind.Hound) { ActHound(monster); return; }
 
         int dist = monster.Pos.Chebyshev(Player.Pos);
 
@@ -1548,6 +1579,45 @@ public sealed class Game
     }
 
     /// <summary>
+    /// The hall family (D-044): the game's first pack. Iron hounds run at a
+    /// walker's full speed and are weak alone: a worrying bite that grows a point
+    /// for every packmate also at your side, and the throat-lunge, their one heavy
+    /// telegraph, attempted only while a packmate holds your attention. The
+    /// counterplay is ground, not feet: in the porch or a door-slot only one hound
+    /// can reach you, and a hound that cannot flank never lunges.
+    /// </summary>
+    private void ActHound(Monster monster)
+    {
+        int dist = monster.Pos.Chebyshev(Player.Pos);
+
+        if (dist == 1)
+        {
+            int packmates = Monsters.Count(m => m.Alive && m != monster && m.Kind == MonsterKind.Hound
+                && m.SiteId == monster.SiteId && m.Pos.Chebyshev(Player.Pos) == 1);
+            if (packmates >= 1 && _combatRng.Chance(0.4))
+            {
+                monster.Intent = new Intent { Kind = IntentKind.ThroatLunge, TargetCell = Player.Pos };
+                Log.Add(Turn, "While its packmate holds your eye, the iron hound gathers itself low!", LogTone.Danger);
+            }
+            else if (_combatRng.Chance(Player.DodgeChance))
+            {
+                Log.Add(Turn, "The iron hound's teeth clash shut on air.", LogTone.Combat);
+            }
+            else
+            {
+                int damage = Absorb(_combatRng.Range(2, 4) + packmates);
+                Player.Hp -= damage;
+                Log.Add(Turn, packmates > 0
+                    ? $"Teeth from more than one side: the pack tears at you for {damage}."
+                    : $"The iron hound's bite worries you for {damage}.", LogTone.Combat);
+            }
+            return;
+        }
+
+        if (dist <= 10) StepBfsToward(monster);
+    }
+
+    /// <summary>
     /// Proper pathing (BFS, cardinal steps) for the dead and the severed: they have
     /// walked their halls for an age and do not fumble at their own doorways.
     /// Goblins keep their greedy stumble.
@@ -1691,6 +1761,9 @@ public sealed class Game
         QuarryX: World.QuarrySite?.OverworldPos.X ?? -1,
         QuarryY: World.QuarrySite?.OverworldPos.Y ?? -1,
         QuarryCleared: World.QuarrySite?.Cleared ?? false,
+        HallX: World.HallSite?.OverworldPos.X ?? -1,
+        HallY: World.HallSite?.OverworldPos.Y ?? -1,
+        HallCleared: World.HallSite?.Cleared ?? false,
         ArcProgress: string.Join(",", new[]
         {
             Player.SeveredTruthHeard ? "truth" : null,
@@ -1793,6 +1866,9 @@ public sealed record Snapshot(
     int QuarryX,
     int QuarryY,
     bool QuarryCleared,
+    int HallX,
+    int HallY,
+    bool HallCleared,
     string ArcProgress,
     string CurrentSite,
     int UnbinderX,

@@ -1,6 +1,6 @@
 namespace Aegis.Core;
 
-public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry }
+public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall }
 
 /// <summary>A monster placed at generation time: kind, cell, and generated stats (D-011).</summary>
 public readonly record struct MonsterSpawn(MonsterKind Kind, Pos Pos, int Hp);
@@ -55,6 +55,9 @@ public sealed class World
 
     /// <summary>The old quarry (D-040): tier 3+, where the graven men stand. Optional depth, like the barrow.</summary>
     public Site? QuarrySite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Quarry);
+
+    /// <summary>The fallen hall (D-044): tier 4+, where the iron hounds run. Optional depth, like the quarry.</summary>
+    public Site? HallSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Hall);
 
     /// <summary>The stead's smith (D-041): every world, every tier. Sells the plain three, mends what use has dulled.</summary>
     public Npc Smith => Npcs.First(n => n.Kind == NpcKind.Smith);
@@ -300,10 +303,11 @@ public static class WorldGen
         // The old quarry (D-040): tier 3+ worlds hold the deep band's site, where
         // the graven men stand. Own stream, placed after every existing draw
         // (including the stair's), so pinned worlds keep their layouts exactly.
+        Pos quarryPos = default;
         if (tier >= 3)
         {
             var quarryRng = new Rng(SeedTree.Derive(worldSeed, "quarry"));
-            Pos quarryPos = FindDistantSpot(overworld, ref quarryRng, settlement, minDistance: 16);
+            quarryPos = FindDistantSpot(overworld, ref quarryRng, settlement, minDistance: 16);
             while (overworld[quarryPos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills)
                    || quarryPos.Manhattan(camp) < 5 || quarryPos.Manhattan(gate) < 5
                    || quarryPos.Manhattan(barrow) < 5 || quarryPos.Manhattan(hollowPos) < 5
@@ -367,6 +371,40 @@ public static class WorldGen
             Pos = smithPos,
             Kind = NpcKind.Smith,
         });
+
+        // The fallen hall (D-044): tier 4+ worlds hold the third band's site, where
+        // the iron hounds run. Own stream, placed after every existing draw
+        // (including the smith's), so pinned worlds keep their layouts exactly.
+        if (tier >= 4)
+        {
+            var hallRng = new Rng(SeedTree.Derive(worldSeed, "hall"));
+            Pos hallPos = FindDistantSpot(overworld, ref hallRng, settlement, minDistance: 20);
+            while (overworld[hallPos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills)
+                   || hallPos.Manhattan(camp) < 5 || hallPos.Manhattan(gate) < 5
+                   || hallPos.Manhattan(barrow) < 5 || hallPos.Manhattan(hollowPos) < 5
+                   || hallPos.Manhattan(quarryPos) < 5
+                   || (tier >= 5 && hallPos.Manhattan(stairPos) < 5)
+                   || npcs.Any(n => n.Pos == hallPos))
+                hallPos = FindDistantSpot(overworld, ref hallRng, settlement, minDistance: 20);
+            overworld[hallPos] = Terrain.HallEntrance;
+            CarvePathIfDisconnected(overworld, shrine, hallPos);
+
+            int houndCount = Math.Min(5 + (tier - 4), 8);
+            int houndHp = 10 + 2 * (tier - 4);
+            var (hallMap, hallEntry, houndSpawns, hallChest) = GenerateHall(worldSeed, houndCount);
+            sites.Add(new Site
+            {
+                Id = "hall",
+                Kind = SiteKind.Hall,
+                Map = hallMap,
+                OverworldPos = hallPos,
+                EntryPos = hallEntry,
+                Spawns = [.. houndSpawns.Select(p => new MonsterSpawn(MonsterKind.Hound, p, houndHp))],
+                ChestPos = hallChest,
+            });
+            facts.Add("site", "hall", $"{hallPos.X},{hallPos.Y}",
+                "A roofless hall of grey stone, older than any stead-tale. At dusk, things lope from its doorway that were never whelped.");
+        }
 
         facts.Add("world_name", worldName, "");
         facts.Add("settlement", settlementName, $"{settlement.X},{settlement.Y}", "A small stead under the Aegis-shrine.");
@@ -805,6 +843,81 @@ public static class WorldGen
 
         map[entry] = Terrain.ExitLadder;
         return (map, entry, graven, chest);
+    }
+
+    public const int HallW = 34;
+    public const int HallH = 17;
+
+    /// <summary>
+    /// The fallen hall (D-044): a narrow porch opening into one great roofless
+    /// room, with two side chambers behind door-slots a single body wide. Unlike
+    /// the camp's warren, the barrow's passage, and the quarry's open pit, because
+    /// its fight is about ground: the pack flanks anything caught in the open
+    /// room, and the porch and door-slots are where a bearer denies them that.
+    /// Roof-fall rubble follows the quarry's placement rule (all eight neighbors
+    /// open floor), so it can never disconnect the room.
+    /// </summary>
+    private static (GameMap Map, Pos Entry, List<Pos> Hounds, Pos Chest) GenerateHall(ulong worldSeed, int houndCount)
+    {
+        var rng = new Rng(SeedTree.Derive(worldSeed, "site-hall"));
+        var map = new GameMap("hall", HallW, HallH, Terrain.Wall);
+        int mid = HallH / 2;
+
+        // The porch: the first door the pack cannot come through two abreast.
+        var entry = new Pos(2, mid);
+        for (int x = 2; x <= 5; x++) map[new Pos(x, mid)] = Terrain.Floor;
+
+        // The great room.
+        for (int y = 2; y <= HallH - 3; y++)
+            for (int x = 6; x <= 24; x++)
+                map[new Pos(x, y)] = Terrain.Floor;
+
+        // Two side chambers east, each behind a door-slot one body wide.
+        foreach (int cy in (int[])[4, HallH - 5])
+        {
+            for (int y = cy - 2; y <= cy + 2; y++)
+                for (int x = 27; x <= 31; x++)
+                    map[new Pos(x, y)] = Terrain.Floor;
+            map[new Pos(25, cy)] = Terrain.Floor;
+            map[new Pos(26, cy)] = Terrain.Floor;
+        }
+
+        // The coffer keeps to one chamber; which one is the seed's business.
+        Pos chest = rng.Chance(0.5) ? new Pos(29, 4) : new Pos(29, HallH - 5);
+
+        // Roof-fall in the great room: scattered cover, never touching cover.
+        int rubble = 0;
+        for (int attempt = 0; attempt < 200 && rubble < 6; attempt++)
+        {
+            var p = new Pos(rng.Range(8, 24), rng.Range(3, HallH - 3));
+            bool clear = true;
+            for (int dy = -1; dy <= 1 && clear; dy++)
+                for (int dx = -1; dx <= 1 && clear; dx++)
+                    if (map[p.Plus(dx, dy)] != Terrain.Floor) clear = false;
+            if (!clear) continue;
+            map[p] = Terrain.Wall;
+            rubble++;
+        }
+
+        var open = new List<Pos>();
+        for (int y = 1; y < HallH - 1; y++)
+            for (int x = 1; x < HallW - 1; x++)
+            {
+                var p = new Pos(x, y);
+                if (map[p] == Terrain.Floor && p.Manhattan(entry) > 14 && p != chest) open.Add(p);
+            }
+
+        var hounds = new List<Pos>();
+        int guard = 4000;
+        while (hounds.Count < houndCount)
+        {
+            var p = rng.Pick(open);
+            bool spaced = guard-- <= 0 || hounds.All(q => q.Manhattan(p) >= 2);
+            if (!hounds.Contains(p) && spaced) hounds.Add(p);
+        }
+
+        map[entry] = Terrain.ExitLadder;
+        return (map, entry, hounds, chest);
     }
 }
 

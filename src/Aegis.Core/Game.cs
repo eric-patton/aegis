@@ -26,6 +26,12 @@ public sealed class Game
     public bool ChestLooted { get; private set; }
     public bool CampCleared { get; private set; }
     public bool InShrineMenu { get; private set; }
+    public bool InTalkMenu { get; private set; }
+    public Npc? TalkNpc { get; private set; }
+
+    /// <summary>The current conversation's topics, computed live from the fact graph at open.</summary>
+    public IReadOnlyList<(string Label, string Answer)> Topics => _topics;
+    private readonly List<(string Label, string Answer)> _topics = [];
 
     /// <summary>
     /// Fired for every key that reached the engine while running (including menu keys
@@ -88,6 +94,13 @@ public sealed class Game
     {
         if (!Running) return;
 
+        if (InTalkMenu)
+        {
+            HandleTalkMenuKey(key);
+            KeyApplied?.Invoke(key);
+            return;
+        }
+
         if (InShrineMenu)
         {
             HandleShrineMenuKey(key);
@@ -135,6 +148,11 @@ public sealed class Game
         {
             var blocker = Monsters.FirstOrDefault(m => m.Alive && m.Pos == target);
             if (blocker is not null) return AttackMonster(blocker);
+        }
+        else
+        {
+            var npc = World.Npcs.FirstOrDefault(n => n.Pos == target);
+            if (npc is not null) return StartTalk(npc);
         }
 
         if (!map.Walkable(target))
@@ -239,6 +257,8 @@ public sealed class Game
         ChestLooted = false;
         CampCleared = false;
         InShrineMenu = false;
+        InTalkMenu = false;
+        TalkNpc = null;
 
         Mode = MapMode.Overworld;
         Player.Pos = World.ShrinePos;
@@ -308,6 +328,70 @@ public sealed class Game
 
         Log.Add(Turn, "There is nothing here to take.");
         return false;
+    }
+
+    /// <summary>
+    /// Opens a conversation (D-023's ask-about surface, D-031). Topics are computed
+    /// from the fact graph at open, so what people can discuss tracks the world's
+    /// actual state. First meetings are written back to the graph.
+    /// </summary>
+    private bool StartTalk(Npc npc)
+    {
+        TalkNpc = npc;
+        InTalkMenu = true;
+        _topics.Clear();
+        _topics.AddRange(BuildTopics(npc));
+
+        Log.Add(Turn, $"{npc.Name}, {npc.Role} of {World.SettlementName}, turns to you.");
+        if (!World.Facts.Exists("met", npc.Id))
+        {
+            World.Facts.Add("met", npc.Id, World.SettlementName,
+                $"{npc.Name}, {npc.Role} of {World.SettlementName}, has spoken with the bearer.");
+            Log.Add(Turn, $"\"A stranger, then. Word travels slower than trouble here.\"");
+        }
+        _storylets.TryFire(this, StoryletTrigger.Talk);
+        return true;
+    }
+
+    private List<(string Label, string Answer)> BuildTopics(Npc npc)
+    {
+        var topics = new List<(string, string)>();
+
+        if (World.Facts.Find("settlement", World.SettlementName) is { } stead)
+            topics.Add(("The stead", $"{stead.Detail} \"We hold on. That is the whole craft of it.\""));
+
+        if (CampCleared)
+            topics.Add(("The quiet nights", $"\"The raids are ended, and everyone knows whose doing that was. {World.SettlementName} sleeps whole again.\""));
+        else if (World.Facts.OfType("grievance").FirstOrDefault() is { } grievance)
+            topics.Add(("The goblin raids", $"\"{grievance.Detail} We have fed them to keep the peace. It has not bought much peace.\""));
+
+        if (World.Facts.Find("rest_point", "shrine") is { } shrine)
+            topics.Add(("The shrine", $"{shrine.Detail} \"Old past knowing. We keep it swept all the same.\""));
+
+        if (World.Facts.Find("site", "waygate") is { } gate)
+            topics.Add(("The black arch", gate.Detail + (CampCleared
+                ? " \"They say it hums now. No one goes near to check.\""
+                : " \"Shut as long as any here remember. Best left so.\"")));
+
+        if (World.Facts.OfType("echo").FirstOrDefault() is { } echo)
+            topics.Add(("Old songs", $"\"There is a new one, though none can say who taught it. {echo.Detail}\""));
+
+        return topics;
+    }
+
+    private void HandleTalkMenuKey(char key)
+    {
+        if (key >= '1' && key <= '0' + _topics.Count)
+        {
+            var (label, answer) = _topics[key - '1'];
+            Log.Add(Turn, $"You ask about {label.ToLowerInvariant()}.");
+            Log.Add(Turn, $"{TalkNpc!.Name}: {answer}");
+            return;
+        }
+
+        InTalkMenu = false;
+        Log.Add(Turn, $"You part ways with {TalkNpc!.Name}.");
+        TalkNpc = null;
     }
 
     /// <summary>Global rising cost per raise (D-014's Essence economy, Souls-style curve).</summary>
@@ -502,6 +586,8 @@ public sealed class Game
     {
         Player.Deaths++;
         InShrineMenu = false;
+        InTalkMenu = false;
+        TalkNpc = null;
 
         bool forfeited = Remnant is not null;
         if (forfeited)
@@ -576,6 +662,8 @@ public sealed class Game
         Presence: Player.Attributes[Attr.Presence],
         NextRaiseCost: NextRaiseCost,
         InShrineMenu: InShrineMenu,
+        InTalkMenu: InTalkMenu,
+        TalkNpc: TalkNpc?.Name ?? "",
         WoundedTurns: Player.WoundedTurns,
         Deaths: Player.Deaths,
         MonstersAlive: Monsters.Count(m => m.Alive),
@@ -624,6 +712,8 @@ public sealed record Snapshot(
     int Presence,
     int NextRaiseCost,
     bool InShrineMenu,
+    bool InTalkMenu,
+    string TalkNpc,
     int WoundedTurns,
     int Deaths,
     int MonstersAlive,

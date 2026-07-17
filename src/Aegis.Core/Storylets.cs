@@ -1,7 +1,7 @@
 namespace Aegis.Core;
 
 /// <summary>The hook points storylets can fire on. See design/storylets.md sec 3.</summary>
-public enum StoryletTrigger { Arrival, EnterTile, NearHouse, Rest, DeedWritten, AmbientTurn }
+public enum StoryletTrigger { Arrival, EnterTile, NearHouse, Rest, DeedWritten, AmbientTurn, Talk }
 
 /// <summary>World-scoped storylets become eligible again after a crossing; Character-scoped never do.</summary>
 public enum StoryletScope { World, Character }

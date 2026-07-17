@@ -69,7 +69,7 @@ aegis pilot quit                 stop the game
 aegis pilot ... --session name   target a named session
 ```
 
-Keys are the same everywhere (TUI, pilot, sim): `hjkl`/`yubn` move, `.` wait, `g` grab, `>`/`<` enter/exit, `q` quit. Arrow keys work in the TUI and map to `hjkl`.
+Keys are the same everywhere (TUI, pilot, sim): `hjkl`/`yubn` move, `.` wait, `g` grab, `>`/`<` enter/exit, `q` quit. Arrow keys work in the TUI and map to `hjkl`. Moving into a villager (`p`) opens the talk menu; digits ask topics and any other key closes it (menu keys are journaled like all others).
 
 Two usage patterns:
 

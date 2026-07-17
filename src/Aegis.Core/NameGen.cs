@@ -20,4 +20,10 @@ public static class NameGen
 
     public static string World(ref Rng rng)
         => rng.Pick(Openers) + rng.Pick(Middles) + rng.Pick(WorldClosers);
+
+    private static readonly string[] PersonClosers =
+        ["da", "dric", "ga", "lin", "mund", "na", "ric", "rin", "sa", "wyn"];
+
+    public static string Person(ref Rng rng)
+        => rng.Pick(Openers) + rng.Pick(Middles) + rng.Pick(PersonClosers);
 }

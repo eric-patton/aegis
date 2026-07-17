@@ -158,7 +158,7 @@ public class CrossingTests
 
     private static char? NextBotKey(Game game)
     {
-        if (game.InShrineMenu) return ' '; // rise without spending
+        if (game.InShrineMenu || game.InTalkMenu) return ' '; // rise / part ways without engaging
 
         if (game.Mode == MapMode.Site)
         {
@@ -179,7 +179,8 @@ public class CrossingTests
 
         var goal = game.CampCleared ? game.World.GatePos : game.World.CampPos;
         if (game.Player.Pos == goal) return '>';
-        return StepToward(game, game.World.Overworld, goal, p => game.World.Overworld.Walkable(p));
+        return StepToward(game, game.World.Overworld, goal,
+            p => game.World.Overworld.Walkable(p) && !game.World.Npcs.Any(n => n.Pos == p));
     }
 
     private static Pos FindLadder(GameMap camp)

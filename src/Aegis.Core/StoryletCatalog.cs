@@ -102,6 +102,18 @@ public static class StoryletCatalog
             ],
         },
 
+        // First conversation with anyone, once per character: the Aegis notices people.
+        new Storylet
+        {
+            Id = "first-voices",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.Character,
+            Lines =
+            [
+                ("\"So many voices. I count those too, in my way. Speak with them; what they know is weight.\"", LogTone.Aegis),
+            ],
+        },
+
         // Ambient flavor: repeatable, cooldown-gated, deliberately slight.
         new Storylet
         {

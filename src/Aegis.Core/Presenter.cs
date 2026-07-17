@@ -44,16 +44,31 @@ public static class Presenter
         DrawSidebar(frame, game, layout);
         DrawLog(frame, game, layout);
         if (game.InShrineMenu) DrawShrineMenu(frame, game, layout);
+        if (game.InTalkMenu) DrawTalkMenu(frame, game, layout);
         return frame;
     }
 
-    private static void DrawShrineMenu(Frame frame, Game game, Layout layout)
+    private static void DrawTalkMenu(Frame frame, Game game, Layout layout)
     {
-        const int boxW = 42;
-        int boxH = 6 + AttributeSet.Count;
+        var npc = game.TalkNpc;
+        if (npc is null) return;
+
+        const int boxW = 46;
+        int boxH = 5 + game.Topics.Count;
         int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
         int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
 
+        DrawBox(frame, x0, y0, boxW, boxH);
+        frame.Write(x0 + 2, y0 + 1, $"{npc.Name}, {npc.Role} of {game.World.SettlementName}", Hue.White);
+
+        for (int i = 0; i < game.Topics.Count; i++)
+            frame.Write(x0 + 2, y0 + 3 + i, $"{i + 1}) Ask about {game.Topics[i].Label}", Hue.Gray);
+
+        frame.Write(x0 + 2, y0 + boxH - 2, "1-" + game.Topics.Count + " ask; any other key to part ways", Hue.DarkGray);
+    }
+
+    private static void DrawBox(Frame frame, int x0, int y0, int boxW, int boxH)
+    {
         for (int y = 0; y < boxH; y++)
             for (int x = 0; x < boxW; x++)
             {
@@ -65,7 +80,16 @@ public static class Presenter
         frame.Put(x0 + boxW - 1, y0, '+', Hue.Cyan);
         frame.Put(x0, y0 + boxH - 1, '+', Hue.Cyan);
         frame.Put(x0 + boxW - 1, y0 + boxH - 1, '+', Hue.Cyan);
+    }
 
+    private static void DrawShrineMenu(Frame frame, Game game, Layout layout)
+    {
+        const int boxW = 42;
+        int boxH = 6 + AttributeSet.Count;
+        int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
+        int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
+
+        DrawBox(frame, x0, y0, boxW, boxH);
         frame.Write(x0 + 2, y0 + 1, $"The Shrine of {game.World.SettlementName}", Hue.White);
         frame.Write(x0 + 2, y0 + 2, $"Essence {game.Player.Essence}   next raise costs {game.NextRaiseCost}", Hue.Cyan);
 
@@ -123,6 +147,10 @@ public static class Presenter
 
         if (game.Mode == MapMode.Site && !game.ChestLooted)
             PutWorld(game.World.ChestPos, '$', Hue.Yellow);
+
+        if (game.Mode == MapMode.Overworld)
+            foreach (var npc in game.World.Npcs)
+                PutWorld(npc.Pos, 'p', Hue.Green);
 
         foreach (var monster in game.LiveMonstersHere)
             PutWorld(monster.Pos, 'g', monster.Intent is null ? Hue.Red : Hue.White,
@@ -183,6 +211,9 @@ public static class Presenter
             if (here == Terrain.CampEntrance) Line("Cave mouth: > enters", Hue.Red);
             if (here == Terrain.Waygate)
                 Line(game.CampCleared ? "Waygate hums: > crosses" : "Waygate: shut", Hue.Magenta);
+            foreach (var npc in game.World.Npcs)
+                if (npc.Pos.Chebyshev(p.Pos) == 1)
+                    Line($"{npc.Name}: bump to talk", Hue.Green);
         }
 
         if (game.Remnant is { } remnant)

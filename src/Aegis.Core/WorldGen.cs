@@ -15,6 +15,7 @@ public sealed class World
     public required Pos GatePos { get; init; }
     public required List<Pos> GoblinSpawns { get; init; }
     public required Pos ChestPos { get; init; }
+    public required List<Npc> Npcs { get; init; }
 }
 
 /// <summary>
@@ -64,12 +65,16 @@ public static class WorldGen
         int goblinCount = Math.Min(3 + (tier - 1), 6);
         var (campMap, entry, goblinSpawns, chest) = GenerateCamp(worldSeed, goblinCount);
 
+        var npcs = CastNpcs(overworld, ref placeRng, ref nameRng, settlement, shrine);
+
         facts.Add("world_name", worldName, "");
         facts.Add("settlement", settlementName, $"{settlement.X},{settlement.Y}", "A small stead under the Aegis-shrine.");
         facts.Add("rest_point", "shrine", $"{shrine.X},{shrine.Y}", $"The shrine at {settlementName}. The Aegis anchors here.");
         facts.Add("site", "goblin_camp", $"{camp.X},{camp.Y}", "A cave the goblins have made their own.");
         facts.Add("site", "waygate", $"{gate.X},{gate.Y}", "An arch of black iron links, older than the stones around it.");
         facts.Add("grievance", "goblin_camp", settlementName, $"Goblins from the cave raid {settlementName}'s stores by night.");
+        foreach (var npc in npcs)
+            facts.Add("person", npc.Id, npc.Name, $"{npc.Name}, {npc.Role} of {settlementName}.");
 
         return new World
         {
@@ -86,7 +91,47 @@ public static class WorldGen
             GatePos = gate,
             GoblinSpawns = goblinSpawns,
             ChestPos = chest,
+            Npcs = npcs,
         };
+    }
+
+    /// <summary>
+    /// Casts the settlement's people (D-031): role slots filled with generated names,
+    /// standing on walkable tiles beside their houses. The column between shrine and
+    /// settlement center stays clear so bump-to-talk never blocks the road.
+    /// </summary>
+    private static List<Npc> CastNpcs(GameMap overworld, ref Rng placeRng, ref Rng nameRng, Pos settlement, Pos shrine)
+    {
+        var candidates = new List<Pos>();
+        for (int dy = -3; dy <= 3; dy++)
+            for (int dx = -3; dx <= 3; dx++)
+            {
+                var p = settlement.Plus(dx, dy);
+                if (!overworld.Walkable(p) || p == shrine || p.X == settlement.X) continue;
+                bool byHouse = false;
+                foreach (var (ddx, ddy) in Directions.All8)
+                {
+                    var q = p.Plus(ddx, ddy);
+                    if (overworld.InBounds(q) && overworld[q] == Terrain.House) { byHouse = true; break; }
+                }
+                if (byHouse) candidates.Add(p);
+            }
+
+        var npcs = new List<Npc>();
+        foreach (string role in (string[])["steadholder", "herbwife", "woodward"])
+        {
+            if (candidates.Count == 0) break;
+            var pos = placeRng.Pick(candidates);
+            candidates.Remove(pos);
+            npcs.Add(new Npc
+            {
+                Id = $"npc_{role}",
+                Name = NameGen.Person(ref nameRng),
+                Role = role,
+                Pos = pos,
+            });
+        }
+        return npcs;
     }
 
     private static GameMap GenerateOverworld(ulong masterSeed)

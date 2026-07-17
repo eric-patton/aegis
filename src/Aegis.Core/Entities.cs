@@ -56,6 +56,18 @@ public sealed class Intent
 
 public enum IntentKind { CrushingBlow }
 
+/// <summary>
+/// A named, placed person (D-031). Static in v1: they stand near their homes and
+/// talk. The Id is stable within a world and is what facts reference.
+/// </summary>
+public sealed class Npc
+{
+    public required string Id { get; init; }
+    public required string Name { get; init; }
+    public required string Role { get; init; }
+    public required Pos Pos { get; init; }
+}
+
 /// <summary>What death leaves behind: unspent coin and Essence, one reclaim attempt (D-008).</summary>
 public sealed class Remnant
 {

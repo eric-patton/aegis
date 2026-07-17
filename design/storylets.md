@@ -37,6 +37,7 @@ Decision record: D-030 in `../design/decisions.md`.
 | `Once` | If true, fires at most once per scope. |
 | `CooldownTurns` | Minimum turns between firings (repeatable storylets only). |
 | `Weight` | Relative selection weight when several storylets are eligible on the same trigger. |
+| `Priority` | Selection tier: only the highest-priority eligible candidates enter the weighted draw. Template-emitted story beats use 10; asides and flavor use the default 0, so a plot moment is never lost to an ambient line. |
 | `Requires` | Declarative fact patterns that must all match (section 4). |
 | `Forbids` | Declarative fact patterns that must all be absent. |
 | `When` | Optional compiled predicate over game state for what facts cannot express (cycle, position, flags). Kept small; anything reusable should become a fact or a named condition. |
@@ -92,7 +93,8 @@ writes `boon`. `Once` handles repetition; facts handle cross-content knowledge.
 2. Candidates: trigger matches, tile matches, `Once`/scope not spent, cooldown elapsed,
    all `Requires` match, no `Forbids` match, `When` passes.
 3. If no candidates: nothing happens (silence is always acceptable).
-4. One winner picked by weighted draw from the world's storylet RNG stream
+4. Candidates below the highest present `Priority` drop out; one winner is picked
+   from the rest by weighted draw from the world's storylet RNG stream
    (`Derive(worldSeed, "storylets")`, re-derived each crossing).
 5. Winner's lines land in the log with their tones; effect runs; firing is recorded
    (fired-set by scope, cooldown timestamp).
@@ -107,7 +109,8 @@ draw count, and therefore every later draw, deterministic as the catalog grows.
 - External data files and a condition/effect vocabulary (needs content volume first).
 - The full pacing director (D-021.5): act awareness, drought/glut balancing, hostility
   tier tuning. `AmbientTurn`'s chance roll is its seam.
-- Role casting and template compilation (world-story templates): templates will emit
-  storylet sets with roles bound at worldgen; the storylet format does not change.
+- ~~Role casting and template compilation~~ Landed as v0 in D-032: a template compiles
+  at worldgen into role facts plus cast-bound storylets (`WorldStory.cs`), merged with
+  the global catalog per world. The storylet format did not change, as predicted.
 - Dialogue trees: storylets deliver beats as log lines today. When a scene UI exists,
   `Lines` grows scene directions without changing gating.

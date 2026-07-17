@@ -7,9 +7,10 @@ public class NpcTests
     private static Pos SettlementCenter(Game game) => game.World.ShrinePos.Plus(0, -2);
 
     /// <summary>Puts the player beside an NPC and bumps into them; returns the NPC.</summary>
-    private static Npc BumpFirstNpc(Game game)
+    private static Npc BumpFirstNpc(Game game) => BumpNpc(game, game.World.Npcs[0]);
+
+    internal static Npc BumpNpc(Game game, Npc npc)
     {
-        var npc = game.World.Npcs[0];
         var beside = Directions.All8
             .Select(d => npc.Pos.Plus(d.dx, d.dy))
             .First(p => game.World.Overworld.Walkable(p) && !game.World.Npcs.Any(n => n.Pos == p));
@@ -45,7 +46,11 @@ public class NpcTests
     {
         var game = new Game(42);
         int turnBefore = game.Turn;
-        var npc = BumpFirstNpc(game);
+
+        // The plaintiff's plea outranks the first-voices aside (priority tiers), so
+        // assert the aside against a non-plaintiff villager.
+        string plaintiffId = game.World.Facts.Find("role", "plaintiff")!.Object;
+        var npc = BumpNpc(game, game.World.Npcs.First(n => n.Id != plaintiffId));
 
         Assert.True(game.InTalkMenu);
         Assert.Equal(npc.Name, game.TalkNpc!.Name);

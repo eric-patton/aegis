@@ -32,6 +32,13 @@ public sealed record Storylet
     public bool Once { get; init; } = true;
     public int CooldownTurns { get; init; }
     public int Weight { get; init; } = 10;
+
+    /// <summary>
+    /// Selection tier: only the highest-priority eligible candidates enter the
+    /// weighted draw. Dramatic story beats (template-emitted) outrank asides and
+    /// flavor so a plot moment is never lost to an ambient line.
+    /// </summary>
+    public int Priority { get; init; }
     public FactPattern[] Requires { get; init; } = [];
     public FactPattern[] Forbids { get; init; } = [];
     public Func<Game, bool>? When { get; init; }
@@ -49,7 +56,7 @@ public sealed class StoryletEngine
 {
     private const double AmbientChance = 0.04;
 
-    private readonly IReadOnlyList<Storylet> _catalog;
+    private IReadOnlyList<Storylet> _catalog;
     private readonly HashSet<string> _firedCharacter = [];
     private readonly HashSet<string> _firedWorld = [];
     private readonly Dictionary<string, int> _lastFiredTurn = [];
@@ -63,9 +70,14 @@ public sealed class StoryletEngine
         _rng = new Rng(SeedTree.Derive(worldSeed, "storylets"));
     }
 
-    /// <summary>World-scoped eligibility resets; the stream re-derives from the new world.</summary>
-    public void OnCrossing(ulong newWorldSeed)
+    /// <summary>
+    /// World-scoped eligibility resets, the stream re-derives from the new world, and
+    /// the catalog swaps to the new world's (global content plus its compiled story).
+    /// Character-scoped history survives.
+    /// </summary>
+    public void OnCrossing(ulong newWorldSeed, IReadOnlyList<Storylet> catalog)
     {
+        _catalog = catalog;
         _firedWorld.Clear();
         _rng = new Rng(SeedTree.Derive(newWorldSeed, "storylets"));
     }
@@ -105,6 +117,9 @@ public sealed class StoryletEngine
         }
 
         if (candidates.Count == 0) return false;
+
+        int top = candidates.Max(c => c.S.Priority);
+        candidates.RemoveAll(c => c.S.Priority < top);
 
         int roll = _rng.Next(candidates.Sum(c => c.S.Weight));
         var chosen = candidates[0];

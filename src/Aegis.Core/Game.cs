@@ -52,7 +52,7 @@ public sealed class Game
         // Cycle 1 uses the master seed directly, so pre-crossing saves stay replayable.
         World = WorldGen.Generate(seed);
         _combatRng = new Rng(SeedTree.Derive(World.Seed, "combat"));
-        _storylets = new StoryletEngine(World.Seed, StoryletCatalog.All);
+        _storylets = new StoryletEngine(World.Seed, FullCatalog());
         Player.Pos = World.ShrinePos;
         SpawnMonsters();
 
@@ -61,6 +61,9 @@ public sealed class Game
         Log.Add(0, $"Rumor: goblins from a cave to the {Compass(World.ShrinePos, World.CampPos)} raid {World.SettlementName}'s stores by night.");
         _storylets.TryFire(this, StoryletTrigger.Arrival);
     }
+
+    /// <summary>Global authored content plus this world's compiled story (D-032).</summary>
+    private List<Storylet> FullCatalog() => [.. StoryletCatalog.All, .. World.StoryStorylets];
 
     private void SpawnMonsters()
     {
@@ -251,7 +254,7 @@ public sealed class Game
         Cycle++;
         World = WorldGen.Generate(SeedTree.Derive(MasterSeed, "cycle", Cycle), tier: Cycle);
         _combatRng = new Rng(SeedTree.Derive(World.Seed, "combat"));
-        _storylets.OnCrossing(World.Seed);
+        _storylets.OnCrossing(World.Seed, FullCatalog());
         Monsters.Clear();
         SpawnMonsters();
         ChestLooted = false;

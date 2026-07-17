@@ -16,6 +16,9 @@ public sealed class World
     public required List<Pos> GoblinSpawns { get; init; }
     public required Pos ChestPos { get; init; }
     public required List<Npc> Npcs { get; init; }
+
+    /// <summary>Storylets compiled from this world's story template, cast-bound (D-032).</summary>
+    public required List<Storylet> StoryStorylets { get; init; }
 }
 
 /// <summary>
@@ -67,6 +70,9 @@ public static class WorldGen
 
         var npcs = CastNpcs(overworld, ref placeRng, ref nameRng, settlement, shrine);
 
+        var storyRng = new Rng(SeedTree.Derive(worldSeed, "world-story"));
+        var storyStorylets = RaidedSteadTemplate.Compile(ref storyRng, npcs, settlementName, facts);
+
         facts.Add("world_name", worldName, "");
         facts.Add("settlement", settlementName, $"{settlement.X},{settlement.Y}", "A small stead under the Aegis-shrine.");
         facts.Add("rest_point", "shrine", $"{shrine.X},{shrine.Y}", $"The shrine at {settlementName}. The Aegis anchors here.");
@@ -92,6 +98,7 @@ public static class WorldGen
             GoblinSpawns = goblinSpawns,
             ChestPos = chest,
             Npcs = npcs,
+            StoryStorylets = storyStorylets,
         };
     }
 

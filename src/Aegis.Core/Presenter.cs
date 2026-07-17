@@ -62,9 +62,12 @@ public static class Presenter
         int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
 
         DrawBox(frame, x0, y0, boxW, boxH);
-        frame.Write(x0 + 2, y0 + 1, unbinder
-            ? $"{npc.Name}, a wandering {npc.Role}"
-            : $"{npc.Name}, {npc.Role} of {game.World.SettlementName}", Hue.White);
+        frame.Write(x0 + 2, y0 + 1, npc.Kind switch
+        {
+            NpcKind.Unbinder => $"{npc.Name}, a wandering {npc.Role}",
+            NpcKind.Severed => $"{npc.Name}, {npc.Role} of no stead at all",
+            _ => $"{npc.Name}, {npc.Role} of {game.World.SettlementName}",
+        }, Hue.White);
 
         for (int i = 0; i < game.Topics.Count; i++)
             frame.Write(x0 + 2, y0 + 3 + i, $"{i + 1}) Ask about {game.Topics[i].Label}", Hue.Gray);
@@ -189,7 +192,7 @@ public static class Presenter
 
         if (game.Mode == MapMode.Overworld)
             foreach (var npc in game.World.Npcs)
-                PutWorld(npc.Pos, 'p', Hue.Green);
+                PutWorld(npc.Pos, 'p', npc.Kind == NpcKind.Severed ? Hue.Magenta : Hue.Green);
 
         foreach (var monster in game.LiveMonstersHere)
         {

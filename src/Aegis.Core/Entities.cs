@@ -44,6 +44,15 @@ public sealed class Player
     /// <summary>Rung 3c: the crossing-scene ledger reveal has been spoken.</summary>
     public bool LedgerHeard { get; set; }
 
+    /// <summary>Rung 4a: the agency-model severed's side has been heard (D-038).</summary>
+    public bool SeveredPeaceHeard { get; set; }
+
+    /// <summary>Rung 4b: the essence-model severed's routine has been witnessed (D-038).</summary>
+    public bool SeveredCostSeen { get; set; }
+
+    /// <summary>Rung 4d: the commission has been spoken in full at a crossing (D-038).</summary>
+    public bool CommissionHeard { get; set; }
+
     /// <summary>The Unbinder's layered identity, by trust not clock (0 = guise only).</summary>
     public int UnbinderRevealTier { get; set; }
 
@@ -101,8 +110,10 @@ public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut }
 /// <summary>
 /// Villagers live beside their houses; the Unbinder (D-034) is the wandering
 /// mender cast into every world under a fresh guise, and talks differently.
+/// The Severed kind (D-038) is a former bearer met as a person, not a foe:
+/// the game never makes them fightable, only listenable.
 /// </summary>
-public enum NpcKind { Villager, Unbinder }
+public enum NpcKind { Villager, Unbinder, Severed }
 
 /// <summary>
 /// A named, placed person (D-031). Static in v1: they stand near their homes and

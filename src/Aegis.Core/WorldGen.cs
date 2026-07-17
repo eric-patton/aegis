@@ -47,6 +47,9 @@ public sealed class World
     /// <summary>The stone ring where a severed one waits (D-037, tier 2+).</summary>
     public Site? HollowSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Hollow);
 
+    /// <summary>The severed bearer at peace (D-038): tier 3+, met as a person, never a foe.</summary>
+    public Npc? SeveredNpc => Npcs.FirstOrDefault(n => n.Kind == NpcKind.Severed);
+
     // Convenience views of the camp, the site every world has (and tests lean on).
     public GameMap Camp => CampSite.Map;
     public Pos CampPos => CampSite.OverworldPos;
@@ -225,6 +228,29 @@ public static class WorldGen
                 "In the hills stands a tomb raised for one who, the old folk swear, did not die. Its door has never been opened, because it has never been needed.");
         }
 
+        // The one at peace (D-038): tier 3+ worlds also hold a severed bearer who
+        // chose the cutting and sits easy with it, camped at a small fire far from
+        // stead and ring alike. Own stream, placed after every existing draw, so
+        // pinned worlds keep their layouts and only gain a person.
+        if (tier >= 3)
+        {
+            var calmRng = new Rng(SeedTree.Derive(worldSeed, "severed-calm"));
+            string calmName = NameGen.Person(ref calmRng);
+            Pos calmPos = FindDistantSpot(overworld, ref calmRng, settlement, minDistance: 12);
+            while (overworld[calmPos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills)
+                   || npcs.Any(n => n.Pos == calmPos) || calmPos.Manhattan(unbinderPos) < 5)
+                calmPos = FindDistantSpot(overworld, ref calmRng, settlement, minDistance: 12);
+            CarvePathIfDisconnected(overworld, shrine, calmPos);
+            npcs.Add(new Npc
+            {
+                Id = "npc_severed_calm",
+                Name = calmName,
+                Role = "hermit",
+                Pos = calmPos,
+                Kind = NpcKind.Severed,
+            });
+        }
+
         facts.Add("world_name", worldName, "");
         facts.Add("settlement", settlementName, $"{settlement.X},{settlement.Y}", "A small stead under the Aegis-shrine.");
         facts.Add("rest_point", "shrine", $"{shrine.X},{shrine.Y}", $"The shrine at {settlementName}. The Aegis anchors here.");
@@ -235,9 +261,12 @@ public static class WorldGen
                 "A long mound of turf over lintel stones, older than the waygate's iron. The dead under it do not lie easy.");
         facts.Add("grievance", "goblin_camp", settlementName, $"Goblins from the cave raid {settlementName}'s stores by night.");
         foreach (var npc in npcs)
-            facts.Add("person", npc.Id, npc.Name, npc.Kind == NpcKind.Unbinder
-                ? $"{npc.Name}, a wandering {npc.Role}, camped away from the stead."
-                : $"{npc.Name}, {npc.Role} of {settlementName}.");
+            facts.Add("person", npc.Id, npc.Name, npc.Kind switch
+            {
+                NpcKind.Unbinder => $"{npc.Name}, a wandering {npc.Role}, camped away from the stead.",
+                NpcKind.Severed => $"{npc.Name}, a hermit at a fire in the wilds. No one remembers them arriving.",
+                _ => $"{npc.Name}, {npc.Role} of {settlementName}.",
+            });
         facts.Add("wanderer", unbinder.Id, $"{unbinderPos.X},{unbinderPos.Y}",
             $"A {guiseRole} called {guiseName} is camped to the {Game.Compass(shrine, unbinderPos)}. Mends what pinches, they say, and asks no coin for it.");
 

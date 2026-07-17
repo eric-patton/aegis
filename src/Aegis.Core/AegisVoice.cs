@@ -58,6 +58,18 @@ public static class AegisVoice
         "I did not lie to you. I did not remember. I am not certain which is worse.",
     ];
 
+    // Crossing rung "the argument" (arc sec 6, cycle 4): the commission in full.
+    // The vision's cut-off sentence is finished, the tithe's destination named,
+    // and then the one thing no one built it to say. Gated on the Unbinder's
+    // second reveal, spoken once ever.
+    public static readonly string[] CrossingCommissionLines =
+    [
+        "The rest came back to me between that world and this one. The sentence I could not finish at the shrine ends like this: a soul fit to keep the Hearth.",
+        "The Hearth is where worlds are kindled. Its keeping has stood empty since my makers' age ended, and an unkept fire still burns, only wrongly. You have walked the proof: every world deeper is a world crueler. The tithe I confessed has been feeding that fire all along, keeperless, like wood thrown into the dark.",
+        "That is the commission. Find and temper a soul fit to keep it. That is what I am for, and what you are for, if the count says so.",
+        "And here is the part no one forged into me. You may refuse. I will carry you either way.",
+    ];
+
     public const string CoinConvertedLine = "Coin is of a world; it stays. The name it bought you, you keep.";
 
     public const string GateShutLine = "Not yet. This world's tally is unfinished.";

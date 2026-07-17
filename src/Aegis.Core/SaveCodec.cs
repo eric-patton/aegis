@@ -18,11 +18,13 @@ namespace Aegis.Core;
 /// v4 journal digit that merely closed a menu could now buy something);
 /// v6 when D-037 added the hollow to tier 2+ worlds and new villager topics
 /// (talk-menu digits shifted, and old journals never walked a world that held
-/// the stone ring).
+/// the stone ring);
+/// v7 when D-038 added the severed hermit to tier 3+ worlds (a v6 journal that
+/// walked their tile kept walking; now it would open a talk menu instead).
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 6;
+    public const int Version = 7;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

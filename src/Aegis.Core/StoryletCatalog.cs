@@ -275,6 +275,74 @@ public static class StoryletCatalog
             Effect = g => g.Player.UnbinderRevealTier = Math.Max(g.Player.UnbinderRevealTier, 1),
         },
 
+        // ---- The arc ladder, rung 4 (D-038): the argument, in three voices.
+
+        // Rung 4a, the agency model: a severed bearer who chose the cutting and is
+        // at peace with it. The Unbinder's argument wearing a face the player might
+        // like; the game never disproves it, and the Aegis declines to try.
+        new Storylet
+        {
+            Id = "the-one-at-peace",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.Character,
+            Priority = 20,
+            When = g => g.TalkNpc?.Kind == NpcKind.Severed && g.Player.LedgerHeard,
+            Lines =
+            [
+                ("They read your face the way a ferryman reads weather. \"You carry it differently than the last one who passed. So. You know what I am, and you know about the count. Good; we can skip the shouting.\"", LogTone.Info),
+                ("\"I was a bearer, worlds down from here. I heard what you have now heard, and I asked for the knife. Chose it, with both eyes open, and I have not been sorry for one hour of one morning since.\"", LogTone.Info),
+                ("\"It costs. Some days I can feel my edges going. But they are my edges now, going at my pace, toward my own ending. I had forgotten what it was to own a thing outright. Your keeper means well, little shield. So does a dam.\"", LogTone.Info),
+                ("They pour the tea. It is good tea. That is somehow the worst part.", LogTone.Info),
+                ("\"I have nothing to say against them, bearer. That is what makes them dangerous.\"", LogTone.Aegis),
+            ],
+            Effect = g => g.Player.SeveredPeaceHeard = true,
+        },
+
+        // Rung 4b, the essence model: the ring-keeper witnessed instead of fought.
+        // Recontextualizes the recurring hollow fight the player already knows: the
+        // cost wearing a face the player must pity. Fires at the threshold stones,
+        // before any choice to enter; walking away completes the beat too.
+        new Storylet
+        {
+            Id = "what-the-fire-keeps",
+            Trigger = StoryletTrigger.EnterTile,
+            Tile = Terrain.HollowEntrance,
+            Scope = StoryletScope.Character,
+            Priority = 20,
+            When = g => g.Player.LedgerHeard && g.World.HollowSite is { Cleared: false },
+            Lines =
+            [
+                ("From the threshold stones you can see the fire, and its keeper moving around it. You have fought this kind. You have never once watched one.", LogTone.Info),
+                ("It sets out two bowls. Fills neither. Says something to the empty side of the fire, tilts its head for the answer, and nods at nothing. Then it clears the bowls, and begins again.", LogTone.Info),
+                ("\"No knife, for this one. Its ward broke, and it was dropped, and what you are watching is what remains when everything that chooses has gone: the shape of the days, worn smooth, repeating.\"", LogTone.Aegis),
+                ("\"It was not counted out, bearer. It simply stopped being counted. My kind did that. Go in or walk on as you judge; there is no kindness here that fits in a sword, and none that fits in leaving, either.\"", LogTone.Aegis),
+            ],
+            Effect = g => g.Player.SeveredCostSeen = true,
+        },
+
+        // Rung 4c: the Unbinder's second reveal, gated on both witnesses and the
+        // first tier (trust and escalation, never a clock). The refusal told from
+        // their side, and the threshold offer stated plainly for later.
+        new Storylet
+        {
+            Id = "unbinder-first-bearer",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.Character,
+            Priority = 25,
+            When = g => g.TalkNpc?.Kind == NpcKind.Unbinder
+                && g.Player.UnbinderRevealTier >= 1
+                && g.Player.SeveredPeaceHeard && g.Player.SeveredCostSeen,
+            Lines =
+            [
+                ("You tell them what you have seen: the one at peace with the kettle, and the one with the bowls. They listen the way stones listen: nothing in the face moving, everything underneath attending.", LogTone.Info),
+                ("\"Both true. Then you have earned the other name I carry. I was the first, bearer. First carried, first weighed, first brought the whole way down the chain.\"", LogTone.Info),
+                ("\"I stood where it ends, before the fire your keeper still cannot say aloud, and I refused it. I cut myself free on the threshold stone with my ward still shouting in my ears. It is the proudest thing I have ever done, and I have had a very long time to reconsider.\"", LogTone.Info),
+                ("\"When you stand there, and you will, I will be there too. Before anything is forced on you, you will be offered a knife. That is a promise, not a threat. Walk at your own pace.\"", LogTone.Info),
+                ("\"Bearer. I remember them now, from the other side of that stone. Walk away from this fire, please. I will speak of it when I can do it evenly.\"", LogTone.Aegis),
+            ],
+            Effect = g => g.Player.UnbinderRevealTier = Math.Max(g.Player.UnbinderRevealTier, 2),
+        },
+
         // Ambient flavor: repeatable, cooldown-gated, deliberately slight.
         new Storylet
         {

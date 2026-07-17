@@ -367,6 +367,12 @@ public sealed class Game
             foreach (string line in AegisVoice.CrossingLedgerLines)
                 Log.Add(Turn, $"\"{line}\"", LogTone.Aegis);
         }
+        else if (Player.UnbinderRevealTier >= 2 && !Player.CommissionHeard)
+        {
+            Player.CommissionHeard = true;
+            foreach (string line in AegisVoice.CrossingCommissionLines)
+                Log.Add(Turn, $"\"{line}\"", LogTone.Aegis);
+        }
         else
         {
             Log.Add(Turn, $"\"{AegisVoice.LaterCrossingLine}\"", LogTone.Aegis);
@@ -385,6 +391,8 @@ public sealed class Game
             Log.Add(Turn, $"They speak lower of the long mound to the {Compass(World.ShrinePos, barrow.OverworldPos)}, where the dead do not lie easy.");
         if (World.HollowSite is { } hollow)
             Log.Add(Turn, $"And of the stone ring to the {Compass(World.ShrinePos, hollow.OverworldPos)} they say only this: leave the fire there to its keeper.");
+        if (World.SeveredNpc is { } calm)
+            Log.Add(Turn, $"A hermit called {calm.Name} keeps a fire to the {Compass(World.ShrinePos, calm.Pos)}. The stead trades them nothing, owes them nothing, and minds them not at all: they have simply always been there.");
         _storylets.TryFire(this, StoryletTrigger.Arrival);
     }
 
@@ -447,11 +455,26 @@ public sealed class Game
         TalkNpc = npc;
         InTalkMenu = true;
         _topics.Clear();
-        _topics.AddRange(npc.Kind == NpcKind.Unbinder ? BuildUnbinderTopics(npc) : BuildTopics(npc));
+        _topics.AddRange(npc.Kind switch
+        {
+            NpcKind.Unbinder => BuildUnbinderTopics(npc),
+            NpcKind.Severed => BuildSeveredTopics(),
+            _ => BuildTopics(npc),
+        });
         _offers.Clear();
         if (npc.Kind == NpcKind.Villager) _offers.AddRange(BuildOffers(npc));
 
-        if (npc.Kind == NpcKind.Unbinder)
+        if (npc.Kind == NpcKind.Severed)
+        {
+            Log.Add(Turn, $"{npc.Name} does not look up until you are close, and then is not surprised. Their eyes go to your collarbone first, the way the ring-keepers' do, and then, unlike theirs, come up to your face.");
+            if (!World.Facts.Exists("met", npc.Id))
+            {
+                World.Facts.Add("met", npc.Id, World.SettlementName,
+                    $"{npc.Name}, the hermit at the fire in the wilds, has spoken with the bearer.");
+                Log.Add(Turn, "\"I keep a fire, not a door. Sit if you like; the kettle is just boiled.\"");
+            }
+        }
+        else if (npc.Kind == NpcKind.Unbinder)
         {
             Log.Add(Turn, $"{npc.Name} the {npc.Role} looks up from their work, unsurprised.");
             if (!World.Facts.Exists("met", npc.Id))
@@ -538,6 +561,29 @@ public sealed class Game
         // and never advanced by asking twice (trust and escalation, not a clock).
         if (Player.UnbinderRevealTier >= 1)
             topics.Add(("The long road", "\"How long have I walked? Longer than this world has had a name. You knew that before you asked. What you want to know is whether it can be borne. It can. Ask your keeper what it counts, and then ask it again.\""));
+
+        // Reveal tier 2 (D-038): the refusal, restated on demand, never softened.
+        if (Player.UnbinderRevealTier >= 2)
+            topics.Add(("The refusal", "\"Would I do it again? Every dawn of every world. You want to know if the knife is clean. It is the cleanest thing I own. At the threshold it will be yours to take or wave away, and either answer will be yours. That is the entire point of me.\""));
+
+        return topics;
+    }
+
+    /// <summary>
+    /// The severed hermit's topics (D-038): the agency model's worldview, coherent
+    /// and unyielding in every world (the arc's never-disproved rule wears a second
+    /// face here). The last topic unlocks once their side has been heard.
+    /// </summary>
+    private List<(string Label, string Answer)> BuildSeveredTopics()
+    {
+        var topics = new List<(string, string)>
+        {
+            ("The fire", "\"It is a small fire because I want a small fire. The stead lets me be, and I let the stead be, and between us we have the tidiest treaty in this world.\""),
+            ("Their peace", "\"You are looking for the crack in it. There is none. I am spending myself the way a person spends a purse they finally own: slowly, on mornings like this one. I recommend it to everyone who can bear the price, and to no one who cannot.\""),
+        };
+
+        if (Player.SeveredPeaceHeard)
+            topics.Add(("The cutting", "\"A courteous stranger held the knife. You have met them; one of them is always about. They asked me three times if I was certain. I was rude, by the third. I have regretted the rudeness and nothing else.\""));
 
         return topics;
     }
@@ -639,6 +685,8 @@ public sealed class Game
         InTalkMenu = false;
         if (TalkNpc.Kind == NpcKind.Unbinder)
             Log.Add(Turn, $"\"{UnbinderFarewell}\" {TalkNpc.Name} returns to their work.");
+        else if (TalkNpc.Kind == NpcKind.Severed)
+            Log.Add(Turn, $"\"All is counted, little shield. I mean the first part kindly and the second precisely.\" {TalkNpc.Name} turns back to the kettle.");
         else
             Log.Add(Turn, $"You part ways with {TalkNpc.Name}.");
         TalkNpc = null;
@@ -1135,13 +1183,18 @@ public sealed class Game
         HollowX: World.HollowSite?.OverworldPos.X ?? -1,
         HollowY: World.HollowSite?.OverworldPos.Y ?? -1,
         HollowCleared: World.HollowSite?.Cleared ?? false,
+        SeveredNpcX: World.SeveredNpc?.Pos.X ?? -1,
+        SeveredNpcY: World.SeveredNpc?.Pos.Y ?? -1,
         ArcProgress: string.Join(",", new[]
         {
             Player.SeveredTruthHeard ? "truth" : null,
             Player.CrossingGuiltHeard ? "guilt" : null,
             Player.VisionSeen ? "vision" : null,
             Player.LedgerHeard ? "ledger" : null,
+            Player.SeveredPeaceHeard ? "peace" : null,
+            Player.SeveredCostSeen ? "cost" : null,
             Player.UnbinderRevealTier >= 1 ? $"tier{Player.UnbinderRevealTier}" : null,
+            Player.CommissionHeard ? "commission" : null,
         }.Where(s => s is not null)),
         CurrentSite: CurrentSite?.Id ?? "",
         UnbinderX: World.Unbinder.Pos.X,
@@ -1208,6 +1261,8 @@ public sealed record Snapshot(
     int HollowX,
     int HollowY,
     bool HollowCleared,
+    int SeveredNpcX,
+    int SeveredNpcY,
     string ArcProgress,
     string CurrentSite,
     int UnbinderX,

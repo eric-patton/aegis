@@ -61,9 +61,16 @@ sundering cut (always dodge it), and its bare touch drains 1 essence along with
 hp; felling it pays 15 essence and no coin, and it is the hardest optional
 fight in the band. `state` carries `hollowX/hollowY` (`-1` when absent),
 `hollowCleared`, and `arcProgress`: a comma list of spoiler-free rung flags
-(`truth`, `guilt`, `vision`, `ledger`, `tier1`) that live tests should assert
-instead of echoing story prose. Story beats gate on earlier flags, not cycle
-counts. Saves are format v6 (tier-2+ worldgen and villager topics changed).
+(`truth`, `guilt`, `vision`, `ledger`, `peace`, `cost`, `tierN`, `commission`)
+that live tests should assert instead of echoing story prose. Story beats gate
+on earlier flags, not cycle counts.
+
+Cycle-4 content (D-038): tier 3+ worlds also cast a severed hermit (`p` in
+magenta, camped like the Unbinder; `state` carries `severedNpcX/severedNpcY`,
+`-1` when absent). Their beat, the hollow-threshold witness scene (fires on
+stepping onto the `o` tile, no entry needed), the Unbinder's second reveal,
+and the commission crossing all gate on the ledger flag and each other. Saves
+are format v7 (tier-3+ worldgen changed).
 
 ## Trade and provisions (D-036)
 

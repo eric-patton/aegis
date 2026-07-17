@@ -164,6 +164,162 @@ public class ArcTests
         Assert.Equal(1, game.Log.Entries.Count(e => e.Text.Contains(AegisVoice.ForgeName)));
     }
 
+    // ---- rung 4 (D-038): the argument ----
+
+    [Fact]
+    public void Hermit_ExistsAtTierThreePlus_Reachable_AndDeterministic()
+    {
+        for (ulong seed = 1; seed <= 25; seed++)
+        {
+            Assert.Null(WorldGen.Generate(seed, tier: 1).SeveredNpc);
+            Assert.Null(WorldGen.Generate(seed, tier: 2).SeveredNpc);
+
+            foreach (int tier in (int[])[3, 5])
+            {
+                var a = WorldGen.Generate(seed, tier);
+                var b = WorldGen.Generate(seed, tier);
+
+                var calm = a.SeveredNpc;
+                Assert.NotNull(calm);
+                Assert.Equal(NpcKind.Severed, calm!.Kind);
+                Assert.Equal(calm.Pos, b.SeveredNpc!.Pos);
+                Assert.True(a.Overworld.Walkable(calm.Pos), $"seed {seed} tier {tier}: hermit on unwalkable ground");
+                Assert.True(Reachable(a.Overworld, a.ShrinePos, calm.Pos), $"seed {seed} tier {tier}: hermit unreachable");
+                Assert.True(a.Facts.Exists("person", "npc_severed_calm"));
+            }
+        }
+    }
+
+    [Fact]
+    public void PeaceBeat_WaitsForTheLedger()
+    {
+        var game = CrossedGame(42);
+        Cross(game);
+        Cross(game); // world 4, tier 4: the hermit is there, but no rung is ready.
+
+        NpcTests.BumpNpc(game, game.World.SeveredNpc!);
+        Assert.False(game.Player.SeveredPeaceHeard);
+        Assert.DoesNotContain(game.Log.Entries, e => e.Text.Contains("both eyes open"));
+        Assert.Contains(game.Topics, t => t.Label == "Their peace");
+        Assert.DoesNotContain(game.Topics, t => t.Label == "The cutting");
+        game.ApplyKey(' ');
+    }
+
+    [Fact]
+    public void PeaceBeat_LandsOnce_AndUnlocksTheCuttingTopic()
+    {
+        var game = LedgeredGame();
+
+        NpcTests.BumpNpc(game, game.World.SeveredNpc!);
+        Assert.True(game.Player.SeveredPeaceHeard);
+        Assert.Equal(1, game.Log.Entries.Count(e => e.Text.Contains("both eyes open")));
+        game.ApplyKey(' ');
+
+        NpcTests.BumpNpc(game, game.World.SeveredNpc!);
+        Assert.Equal(1, game.Log.Entries.Count(e => e.Text.Contains("both eyes open")));
+        Assert.Contains(game.Topics, t => t.Label == "The cutting");
+        game.ApplyKey(' ');
+    }
+
+    [Fact]
+    public void CostBeat_IsWitnessedFromTheThreshold_WithoutAFight()
+    {
+        // Before the ledger, the threshold stones are only stones.
+        var early = CrossedGame(42);
+        StepOnto(early, early.World.HollowSite!.OverworldPos);
+        Assert.False(early.Player.SeveredCostSeen);
+
+        var game = LedgeredGame();
+        StepOnto(game, game.World.HollowSite!.OverworldPos);
+        Assert.True(game.Player.SeveredCostSeen);
+        Assert.Equal(1, game.Log.Entries.Count(e => e.Text.Contains("two bowls")));
+
+        // The beat completed with the keeper alive: no fight was ever required.
+        Assert.False(game.World.HollowSite!.Cleared);
+
+        StepOnto(game, game.World.HollowSite!.OverworldPos);
+        Assert.Equal(1, game.Log.Entries.Count(e => e.Text.Contains("two bowls")));
+    }
+
+    [Fact]
+    public void FirstBearer_RequiresBothWitnesses_OnTopOfTierOne()
+    {
+        var game = LedgeredGame();
+
+        // First conversation since the vision: tier 1, never tier 2.
+        NpcTests.BumpNpc(game, game.World.Unbinder);
+        Assert.Equal(1, game.Player.UnbinderRevealTier);
+        game.ApplyKey(' ');
+
+        // One witness is not enough.
+        NpcTests.BumpNpc(game, game.World.SeveredNpc!);
+        game.ApplyKey(' ');
+        NpcTests.BumpNpc(game, game.World.Unbinder);
+        Assert.Equal(1, game.Player.UnbinderRevealTier);
+        Assert.DoesNotContain(game.Log.Entries, e => e.Text.Contains("proudest thing"));
+        game.ApplyKey(' ');
+
+        // Both witnesses: the confrontation lands, once, and its topic persists.
+        StepOnto(game, game.World.HollowSite!.OverworldPos);
+        NpcTests.BumpNpc(game, game.World.Unbinder);
+        Assert.Equal(2, game.Player.UnbinderRevealTier);
+        Assert.Equal(1, game.Log.Entries.Count(e => e.Text.Contains("proudest thing")));
+        game.ApplyKey(' ');
+
+        NpcTests.BumpNpc(game, game.World.Unbinder);
+        Assert.Contains(game.Topics, t => t.Label == "The refusal");
+        Assert.Equal(1, game.Log.Entries.Count(e => e.Text.Contains("proudest thing")));
+        game.ApplyKey(' ');
+    }
+
+    [Fact]
+    public void Commission_SpeaksAtTheNextCrossing_Once()
+    {
+        var game = LedgeredGame();
+        NpcTests.BumpNpc(game, game.World.Unbinder);
+        game.ApplyKey(' ');
+        NpcTests.BumpNpc(game, game.World.SeveredNpc!);
+        game.ApplyKey(' ');
+        StepOnto(game, game.World.HollowSite!.OverworldPos);
+        NpcTests.BumpNpc(game, game.World.Unbinder);
+        game.ApplyKey(' ');
+        Assert.Equal(2, game.Player.UnbinderRevealTier);
+        Assert.False(game.Player.CommissionHeard);
+
+        Cross(game);
+        Assert.True(game.Player.CommissionHeard);
+        Assert.Equal(1, game.Log.Entries.Count(e => e.Text.Contains("carry you either way")));
+
+        Cross(game);
+        Assert.Equal(1, game.Log.Entries.Count(e => e.Text.Contains("carry you either way")));
+
+        Assert.Equal("truth,guilt,vision,ledger,peace,cost,tier2,commission",
+            game.TakeSnapshot().ArcProgress);
+    }
+
+    [Fact]
+    public void Presenter_MarksTheHermitApart_AndHeadsTheirMenu()
+    {
+        var game = CrossedGame(42);
+        Cross(game); // world 3, tier 3
+
+        var hermit = game.World.SeveredNpc!;
+        NpcTests.BumpNpc(game, hermit); // stands the player beside them, opens the menu
+        game.ApplyKey(' ');
+
+        var frame = Presenter.Render(game);
+        bool magentaP = false;
+        for (int y = 0; y < Presenter.DefaultHeight; y++)
+            for (int x = 0; x < Presenter.DefaultWidth; x++)
+                if (frame[x, y] is { Ch: 'p', Fg: Hue.Magenta }) magentaP = true;
+        Assert.True(magentaP, "hermit not drawn in their own hue beside the player");
+
+        NpcTests.BumpNpc(game, hermit);
+        var menu = Presenter.Render(game).ToTextLines();
+        Assert.Contains(menu, line => line.Contains($"{hermit.Name}, hermit of no stead at all"));
+        game.ApplyKey(' ');
+    }
+
     // ---- helpers ----
 
     /// <summary>A game one crossing in: master 42's world 2, tier 2.</summary>
@@ -172,6 +328,34 @@ public class ArcTests
         var game = new Game(master);
         Cross(game);
         return game;
+    }
+
+    /// <summary>Master 42 walked to the ledger: world 4, tier 4, flags truth/guilt/vision/ledger.</summary>
+    private static Game LedgeredGame()
+    {
+        var game = CrossedGame(42);
+        EnterHollow(game);
+        FellSevered(game);   // truth
+        Cross(game);         // guilt
+        game.ApplyKey('r');  // vision, at the arrival shrine
+        game.ApplyKey(' ');
+        Cross(game);         // ledger
+        return game;
+    }
+
+    /// <summary>Walks onto an overworld tile for real, so EnterTile storylets fire.</summary>
+    private static void StepOnto(Game game, Pos target)
+    {
+        game.Debug_SetMode(MapMode.Overworld);
+        foreach (var (dx, dy, key) in ((int, int, char)[])[(-1, 0, 'l'), (1, 0, 'h'), (0, -1, 'j'), (0, 1, 'k')])
+        {
+            var from = target.Plus(dx, dy);
+            if (!game.World.Overworld.Walkable(from) || game.World.Npcs.Any(n => n.Pos == from)) continue;
+            game.Debug_SetPlayerPos(from);
+            game.ApplyKey(key);
+            if (game.Player.Pos == target) return;
+        }
+        Assert.Fail($"no walkable approach to {target}");
     }
 
     private static void Cross(Game game)

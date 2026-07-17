@@ -45,6 +45,15 @@ is optional: only the camp deed opens the waygate. Worldgen for tier 2+ changed 
 D-033, so saves are format v2 (v1 journals that had crossed would replay wrong and
 are refused).
 
+## The Unbinder and respec (D-034)
+
+Every world casts a wandering mender (`p`, camped away from the stead; villagers'
+"The wanderer" topic gives the direction). Bump to talk; the last menu entry opens
+the unbind menu: `1-7` loosens a raised attribute, refunding exactly what re-buying
+it costs, three times per world (refreshed at each crossing). `state` carries
+`unbinderX/unbinderY`, `unbindingsLeft`, and `inUnbindMenu`. Worldgen changed at
+every tier, so saves are format v3.
+
 Build and run from the repo root:
 
 ```

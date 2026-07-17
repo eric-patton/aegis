@@ -15,6 +15,12 @@ public sealed class Player
     public int WoundedTurns { get; set; }
     public int Deaths { get; set; }
 
+    /// <summary>Cycle of the first conversation with any world's Unbinder; 0 = never met (D-034).</summary>
+    public int FirstUnbinderCycle { get; set; }
+
+    /// <summary>Total unbindings ever performed on this character, all worlds.</summary>
+    public int Unbindings { get; set; }
+
     /// <summary>Derived from Vigor (D-015): the humble baseline of 5 gives 20.</summary>
     public int MaxHp => 10 + Attributes[Attr.Vigor] * 2;
 
@@ -66,6 +72,12 @@ public sealed class Intent
 public enum IntentKind { CrushingBlow, BarrowBlade }
 
 /// <summary>
+/// Villagers live beside their houses; the Unbinder (D-034) is the wandering
+/// mender cast into every world under a fresh guise, and talks differently.
+/// </summary>
+public enum NpcKind { Villager, Unbinder }
+
+/// <summary>
 /// A named, placed person (D-031). Static in v1: they stand near their homes and
 /// talk. The Id is stable within a world and is what facts reference.
 /// </summary>
@@ -75,6 +87,7 @@ public sealed class Npc
     public required string Name { get; init; }
     public required string Role { get; init; }
     public required Pos Pos { get; init; }
+    public NpcKind Kind { get; init; } = NpcKind.Villager;
 }
 
 /// <summary>What death leaves behind: unspent coin and Essence, one reclaim attempt (D-008).</summary>

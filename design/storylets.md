@@ -74,7 +74,8 @@ and waits for the next moment.
 
 - `Type` is a lower_snake noun naming the relation. Reserved types so far:
   `world_name`, `settlement`, `rest_point`, `site`, `grievance`, `deed`, `echo`,
-  and from storylets: `met`, `boon`.
+  `person`, `wanderer`; from storylets: `met`, `boon`, `noticed`; from templates
+  (D-032): `role`, `promise`, `story_complete`.
 - `Subject` is the thing the fact is about (a site id, a settlement name, a storylet id).
 - `Object` is the other party or a coordinate pair, `""` when unary.
 - `Detail` is prose for surfacing in content; never parsed, never load-bearing.

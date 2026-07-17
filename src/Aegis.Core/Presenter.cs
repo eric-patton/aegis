@@ -45,6 +45,7 @@ public static class Presenter
         DrawLog(frame, game, layout);
         if (game.InShrineMenu) DrawShrineMenu(frame, game, layout);
         if (game.InTalkMenu) DrawTalkMenu(frame, game, layout);
+        if (game.InUnbindMenu) DrawUnbindMenu(frame, game, layout);
         return frame;
     }
 
@@ -53,18 +54,53 @@ public static class Presenter
         var npc = game.TalkNpc;
         if (npc is null) return;
 
+        bool unbinder = npc.Kind == NpcKind.Unbinder;
+        int entries = game.Topics.Count + (unbinder ? 1 : 0);
         const int boxW = 46;
-        int boxH = 5 + game.Topics.Count;
+        int boxH = 5 + entries;
         int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
         int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
 
         DrawBox(frame, x0, y0, boxW, boxH);
-        frame.Write(x0 + 2, y0 + 1, $"{npc.Name}, {npc.Role} of {game.World.SettlementName}", Hue.White);
+        frame.Write(x0 + 2, y0 + 1, unbinder
+            ? $"{npc.Name}, a wandering {npc.Role}"
+            : $"{npc.Name}, {npc.Role} of {game.World.SettlementName}", Hue.White);
 
         for (int i = 0; i < game.Topics.Count; i++)
             frame.Write(x0 + 2, y0 + 3 + i, $"{i + 1}) Ask about {game.Topics[i].Label}", Hue.Gray);
+        if (unbinder)
+            frame.Write(x0 + 2, y0 + 3 + game.Topics.Count,
+                $"{entries}) The unbinding ({game.UnbindingsLeft} left this world)", Hue.Cyan);
 
-        frame.Write(x0 + 2, y0 + boxH - 2, "1-" + game.Topics.Count + " ask; any other key to part ways", Hue.DarkGray);
+        frame.Write(x0 + 2, y0 + boxH - 2, $"1-{entries} choose; any other key to part ways", Hue.DarkGray);
+    }
+
+    private static void DrawUnbindMenu(Frame frame, Game game, Layout layout)
+    {
+        var npc = game.TalkNpc;
+        if (npc is null) return;
+
+        const int boxW = 46;
+        int boxH = 6 + AttributeSet.Count;
+        int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
+        int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
+
+        DrawBox(frame, x0, y0, boxW, boxH);
+        frame.Write(x0 + 2, y0 + 1, $"The unbinding | {npc.Name} the {npc.Role}", Hue.White);
+        frame.Write(x0 + 2, y0 + 2, game.Player.Attributes.TotalRaises > 0
+            ? $"Loosening returns {game.UnbindRefund} essence   {game.UnbindingsLeft} left"
+            : "Nothing to loosen: you are as you began", Hue.Cyan);
+
+        for (int i = 0; i < AttributeSet.Count; i++)
+        {
+            var attr = (Attr)i;
+            bool bound = game.Player.Attributes[attr] > AttributeSet.Baseline;
+            frame.Write(x0 + 2, y0 + 4 + i,
+                $"{i + 1}) {AttributeSet.NameOf(attr),-9} {game.Player.Attributes[attr],2}",
+                bound ? Hue.White : Hue.DarkGray);
+        }
+
+        frame.Write(x0 + 2, y0 + boxH - 2, "1-7 loosen; any other key to part ways", Hue.DarkGray);
     }
 
     private static void DrawBox(Frame frame, int x0, int y0, int boxW, int boxH)

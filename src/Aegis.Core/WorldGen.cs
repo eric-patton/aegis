@@ -41,12 +41,36 @@ public sealed class World
     public Site CampSite => Sites.First(s => s.Kind == SiteKind.GoblinCamp);
     public Site? BarrowSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Barrow);
 
+    /// <summary>The wandering mender (D-034): cast into every world, every tier.</summary>
+    public Npc Unbinder => Npcs.First(n => n.Kind == NpcKind.Unbinder);
+
     // Convenience views of the camp, the site every world has (and tests lean on).
     public GameMap Camp => CampSite.Map;
     public Pos CampPos => CampSite.OverworldPos;
     public Pos CampEntryPos => CampSite.EntryPos;
     public Pos ChestPos => CampSite.ChestPos;
     public List<Pos> GoblinSpawns => [.. CampSite.Spawns.Select(s => s.Pos)];
+}
+
+/// <summary>
+/// The wandering mender's per-world guises (D-034): a trade name and the work line
+/// its talk topic opens with. One deck, so guise and voice never drift apart.
+/// </summary>
+public static class UnbinderGuises
+{
+    public static readonly string[] Roles =
+        ["tinker", "knife-grinder", "bone-setter", "mapmaker", "dowser", "chandler"];
+
+    public static string WorkLine(string role) => role switch
+    {
+        "tinker" => "Pots mended, latches trued, small things made whole.",
+        "knife-grinder" => "Edges brought back to what they were before the world wore them.",
+        "bone-setter" => "Bones set, joints eased, old aches argued with.",
+        "mapmaker" => "Roads drawn as they run, not as folk wish they ran.",
+        "dowser" => "Water found where it hides from the thirsty.",
+        "chandler" => "Candles for the hours the sun does not keep.",
+        _ => "This and that, mended.",
+    };
 }
 
 /// <summary>
@@ -141,8 +165,30 @@ public static class WorldGen
 
         var npcs = CastNpcs(overworld, ref placeRng, ref nameRng, settlement, shrine);
 
+        // The template compiles against the villagers only: the Unbinder (cast below)
+        // must never be picked for a world-story role.
         var storyRng = new Rng(SeedTree.Derive(worldSeed, "world-story"));
         var storyStorylets = RaidedSteadTemplate.Compile(ref storyRng, npcs, settlementName, facts);
+
+        // The Unbinder (D-034): a fresh guise every world, its own seed stream, placed
+        // well away from the stead. Their tile stays plain ground: nothing on the map
+        // marks them as anything but a camped wanderer.
+        var unbinderRng = new Rng(SeedTree.Derive(worldSeed, "unbinder"));
+        string guiseName = NameGen.Person(ref unbinderRng);
+        string guiseRole = unbinderRng.Pick(UnbinderGuises.Roles);
+        Pos unbinderPos = FindDistantSpot(overworld, ref unbinderRng, settlement, minDistance: 10);
+        while (overworld[unbinderPos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills))
+            unbinderPos = FindDistantSpot(overworld, ref unbinderRng, settlement, minDistance: 10);
+        CarvePathIfDisconnected(overworld, shrine, unbinderPos);
+        var unbinder = new Npc
+        {
+            Id = "npc_unbinder",
+            Name = guiseName,
+            Role = guiseRole,
+            Pos = unbinderPos,
+            Kind = NpcKind.Unbinder,
+        };
+        npcs.Add(unbinder);
 
         facts.Add("world_name", worldName, "");
         facts.Add("settlement", settlementName, $"{settlement.X},{settlement.Y}", "A small stead under the Aegis-shrine.");
@@ -154,7 +200,11 @@ public static class WorldGen
                 "A long mound of turf over lintel stones, older than the waygate's iron. The dead under it do not lie easy.");
         facts.Add("grievance", "goblin_camp", settlementName, $"Goblins from the cave raid {settlementName}'s stores by night.");
         foreach (var npc in npcs)
-            facts.Add("person", npc.Id, npc.Name, $"{npc.Name}, {npc.Role} of {settlementName}.");
+            facts.Add("person", npc.Id, npc.Name, npc.Kind == NpcKind.Unbinder
+                ? $"{npc.Name}, a wandering {npc.Role}, camped away from the stead."
+                : $"{npc.Name}, {npc.Role} of {settlementName}.");
+        facts.Add("wanderer", unbinder.Id, $"{unbinderPos.X},{unbinderPos.Y}",
+            $"A {guiseRole} called {guiseName} is camped to the {Game.Compass(shrine, unbinderPos)}. Mends what pinches, they say, and asks no coin for it.");
 
         return new World
         {

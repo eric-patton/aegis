@@ -145,6 +145,27 @@ public static class StoryletCatalog
                 "A bent silver pin from the barrow-age, given the day the mound went quiet."),
         },
 
+        // Meeting the wandering mender in a LATER world than the first meeting: the
+        // first thread a player can pull that runs between worlds. Completes its own
+        // small answer (these wanderers know you) and unlocks asking about it.
+        new Storylet
+        {
+            Id = "unbinder-again",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.Character,
+            Priority = 10,
+            When = g => g.TalkNpc?.Kind == NpcKind.Unbinder
+                && g.Player.FirstUnbinderCycle > 0
+                && g.Cycle > g.Player.FirstUnbinderCycle,
+            Lines =
+            [
+                ("A different face, a different name, a different trade. But you are looked at the way the last mender looked at you, in a world that is shut now: unsurprised.", LogTone.Info),
+                ("These wanderers know you. That much is now certain.", LogTone.Danger),
+            ],
+            Effect = g => g.World.Facts.Add("noticed", "unbinder", "",
+                "The bearer has marked the wandering menders: in every world one waits, and knows the bearer on sight."),
+        },
+
         // Ambient flavor: repeatable, cooldown-gated, deliberately slight.
         new Storylet
         {

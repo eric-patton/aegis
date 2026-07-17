@@ -31,7 +31,20 @@ public sealed class Game
     public bool CampCleared => World.CampSite.Cleared;
     public bool InShrineMenu { get; private set; }
     public bool InTalkMenu { get; private set; }
+    public bool InUnbindMenu { get; private set; }
     public Npc? TalkNpc { get; private set; }
+
+    /// <summary>Unbindings per world (D-016: a handful, refreshed at each crossing).</summary>
+    public const int UnbindingsPerWorld = 3;
+
+    /// <summary>How many unbindings this world's Unbinder will still perform.</summary>
+    public int UnbindingsLeft { get; private set; } = UnbindingsPerWorld;
+
+    /// <summary>
+    /// What loosening one raise returns: exactly what re-buying it will cost at the
+    /// shrine afterward, so a respec round trip never gains or loses essence.
+    /// </summary>
+    public int UnbindRefund => 10 + 5 * (Player.Attributes.TotalRaises - 1);
 
     /// <summary>The current conversation's topics, computed live from the fact graph at open.</summary>
     public IReadOnlyList<(string Label, string Answer)> Topics => _topics;
@@ -100,6 +113,13 @@ public sealed class Game
     public void ApplyKey(char key)
     {
         if (!Running) return;
+
+        if (InUnbindMenu)
+        {
+            HandleUnbindMenuKey(key);
+            KeyApplied?.Invoke(key);
+            return;
+        }
 
         if (InTalkMenu)
         {
@@ -274,8 +294,10 @@ public sealed class Game
         SpawnMonsters();
         InShrineMenu = false;
         InTalkMenu = false;
+        InUnbindMenu = false;
         TalkNpc = null;
         CurrentSite = null;
+        UnbindingsLeft = UnbindingsPerWorld;
 
         Mode = MapMode.Overworld;
         Player.Pos = World.ShrinePos;
@@ -363,14 +385,30 @@ public sealed class Game
         TalkNpc = npc;
         InTalkMenu = true;
         _topics.Clear();
-        _topics.AddRange(BuildTopics(npc));
+        _topics.AddRange(npc.Kind == NpcKind.Unbinder ? BuildUnbinderTopics(npc) : BuildTopics(npc));
 
-        Log.Add(Turn, $"{npc.Name}, {npc.Role} of {World.SettlementName}, turns to you.");
-        if (!World.Facts.Exists("met", npc.Id))
+        if (npc.Kind == NpcKind.Unbinder)
         {
-            World.Facts.Add("met", npc.Id, World.SettlementName,
-                $"{npc.Name}, {npc.Role} of {World.SettlementName}, has spoken with the bearer.");
-            Log.Add(Turn, $"\"A stranger, then. Word travels slower than trouble here.\"");
+            Log.Add(Turn, $"{npc.Name} the {npc.Role} looks up from their work, unsurprised.");
+            if (!World.Facts.Exists("met", npc.Id))
+            {
+                World.Facts.Add("met", npc.Id, World.SettlementName,
+                    $"{npc.Name}, the wandering {npc.Role}, has spoken with the bearer.");
+                Log.Add(Turn, "\"Sit, if you like. The fire is small, but it is honest.\"");
+            }
+            // First-meeting cycle is recorded before the trigger fires, so recognition
+            // content can gate on "met one in an EARLIER world" (D-034).
+            if (Player.FirstUnbinderCycle == 0) Player.FirstUnbinderCycle = Cycle;
+        }
+        else
+        {
+            Log.Add(Turn, $"{npc.Name}, {npc.Role} of {World.SettlementName}, turns to you.");
+            if (!World.Facts.Exists("met", npc.Id))
+            {
+                World.Facts.Add("met", npc.Id, World.SettlementName,
+                    $"{npc.Name}, {npc.Role} of {World.SettlementName}, has spoken with the bearer.");
+                Log.Add(Turn, $"\"A stranger, then. Word travels slower than trouble here.\"");
+            }
         }
         _storylets.TryFire(this, StoryletTrigger.Talk);
         return true;
@@ -401,11 +439,36 @@ public sealed class Game
                 ? " \"Quiet up there now, first time in living memory. Whoever settled them, the stead owes a debt it cannot name.\""
                 : " \"None go up. Of late there are lights along the mound at night, and the dogs will not face that way.\"")));
 
+        if (World.Facts.Find("wanderer", "npc_unbinder") is { } wanderer)
+            topics.Add(("The wanderer", $"\"{wanderer.Detail} Not the first such to pass through, if the old folk are believed.\""));
+
         if (World.Facts.OfType("echo").FirstOrDefault() is { } echo)
             topics.Add(("Old songs", $"\"There is a new one, though none can say who taught it. {echo.Detail}\""));
 
         return topics;
     }
+
+    /// <summary>
+    /// The Unbinder's own topics (D-034). The "stead" answer is their worldview
+    /// surfaced plainly: it stays coherent and unyielding in every world, every cycle
+    /// (the arc's never-disproved rule). The last topic unlocks via the recognition
+    /// storylet's fact write.
+    /// </summary>
+    private List<(string Label, string Answer)> BuildUnbinderTopics(Npc npc)
+    {
+        var topics = new List<(string, string)>
+        {
+            ("Their trade", $"\"{UnbinderGuises.WorkLine(npc.Role)} And when the work under the work asks for it, I loosen what is bound too tight. People, mostly.\""),
+            ("The stead", $"\"Good people in {World.SettlementName}. They will end, and their stead will end, and that is not a sad thing. Endings are what let anything matter at all.\""),
+        };
+
+        if (World.Facts.Exists("noticed", "unbinder"))
+            topics.Add(("The one before", "\"The one before. Hm. Roads repeat their travelers, or travelers their roads. When you can tell those two apart, come and ask me again.\""));
+
+        return topics;
+    }
+
+    private const string UnbinderFarewell = "Nothing needs to be counted. Walk well.";
 
     private void HandleTalkMenuKey(char key)
     {
@@ -417,9 +480,74 @@ public sealed class Game
             return;
         }
 
+        if (TalkNpc!.Kind == NpcKind.Unbinder && key == '1' + _topics.Count)
+        {
+            InTalkMenu = false;
+            if (UnbindingsLeft == 0)
+            {
+                Log.Add(Turn, $"{TalkNpc.Name} shakes their head. \"Not again in this world. What I loosen must settle before I loosen more.\"");
+                Log.Add(Turn, $"\"{UnbinderFarewell}\" They return to their work.");
+                TalkNpc = null;
+                return;
+            }
+            InUnbindMenu = true;
+            Log.Add(Turn, $"{TalkNpc.Name} unrolls a cloth of worn tools that are not for a {TalkNpc.Role}'s work.");
+            Log.Add(Turn, "\"Show me where the shape grips too tight. What was spent comes back; nothing is lost.\"");
+            return;
+        }
+
         InTalkMenu = false;
-        Log.Add(Turn, $"You part ways with {TalkNpc!.Name}.");
+        if (TalkNpc.Kind == NpcKind.Unbinder)
+            Log.Add(Turn, $"\"{UnbinderFarewell}\" {TalkNpc.Name} returns to their work.");
+        else
+            Log.Add(Turn, $"You part ways with {TalkNpc.Name}.");
         TalkNpc = null;
+    }
+
+    private void HandleUnbindMenuKey(char key)
+    {
+        if (key >= '1' && key <= '7')
+        {
+            TryUnbind((Attr)(key - '1'));
+            return;
+        }
+
+        InUnbindMenu = false;
+        Log.Add(Turn, $"\"{UnbinderFarewell}\" {TalkNpc!.Name} rolls the tools away.");
+        TalkNpc = null;
+    }
+
+    /// <summary>
+    /// Attribute respec (D-016, D-034): loosen one raise, refund exactly what
+    /// re-buying it will cost. Lossless by construction; the scarcity is the
+    /// per-world cap, not a price.
+    /// </summary>
+    private void TryUnbind(Attr attr)
+    {
+        if (UnbindingsLeft == 0)
+        {
+            Log.Add(Turn, "\"Not again in this world. What I loosen must settle before I loosen more.\"");
+            return;
+        }
+        if (Player.Attributes[attr] <= AttributeSet.Baseline)
+        {
+            Log.Add(Turn, $"\"There is nothing bound in your {AttributeSet.NameOf(attr)} but what you were born with. That, I do not touch.\"");
+            return;
+        }
+
+        int refund = UnbindRefund;
+        Player.Attributes[attr] = Player.Attributes[attr] - 1;
+        Player.Essence += refund;
+        UnbindingsLeft--;
+        Player.Unbindings++;
+        if (attr == Attr.Vigor)
+        {
+            Player.Hp = Math.Min(Player.Hp, Player.EffectiveMaxHp);
+            Player.Stamina = Math.Min(Player.Stamina, Player.MaxStamina);
+        }
+        Log.Add(Turn, $"Their fingers work at something above your collarbone that you cannot see. {AttributeSet.NameOf(attr)} eases to {Player.Attributes[attr]}; {refund} essence returns to you.", LogTone.Reward);
+        if (Player.Unbindings == 1)
+            Log.Add(Turn, "\"Strange, to be loosened. I held that shape with care. ...I will hold the new one the same.\"", LogTone.Aegis);
     }
 
     /// <summary>Global rising cost per raise (D-014's Essence economy, Souls-style curve).</summary>
@@ -706,6 +834,7 @@ public sealed class Game
         Player.Deaths++;
         InShrineMenu = false;
         InTalkMenu = false;
+        InUnbindMenu = false;
         TalkNpc = null;
 
         bool forfeited = Remnant is not null;
@@ -776,6 +905,9 @@ public sealed class Game
         BarrowY: World.BarrowSite?.OverworldPos.Y ?? -1,
         BarrowCleared: World.BarrowSite?.Cleared ?? false,
         CurrentSite: CurrentSite?.Id ?? "",
+        UnbinderX: World.Unbinder.Pos.X,
+        UnbinderY: World.Unbinder.Pos.Y,
+        UnbindingsLeft: UnbindingsLeft,
         Hp: Player.Hp,
         MaxHp: Player.EffectiveMaxHp,
         Stamina: Player.Stamina,
@@ -793,6 +925,7 @@ public sealed class Game
         NextRaiseCost: NextRaiseCost,
         InShrineMenu: InShrineMenu,
         InTalkMenu: InTalkMenu,
+        InUnbindMenu: InUnbindMenu,
         TalkNpc: TalkNpc?.Name ?? "",
         WoundedTurns: Player.WoundedTurns,
         Deaths: Player.Deaths,
@@ -830,6 +963,9 @@ public sealed record Snapshot(
     int BarrowY,
     bool BarrowCleared,
     string CurrentSite,
+    int UnbinderX,
+    int UnbinderY,
+    int UnbindingsLeft,
     int Hp,
     int MaxHp,
     int Stamina,
@@ -847,6 +983,7 @@ public sealed record Snapshot(
     int NextRaiseCost,
     bool InShrineMenu,
     bool InTalkMenu,
+    bool InUnbindMenu,
     string TalkNpc,
     int WoundedTurns,
     int Deaths,

@@ -9,11 +9,13 @@ namespace Aegis.Core;
 /// no file I/O, so it lives in Core and tests cover it directly. Checkpoint
 /// compression can be layered on later without changing what a save means.
 /// Version history: v1 launch format; v2 when D-033 changed tier 2+ worldgen
-/// (journals that crossed a waygate would replay into a different world).
+/// (journals that crossed a waygate would replay into a different world);
+/// v3 when D-034 added the Unbinder to every world at every tier (a v2 journal
+/// walking their tile would open a talk menu that did not exist when it was played).
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 2;
+    public const int Version = 3;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

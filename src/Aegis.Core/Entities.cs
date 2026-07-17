@@ -52,6 +52,15 @@ public sealed class Player
     /// <summary>The Aegis speaks once at the first iron taken up; never again.</summary>
     public bool GearLineHeard { get; set; }
 
+    /// <summary>
+    /// The use-grown track (D-042). Banked like attributes and gear: death never
+    /// touches it, and it crosses waygates whole (vision secs 8, 10).
+    /// </summary>
+    public SkillSet Skills { get; } = new();
+
+    /// <summary>The Aegis speaks once at the first skill rise; never again.</summary>
+    public bool SkillLineHeard { get; set; }
+
     // Arc-ladder state (D-037, design/story/aegis-arc.md sec 6). The fact graph is
     // per-world, so rung progress lives on the character. Each flag is set by the
     // storylet or crossing scene that completes its rung; later rungs gate on

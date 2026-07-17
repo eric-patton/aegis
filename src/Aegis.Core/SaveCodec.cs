@@ -31,10 +31,12 @@ namespace Aegis.Core;
 /// v10 when D-041 added gear: a smith stands at every stead at every tier
 /// (a v9 journal walking their tile would open a menu that did not exist),
 /// deep chests hand out iron, and 'i' plus new menu digits carry meaning.
+/// v11 when D-042 added use-grown skills: swings and turned blows now change
+/// later damage, and 'c' (the sheet) gained meaning as a journaled key.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 10;
+    public const int Version = 11;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

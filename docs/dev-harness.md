@@ -121,6 +121,20 @@ banked on death (the remnant takes only coin and essence) and crosses whole.
 `repairPrice`, and `inGearMenu`. Saves are format v10 (a person and a key gained
 meaning at every tier).
 
+## Skills and the sheet (D-042)
+
+Four use-grown skills: Blades, Hafted, and Brawling split the melee swing by
+what is in hand (axe and maul are Hafted, the grave-iron blade is Blades, bare
+fists are Brawling); Warding is armor-craft, fed only by blows the worn iron
+turns. Counted uses are the only state; levels are derived (thresholds 8, 20,
+36, 56, 80...), and each level pair adds +1 (damage for the family swung,
+absorb for Warding while armor is worn). Free actions teach nothing: a winded
+feeble swing and an unturned raw-1 bite both count for nothing. `c` opens the
+sheet anywhere (turn-free): seven attributes and four skills with progress.
+Skills are banked on death and cross whole. `state` carries `skills` (a comma
+list of `name:level:uses`) and `inSheetMenu`. Saves are format v11 ('c'
+gained meaning, and swings now change later damage).
+
 ## Trade and provisions (D-036)
 
 The steadholder sells rations (talk menu, last entries after the topics; the menu

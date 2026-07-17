@@ -28,6 +28,9 @@ public sealed class GearItem
     public required int MaxWear { get; init; }
     public int Wear { get; set; }
 
+    /// <summary>Which skill a weapon trains and draws on (D-042). Armor ignores it; bare hands are Brawling.</summary>
+    public SkillId Family { get; init; } = SkillId.Brawling;
+
     /// <summary>Fully worn: a dull edge or cut batting. Half the good, until the smith sees it.</summary>
     public bool Worn => Wear >= MaxWear;
 
@@ -66,6 +69,7 @@ public static class GearCatalog
         {
             Id = id, Name = "woodsman's axe", Slot = GearSlot.Weapon,
             Bonus = 2, ReqAttr = Attr.Might, Req = 5, Value = 8, MaxWear = 40,
+            Family = SkillId.Hafted,
         },
         "quilted_jack" => new GearItem
         {
@@ -81,11 +85,13 @@ public static class GearCatalog
         {
             Id = id, Name = "grave-iron blade", Slot = GearSlot.Weapon,
             Bonus = 4, ReqAttr = Attr.Might, Req = 7, Value = 18, MaxWear = 45,
+            Family = SkillId.Blades,
         },
         "carvers_maul" => new GearItem
         {
             Id = id, Name = "carver's maul", Slot = GearSlot.Weapon,
             Bonus = 5, ReqAttr = Attr.Might, Req = 8, Value = 26, MaxWear = 45,
+            Family = SkillId.Hafted,
         },
         _ => throw new ArgumentException($"Unknown gear id: {id}"),
     };

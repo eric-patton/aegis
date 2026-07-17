@@ -41,6 +41,7 @@ public sealed class Game
 
     /// <summary>The pack menu (D-041): 'i' anywhere; digits wield or wear, anything else closes.</summary>
     public bool InGearMenu { get; private set; }
+    public bool InSheetMenu { get; private set; }
     public Npc? TalkNpc { get; private set; }
 
     /// <summary>Unbindings per world (D-016: a handful, refreshed at each crossing).</summary>
@@ -165,6 +166,13 @@ public sealed class Game
             return;
         }
 
+        if (InSheetMenu)
+        {
+            InSheetMenu = false;
+            KeyApplied?.Invoke(key);
+            return;
+        }
+
         if (InThresholdMenu)
         {
             HandleThresholdMenuKey(key);
@@ -220,6 +228,7 @@ public sealed class Game
             Command.Rest => DoRest(),
             Command.Eat => DoEat(),
             Command.Gear => DoGearMenu(),
+            Command.Sheet => DoSheet(),
             _ => CommandMap.Delta(cmd) is { } d && DoMove(d.dx, d.dy),
         };
 
@@ -418,6 +427,7 @@ public sealed class Game
         InUnbindMenu = false;
         InThresholdMenu = false;
         InGearMenu = false;
+        InSheetMenu = false;
         TalkNpc = null;
         CurrentSite = null;
         UnbindingsLeft = UnbindingsPerWorld;
@@ -1050,6 +1060,17 @@ public sealed class Game
         Log.Add(Turn, "You close the pack.");
     }
 
+    /// <summary>
+    /// Opens the sheet ('c'): both ledgers of what you are, the seven the Aegis
+    /// shapes and the four the body keeps (D-042). Costs no turn, like every
+    /// menu: the fiction is a moment's honest self-regard.
+    /// </summary>
+    private bool DoSheet()
+    {
+        InSheetMenu = true;
+        return false;
+    }
+
     /// <summary>Wields or wears a pack item; whatever held the slot goes to the pack.</summary>
     private void EquipGear(GearItem item)
     {
@@ -1148,12 +1169,18 @@ public sealed class Game
         // Under-requirement gear is usable, badly (D-015): the swing costs extra
         // wind on top of the halved edge the item itself reports.
         var weapon = Player.Weapon;
+        var family = weapon?.Family ?? SkillId.Brawling;
         int staminaCost = 3 + (weapon is not null && !weapon.MeetsReq(Player.Attributes) ? 1 : 0);
         int damage;
+        SkillId? trained = null;
         if (Player.Stamina >= staminaCost)
         {
             Player.Stamina -= staminaCost;
-            damage = _combatRng.Range(2, 5) + Player.MeleeBonus + (weapon?.EffectiveBonus(Player.Attributes) ?? 0);
+            damage = _combatRng.Range(2, 5) + Player.MeleeBonus + (weapon?.EffectiveBonus(Player.Attributes) ?? 0)
+                + Player.Skills.Bonus(family);
+            // Only a full swing teaches (D-014's cost gating: this one was paid
+            // for in wind and wear). Feeble flailing is free, and free is unfed.
+            trained = family;
             if (weapon is not null && !weapon.Worn)
             {
                 weapon.Wear++;
@@ -1207,7 +1234,35 @@ public sealed class Game
             }, LogTone.Reward);
             CheckSiteCleared(CurrentSite!);
         }
+
+        if (trained is { } skill) GainSkill(skill);
         return true;
+    }
+
+    /// <summary>
+    /// Counts one real use and speaks up at each level line (D-042). Levels are
+    /// derived from uses, so this is the only place growth can happen.
+    /// </summary>
+    private void GainSkill(SkillId id)
+    {
+        int before = Player.Skills.Level(id);
+        Player.Skills.AddUse(id);
+        int after = Player.Skills.Level(id);
+        if (after == before) return;
+
+        Log.Add(Turn, id switch
+        {
+            SkillId.Blades => $"The edge finds its line without being asked. (Blades rises to {after})",
+            SkillId.Hafted => $"The haft has stopped arguing with your grip. (Hafted rises to {after})",
+            SkillId.Brawling => $"Your fists have learned where the bones are not. (Brawling rises to {after})",
+            _ => $"You take the blow where the iron is thickest. (Warding rises to {after})",
+        }, LogTone.Reward);
+
+        if (!Player.SkillLineHeard)
+        {
+            Player.SkillLineHeard = true;
+            Log.Add(Turn, "\"That was none of my doing. The body keeps a ledger of its own, bearer; I am only permitted to read it.\"", LogTone.Aegis);
+        }
     }
 
     /// <summary>
@@ -1219,12 +1274,18 @@ public sealed class Game
     {
         var armor = Player.Armor;
         if (armor is null) return raw;
-        int reduced = Math.Max(1, raw - armor.EffectiveBonus(Player.Attributes));
-        if (reduced < raw && !armor.Worn)
+        // Warding is armor-craft, not toughness: it only helps while iron is
+        // worn, and only a blow the iron actually turned teaches it (D-042).
+        int reduced = Math.Max(1, raw - armor.EffectiveBonus(Player.Attributes) - Player.Skills.Bonus(SkillId.Warding));
+        if (reduced < raw)
         {
-            armor.Wear++;
-            if (armor.Worn)
-                Log.Add(Turn, $"The {armor.Name} hangs in cut batting now; it turns nothing more until it is mended.", LogTone.Combat);
+            if (!armor.Worn)
+            {
+                armor.Wear++;
+                if (armor.Worn)
+                    Log.Add(Turn, $"The {armor.Name} hangs in cut batting now; it turns nothing more until it is mended.", LogTone.Combat);
+            }
+            GainSkill(SkillId.Warding);
         }
         return reduced;
     }
@@ -1547,6 +1608,7 @@ public sealed class Game
         InUnbindMenu = false;
         InThresholdMenu = false;
         InGearMenu = false;
+        InSheetMenu = false;
         TalkNpc = null;
 
         bool forfeited = Remnant is not null;
@@ -1669,6 +1731,8 @@ public sealed class Game
         RepairPrice: RepairPrice,
         SmithX: World.Smith.Pos.X,
         SmithY: World.Smith.Pos.Y,
+        Skills: string.Join(",", Enum.GetValues<SkillId>()
+            .Select(s => $"{SkillSet.NameOf(s).ToLowerInvariant()}:{Player.Skills.Level(s)}:{Player.Skills.Uses(s)}")),
         Might: Player.Attributes[Attr.Might],
         Grace: Player.Attributes[Attr.Grace],
         Vigor: Player.Attributes[Attr.Vigor],
@@ -1682,6 +1746,7 @@ public sealed class Game
         InUnbindMenu: InUnbindMenu,
         InThresholdMenu: InThresholdMenu,
         InGearMenu: InGearMenu,
+        InSheetMenu: InSheetMenu,
         TalkNpc: TalkNpc?.Name ?? "",
         WoundedTurns: Player.WoundedTurns,
         Deaths: Player.Deaths,
@@ -1752,6 +1817,7 @@ public sealed record Snapshot(
     int RepairPrice,
     int SmithX,
     int SmithY,
+    string Skills,
     int Might,
     int Grace,
     int Vigor,
@@ -1765,6 +1831,7 @@ public sealed record Snapshot(
     bool InUnbindMenu,
     bool InThresholdMenu,
     bool InGearMenu,
+    bool InSheetMenu,
     string TalkNpc,
     int WoundedTurns,
     int Deaths,

@@ -48,6 +48,7 @@ public static class Presenter
         if (game.InUnbindMenu) DrawUnbindMenu(frame, game, layout);
         if (game.InThresholdMenu) DrawThresholdMenu(frame, layout);
         if (game.InGearMenu) DrawGearMenu(frame, game, layout);
+        if (game.InSheetMenu) DrawSheet(frame, game, layout);
         return frame;
     }
 
@@ -161,6 +162,43 @@ public static class Presenter
         frame.Write(x0 + 2, y0 + boxH - 2,
             items.Count > 0 ? $"1-{items.Count} wield or wear (* held); other closes" : "any key closes",
             Hue.DarkGray);
+    }
+
+    /// <summary>
+    /// The sheet (D-042): both ledgers on one page. Attributes are what the
+    /// Aegis has been paid to shape; skills are what the body counted itself.
+    /// </summary>
+    private static void DrawSheet(Frame frame, Game game, Layout layout)
+    {
+        var p = game.Player;
+        const int boxW = 46;
+        const int boxH = 14;
+        int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
+        int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
+
+        DrawBox(frame, x0, y0, boxW, boxH);
+        frame.Write(x0 + 2, y0 + 1, "The bearer", Hue.White);
+
+        for (int i = 0; i < AttributeSet.Count; i++)
+        {
+            var attr = (Attr)i;
+            int col = i < 4 ? x0 + 2 : x0 + 24;
+            int row = y0 + 3 + (i < 4 ? i : i - 4);
+            bool raised = p.Attributes[attr] > AttributeSet.Baseline;
+            frame.Write(col, row, $"{AttributeSet.NameOf(attr),-9}{p.Attributes[attr],2}",
+                raised ? Hue.White : Hue.Gray);
+        }
+
+        for (int i = 0; i < SkillSet.Count; i++)
+        {
+            var skill = (SkillId)i;
+            int level = p.Skills.Level(skill);
+            frame.Write(x0 + 2, y0 + 8 + i,
+                $"{SkillSet.NameOf(skill),-9}{level,2}   {p.Skills.Uses(skill)}/{SkillSet.UsesForLevel(level + 1)}",
+                level > 0 ? Hue.White : Hue.Gray);
+        }
+
+        frame.Write(x0 + 2, y0 + boxH - 2, "any key closes", Hue.DarkGray);
     }
 
     private static void DrawBox(Frame frame, int x0, int y0, int boxW, int boxH)
@@ -366,7 +404,8 @@ public static class Presenter
         y++;
         Line("hjkl/yubn move  . wait", Hue.DarkGray);
         Line("g grab  >/< enter/exit", Hue.DarkGray);
-        Line("e eat  i gear  q quit", Hue.DarkGray);
+        Line("e eat  i gear  c you", Hue.DarkGray);
+        Line("q quit", Hue.DarkGray);
     }
 
     private static string Bar(int value, int max, int slots)

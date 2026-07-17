@@ -36,10 +36,13 @@ namespace Aegis.Core;
 /// v12 when D-044 added the fallen hall to tier 4+ worlds (a v11 journal deep
 /// enough would walk tiles that now hold the hall's gate, against a pack that
 /// did not exist when it was played).
+/// v13 when D-045 added the laying-down menu (a post-resolution bump on a
+/// severed one now opens a choice where a v12 journal recorded an attack) and
+/// the compounding song fact at crossings.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 12;
+    public const int Version = 13;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

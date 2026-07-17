@@ -96,6 +96,24 @@ public sealed class Player
     /// <summary>The Unbinder's layered identity, by trust not clock (0 = guise only).</summary>
     public int UnbinderRevealTier { get; set; }
 
+    // Steady state (D-045, arc sec 9). Post-resolution families read this state;
+    // like every rung flag it is journal-derived, never serialized.
+
+    /// <summary>The cycle the threshold was answered in (0 = unanswered).</summary>
+    public int ResolutionCycle { get; set; }
+
+    /// <summary>Completed worlds' names, oldest first: the long song's verses.</summary>
+    public List<string> WorldsWalked { get; } = [];
+
+    /// <summary>Severed laid down gently rather than fought: the post-resolution verb.</summary>
+    public int SeveredUnbound { get; set; }
+
+    /// <summary>The one permitted long thread, advanced a beat at a time (0 = not begun).</summary>
+    public int ArgumentStage { get; set; }
+
+    /// <summary>The cycle the argument last advanced in: a line at a time, never binged.</summary>
+    public int ArgumentCycle { get; set; }
+
     /// <summary>Derived from Vigor (D-015): the humble baseline of 5 gives 20.</summary>
     public int MaxHp => 10 + Attributes[Attr.Vigor] * 2;
 

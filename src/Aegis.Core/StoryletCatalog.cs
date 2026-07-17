@@ -483,6 +483,188 @@ public static class StoryletCatalog
             ],
         },
 
+        // ---- Steady state (D-045, arc sec 9): small complete stories, no new
+        // mystery. The one permitted long thread (the argument) advances a beat
+        // at a time, at most one per cycle; everything else pays out and closes.
+
+        // The hermit hears the answer: the keeping, examined by the one voice the
+        // game never disproves. Their knife stays theirs; the respect is real.
+        new Storylet
+        {
+            Id = "the-fire-answered-kept",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.Character,
+            Priority = 20,
+            When = g => g.TalkNpc?.Kind == NpcKind.Severed && g.Player.Resolution == Resolution.Kept,
+            Lines =
+            [
+                ("You tell them how it ended: the stone, the two worn places, your hands on the keeping. They are quiet so long the kettle starts talking instead.", LogTone.Info),
+                ("\"Then it was a choice, and it was yours, and nothing carried you to it. That is all I ever wanted for any of us.\" They pour. \"I hold to my knife, bearer. I would choose it again by morning. But the fire got a keeper who could have walked away, and I will be turning that over for years.\"", LogTone.Info),
+                ("\"They mean it, bearer. That is the strangest thing on this whole long road: everyone I have argued with meant it.\"", LogTone.Aegis),
+            ],
+        },
+
+        // The hermit hears the other answer: the third road, named by the one
+        // soul best placed to know there were only ever supposed to be two.
+        new Storylet
+        {
+            Id = "the-fire-answered-refused",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.Character,
+            Priority = 20,
+            When = g => g.TalkNpc?.Kind == NpcKind.Severed && g.Player.Resolution == Resolution.Refused,
+            Lines =
+            [
+                ("You tell them how it ended: the knife offered and waved away, the commission laid down with your own hands, and the ward still warm at your collarbone.", LogTone.Info),
+                ("\"Ha.\" It is not quite a laugh; it is more like a door opening. \"The third road. An age of bearers, an age of knives, and it took you to find it: not severed, not kept. Just walking, the two of you, on no one's errand.\"", LogTone.Info),
+                ("\"Sit down. Drink the tea. I want every step of it, and for the first hour of the telling I promise not to argue.\"", LogTone.Info),
+                ("\"I am not built to like them, bearer. I find I do anyway.\"", LogTone.Aegis),
+            ],
+        },
+
+        // The standing irony, surfaced at last (arc sec 7): the first laying-down
+        // makes the bearer a colleague in the trade the Unbinder never speaks of.
+        new Storylet
+        {
+            Id = "the-trade-shared",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.Character,
+            Priority = 30,
+            When = g => g.TalkNpc?.Kind == NpcKind.Unbinder && g.Player.SeveredUnbound >= 1,
+            Lines =
+            [
+                ("They know before you say a word. Menders always know whose hands have been doing the work.", LogTone.Info),
+                ("\"So. You have taken up the other half of my trade: the half done in the dark, unspoken of at fires, and never once thanked.\" They study their own hands. \"It does not get easier. Do not let it get easier. The day it is easy, put it down.\"", LogTone.Info),
+                ("\"That is the whole of my teaching, and I notice you did not need it. Your keeper taught you what things weigh.\"", LogTone.Info),
+                ("\"They have carried that alone a very long time, bearer. It is no lighter now. But it is shared.\"", LogTone.Aegis),
+            ],
+        },
+
+        // The argument, resumed (beat one, per answer): the promise from the
+        // threshold kept, one exchange, one point marked, complete in itself.
+        new Storylet
+        {
+            Id = "the-argument-resumed-kept",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.Character,
+            Priority = 20,
+            When = g => g.TalkNpc?.Kind == NpcKind.Unbinder
+                && g.Player.Resolution == Resolution.Kept
+                && g.Player.ArgumentStage == 0
+                && g.Cycle > g.Player.ResolutionCycle,
+            Lines =
+            [
+                ("A new world, a new guise, the same eyes. They set their work down as if you had an appointment. \"Keeper. I promised you an argument; here is my opening. You did not choose the keeping. It chose you an age ago, and called the choosing yours at the very end. A well-made trap looks exactly like a door.\"", LogTone.Info),
+                ("\"And a door you can walk back out of is not a trap. We crossed after the choice was made, and the door stood open behind us. It always will.\"", LogTone.Aegis),
+                ("The Unbinder smiles, actually smiles. \"Point taken and not conceded. Mark it in your ledger: one to the shield. We resume when the roads cross.\"", LogTone.Info),
+            ],
+            Effect = g => { g.Player.ArgumentStage = 1; g.Player.ArgumentCycle = g.Cycle; },
+        },
+        new Storylet
+        {
+            Id = "the-argument-resumed-refused",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.Character,
+            Priority = 20,
+            When = g => g.TalkNpc?.Kind == NpcKind.Unbinder
+                && g.Player.Resolution == Resolution.Refused
+                && g.Player.ArgumentStage == 0
+                && g.Cycle > g.Player.ResolutionCycle,
+            Lines =
+            [
+                ("A new world, a new guise, the same eyes. They set their work down as if you had an appointment. \"Walker. I promised you an argument, and you have taken half my side of it already, which makes this awkward. Here is what is left: the ward. You laid down the errand, and kept the leash.\"", LogTone.Info),
+                ("\"A leash has a held end and a worn end, and no confusion about which is which. Find the held end of us, and I will cut it myself.\"", LogTone.Aegis),
+                ("The Unbinder turns that over for a long, honest moment. \"Mark it: one to the shield. I have not been argued with this well in an age. We resume when the roads cross.\"", LogTone.Info),
+            ],
+            Effect = g => { g.Player.ArgumentStage = 1; g.Player.ArgumentCycle = g.Cycle; },
+        },
+
+        // Beat two: the stranger-kind, now that someone holds the count. The one
+        // round the argument ever draws, because both sides win it.
+        new Storylet
+        {
+            Id = "the-argument-of-mercies",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.Character,
+            Priority = 20,
+            When = g => g.TalkNpc?.Kind == NpcKind.Unbinder
+                && g.Player.ArgumentStage == 1
+                && g.Cycle > g.Player.ArgumentCycle,
+            Lines =
+            [
+                ("They pick the thread up mid-sentence, worlds later, as if no time had passed at all. \"The stranger-kind, then. My mercies and your keeper's failures, still walking the deep roads. What is owed them, now that someone holds the count?\"", LogTone.Info),
+                ("\"Everything short of forcing it. An ending offered is a mercy; an ending imposed is the old commission wearing kind clothes. We offer. They choose. That is the whole law of it now.\"", LogTone.Aegis),
+                ("\"...That is my own law, said back to me in a forged voice.\" They do not smile this time. \"Mark nothing. Some rounds are draws because both sides won them.\"", LogTone.Info),
+            ],
+            Effect = g => { g.Player.ArgumentStage = 2; g.Player.ArgumentCycle = g.Cycle; },
+        },
+
+        // Beat three: the steady state said aloud. Nobody concedes; the argument
+        // settles into the one shape that can run forever without going stale.
+        new Storylet
+        {
+            Id = "the-argument-unhurried",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.Character,
+            Priority = 20,
+            When = g => g.TalkNpc?.Kind == NpcKind.Unbinder
+                && g.Player.ArgumentStage == 2
+                && g.Cycle > g.Player.ArgumentCycle,
+            Lines =
+            [
+                ("\"A last piece, and then the argument can breathe a while. I hold what I have always held: an ending is what makes a thing mean. Nothing you chose has changed my mind.\" They look at you the way a mason looks at old, sound work. \"But I have watched you spend a carried life as if every day of it could end, and I grant this much: you are the best counterargument the shield ever forged. It is still only an argument.\"", LogTone.Info),
+                ("\"Granted back: they are still the best question anyone ever asked me. A made thing should keep the question that made it think. We keep theirs.\"", LogTone.Aegis),
+                ("\"Then neither of us is finished, and neither of us is in any hurry.\" They shoulder their pack, and the courtesy, for once, is only warmth. \"Walk well, both of you. I will find you deeper down.\"", LogTone.Info),
+            ],
+            Effect = g => { g.Player.ArgumentStage = 3; g.Player.ArgumentCycle = g.Cycle; },
+        },
+
+        // Hearth-signs (arc sec 9): the deep worlds read the answer back. Text
+        // only, once per world, never a number: the sec 8 guardrail holds.
+        new Storylet
+        {
+            Id = "hearth-sign-kept",
+            Trigger = StoryletTrigger.Rest,
+            Priority = 5,
+            When = g => g.Player.Resolution == Resolution.Kept && g.World.Tier >= 4,
+            Lines =
+            [
+                ("The shrine's hum settles under your breastbone and stays a moment past the counting, like a held chord.", LogTone.Info),
+                ("\"Feel that? The fire knows its keeper crossed. These deep worlds were kindled wild and wild they stay: but the wildness knows whose tread this is now. Nothing here is cruel on purpose tonight.\"", LogTone.Aegis),
+            ],
+        },
+        new Storylet
+        {
+            Id = "hearth-sign-refused",
+            Trigger = StoryletTrigger.EnterTile,
+            Tile = Terrain.Waygate,
+            Priority = 5,
+            When = g => g.Player.Resolution == Resolution.Refused && g.World.Tier >= 4,
+            Lines =
+            [
+                ("This deep, the arch's hum has a grain to it: unkept, untuned, and somehow the freer for it, like a bell that answers no ringer.", LogTone.Info),
+                ("\"Kindled keeperless, this one, like every world below it. We chose that, and I do not unsay it: hear how it sings anyway. Wild is not the same word as wrong. We walk in the difference.\"", LogTone.Aegis),
+            ],
+        },
+
+        // The long song: the mythology pipe compounding (D-013 by way of D-045).
+        // The stead has the order wrong and a world too many; the correction is
+        // the final register doing what it does best, keeping score gently.
+        new Storylet
+        {
+            Id = "the-long-song",
+            Trigger = StoryletTrigger.NearHouse,
+            Scope = StoryletScope.Character,
+            Priority = 10,
+            Requires = [new FactPattern("song", "the_descent")],
+            When = g => g.Player.Resolution != Resolution.None,
+            Lines =
+            [
+                ("By the well a chain of children are singing a walking-song too long for its tune, a verse for every world, hands slapping the rhythm on the trough. \"{r0.detail}\"", LogTone.Info),
+                ("\"They have the order wrong, and one world too many: I was there, and you never wept in any world of glass. Songs are ledgers kept by love instead of weight, bearer. I no longer mind that they balance differently.\"", LogTone.Aegis),
+            ],
+        },
+
         // Ambient flavor: repeatable, cooldown-gated, deliberately slight.
         new Storylet
         {

@@ -47,6 +47,7 @@ public static class Presenter
         if (game.InTalkMenu) DrawTalkMenu(frame, game, layout);
         if (game.InUnbindMenu) DrawUnbindMenu(frame, game, layout);
         if (game.InThresholdMenu) DrawThresholdMenu(frame, layout);
+        if (game.InLayingMenu) DrawLayingMenu(frame, layout);
         if (game.InGearMenu) DrawGearMenu(frame, game, layout);
         if (game.InSheetMenu) DrawSheet(frame, game, layout);
         return frame;
@@ -128,6 +129,22 @@ public static class Presenter
         frame.Write(x0 + 2, y0 + 2, "The Hearth burns alone.", Hue.Cyan);
         frame.Write(x0 + 2, y0 + 4, "1) Take up the keeping", Hue.White);
         frame.Write(x0 + 2, y0 + 5, "2) Lay the commission down and walk on", Hue.White);
+        frame.Write(x0 + 2, y0 + boxH - 2, "1-2 choose; any other key to step back", Hue.DarkGray);
+    }
+
+    /// <summary>The laying-down (D-045): the post-resolution choice, at arm's length.</summary>
+    private static void DrawLayingMenu(Frame frame, Layout layout)
+    {
+        const int boxW = 46;
+        const int boxH = 9;
+        int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
+        int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
+
+        DrawBox(frame, x0, y0, boxW, boxH);
+        frame.Write(x0 + 2, y0 + 1, "The Severed One", Hue.White);
+        frame.Write(x0 + 2, y0 + 2, "It waits. The count is yours to weigh.", Hue.Cyan);
+        frame.Write(x0 + 2, y0 + 4, "1) The old way", Hue.White);
+        frame.Write(x0 + 2, y0 + 5, "2) Lay it down gently", Hue.White);
         frame.Write(x0 + 2, y0 + boxH - 2, "1-2 choose; any other key to step back", Hue.DarkGray);
     }
 

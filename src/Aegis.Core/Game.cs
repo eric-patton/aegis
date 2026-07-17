@@ -39,6 +39,14 @@ public sealed class Game
     /// <summary>The keeping's choice menu (D-039), open only at the Hearth itself.</summary>
     public bool InThresholdMenu { get; private set; }
 
+    /// <summary>The laying-down choice (D-045), open only face to face with a severed one.</summary>
+    public bool InLayingMenu { get; private set; }
+
+    private Monster? _layingTarget;
+
+    /// <summary>Set by choosing the old way: the moment closes for this world's keeper.</summary>
+    private bool _layingDeclined;
+
     /// <summary>The pack menu (D-041): 'i' anywhere; digits wield or wear, anything else closes.</summary>
     public bool InGearMenu { get; private set; }
     public bool InSheetMenu { get; private set; }
@@ -180,6 +188,13 @@ public sealed class Game
             return;
         }
 
+        if (InLayingMenu)
+        {
+            HandleLayingMenuKey(key);
+            KeyApplied?.Invoke(key);
+            return;
+        }
+
         if (InUnbindMenu)
         {
             HandleUnbindMenuKey(key);
@@ -243,7 +258,12 @@ public sealed class Game
         if (Mode == MapMode.Site)
         {
             var blocker = Monsters.FirstOrDefault(m => m.Alive && m.SiteId == CurrentSite!.Id && m.Pos == target);
-            if (blocker is not null) return AttackMonster(blocker);
+            if (blocker is not null)
+            {
+                if (blocker.Kind == MonsterKind.Severed && Player.Resolution != Resolution.None && !_layingDeclined)
+                    return OpenLayingMenu(blocker);
+                return AttackMonster(blocker);
+            }
         }
         else
         {
@@ -406,6 +426,7 @@ public sealed class Game
     {
         string prevWorld = World.Name;
         string prevSettlement = World.SettlementName;
+        Player.WorldsWalked.Add(prevWorld);
 
         if (Remnant is not null)
         {
@@ -432,11 +453,14 @@ public sealed class Game
         InTalkMenu = false;
         InUnbindMenu = false;
         InThresholdMenu = false;
+        InLayingMenu = false;
         InGearMenu = false;
         InSheetMenu = false;
         TalkNpc = null;
         CurrentSite = null;
         UnbindingsLeft = UnbindingsPerWorld;
+        _layingTarget = null;
+        _layingDeclined = false;
 
         Mode = MapMode.Overworld;
         Player.Pos = World.ShrinePos;
@@ -446,6 +470,12 @@ public sealed class Game
 
         World.Facts.Add("echo", "deed", prevSettlement,
             $"In a world called {prevWorld}, the bearer emptied a goblin cave, and {prevSettlement} slept safe.");
+
+        // The long song (D-045): from the third world on, the walked worlds are one
+        // song, compounding a verse per crossing, and every stead sings it wrong.
+        if (Player.WorldsWalked.Count >= 2)
+            World.Facts.Add("song", "the_descent", World.Name,
+                $"First {string.Join(", then ", Player.WorldsWalked)}; and then, the singers swear, a world of glass where the walker wept, which no walker ever walked.");
 
         Log.Add(Turn, $"You step through the arch, and {prevWorld} folds shut behind you like a closed book.", LogTone.Danger);
         // The crossing is the arc's guaranteed real estate (arc sec 5). Rungs are
@@ -949,6 +979,7 @@ public sealed class Game
     private void ResolveThreshold(bool kept)
     {
         Player.Resolution = kept ? Resolution.Kept : Resolution.Refused;
+        Player.ResolutionCycle = Cycle;
         InThresholdMenu = false;
 
         if (kept)
@@ -971,6 +1002,72 @@ public sealed class Game
         // The mystery's resolution is never the final note (technique commitment 7):
         // the same pointer home, either way, toward the witnessed epilogue above.
         Log.Add(Turn, "\"Go up after them. There is a stead over your head that thinks you are only a stranger who was kind to it. That matters more than this room. Go and be that.\"", LogTone.Aegis);
+    }
+
+    /// <summary>
+    /// The post-resolution meeting (D-045, arc sec 9): face to face with a severed
+    /// one, the bearer holds the count now, and the choice the Unbinder always had
+    /// is on the table. Turn-free like every menu; the moment holds its breath.
+    /// Both resolutions get the same verb at the same price (arc sec 8 guardrail).
+    /// </summary>
+    private bool OpenLayingMenu(Monster keeper)
+    {
+        InLayingMenu = true;
+        _layingTarget = keeper;
+        Log.Add(Turn, "At arm's length it stops, mid-reach, the way a routine stops when something in it finally does not fit. It is looking at your collarbone. It is, perhaps, the first true thing it has seen in an age.", LogTone.Danger);
+        Log.Add(Turn, Player.Resolution == Resolution.Kept
+            ? "\"It sees the keeping on you, bearer. You hold what it is owed. You could close its count here, gently, if you choose. Or the old way. Yours to weigh now.\""
+            : "\"It sees what you laid down, bearer, and cannot understand a laying-down it was never offered. You could offer it one, here, gently. Or the old way. Yours to weigh now.\"", LogTone.Aegis);
+        return false;
+    }
+
+    private void HandleLayingMenuKey(char key)
+    {
+        InLayingMenu = false;
+        var keeper = _layingTarget!;
+        _layingTarget = null;
+
+        if (key == '1')
+        {
+            _layingDeclined = true;
+            Log.Add(Turn, "The old way, then. The moment closes like water over a dropped stone.", LogTone.Info);
+            if (AttackMonster(keeper)) AdvanceTurn();
+        }
+        else if (key == '2')
+        {
+            LayDownSevered(keeper);
+            AdvanceTurn();
+        }
+        else
+        {
+            Log.Add(Turn, "You step back from the moment. It holds its half of the silence, and does not follow it.", LogTone.Info);
+        }
+    }
+
+    /// <summary>
+    /// The gentle answer (D-045): the Unbinder's own act, in the bearer's hands.
+    /// No essence changes hands: the count closes instead of transferring, and
+    /// where it goes is register, never a number.
+    /// </summary>
+    private void LayDownSevered(Monster keeper)
+    {
+        keeper.Hp = 0;
+        keeper.Intent = null;
+        Player.SeveredUnbound++;
+
+        Log.Add(Turn, "You take its hands. They are cold, and under yours they stop shaking. You speak its count out plainly: what it kept, what it carried, what it is owed. It listens the way dry ground takes rain.", LogTone.Info);
+        Log.Add(Turn, "It comes apart the way a knot comes undone: nothing breaks. At the end there is a face, and the face is only tired, and then it is only gone.", LogTone.Info);
+        Log.Add(Turn, Player.Resolution == Resolution.Kept
+            ? "\"Its count is closed and carried, bearer. I have it; the fire will have it. Nothing about it was wasted, and now nothing about it is lost.\""
+            : "\"Its count is closed and struck out, bearer: paid in full, owed to no fire and no ledger. That is what we could give it. I think it is what it wanted.\"", LogTone.Aegis);
+
+        if (CurrentSite is { Cleared: false } site && !Monsters.Any(m => m.Alive && m.SiteId == site.Id))
+        {
+            site.Cleared = true;
+            World.Facts.Add("deed", "severed_laid", World.SettlementName,
+                "The keeper of the stone ring was laid down gently, and the fire in the ring went out with no one left to need it.");
+            _storylets.TryFire(this, StoryletTrigger.DeedWritten);
+        }
     }
 
     private void HandleUnbindMenuKey(char key)
@@ -1677,9 +1774,11 @@ public sealed class Game
         InTalkMenu = false;
         InUnbindMenu = false;
         InThresholdMenu = false;
+        InLayingMenu = false;
         InGearMenu = false;
         InSheetMenu = false;
         TalkNpc = null;
+        _layingTarget = null;
 
         bool forfeited = Remnant is not null;
         if (forfeited)
@@ -1818,6 +1917,7 @@ public sealed class Game
         InTalkMenu: InTalkMenu,
         InUnbindMenu: InUnbindMenu,
         InThresholdMenu: InThresholdMenu,
+        InLayingMenu: InLayingMenu,
         InGearMenu: InGearMenu,
         InSheetMenu: InSheetMenu,
         TalkNpc: TalkNpc?.Name ?? "",
@@ -1906,6 +2006,7 @@ public sealed record Snapshot(
     bool InTalkMenu,
     bool InUnbindMenu,
     bool InThresholdMenu,
+    bool InLayingMenu,
     bool InGearMenu,
     bool InSheetMenu,
     string TalkNpc,

@@ -176,7 +176,7 @@ public sealed class Game
 
         if (InSheetMenu)
         {
-            InSheetMenu = false;
+            HandleSheetMenuKey(key);
             KeyApplied?.Invoke(key);
             return;
         }
@@ -1185,6 +1185,45 @@ public sealed class Game
         return false;
     }
 
+    /// <summary>
+    /// Threshold questions standing open: reached, and no answer taken (D-046).
+    /// Derived entirely from uses and chosen knacks, so nothing here needs
+    /// saving, resetting, or death handling.
+    /// </summary>
+    public IEnumerable<KnackChoice> OpenKnackChoices =>
+        PerkCatalog.Choices.Where(c => Player.Skills.Level(c.Skill) >= c.Level
+            && !c.Options.Any(o => Player.HasPerk(o.Id)));
+
+    /// <summary>The question the sheet is currently putting, if any: one at a time.</summary>
+    public KnackChoice? PendingKnack => OpenKnackChoices.FirstOrDefault();
+
+    /// <summary>
+    /// The sheet mostly just closes, but while a knack question is open its
+    /// digits answer it (D-046). Choosing keeps the sheet open, so a second
+    /// waiting question is put right away.
+    /// </summary>
+    private void HandleSheetMenuKey(char key)
+    {
+        var choice = PendingKnack;
+        if (choice is not null && key >= '1' && key <= '0' + choice.Options.Length)
+        {
+            ChooseKnack(choice.Options[key - '1']);
+            return;
+        }
+        InSheetMenu = false;
+    }
+
+    private void ChooseKnack(PerkDef perk)
+    {
+        Player.Perks.Add(perk.Id);
+        Log.Add(Turn, $"{perk.ChosenLine} ({perk.Name} is yours, for good.)", LogTone.Reward);
+        if (!Player.KnackLineHeard)
+        {
+            Player.KnackLineHeard = true;
+            Log.Add(Turn, "\"The body's ledger keeps choices now, not only counts. Still none of my doing, bearer. It is becoming quite a book.\"", LogTone.Aegis);
+        }
+    }
+
     /// <summary>Wields or wears a pack item; whatever held the slot goes to the pack.</summary>
     private void EquipGear(GearItem item)
     {
@@ -1284,18 +1323,26 @@ public sealed class Game
         // wind on top of the halved edge the item itself reports.
         var weapon = Player.Weapon;
         var family = weapon?.Family ?? SkillId.Brawling;
-        int staminaCost = 3 + (weapon is not null && !weapon.MeetsReq(Player.Attributes) ? 1 : 0);
+        int staminaCost = 3
+            - (family == SkillId.Blades && Player.HasPerk(PerkId.SpareMotion) ? 1 : 0)
+            + (weapon is not null && !weapon.MeetsReq(Player.Attributes) ? 1 : 0);
         int damage;
         SkillId? trained = null;
         if (Player.Stamina >= staminaCost)
         {
             Player.Stamina -= staminaCost;
             damage = _combatRng.Range(2, 5) + Player.MeleeBonus + (weapon?.EffectiveBonus(Player.Attributes) ?? 0)
-                + Player.Skills.Bonus(family);
+                + Player.Skills.Bonus(family)
+                + (family == SkillId.Blades && Player.HasPerk(PerkId.DrawnCut) ? 1 : 0)
+                + (weapon is null && Player.HasPerk(PerkId.KnuckleAndBone) ? 2 : 0);
             // Only a full swing teaches (D-014's cost gating: this one was paid
             // for in wind and wear). Feeble flailing is free, and free is unfed.
             trained = family;
-            if (weapon is not null && !weapon.Worn)
+            // The kind grip (D-046): every second counted hafted swing spares
+            // the edge. Uses parity, so replay and the wear ledger agree.
+            bool edgeSpared = family == SkillId.Hafted && Player.HasPerk(PerkId.KindGrip)
+                && Player.Skills.Uses(family) % 2 == 1;
+            if (weapon is not null && !weapon.Worn && !edgeSpared)
             {
                 weapon.Wear++;
                 if (weapon.Worn)
@@ -1349,6 +1396,10 @@ public sealed class Game
                 MonsterKind.Hound => $"The iron hound drops mid-stride and lies still: a made thing, and whatever ran it has run out. You take {coin} coin and {essence} essence.",
                 _ => $"The {target.Name} falls. You take {coin} coin and {essence} essence.",
             }, LogTone.Reward);
+            // The follow-through (D-046): a hafted swing that finishes its foe
+            // hands part of its wind back. Quiet; the wind bar says it.
+            if (trained == SkillId.Hafted && Player.HasPerk(PerkId.FollowThrough))
+                Player.Stamina = Math.Min(Player.Stamina + 2, Player.MaxStamina);
             CheckSiteCleared(CurrentSite!);
         }
 
@@ -1380,6 +1431,13 @@ public sealed class Game
             Player.SkillLineHeard = true;
             Log.Add(Turn, "\"That was none of my doing. The body keeps a ledger of its own, bearer; I am only permitted to read it.\"", LogTone.Aegis);
         }
+
+        // A threshold crossed opens its question (D-046). Announced here, put by
+        // the sheet, and standing open forever until answered.
+        foreach (var choice in PerkCatalog.Choices)
+            if (choice.Skill == id && before < choice.Level && after >= choice.Level
+                && !choice.Options.Any(o => Player.HasPerk(o.Id)))
+                Log.Add(Turn, $"Your {SkillSet.NameOf(id)} has settled into a question of style. The sheet ('c') will put it to you.", LogTone.Reward);
     }
 
     /// <summary>
@@ -1387,16 +1445,23 @@ public sealed class Game
     /// never below 1: iron helps, and nothing makes being hit free. Turning a
     /// blow is what wears the armor down.
     /// </summary>
-    private int Absorb(int raw)
+    private int Absorb(int raw, bool telegraphed = false)
     {
         var armor = Player.Armor;
         if (armor is null) return raw;
         // Warding is armor-craft, not toughness: it only helps while iron is
         // worn, and only a blow the iron actually turned teaches it (D-042).
-        int reduced = Math.Max(1, raw - armor.EffectiveBonus(Player.Attributes) - Player.Skills.Bonus(SkillId.Warding));
+        // The braced shoulder (D-046) reads the wind-up: a telegraphed blow
+        // that still lands is turned 2 further.
+        int reduced = Math.Max(1, raw - armor.EffectiveBonus(Player.Attributes) - Player.Skills.Bonus(SkillId.Warding)
+            - (telegraphed && Player.HasPerk(PerkId.BracedShoulder) ? 2 : 0));
         if (reduced < raw)
         {
-            if (!armor.Worn)
+            // The mended strap (D-046): every second turned blow spares the
+            // straps. Uses parity, same clock as the kind grip.
+            bool strapSpared = Player.HasPerk(PerkId.MendedStrap)
+                && Player.Skills.Uses(SkillId.Warding) % 2 == 1;
+            if (!armor.Worn && !strapSpared)
             {
                 armor.Wear++;
                 if (armor.Worn)
@@ -1494,7 +1559,7 @@ public sealed class Game
                         IntentKind.GravenFist => _combatRng.Range(6, 10),
                         IntentKind.ThroatLunge => _combatRng.Range(6, 10),
                         _ => _combatRng.Range(4, 7),
-                    });
+                    }, telegraphed: true);
                     Player.Hp -= damage;
                     Log.Add(Turn, intent.Kind switch
                     {
@@ -1905,6 +1970,8 @@ public sealed class Game
         SmithY: World.Smith.Pos.Y,
         Skills: string.Join(",", Enum.GetValues<SkillId>()
             .Select(s => $"{SkillSet.NameOf(s).ToLowerInvariant()}:{Player.Skills.Level(s)}:{Player.Skills.Uses(s)}")),
+        Perks: string.Join(",", Player.Perks.Select(PerkCatalog.IdOf)),
+        PendingKnack: PendingKnack is { } knack ? SkillSet.NameOf(knack.Skill).ToLowerInvariant() : "",
         Might: Player.Attributes[Attr.Might],
         Grace: Player.Attributes[Attr.Grace],
         Vigor: Player.Attributes[Attr.Vigor],
@@ -1994,6 +2061,8 @@ public sealed record Snapshot(
     int SmithX,
     int SmithY,
     string Skills,
+    string Perks,
+    string PendingKnack,
     int Might,
     int Grace,
     int Vigor,

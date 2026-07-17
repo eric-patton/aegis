@@ -51,7 +51,7 @@ Might, Grace, Vigor, Wits, Mind, Will, Presence. Raised by spending **Essence** 
 ### Skills: eighteen-ish, grown by use
 Combat (Blades, Hafted, Polearms, Ranged, Brawling, Warding), Craft (Smithing, Alchemy, Cooking), Wilderness (Hunting, Survival, Athletics), Subterfuge (Stealth, Larceny), Social (Persuasion, Commerce), Mind (Lore, plus magic skills). Skills grow only through use, and every use costs something real: materials, durability, fatigue, time, risk. Grinding is welcome and diegetic (sparring partners, training dummies, dangerous hunting grounds) with diminishing returns; it is never an exploit, because free repeatable actions do not exist.
 
-At skill thresholds you choose one of two or three **perks** (mutually exclusive, KCD-style). **Proficiencies** (discrete know-how: recipes, techniques, faction customs) come from books, mentors, and quests.
+At skill thresholds you choose one of two or three **perks** (mutually exclusive, KCD-style; in the game's own register they are knacks, shipped at level 2 by D-046). **Proficiencies** (discrete know-how: recipes, techniques, faction customs) come from books, mentors, and quests.
 
 ### Gear is the other half of your build
 Weapons and armor print hard attribute/skill requirements, visible before you invest. Under-requirement use is penalized, not blocked: you can swing the too-big sword, badly, and the sword itself tells you what to become. Respec exists only as a rare "unbinding" of the Aegis, a handful per world, refreshed at each crossing.
@@ -177,7 +177,7 @@ And the loop closes on itself: **your finished characters enter the mythology.**
 
 ## 13. Document Map
 
-- `decisions.md`: the decision audit trail with rationale (45 and counting)
+- `decisions.md`: the decision audit trail with rationale (46 and counting)
 - `storylets.md`: storylet format and fact-graph schema spec (D-030)
 - `story/aegis-arc.md`: the trans-world Aegis arc spec (Canon: The Ledger; D-026)
 - `story/world-story-templates.md`: the world-story template contract, iron rules, and three launch templates

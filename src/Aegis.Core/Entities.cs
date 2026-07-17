@@ -61,6 +61,18 @@ public sealed class Player
     /// <summary>The Aegis speaks once at the first skill rise; never again.</summary>
     public bool SkillLineHeard { get; set; }
 
+    /// <summary>
+    /// Knacks chosen at skill thresholds (D-046), in the order they were taken.
+    /// A choice forecloses its siblings forever: like the skills that opened
+    /// them, knacks never respec. Banked and crossing like the rest of the body.
+    /// </summary>
+    public List<PerkId> Perks { get; } = [];
+
+    public bool HasPerk(PerkId id) => Perks.Contains(id);
+
+    /// <summary>The Aegis speaks once at the first knack taken; never again.</summary>
+    public bool KnackLineHeard { get; set; }
+
     // Arc-ladder state (D-037, design/story/aegis-arc.md sec 6). The fact graph is
     // per-world, so rung progress lives on the character. Each flag is set by the
     // storylet or crossing scene that completes its rung; later rungs gate on
@@ -117,8 +129,8 @@ public sealed class Player
     /// <summary>Derived from Vigor (D-015): the humble baseline of 5 gives 20.</summary>
     public int MaxHp => 10 + Attributes[Attr.Vigor] * 2;
 
-    /// <summary>Derived from Vigor: baseline 5 gives 10.</summary>
-    public int MaxStamina => 5 + Attributes[Attr.Vigor];
+    /// <summary>Derived from Vigor: baseline 5 gives 10. A brawler's wind is their own (D-046).</summary>
+    public int MaxStamina => 5 + Attributes[Attr.Vigor] + (HasPerk(PerkId.DeepBreath) ? 2 : 0);
 
     /// <summary>Flat melee bonus from Might above baseline.</summary>
     public int MeleeBonus => Math.Max(0, (Attributes[Attr.Might] - AttributeSet.Baseline) / 2);

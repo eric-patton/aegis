@@ -188,8 +188,9 @@ public static class Presenter
     private static void DrawSheet(Frame frame, Game game, Layout layout)
     {
         var p = game.Player;
-        const int boxW = 46;
-        const int boxH = 14;
+        var choice = game.PendingKnack;
+        const int boxW = 50;
+        int boxH = choice is null ? 14 : 15 + choice.Options.Length;
         int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
         int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
 
@@ -210,12 +211,27 @@ public static class Presenter
         {
             var skill = (SkillId)i;
             int level = p.Skills.Level(skill);
-            frame.Write(x0 + 2, y0 + 8 + i,
-                $"{SkillSet.NameOf(skill),-9}{level,2}   {p.Skills.Uses(skill)}/{SkillSet.UsesForLevel(level + 1)}",
-                level > 0 ? Hue.White : Hue.Gray);
+            var knack = PerkCatalog.Choices.FirstOrDefault(c => c.Skill == skill)?
+                .Options.FirstOrDefault(o => p.HasPerk(o.Id));
+            string row = $"{SkillSet.NameOf(skill),-9}{level,2}   {p.Skills.Uses(skill)}/{SkillSet.UsesForLevel(level + 1)}";
+            if (knack is not null) row += $"   {knack.Name}";
+            frame.Write(x0 + 2, y0 + 8 + i, row, level > 0 ? Hue.White : Hue.Gray);
         }
 
-        frame.Write(x0 + 2, y0 + boxH - 2, "any key closes", Hue.DarkGray);
+        if (choice is not null)
+        {
+            frame.Write(x0 + 2, y0 + 12,
+                $"{SkillSet.NameOf(choice.Skill)} has settled into a question:", Hue.Cyan);
+            for (int i = 0; i < choice.Options.Length; i++)
+                frame.Write(x0 + 2, y0 + 13 + i,
+                    $"{i + 1}) {choice.Options[i].Name}: {choice.Options[i].Blurb}", Hue.White);
+            frame.Write(x0 + 2, y0 + boxH - 2,
+                $"1-{choice.Options.Length} choose, for good; any other key closes", Hue.DarkGray);
+        }
+        else
+        {
+            frame.Write(x0 + 2, y0 + boxH - 2, "any key closes", Hue.DarkGray);
+        }
     }
 
     private static void DrawBox(Frame frame, int x0, int y0, int boxW, int boxH)

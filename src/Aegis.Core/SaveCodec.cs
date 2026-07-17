@@ -39,10 +39,13 @@ namespace Aegis.Core;
 /// v13 when D-045 added the laying-down menu (a post-resolution bump on a
 /// severed one now opens a choice where a v12 journal recorded an attack) and
 /// the compounding song fact at crossings.
+/// v14 when D-046 added knacks: the sheet's digits now answer threshold
+/// questions (a v13 key that merely closed the sheet could now choose one
+/// forever), and chosen knacks change later damage, wind, and wear.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 13;
+    public const int Version = 14;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

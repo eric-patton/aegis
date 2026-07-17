@@ -53,6 +53,12 @@ public sealed class Player
     /// <summary>Rung 4d: the commission has been spoken in full at a crossing (D-038).</summary>
     public bool CommissionHeard { get; set; }
 
+    /// <summary>
+    /// The threshold choice (D-039, arc sec 8). Both answers resolve the mystery;
+    /// they differ in fiction and voice register, never in mechanics.
+    /// </summary>
+    public Resolution Resolution { get; set; }
+
     /// <summary>The Unbinder's layered identity, by trust not clock (0 = guise only).</summary>
     public int UnbinderRevealTier { get; set; }
 
@@ -71,6 +77,9 @@ public sealed class Player
     /// <summary>Effective max HP while Wounded: the Aegis is spent (D-008).</summary>
     public int EffectiveMaxHp => WoundedTurns > 0 ? Math.Max(1, MaxHp * 4 / 5) : MaxHp;
 }
+
+/// <summary>How the threshold resolved (D-039): unresolved, the keeping taken up, or laid down.</summary>
+public enum Resolution { None, Kept, Refused }
 
 public enum MonsterKind { Goblin, Wight, Severed }
 

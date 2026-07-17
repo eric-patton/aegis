@@ -72,6 +72,17 @@ stepping onto the `o` tile, no entry needed), the Unbinder's second reveal,
 and the commission crossing all gate on the ledger flag and each other. Saves
 are format v7 (tier-3+ worldgen changed).
 
+Cycle-5 content (D-039): tier 5+ worlds hold the last stair (`v` on the map;
+`state` carries `thresholdX/thresholdY`, `-1` when absent). The door at its
+foot opens only once the commission flag is held; inside, walking the corridor
+fires the approach beats and stepping to the site's heart opens the keeping
+menu (`state` carries `inThresholdMenu`; `1`/`2` answer, anything else steps
+back, and the menu never reopens once answered). The answer appends `kept` or
+`refused` to `arcProgress` and swaps voice registers permanently (death,
+crossing, and rest lines; a new Unbinder topic). The two answers are
+mechanics-identical by design and by test; assert `arcProgress`, never prose.
+Saves are format v8 (tier-5+ worldgen changed and menu digits gained meaning).
+
 ## Trade and provisions (D-036)
 
 The steadholder sells rations (talk menu, last entries after the topics; the menu

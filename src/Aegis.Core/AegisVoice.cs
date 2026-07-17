@@ -1,9 +1,10 @@
 namespace Aegis.Core;
 
 /// <summary>
-/// The Aegis speaks at deaths (D-019, Hades pattern). Slice carries only the
-/// cycle-1 register: terse, functional, the motif planted from the first fall.
-/// Line banks swap registers as the arc advances (design/story/aegis-arc.md sec 4).
+/// The Aegis speaks at deaths (D-019, Hades pattern). Death lines carry register,
+/// never plot (arc sec 4): register one is terse and functional, register two
+/// (after the ledger) personal and worried, the final register (after the
+/// threshold) candid between equals. The motif rides all three, meaning shifting.
 /// </summary>
 public static class AegisVoice
 {
@@ -16,14 +17,41 @@ public static class AegisVoice
         "I caught you. I will always catch you.",
     ];
 
+    private static readonly string[] DeathLinesRegisterTwo =
+    [
+        "Down again. I have you. I will always have you, and I no longer know if that is the best of me or the worst.",
+        "Caught. ...Forgive the delay. I flinched, remembering the ones I did not catch.",
+        "All is counted. I say it, and now we both hear the second meaning under it.",
+        "Rise. The wound is mine a while. The rest of the weight was always mine.",
+        "Not here. Not this deep. Not you.",
+    ];
+
+    private static readonly string[] DeathLinesRegisterFinal =
+    [
+        "Up you get. The count is yours; I am only the arithmetic.",
+        "Caught you. I would say I always will, but you know that now. It is not a vow anymore, only a fact.",
+        "That one was your own doing, and I say so as a friend.",
+        "All is counted, and none of it against you. Rise.",
+        "Again? Well. I have carried worse, and I am not telling you who.",
+    ];
+
     public const string FirstDeathLine = "Be still. I have you. ... All is counted.";
 
     public const string ForfeitLine = "What you left behind is lost. The world keeps what it takes twice.";
 
     public const string ReclaimLine = "Reclaimed. Nothing is wasted that returns.";
 
-    public static string DeathLine(int deathCount)
-        => deathCount <= 1 ? FirstDeathLine : DeathLinesRegisterOne[(deathCount - 2) % DeathLinesRegisterOne.Length];
+    public static string DeathLine(int deathCount, int register = 1)
+    {
+        if (deathCount <= 1) return FirstDeathLine;
+        var bank = register switch
+        {
+            >= 3 => DeathLinesRegisterFinal,
+            2 => DeathLinesRegisterTwo,
+            _ => DeathLinesRegisterOne,
+        };
+        return bank[(deathCount - 2) % bank.Length];
+    }
 
     // Crossing lines (arc sec 5). The first crossing carries rung 1 of the reveal
     // ladder: there are other worlds, and this has happened before. Later crossings
@@ -69,6 +97,14 @@ public static class AegisVoice
         "That is the commission. Find and temper a soul fit to keep it. That is what I am for, and what you are for, if the count says so.",
         "And here is the part no one forged into me. You may refuse. I will carry you either way.",
     ];
+
+    // Post-resolution crossings (arc sec 9): the steady state's final register.
+    // The two lines differ in fiction only; the crossing itself is unchanged.
+    public const string KeptCrossingLine =
+        "Deeper, then. The crossing is the keeping, keeper: every world we finish is wood on the fire.";
+
+    public const string RefusedCrossingLine =
+        "Deeper, then, on no one's errand but ours. Hold fast to me; I hold fast back.";
 
     public const string CoinConvertedLine = "Coin is of a world; it stays. The name it bought you, you keep.";
 

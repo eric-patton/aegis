@@ -1,6 +1,6 @@
 namespace Aegis.Core;
 
-public enum SiteKind { GoblinCamp, Barrow, Hollow }
+public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold }
 
 /// <summary>A monster placed at generation time: kind, cell, and generated stats (D-011).</summary>
 public readonly record struct MonsterSpawn(MonsterKind Kind, Pos Pos, int Hp);
@@ -49,6 +49,9 @@ public sealed class World
 
     /// <summary>The severed bearer at peace (D-038): tier 3+, met as a person, never a foe.</summary>
     public Npc? SeveredNpc => Npcs.FirstOrDefault(n => n.Kind == NpcKind.Severed);
+
+    /// <summary>The last stair (D-039): tier 5+, the arc's fixed final stage. The door below answers to flags, not tiers.</summary>
+    public Site? ThresholdSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Threshold);
 
     // Convenience views of the camp, the site every world has (and tests lean on).
     public GameMap Camp => CampSite.Map;
@@ -200,10 +203,11 @@ public static class WorldGen
         // The hollow (D-037): tier 2+, on its own stream so every existing draw
         // stays put. A severed one keeps the ring's fire in every world deep
         // enough to hold one; the encounter is optional, like the barrow.
+        Pos hollowPos = default;
         if (tier >= 2)
         {
             var hollowRng = new Rng(SeedTree.Derive(worldSeed, "hollow"));
-            Pos hollowPos = FindDistantSpot(overworld, ref hollowRng, settlement, minDistance: 14);
+            hollowPos = FindDistantSpot(overworld, ref hollowRng, settlement, minDistance: 14);
             while (hollowPos == camp || hollowPos == gate || hollowPos == barrow
                    || hollowPos.Manhattan(camp) < 5 || hollowPos.Manhattan(gate) < 5
                    || hollowPos.Manhattan(barrow) < 5 || npcs.Any(n => n.Pos == hollowPos))
@@ -249,6 +253,39 @@ public static class WorldGen
                 Pos = calmPos,
                 Kind = NpcKind.Severed,
             });
+        }
+
+        // The last stair (D-039): tier 5+ worlds hold the arc's fixed final stage, a
+        // bottle site inside a procedural world (arc sec 6, cycle 5). Own stream,
+        // placed after every existing draw, so pinned deep worlds keep their layouts.
+        // The stair exists whether or not this bearer is ready: the door at its foot
+        // answers to the arc's flags, never to the map.
+        if (tier >= 5)
+        {
+            var stairRng = new Rng(SeedTree.Derive(worldSeed, "threshold"));
+            Pos stairPos = FindDistantSpot(overworld, ref stairRng, settlement, minDistance: 26);
+            while (overworld[stairPos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills)
+                   || stairPos.Manhattan(camp) < 5 || stairPos.Manhattan(gate) < 5
+                   || stairPos.Manhattan(barrow) < 5 || stairPos.Manhattan(hollowPos) < 5
+                   || npcs.Any(n => n.Pos == stairPos))
+                stairPos = FindDistantSpot(overworld, ref stairRng, settlement, minDistance: 26);
+            overworld[stairPos] = Terrain.ThresholdEntrance;
+            CarvePathIfDisconnected(overworld, shrine, stairPos);
+
+            var (stairMap, stairEntry, _) = GenerateThreshold();
+            sites.Add(new Site
+            {
+                Id = "threshold",
+                Kind = SiteKind.Threshold,
+                Map = stairMap,
+                OverworldPos = stairPos,
+                EntryPos = stairEntry,
+                Spawns = [],
+                ChestPos = stairEntry,
+                ChestLooted = true,
+            });
+            facts.Add("site", "threshold", $"{stairPos.X},{stairPos.Y}",
+                "A stair going down into the hill where no door should be, cut clean and swept clean, though nothing lives near to sweep it.");
         }
 
         facts.Add("world_name", worldName, "");
@@ -581,6 +618,32 @@ public static class WorldGen
         var entry = new Pos(2, 5);
         map[entry] = Terrain.ExitLadder;
         return (map, entry, center, new Pos(17, 7));
+    }
+
+    public const int ThresholdW = 30;
+    public const int ThresholdH = 9;
+
+    /// <summary>
+    /// The last stair (D-039): a long corridor opening into the keeping chamber,
+    /// the Hearth at its heart. Fully authored, no carve RNG, no spawns: the arc's
+    /// final stage is the same room at the bottom of every world deep enough to
+    /// reach it, because it is, in fiction, the same room.
+    /// </summary>
+    private static (GameMap Map, Pos Entry, Pos Hearth) GenerateThreshold()
+    {
+        var map = new GameMap("threshold", ThresholdW, ThresholdH, Terrain.Wall);
+        int mid = ThresholdH / 2;
+
+        for (int x = 2; x <= 20; x++) map[new Pos(x, mid)] = Terrain.Floor;
+        for (int y = 2; y <= ThresholdH - 3; y++)
+            for (int x = 21; x <= ThresholdW - 3; x++)
+                map[new Pos(x, y)] = Terrain.Floor;
+
+        var hearth = new Pos(26, mid);
+        map[hearth] = Terrain.Hearth;
+        var entry = new Pos(2, mid);
+        map[entry] = Terrain.ExitLadder;
+        return (map, entry, hearth);
     }
 }
 

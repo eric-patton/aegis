@@ -343,6 +343,86 @@ public static class StoryletCatalog
             Effect = g => g.Player.UnbinderRevealTier = Math.Max(g.Player.UnbinderRevealTier, 2),
         },
 
+        // ---- The arc ladder, rung 5 (D-039): the threshold. The approach speaks
+        // in order down the last stair; the choice itself lives in the keeping
+        // menu, and the mandated final beat waits back up in the stead.
+
+        // The stair: the motif in every hand that ever came this far. Withheld
+        // significance paying out: the player has read these words since death one.
+        new Storylet
+        {
+            Id = "the-last-stair",
+            Trigger = StoryletTrigger.EnterTile,
+            Tile = Terrain.Floor,
+            Scope = StoryletScope.Character,
+            Priority = 30,
+            When = g => g.CurrentSite?.Kind == SiteKind.Threshold && g.Player.Pos.X >= 8,
+            Lines =
+            [
+                ("The stair bottoms into a corridor, and the walls begin to speak: three words, cut in the shrine-script, over and over, in hands that change every few strides. Carvers by the generation. The same three words.", LogTone.Info),
+                ("\"Bearers cut those, coming down. Every one that came this far. I carried some of the hands that held the chisels.\"", LogTone.Aegis),
+                ("\"Add yours or not, as you please. The wall does not count. That was always my work.\"", LogTone.Aegis),
+            ],
+        },
+
+        // The door: the Unbinder present as promised, guise laid down, knife
+        // offered and left unforced. The promise from rung 4c, kept to the letter.
+        new Storylet
+        {
+            Id = "the-door-and-the-knife",
+            Trigger = StoryletTrigger.EnterTile,
+            Tile = Terrain.Floor,
+            Scope = StoryletScope.Character,
+            Priority = 30,
+            When = g => g.CurrentSite?.Kind == SiteKind.Threshold && g.Player.Pos.X >= 16,
+            Lines =
+            [
+                ("Ahead, where the corridor opens, someone waits by the last arch: no pack, no tools, no guise at all. You did not pass them on the road, and it does not matter. They were always going to be here.", LogTone.Info),
+                ("\"You kept a good pace.\" The Unbinder holds out a knife, handle first: a plain thing, older than any world you have walked. \"As promised. Take it, or wave it away. Nothing is forced here; that is the one law left this deep.\"", LogTone.Info),
+                ("\"I will stand where I stood. Whatever you choose, bearer, choose it. The worst thing that ever happened on this stone was a soul that let the stone decide.\"", LogTone.Info),
+                ("\"I am here, bearer. Not to argue with them. To be beside you while you look at it. Go and look.\"", LogTone.Aegis),
+            ],
+        },
+
+        // The chamber: the Hearth and the empty keeping, seen plainly at last.
+        // The Aegis speaks as a party to the choice, not a narrator of it.
+        new Storylet
+        {
+            Id = "the-empty-keeping",
+            Trigger = StoryletTrigger.EnterTile,
+            Tile = Terrain.Floor,
+            Scope = StoryletScope.Character,
+            Priority = 30,
+            When = g => g.CurrentSite?.Kind == SiteKind.Threshold && g.Player.Pos.X >= 21,
+            Lines =
+            [
+                ("The chamber. You have stood in great halls; this is not one. It is the size of a room where bread is baked and boots are dried, and at its heart, in a ring of plain stone, burns the Hearth: small, patient, and wrong in no way you can name, except that it burns alone.", LogTone.Info),
+                ("Around it, worn into the floor, runs a track: the path a keeper's feet would wear over an age of tending. It is empty. It has been empty long enough that the dust in it has its own dust.", LogTone.Info),
+                ("\"This is what I could not remember. Not because it was hidden. Because it hurt. Every world you have bled for was lit from this fire, and no one has kept it since my makers' age guttered out.\"", LogTone.Aegis),
+                ("\"Step up to it, bearer. Not because you must. I have carried you a long way; I will not carry you the last three strides. Those are yours.\"", LogTone.Aegis),
+            ],
+        },
+
+        // The mandated final beat (technique commitment 7): a witnessed morning in
+        // the stead, mechanically inert, and the Aegis silent in it. The mystery's
+        // resolution is never the last emotional note; this is.
+        new Storylet
+        {
+            Id = "the-morning-after",
+            Trigger = StoryletTrigger.NearHouse,
+            Scope = StoryletScope.Character,
+            Priority = 30,
+            When = g => g.Player.Resolution != Resolution.None,
+            Requires = [new FactPattern("person", "npc_steadholder")],
+            Lines =
+            [
+                ("Up in the stead, the morning is a plain one: woodsmoke, wet grass, someone arguing mildly about a fence. {r0.object} hails you from a doorway and presses a heel of warm bread into your hands, the way you would to any neighbor passing at this hour.", LogTone.Info),
+                ("\"There is porridge on, if you have not eaten. And the fence wants a second opinion, if you have patience for small things.\"", LogTone.Info),
+                ("You have walked further down than any soul on this road, and what was at the bottom is what is up here: a fire, kept or not kept, and people worth the keeping either way.", LogTone.Info),
+                ("The bread is warm. The fence, on inspection, leans. The morning goes on with you in it.", LogTone.Info),
+            ],
+        },
+
         // Ambient flavor: repeatable, cooldown-gated, deliberately slight.
         new Storylet
         {

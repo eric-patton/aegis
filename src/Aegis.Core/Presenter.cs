@@ -46,6 +46,7 @@ public static class Presenter
         if (game.InShrineMenu) DrawShrineMenu(frame, game, layout);
         if (game.InTalkMenu) DrawTalkMenu(frame, game, layout);
         if (game.InUnbindMenu) DrawUnbindMenu(frame, game, layout);
+        if (game.InThresholdMenu) DrawThresholdMenu(frame, layout);
         return frame;
     }
 
@@ -107,6 +108,25 @@ public static class Presenter
         }
 
         frame.Write(x0 + 2, y0 + boxH - 2, "1-7 loosen; any other key to part ways", Hue.DarkGray);
+    }
+
+    /// <summary>
+    /// The keeping (D-039): two answers, one room. The menu names the choice
+    /// plainly and hurries no one; the guardrail lives in the handler, not here.
+    /// </summary>
+    private static void DrawThresholdMenu(Frame frame, Layout layout)
+    {
+        const int boxW = 46;
+        const int boxH = 9;
+        int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
+        int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
+
+        DrawBox(frame, x0, y0, boxW, boxH);
+        frame.Write(x0 + 2, y0 + 1, "The Keeping", Hue.White);
+        frame.Write(x0 + 2, y0 + 2, "The Hearth burns alone.", Hue.Cyan);
+        frame.Write(x0 + 2, y0 + 4, "1) Take up the keeping", Hue.White);
+        frame.Write(x0 + 2, y0 + 5, "2) Lay the commission down and walk on", Hue.White);
+        frame.Write(x0 + 2, y0 + boxH - 2, "1-2 choose; any other key to step back", Hue.DarkGray);
     }
 
     private static void DrawBox(Frame frame, int x0, int y0, int boxW, int boxH)
@@ -230,6 +250,8 @@ public static class Presenter
         Terrain.Waygate => ('O', Hue.Magenta, Hue.Black),
         Terrain.BarrowEntrance => ('n', Hue.DarkYellow, Hue.Black),
         Terrain.HollowEntrance => ('o', Hue.White, Hue.Black),
+        Terrain.ThresholdEntrance => ('v', Hue.Magenta, Hue.Black),
+        Terrain.Hearth => ('*', Hue.Yellow, Hue.Black),
         _ => ('?', Hue.Magenta, Hue.Black),
     };
 
@@ -260,6 +282,7 @@ public static class Presenter
             {
                 SiteKind.Barrow => "The barrow",
                 SiteKind.Hollow => "The stone ring",
+                SiteKind.Threshold => "The last stair",
                 _ => "Goblin cave",
             }, Hue.White);
             int alive = game.LiveMonstersHere.Count();
@@ -280,6 +303,8 @@ public static class Presenter
             if (here == Terrain.CampEntrance) Line("Cave mouth: > enters", Hue.Red);
             if (here == Terrain.BarrowEntrance) Line("Barrow mouth: > enters", Hue.DarkYellow);
             if (here == Terrain.HollowEntrance) Line("Stone ring: > enters", Hue.White);
+            if (here == Terrain.ThresholdEntrance)
+                Line(game.Player.CommissionHeard ? "Deep stair: > descends" : "Deep stair: shut", Hue.Magenta);
             if (here == Terrain.Waygate)
                 Line(game.CampCleared ? "Waygate hums: > crosses" : "Waygate: shut", Hue.Magenta);
             foreach (var npc in game.World.Npcs)

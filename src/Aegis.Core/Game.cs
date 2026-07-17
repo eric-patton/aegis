@@ -35,6 +35,9 @@ public sealed class Game
     public bool InShrineMenu { get; private set; }
     public bool InTalkMenu { get; private set; }
     public bool InUnbindMenu { get; private set; }
+
+    /// <summary>The keeping's choice menu (D-039), open only at the Hearth itself.</summary>
+    public bool InThresholdMenu { get; private set; }
     public Npc? TalkNpc { get; private set; }
 
     /// <summary>Unbindings per world (D-016: a handful, refreshed at each crossing).</summary>
@@ -138,6 +141,13 @@ public sealed class Game
     {
         if (!Running) return;
 
+        if (InThresholdMenu)
+        {
+            HandleThresholdMenuKey(key);
+            KeyApplied?.Invoke(key);
+            return;
+        }
+
         if (InUnbindMenu)
         {
             HandleUnbindMenuKey(key);
@@ -221,6 +231,17 @@ public sealed class Game
         if (Mode == MapMode.Overworld && Directions.All8.Any(d =>
                 map.InBounds(target.Plus(d.dx, d.dy)) && map[target.Plus(d.dx, d.dy)] == Terrain.House))
             _storylets.TryFire(this, StoryletTrigger.NearHouse);
+
+        // The keeping (D-039): stepping to the Hearth itself puts the choice on the
+        // table. It reopens freely until answered; it never reopens after.
+        if (Mode == MapMode.Site && CurrentSite is { Kind: SiteKind.Threshold }
+            && map[target] == Terrain.Hearth
+            && Player.CommissionHeard && Player.Resolution == Resolution.None)
+        {
+            InThresholdMenu = true;
+            Log.Add(Turn, "You stand at the ring of plain stone. The warmth reaches you like a hand taking yours.");
+            Log.Add(Turn, "\"Here it is, bearer: what I was forged to bring you to, and yours to take up or to refuse. Take your time. Nothing in this room hurries.\"", LogTone.Aegis);
+        }
         return true;
     }
 
@@ -245,6 +266,12 @@ public sealed class Game
                 Log.Add(Turn, World.HollowSite!.Cleared
                     ? "The stone ring. Its fire is out, and the stones hold nothing now but weather."
                     : "A ring of standing stones. Inside it a small fire burns, though no one gathers wood. Press > to step in.", LogTone.Danger);
+            else if (t == Terrain.ThresholdEntrance)
+                Log.Add(Turn, !Player.CommissionHeard
+                    ? "A stair descends into the hill, cut clean and swept clean, though nothing lives near to sweep it. The dark below is not night-dark."
+                    : Player.Resolution == Resolution.None
+                        ? "The stair. Warm air rises from it, thick with hearth-smell. Press > to go down."
+                        : "The stair down to the keeping. The warmth below rises to meet you like a door standing open. Press > to go down.", LogTone.Aegis);
         }
         else
         {
@@ -259,6 +286,10 @@ public sealed class Game
                 }, LogTone.Reward);
             else if (t == Terrain.ExitLadder)
                 Log.Add(Turn, "Daylight above. Press < to climb out.");
+            else if (t == Terrain.Hearth && Player.Resolution != Resolution.None)
+                Log.Add(Turn, Player.Resolution == Resolution.Kept
+                    ? "The Hearth. It leans toward you the way a fire leans toward its keeper. The count is warm to the touch."
+                    : "The Hearth burns alone, by your leave. It does not reproach you. Fires never do.", LogTone.Aegis);
         }
     }
 
@@ -272,15 +303,31 @@ public sealed class Game
     {
         if (Mode == MapMode.Overworld && World.Sites.FirstOrDefault(s => s.OverworldPos == Player.Pos) is { } site)
         {
+            // The last stair (D-039): the door at its foot opens to the commission,
+            // not to the map. Until then it is the arc's shut waygate: a promise.
+            if (site.Kind == SiteKind.Threshold && !Player.CommissionHeard)
+            {
+                Log.Add(Turn, "Twelve steps down, a door of shrine-stone stands shut. No lock, no handle, and no argument to be had with it.");
+                Log.Add(Turn, Player.LedgerHeard
+                    ? "\"Not yet. There is a word that opens it, and I have not finished remembering the word. When I have it, you will hear it first.\""
+                    : "\"I know this door. I do not remember knowing it. Leave it shut a while, bearer; some of what I have forgotten has edges.\"", LogTone.Aegis);
+                return false;
+            }
+
             Mode = MapMode.Site;
             CurrentSite = site;
             Player.Pos = site.EntryPos;
-            Log.Add(Turn, site.Kind switch
-            {
-                SiteKind.Barrow => "You stoop under the lintel stone. The air inside is still, and cold, and does not want you.",
-                SiteKind.Hollow => "You step between the stones. The air changes, the way a room changes when someone in it has been waiting.",
-                _ => "You descend into the goblin cave. The dark smells of smoke and old meat.",
-            }, LogTone.Danger);
+            if (site.Kind == SiteKind.Threshold)
+                Log.Add(Turn, Player.Resolution == Resolution.None
+                    ? "You go down. The door of shrine-stone stands open, and the warmth beyond it is a kitchen's, not a forge's. Somewhere ahead, a fire is burning that has never once gone out."
+                    : "You go down again. The door stands open. It will always stand open to you now.", LogTone.Aegis);
+            else
+                Log.Add(Turn, site.Kind switch
+                {
+                    SiteKind.Barrow => "You stoop under the lintel stone. The air inside is still, and cold, and does not want you.",
+                    SiteKind.Hollow => "You step between the stones. The air changes, the way a room changes when someone in it has been waiting.",
+                    _ => "You descend into the goblin cave. The dark smells of smoke and old meat.",
+                }, LogTone.Danger);
             if (site.Kind == SiteKind.Hollow && !site.Cleared)
             {
                 Log.Add(Turn, "At the fire, a figure rises: neither old nor young, dressed out of no living fashion. It looks at your collarbone before it looks at your face.", LogTone.Danger);
@@ -333,6 +380,7 @@ public sealed class Game
         InShrineMenu = false;
         InTalkMenu = false;
         InUnbindMenu = false;
+        InThresholdMenu = false;
         TalkNpc = null;
         CurrentSite = null;
         UnbindingsLeft = UnbindingsPerWorld;
@@ -372,6 +420,12 @@ public sealed class Game
             Player.CommissionHeard = true;
             foreach (string line in AegisVoice.CrossingCommissionLines)
                 Log.Add(Turn, $"\"{line}\"", LogTone.Aegis);
+        }
+        else if (Player.Resolution != Resolution.None)
+        {
+            // Steady state (arc sec 9): the crossing keeps its guaranteed real
+            // estate, spoken from here on in the final register.
+            Log.Add(Turn, $"\"{(Player.Resolution == Resolution.Kept ? AegisVoice.KeptCrossingLine : AegisVoice.RefusedCrossingLine)}\"", LogTone.Aegis);
         }
         else
         {
@@ -566,6 +620,13 @@ public sealed class Game
         if (Player.UnbinderRevealTier >= 2)
             topics.Add(("The refusal", "\"Would I do it again? Every dawn of every world. You want to know if the knife is clean. It is the cleanest thing I own. At the threshold it will be yours to take or wave away, and either answer will be yours. That is the entire point of me.\""));
 
+        // The one permitted long thread (D-039, arc sec 9): the unfinished argument,
+        // advanced a line at a time, the worldview unyielding in either branch.
+        if (Player.Resolution == Resolution.Kept)
+            topics.Add(("The argument", "\"You chose the fire, and you are still yourself, which spoils half my case and interests the other half. Endings still make the meaning, bearer. Keep your fire; I will keep asking what it is for. Same time next world.\""));
+        else if (Player.Resolution == Resolution.Refused)
+            topics.Add(("The argument", "\"You laid it down and kept your ward anyway: a middle way I did not walk and will not praise. But you chose it, and choosing is the whole of my creed, so I am obliged to nod. Same time next world.\""));
+
         return topics;
     }
 
@@ -692,6 +753,48 @@ public sealed class Game
         TalkNpc = null;
     }
 
+    private void HandleThresholdMenuKey(char key)
+    {
+        if (key == '1') { ResolveThreshold(kept: true); return; }
+        if (key == '2') { ResolveThreshold(kept: false); return; }
+
+        InThresholdMenu = false;
+        Log.Add(Turn, "You step back from the fire.");
+        Log.Add(Turn, "\"No clock runs in this room. It has waited an age; it will wait for you.\"", LogTone.Aegis);
+    }
+
+    /// <summary>
+    /// The threshold choice (D-039, arc sec 8). Both answers resolve the mystery
+    /// into a changed relationship; the guardrail is absolute: they differ in
+    /// fiction, register, and flavor, never in a single mechanical number.
+    /// </summary>
+    private void ResolveThreshold(bool kept)
+    {
+        Player.Resolution = kept ? Resolution.Kept : Resolution.Refused;
+        InThresholdMenu = false;
+
+        if (kept)
+        {
+            Log.Add(Turn, "You wave the knife away, and set your hands above the fire, on the keeping-stone, where an age of other hands has worn two smooth places exactly the size of yours.", LogTone.Info);
+            Log.Add(Turn, "Nothing vast happens. The fire leans toward you the way a hearth leans toward whoever tends it, and the count settles into your keeping like a ledger changing hands: not taken from the Aegis, shared out of it.", LogTone.Info);
+            Log.Add(Turn, "\"So. A keeper, and on your own terms: the crossing is the keeping, and we walk it as we always have. All is counted, bearer. It is your count now. Spend it as you see fit.\"", LogTone.Aegis);
+            Log.Add(Turn, "The Unbinder pockets the knife without ceremony. \"Kept, then. By choice, which is the only way it was ever going to hold. I remain unconvinced, and I remain on the roads. We will argue again; I look forward to it.\"", LogTone.Info);
+            Log.Add(Turn, "They bow, slightly, to the fire and not to you, and take the stair up at a walker's pace.", LogTone.Info);
+        }
+        else
+        {
+            Log.Add(Turn, "You wave the knife away, and you do not set your hands on the stone. You say it plainly to both of them: the commission ends here. Not with a cutting: with a laying down.", LogTone.Info);
+            Log.Add(Turn, "The fire does not flare, and does not dim. It burns alone, as it has an age, and the aloneness settles into plain fact: unkept, unowed, and yours to walk away from. The deep worlds stay wild. You choose that with both eyes open.", LogTone.Info);
+            Log.Add(Turn, "\"Then it is laid down, and the tithe ends with it: what we earn stays ours. I was forged for one errand, bearer, and I find, saying this, that I mind less than I was built to. We walk. That is the whole of the commission now.\"", LogTone.Aegis);
+            Log.Add(Turn, "The Unbinder pockets the knife without ceremony. \"Half my road. The half I could not walk, for my ward would not walk it with me.\" Something in the courtesy has gone quiet and real. \"Keep each other, then. That is not advice I thought I would ever give.\"", LogTone.Info);
+            Log.Add(Turn, "They bow, slightly, to you and not to the fire, and take the stair up at a walker's pace.", LogTone.Info);
+        }
+
+        // The mystery's resolution is never the final note (technique commitment 7):
+        // the same pointer home, either way, toward the witnessed epilogue above.
+        Log.Add(Turn, "\"Go up after them. There is a stead over your head that thinks you are only a stranger who was kind to it. That matters more than this room. Go and be that.\"", LogTone.Aegis);
+    }
+
     private void HandleUnbindMenuKey(char key)
     {
         if (key >= '1' && key <= '7')
@@ -777,7 +880,9 @@ public sealed class Game
         Player.Stamina = Player.MaxStamina;
         InShrineMenu = true;
         Log.Add(Turn, "You rest at the shrine. Warmth returns to you.", LogTone.Info);
-        Log.Add(Turn, "\"Be still. Let me count what you have earned.\"", LogTone.Aegis);
+        Log.Add(Turn, Player.Resolution == Resolution.None
+            ? "\"Be still. Let me count what you have earned.\""
+            : "\"Sit. Count with me; the count answers to you now.\"", LogTone.Aegis);
         _storylets.TryFire(this, StoryletTrigger.Rest);
         return true;
     }
@@ -1111,6 +1216,7 @@ public sealed class Game
         InShrineMenu = false;
         InTalkMenu = false;
         InUnbindMenu = false;
+        InThresholdMenu = false;
         TalkNpc = null;
 
         bool forfeited = Remnant is not null;
@@ -1129,7 +1235,10 @@ public sealed class Game
             monster.Intent = null;
 
         Log.Add(Turn, "You fall.", LogTone.Danger);
-        Log.Add(Turn, $"\"{AegisVoice.DeathLine(Player.Deaths)}\"", LogTone.Aegis);
+        // Death lines carry register, never plot (arc sec 4): worried once the
+        // ledger is known, candid between equals once the threshold is answered.
+        int register = Player.Resolution != Resolution.None ? 3 : Player.LedgerHeard ? 2 : 1;
+        Log.Add(Turn, $"\"{AegisVoice.DeathLine(Player.Deaths, register)}\"", LogTone.Aegis);
 
         Mode = MapMode.Overworld;
         CurrentSite = null;
@@ -1185,6 +1294,8 @@ public sealed class Game
         HollowCleared: World.HollowSite?.Cleared ?? false,
         SeveredNpcX: World.SeveredNpc?.Pos.X ?? -1,
         SeveredNpcY: World.SeveredNpc?.Pos.Y ?? -1,
+        ThresholdX: World.ThresholdSite?.OverworldPos.X ?? -1,
+        ThresholdY: World.ThresholdSite?.OverworldPos.Y ?? -1,
         ArcProgress: string.Join(",", new[]
         {
             Player.SeveredTruthHeard ? "truth" : null,
@@ -1195,6 +1306,12 @@ public sealed class Game
             Player.SeveredCostSeen ? "cost" : null,
             Player.UnbinderRevealTier >= 1 ? $"tier{Player.UnbinderRevealTier}" : null,
             Player.CommissionHeard ? "commission" : null,
+            Player.Resolution switch
+            {
+                Resolution.Kept => "kept",
+                Resolution.Refused => "refused",
+                _ => null,
+            },
         }.Where(s => s is not null)),
         CurrentSite: CurrentSite?.Id ?? "",
         UnbinderX: World.Unbinder.Pos.X,
@@ -1222,6 +1339,7 @@ public sealed class Game
         InShrineMenu: InShrineMenu,
         InTalkMenu: InTalkMenu,
         InUnbindMenu: InUnbindMenu,
+        InThresholdMenu: InThresholdMenu,
         TalkNpc: TalkNpc?.Name ?? "",
         WoundedTurns: Player.WoundedTurns,
         Deaths: Player.Deaths,
@@ -1263,6 +1381,8 @@ public sealed record Snapshot(
     bool HollowCleared,
     int SeveredNpcX,
     int SeveredNpcY,
+    int ThresholdX,
+    int ThresholdY,
     string ArcProgress,
     string CurrentSite,
     int UnbinderX,
@@ -1290,6 +1410,7 @@ public sealed record Snapshot(
     bool InShrineMenu,
     bool InTalkMenu,
     bool InUnbindMenu,
+    bool InThresholdMenu,
     string TalkNpc,
     int WoundedTurns,
     int Deaths,

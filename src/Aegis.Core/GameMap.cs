@@ -22,6 +22,8 @@ public enum Terrain : byte
     Waygate,
     BarrowEntrance,
     HollowEntrance,
+    ThresholdEntrance,
+    Hearth,
 }
 
 public static class TerrainInfo

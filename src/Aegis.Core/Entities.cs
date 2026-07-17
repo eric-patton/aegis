@@ -81,7 +81,7 @@ public sealed class Player
 /// <summary>How the threshold resolved (D-039): unresolved, the keeping taken up, or laid down.</summary>
 public enum Resolution { None, Kept, Refused }
 
-public enum MonsterKind { Goblin, Wight, Severed }
+public enum MonsterKind { Goblin, Wight, Severed, Graven }
 
 public sealed class Monster
 {
@@ -93,12 +93,20 @@ public sealed class Monster
 
     public int Hp { get; set; } = 8;
     public Intent? Intent { get; set; }
+
+    /// <summary>
+    /// Standing as a statue (D-040): graven men begin dormant and do nothing
+    /// until the bearer comes near in their line of sight, or strikes them.
+    /// </summary>
+    public bool Dormant { get; set; }
+
     public bool Alive => Hp > 0;
     public string Name => Kind switch
     {
         MonsterKind.Goblin => "goblin",
         MonsterKind.Wight => "wight",
         MonsterKind.Severed => "severed one",
+        MonsterKind.Graven => "graven man",
         _ => "creature",
     };
 }
@@ -114,7 +122,7 @@ public sealed class Intent
     public int TurnsUntilResolve { get; set; } = 1;
 }
 
-public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut }
+public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut, HurledStone, GravenFist }
 
 /// <summary>
 /// Villagers live beside their houses; the Unbinder (D-034) is the wandering

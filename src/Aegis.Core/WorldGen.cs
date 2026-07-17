@@ -1,6 +1,6 @@
 namespace Aegis.Core;
 
-public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold }
+public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry }
 
 /// <summary>A monster placed at generation time: kind, cell, and generated stats (D-011).</summary>
 public readonly record struct MonsterSpawn(MonsterKind Kind, Pos Pos, int Hp);
@@ -53,6 +53,9 @@ public sealed class World
     /// <summary>The last stair (D-039): tier 5+, the arc's fixed final stage. The door below answers to flags, not tiers.</summary>
     public Site? ThresholdSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Threshold);
 
+    /// <summary>The old quarry (D-040): tier 3+, where the graven men stand. Optional depth, like the barrow.</summary>
+    public Site? QuarrySite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Quarry);
+
     // Convenience views of the camp, the site every world has (and tests lean on).
     public GameMap Camp => CampSite.Map;
     public Pos CampPos => CampSite.OverworldPos;
@@ -98,9 +101,11 @@ public static class WorldGen
     /// Generates a world at a Hostility Tier (D-011): the tier is a GENERATION input
     /// (more and tougher goblins), never a post-hoc multiplier. Tier 1 with a given
     /// seed produces exactly what earlier versions produced from that seed alone,
-    /// which is what keeps old save journals replayable.
+    /// which is what keeps old save journals replayable. <paramref name="prevStory"/>
+    /// is the finished world's story id (D-040): a generation input like the tier,
+    /// legitimate because it is itself a pure function of the seed lineage.
     /// </summary>
-    public static World Generate(ulong worldSeed, int tier = 1)
+    public static World Generate(ulong worldSeed, int tier = 1, string? prevStory = null)
     {
         var facts = new FactGraph();
 
@@ -178,7 +183,7 @@ public static class WorldGen
         // Unbinder (cast below) must never be picked for a world-story role.
         var storyRng = new Rng(SeedTree.Derive(worldSeed, "world-story"));
         var storyStorylets = WorldStories.CompileForWorld(ref storyRng,
-            new StoryTemplateContext(npcs, settlementName, facts, sites, tier));
+            new StoryTemplateContext(npcs, settlementName, facts, sites, tier), prevStory);
 
         // The Unbinder (D-034): a fresh guise every world, its own seed stream, placed
         // well away from the stead. Their tile stays plain ground: nothing on the map
@@ -260,10 +265,11 @@ public static class WorldGen
         // placed after every existing draw, so pinned deep worlds keep their layouts.
         // The stair exists whether or not this bearer is ready: the door at its foot
         // answers to the arc's flags, never to the map.
+        Pos stairPos = default;
         if (tier >= 5)
         {
             var stairRng = new Rng(SeedTree.Derive(worldSeed, "threshold"));
-            Pos stairPos = FindDistantSpot(overworld, ref stairRng, settlement, minDistance: 26);
+            stairPos = FindDistantSpot(overworld, ref stairRng, settlement, minDistance: 26);
             while (overworld[stairPos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills)
                    || stairPos.Manhattan(camp) < 5 || stairPos.Manhattan(gate) < 5
                    || stairPos.Manhattan(barrow) < 5 || stairPos.Manhattan(hollowPos) < 5
@@ -286,6 +292,39 @@ public static class WorldGen
             });
             facts.Add("site", "threshold", $"{stairPos.X},{stairPos.Y}",
                 "A stair going down into the hill where no door should be, cut clean and swept clean, though nothing lives near to sweep it.");
+        }
+
+        // The old quarry (D-040): tier 3+ worlds hold the deep band's site, where
+        // the graven men stand. Own stream, placed after every existing draw
+        // (including the stair's), so pinned worlds keep their layouts exactly.
+        if (tier >= 3)
+        {
+            var quarryRng = new Rng(SeedTree.Derive(worldSeed, "quarry"));
+            Pos quarryPos = FindDistantSpot(overworld, ref quarryRng, settlement, minDistance: 16);
+            while (overworld[quarryPos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills)
+                   || quarryPos.Manhattan(camp) < 5 || quarryPos.Manhattan(gate) < 5
+                   || quarryPos.Manhattan(barrow) < 5 || quarryPos.Manhattan(hollowPos) < 5
+                   || (tier >= 5 && quarryPos.Manhattan(stairPos) < 5)
+                   || npcs.Any(n => n.Pos == quarryPos))
+                quarryPos = FindDistantSpot(overworld, ref quarryRng, settlement, minDistance: 16);
+            overworld[quarryPos] = Terrain.QuarryEntrance;
+            CarvePathIfDisconnected(overworld, shrine, quarryPos);
+
+            int gravenCount = Math.Min(3 + (tier - 3), 5);
+            int gravenHp = 18 + 2 * (tier - 3);
+            var (quarryMap, quarryEntry, gravenSpawns, quarryChest) = GenerateQuarry(worldSeed, gravenCount);
+            sites.Add(new Site
+            {
+                Id = "quarry",
+                Kind = SiteKind.Quarry,
+                Map = quarryMap,
+                OverworldPos = quarryPos,
+                EntryPos = quarryEntry,
+                Spawns = [.. gravenSpawns.Select(p => new MonsterSpawn(MonsterKind.Graven, p, gravenHp))],
+                ChestPos = quarryChest,
+            });
+            facts.Add("site", "quarry", $"{quarryPos.X},{quarryPos.Y}",
+                "An old quarry, worked and abandoned before the stead's first stone was laid. The carvers left mid-stroke, and their figures still stand in the pit.");
         }
 
         facts.Add("world_name", worldName, "");
@@ -644,6 +683,70 @@ public static class WorldGen
         var entry = new Pos(2, mid);
         map[entry] = Terrain.ExitLadder;
         return (map, entry, hearth);
+    }
+
+    public const int QuarryW = 32;
+    public const int QuarryH = 15;
+
+    /// <summary>
+    /// The old quarry (D-040): one open pit, deliberately unlike the camp's warren
+    /// and the barrow's passage, because its fight is fought in the open: the graven
+    /// men throw, and the scattered pillars are the only cover. A pillar is only
+    /// placed where all eight neighbors are open floor, so cover can never touch
+    /// other cover or the pit wall, and reachability holds by construction.
+    /// </summary>
+    private static (GameMap Map, Pos Entry, List<Pos> Graven, Pos Chest) GenerateQuarry(ulong worldSeed, int gravenCount)
+    {
+        var rng = new Rng(SeedTree.Derive(worldSeed, "site-quarry"));
+        var map = new GameMap("quarry", QuarryW, QuarryH, Terrain.Floor);
+        for (int x = 0; x < QuarryW; x++)
+        {
+            map[new Pos(x, 0)] = Terrain.Wall;
+            map[new Pos(x, QuarryH - 1)] = Terrain.Wall;
+        }
+        for (int y = 0; y < QuarryH; y++)
+        {
+            map[new Pos(0, y)] = Terrain.Wall;
+            map[new Pos(QuarryW - 1, y)] = Terrain.Wall;
+        }
+
+        var entry = new Pos(2, QuarryH / 2);
+
+        int pillars = 0;
+        for (int attempt = 0; attempt < 200 && pillars < 14; attempt++)
+        {
+            var p = new Pos(rng.Range(4, QuarryW - 3), rng.Range(2, QuarryH - 2));
+            bool clear = p.Manhattan(entry) > 3;
+            for (int dy = -1; dy <= 1 && clear; dy++)
+                for (int dx = -1; dx <= 1 && clear; dx++)
+                    if (map[p.Plus(dx, dy)] != Terrain.Floor) clear = false;
+            if (!clear) continue;
+            map[p] = Terrain.Wall;
+            pillars++;
+        }
+
+        var open = new List<Pos>();
+        for (int y = 1; y < QuarryH - 1; y++)
+            for (int x = 1; x < QuarryW - 1; x++)
+            {
+                var p = new Pos(x, y);
+                if (map[p] == Terrain.Floor && p.Manhattan(entry) > 12) open.Add(p);
+            }
+
+        var graven = new List<Pos>();
+        int guard = 4000;
+        while (graven.Count < gravenCount)
+        {
+            var p = rng.Pick(open);
+            bool spaced = guard-- <= 0 || graven.All(q => q.Manhattan(p) >= 4);
+            if (!graven.Contains(p) && spaced) graven.Add(p);
+        }
+
+        Pos chest = rng.Pick(open);
+        while (graven.Contains(chest) || chest.X < QuarryW - 8) chest = rng.Pick(open);
+
+        map[entry] = Terrain.ExitLadder;
+        return (map, entry, graven, chest);
     }
 }
 

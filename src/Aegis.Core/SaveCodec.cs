@@ -23,11 +23,15 @@ namespace Aegis.Core;
 /// walked their tile kept walking; now it would open a talk menu instead);
 /// v8 when D-039 added the last stair to tier 5+ worlds and the keeping menu
 /// (a v7 journal deep enough would walk tiles that now hold a stair, and a
-/// digit at the Hearth now answers the arc's central question).
+/// digit at the Hearth now answers the arc's central question);
+/// v9 when D-040 added the quarry to tier 3+ worlds and weighted story
+/// selection against repeating the previous world's template (a v8 journal
+/// that crossed past tier 1 could replay into a world telling a different
+/// story, and deep worlds now hold a site it never walked around).
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 8;
+    public const int Version = 9;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

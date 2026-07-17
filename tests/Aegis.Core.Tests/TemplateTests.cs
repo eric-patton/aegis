@@ -90,7 +90,8 @@ public class TemplateTests
     {
         // Found live: clearing the barrow first made the plaintiff "hear of" a deed
         // nobody asked for. The ending beat must answer its own story's deed.
-        var game = new Game(42);
+        // Master 43's second world tells the stead again (repeat-weighting remap).
+        var game = new Game(43);
         game.Debug_ClearCamp();
         game.Debug_SetPlayerPos(game.World.GatePos);
         game.Apply(Command.Enter);
@@ -109,7 +110,8 @@ public class TemplateTests
     [Fact]
     public void NewWorld_RecastsTheStory_AndItPlaysAgain()
     {
-        var game = new Game(42);
+        // Master 43: its second world tells the stead again (repeat-weighting remap).
+        var game = new Game(43);
         string firstPlaintiff = Plaintiff(game).Name;
 
         game.Debug_ClearCamp();

@@ -32,13 +32,31 @@ public static class WorldStories
     /// Picks this world's story and compiles it. When exactly one template is
     /// eligible there is NO selection draw, which is what keeps tier-1 worlds
     /// (where only the Raided Stead qualifies) consuming the RNG they always did.
+    /// Repeat-weighting (D-040): the previous world's template, when it is in the
+    /// running, carries half the weight of every other candidate. Both paths
+    /// consume exactly one draw, and the unweighted path is unchanged, so worlds
+    /// with no previous story (direct seeds, cycle 1) generate what they always did.
     /// </summary>
-    public static List<Storylet> CompileForWorld(ref Rng rng, StoryTemplateContext ctx)
+    public static List<Storylet> CompileForWorld(ref Rng rng, StoryTemplateContext ctx, string? prevStory = null)
     {
         var eligible = All.Where(t => t.Eligible(ctx)).ToList();
         if (eligible.Count == 0) return [];
 
-        var chosen = eligible.Count == 1 ? eligible[0] : eligible[rng.Next(eligible.Count)];
+        StoryTemplate chosen;
+        if (eligible.Count == 1)
+        {
+            chosen = eligible[0];
+        }
+        else if (prevStory is null || eligible.All(t => t.Id != prevStory))
+        {
+            chosen = eligible[rng.Next(eligible.Count)];
+        }
+        else
+        {
+            var weighted = eligible.SelectMany(t => Enumerable.Repeat(t, t.Id == prevStory ? 1 : 2)).ToList();
+            chosen = weighted[rng.Next(weighted.Count)];
+        }
+
         ctx.Facts.Add("story", chosen.Id, "", $"This world's story is {chosen.Id}.");
         return chosen.Compile(ref rng, ctx);
     }

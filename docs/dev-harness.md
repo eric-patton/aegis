@@ -45,13 +45,32 @@ is optional: only the camp deed opens the waygate. Worldgen for tier 2+ changed 
 D-033, so saves are format v2 (v1 journals that had crossed would replay wrong and
 are refused).
 
-## World stories and template selection (D-035)
+## World stories and template selection (D-035, weighting D-040)
 
 Each world tells one story, chosen at worldgen among eligible templates (tier 1:
 always the Raided Stead; tier 2+ worlds with a barrow may draw the Creeping Blight
 instead). `state` carries `storyTemplate`. Blight worlds: the plea comes from the
 cast "afflicted" villager, evidence deep in the barrow (x >= 19) changes the ending
-the deed fires, and saves are format v4 (the tier-2+ selection draw).
+the deed fires, and saves are format v4 (the tier-2+ selection draw). Since D-040
+each crossing hands the finished world's story id into the next world's draw and
+the selection halves that template's weight: repeats still happen, roughly one
+world in three instead of one in two, and worlds generated from a direct `--seed`
+(no previous story) draw exactly as before.
+
+## The quarry and the graven men (D-040)
+
+Tier 3+ worlds hold the old quarry (`x` on the map; `state` carries
+`quarryX/quarryY`, `-1` when absent, and `quarryCleared`): one open pit with
+freestanding pillars, tenanted by graven men (`m`). They stand as statues until
+the bearer comes within five tiles in their line of sight (or strikes one), then
+hold their ground and hurl stone at telegraphed cells out to nine tiles wherever
+line of sight allows. Pillars block the sight line, a moving bearer is never hit
+by a throw (it lands on the cell, one turn later), and adjacent they trade a
+heavy telegraphed fist worth dodging like the barrow blade. They walk a step
+every third turn, so breaking line of sight and kiting both work. Clearing the
+pit is optional (the waygate stays camp-keyed) and writes its own deed. Saves
+are format v9 (tier-3+ worldgen changed, and crossed worlds draw stories with
+the D-040 weighting).
 
 ## The arc ladder and the hollow (D-037)
 

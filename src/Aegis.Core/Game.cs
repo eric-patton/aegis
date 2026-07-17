@@ -114,7 +114,14 @@ public sealed class Game
         // Stats are generation inputs baked into the spawns (D-011), never live multipliers.
         foreach (var site in World.Sites)
             foreach (var spawn in site.Spawns)
-                Monsters.Add(new Monster { Kind = spawn.Kind, Pos = spawn.Pos, Hp = spawn.Hp, SiteId = site.Id });
+                Monsters.Add(new Monster
+                {
+                    Kind = spawn.Kind,
+                    Pos = spawn.Pos,
+                    Hp = spawn.Hp,
+                    SiteId = site.Id,
+                    Dormant = spawn.Kind == MonsterKind.Graven,
+                });
     }
 
     internal static string Compass(Pos from, Pos to)
@@ -266,6 +273,10 @@ public sealed class Game
                 Log.Add(Turn, World.HollowSite!.Cleared
                     ? "The stone ring. Its fire is out, and the stones hold nothing now but weather."
                     : "A ring of standing stones. Inside it a small fire burns, though no one gathers wood. Press > to step in.", LogTone.Danger);
+            else if (t == Terrain.QuarryEntrance)
+                Log.Add(Turn, World.QuarrySite!.Cleared
+                    ? "The old quarry. Broken stone below, and stillness that is only stillness now."
+                    : "An old quarry, open to the sky. Below, half-cut figures stand among the spoil heaps, and none of them is leaning. Press > to climb down.", LogTone.Danger);
             else if (t == Terrain.ThresholdEntrance)
                 Log.Add(Turn, !Player.CommissionHeard
                     ? "A stair descends into the hill, cut clean and swept clean, though nothing lives near to sweep it. The dark below is not night-dark."
@@ -282,6 +293,7 @@ public sealed class Game
                 {
                     SiteKind.Barrow => "Grave goods lie here on a stone shelf, dressed in dust. Press g to take them.",
                     SiteKind.Hollow => "A bundle of kept things lies here, wrapped against rain with great care. Press g to take it.",
+                    SiteKind.Quarry => "The carvers' toolcache sits under a shelf of slate, sealed tight against an age of dust. Press g to open it.",
                     _ => "A battered strongbox sits here. Press g to open it.",
                 }, LogTone.Reward);
             else if (t == Terrain.ExitLadder)
@@ -326,6 +338,7 @@ public sealed class Game
                 {
                     SiteKind.Barrow => "You stoop under the lintel stone. The air inside is still, and cold, and does not want you.",
                     SiteKind.Hollow => "You step between the stones. The air changes, the way a room changes when someone in it has been waiting.",
+                    SiteKind.Quarry => "You climb down into the old quarry. Half-cut figures stand about the pit in no order, and the silence has a mineral patience to it.",
                     _ => "You descend into the goblin cave. The dark smells of smoke and old meat.",
                 }, LogTone.Danger);
             if (site.Kind == SiteKind.Hollow && !site.Cleared)
@@ -371,8 +384,13 @@ public sealed class Game
         Player.Legend += converted;
         Player.Coin = 0;
 
+        // Repeat-weighting (D-040): the finished world's story travels into the next
+        // draw as a generation input. It is itself a pure function of the seed
+        // lineage, so worldgen stays deterministic per master seed.
+        string? prevStory = World.Facts.OfType("story").FirstOrDefault()?.Subject;
+
         Cycle++;
-        World = WorldGen.Generate(SeedTree.Derive(MasterSeed, "cycle", Cycle), tier: Cycle);
+        World = WorldGen.Generate(SeedTree.Derive(MasterSeed, "cycle", Cycle), tier: Cycle, prevStory: prevStory);
         _combatRng = new Rng(SeedTree.Derive(World.Seed, "combat"));
         _storylets.OnCrossing(World.Seed, FullCatalog());
         Monsters.Clear();
@@ -445,6 +463,8 @@ public sealed class Game
             Log.Add(Turn, $"They speak lower of the long mound to the {Compass(World.ShrinePos, barrow.OverworldPos)}, where the dead do not lie easy.");
         if (World.HollowSite is { } hollow)
             Log.Add(Turn, $"And of the stone ring to the {Compass(World.ShrinePos, hollow.OverworldPos)} they say only this: leave the fire there to its keeper.");
+        if (World.QuarrySite is { } quarry)
+            Log.Add(Turn, $"Of the old quarry to the {Compass(World.ShrinePos, quarry.OverworldPos)} they say the carvers left mid-stroke, and that the figures in the pit are never quite where the last teller said they stood.");
         if (World.SeveredNpc is { } calm)
             Log.Add(Turn, $"A hermit called {calm.Name} keeps a fire to the {Compass(World.ShrinePos, calm.Pos)}. The stead trades them nothing, owes them nothing, and minds them not at all: they have simply always been there.");
         _storylets.TryFire(this, StoryletTrigger.Arrival);
@@ -482,6 +502,7 @@ public sealed class Game
             {
                 SiteKind.Barrow => _combatRng.Range(15, 27),
                 SiteKind.Hollow => _combatRng.Range(4, 10),
+                SiteKind.Quarry => _combatRng.Range(12, 24),
                 _ => _combatRng.Range(10, 21),
             };
             Player.Coin += coin;
@@ -490,6 +511,7 @@ public sealed class Game
             {
                 SiteKind.Barrow => $"Grave-gold: {coin} coin struck for rulers whose names did not keep.",
                 SiteKind.Hollow => $"What they kept: a child's wooden horse, a ring sized for a thinner hand, and {coin} coin of a mint no one living has seen.",
+                SiteKind.Quarry => $"Chisels still sharp under their oilcloth, and the crew's unpaid wages beside them: {coin} coin no one came back for.",
                 _ => $"The strongbox yields {coin} coin.",
             }, LogTone.Reward);
             return true;
@@ -939,6 +961,11 @@ public sealed class Game
         if (target.Alive)
         {
             Log.Add(Turn, $"You strike the {target.Name} for {damage}.", LogTone.Combat);
+            if (target.Dormant)
+            {
+                target.Dormant = false;
+                Log.Add(Turn, "Grit sifts from the figure. The head grinds around to face you.", LogTone.Danger);
+            }
         }
         else
         {
@@ -948,12 +975,14 @@ public sealed class Game
             {
                 MonsterKind.Wight => _combatRng.Range(0, 3),
                 MonsterKind.Severed => 0,
+                MonsterKind.Graven => _combatRng.Range(1, 5),
                 _ => _combatRng.Range(2, 7),
             };
             int essence = target.Kind switch
             {
                 MonsterKind.Wight => 8,
                 MonsterKind.Severed => 15,
+                MonsterKind.Graven => 10,
                 _ => 5,
             };
             Player.Coin += coin;
@@ -962,6 +991,7 @@ public sealed class Game
             {
                 MonsterKind.Wight => $"The wight comes apart into grave-dust and quiet. You take {coin} coin and {essence} essence.",
                 MonsterKind.Severed => $"The severed one comes apart slowly, almost gratefully. What it held pours into the Aegis: {essence} essence, and no coin at all.",
+                MonsterKind.Graven => $"The graven man breaks along its chisel-lines and stands again as what it always was: quarry-stone. You take {coin} coin and {essence} essence.",
                 _ => $"The {target.Name} falls. You take {coin} coin and {essence} essence.",
             }, LogTone.Reward);
             CheckSiteCleared(CurrentSite!);
@@ -988,6 +1018,13 @@ public sealed class Game
                 $"The barrow's dead were put to rest. The lights on the mound above {World.SettlementName} have gone out.");
             Log.Add(Turn, "The passage is still. Whatever the dead here were set to hold, no one is holding it now.", LogTone.Reward);
             Log.Add(Turn, "\"They were given a task and no release. I remember the shape of that arrangement. It is counted, bearer, twice over.\"", LogTone.Aegis);
+        }
+        else if (site.Kind == SiteKind.Quarry)
+        {
+            World.Facts.Add("deed", "quarry_hushed", World.SettlementName,
+                "The graven men of the old quarry stand still at last. The pit is only a pit now.");
+            Log.Add(Turn, "The pit is still. Broken stone everywhere, and not one figure left standing that should not.", LogTone.Reward);
+            Log.Add(Turn, "\"Set to watch a working no one finished, and never told to stop. There is a lot of that, this deep. It is counted.\"", LogTone.Aegis);
         }
         else
         {
@@ -1038,6 +1075,8 @@ public sealed class Game
                     {
                         IntentKind.BarrowBlade => _combatRng.Range(5, 9),
                         IntentKind.SunderingCut => _combatRng.Range(7, 11),
+                        IntentKind.HurledStone => _combatRng.Range(4, 8),
+                        IntentKind.GravenFist => _combatRng.Range(6, 10),
                         _ => _combatRng.Range(4, 7),
                     };
                     Player.Hp -= damage;
@@ -1045,6 +1084,8 @@ public sealed class Game
                     {
                         IntentKind.BarrowBlade => $"The wight's barrow blade opens you for {damage}!",
                         IntentKind.SunderingCut => $"The severed one's cut goes through guard, cloth, and certainty for {damage}!",
+                        IntentKind.HurledStone => $"The hurled stone takes you square for {damage}!",
+                        IntentKind.GravenFist => $"The graven fist comes down like a falling lintel for {damage}!",
                         _ => $"The {monster.Name}'s crushing blow lands for {damage}!",
                     }, LogTone.Danger);
                 }
@@ -1054,6 +1095,8 @@ public sealed class Game
                     {
                         IntentKind.BarrowBlade => "The wight's bronze blade shears cold, empty air.",
                         IntentKind.SunderingCut => "The severed one's cut parts the air where you stood, without hurry and without regret.",
+                        IntentKind.HurledStone => "The stone bursts on the floor where you stood, loud as the quarry's last working day.",
+                        IntentKind.GravenFist => "The graven fist cracks the floor where you stood.",
                         _ => $"The {monster.Name}'s crushing blow splinters empty stone.",
                     }, LogTone.Combat);
                 }
@@ -1063,6 +1106,7 @@ public sealed class Game
 
         if (monster.Kind == MonsterKind.Wight) { ActWight(monster); return; }
         if (monster.Kind == MonsterKind.Severed) { ActSevered(monster); return; }
+        if (monster.Kind == MonsterKind.Graven) { ActGraven(monster); return; }
 
         int dist = monster.Pos.Chebyshev(Player.Pos);
 
@@ -1155,6 +1199,61 @@ public sealed class Game
         }
 
         if (dist <= 8) StepBfsToward(monster);
+    }
+
+    /// <summary>
+    /// The quarry family (D-040): statues until you are close enough to see, and
+    /// seen. Awake, they are artillery: they hold their ground and hurl quarry-stone
+    /// at telegraphed cells wherever line of sight allows, lumber a step every third
+    /// turn when it does not, and trade a heavy telegraphed fist up close. The
+    /// pillars of their own pit are the counterplay: cover breaks the throw.
+    /// </summary>
+    private void ActGraven(Monster monster)
+    {
+        int dist = monster.Pos.Chebyshev(Player.Pos);
+        var map = CurrentSite!.Map;
+
+        if (monster.Dormant)
+        {
+            if (dist <= 5 && map.LineOfSight(monster.Pos, Player.Pos))
+            {
+                monster.Dormant = false;
+                Log.Add(Turn, "Grit sifts from a figure you took for quarry-stone. It turns its head, and the head grinds.", LogTone.Danger);
+            }
+            return;
+        }
+
+        if (dist == 1)
+        {
+            if (_combatRng.Chance(0.4))
+            {
+                monster.Intent = new Intent { Kind = IntentKind.GravenFist, TargetCell = Player.Pos };
+                Log.Add(Turn, "The graven man raises a fist like a keystone coming loose!", LogTone.Danger);
+            }
+            else if (_combatRng.Chance(Player.DodgeChance))
+            {
+                Log.Add(Turn, "The graven man's grip closes on air, slow as subsidence.", LogTone.Combat);
+            }
+            else
+            {
+                int damage = _combatRng.Range(2, 4);
+                Player.Hp -= damage;
+                Log.Add(Turn, $"The graven man's grip scores you for {damage}. Stone dust in the wound.", LogTone.Combat);
+            }
+            return;
+        }
+
+        if (dist <= 9 && map.LineOfSight(monster.Pos, Player.Pos))
+        {
+            if (_combatRng.Chance(0.5))
+            {
+                monster.Intent = new Intent { Kind = IntentKind.HurledStone, TargetCell = Player.Pos };
+                Log.Add(Turn, "The graven man hefts a broken block, eye-hollows fixed on where you stand!", LogTone.Danger);
+            }
+            return;
+        }
+
+        if (dist <= 12 && Turn % 3 == 0) StepBfsToward(monster);
     }
 
     /// <summary>
@@ -1296,6 +1395,9 @@ public sealed class Game
         SeveredNpcY: World.SeveredNpc?.Pos.Y ?? -1,
         ThresholdX: World.ThresholdSite?.OverworldPos.X ?? -1,
         ThresholdY: World.ThresholdSite?.OverworldPos.Y ?? -1,
+        QuarryX: World.QuarrySite?.OverworldPos.X ?? -1,
+        QuarryY: World.QuarrySite?.OverworldPos.Y ?? -1,
+        QuarryCleared: World.QuarrySite?.Cleared ?? false,
         ArcProgress: string.Join(",", new[]
         {
             Player.SeveredTruthHeard ? "truth" : null,
@@ -1383,6 +1485,9 @@ public sealed record Snapshot(
     int SeveredNpcY,
     int ThresholdX,
     int ThresholdY,
+    int QuarryX,
+    int QuarryY,
+    bool QuarryCleared,
     string ArcProgress,
     string CurrentSite,
     int UnbinderX,

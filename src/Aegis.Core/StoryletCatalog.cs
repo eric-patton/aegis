@@ -145,6 +145,36 @@ public static class StoryletCatalog
                 "A bent silver pin from the barrow-age, given the day the mound went quiet."),
         },
 
+        // Deep in the quarry (D-040, tier 3+ worlds): world-texture, not arc. The
+        // pit's one mystery is a working left mid-stroke, and it stays a mystery.
+        new Storylet
+        {
+            Id = "the-downed-tools",
+            Trigger = StoryletTrigger.EnterTile,
+            Tile = Terrain.Floor,
+            Priority = 5,
+            When = g => g.CurrentSite?.Kind == SiteKind.Quarry && g.Player.Pos.X >= 14,
+            Lines =
+            [
+                ("Past the spoil heaps the working face rises sheer, and figures stand in it half-freed: a shoulder here, a lifted chin there, each one abandoned between one chisel-blow and the next.", LogTone.Info),
+                ("The tools were not dropped. They were set down in rows, edges wiped, as if the crew meant to be back by supper. The dust on them is deeper than the stead is old.", LogTone.Info),
+            ],
+        },
+
+        // The stead's answer to the quarry going still: same shape as the barrow's,
+        // smaller and drier, the way news of far stone arrives.
+        new Storylet
+        {
+            Id = "the-pit-gone-quiet",
+            Trigger = StoryletTrigger.NearHouse,
+            Requires = [new FactPattern("deed", "quarry_hushed")],
+            Lines =
+            [
+                ("A mason's boy runs past with the news, twice around the well before anyone will hold still for it: the figures in the old pit are down.", LogTone.Info),
+                ("The woodward only grunts. \"Good stone up there. Maybe now someone will go and get it.\" It is, by stead standards, a eulogy.", LogTone.Info),
+            ],
+        },
+
         // Meeting the wandering mender in a LATER world than the first meeting: the
         // first thread a player can pull that runs between worlds. Completes its own
         // small answer (these wanderers know you) and unlocks asking about it.

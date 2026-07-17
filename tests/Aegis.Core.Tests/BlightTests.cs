@@ -11,7 +11,8 @@ namespace Aegis.Core.Tests;
 public class BlightTests
 {
     /// <summary>Master seed whose cycle-2 world selects the Creeping Blight.</summary>
-    private const ulong BlightMaster = 43;
+    // D-040's repeat-weighting remapped the cycle-2 draws: 42 and 43 swapped stories.
+    private const ulong BlightMaster = 42;
 
     [Fact]
     public void Tier1_AlwaysTellsTheRaidedStead()
@@ -131,7 +132,7 @@ public class BlightTests
         Assert.Contains(game.Log.Entries, e => e.Text.Contains("Oath-breakers under the turf"));
     }
 
-    /// <summary>Crosses master seed 43 into its cycle-2 world, which tells the blight.</summary>
+    /// <summary>Crosses the blight master into its cycle-2 world, which tells the blight.</summary>
     private static Game CrossedBlightGame()
     {
         var game = new Game(BlightMaster);

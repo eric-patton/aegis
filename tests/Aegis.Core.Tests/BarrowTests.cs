@@ -126,6 +126,7 @@ public class BarrowTests
 
         game.Debug_ClearCamp();
         game.Apply(Command.Enter);
+        game.Apply(Command.Enter);
         Assert.Equal(3, game.Cycle);
     }
 
@@ -217,6 +218,7 @@ public class BarrowTests
         var game = new Game(seed);
         game.Debug_ClearCamp();
         game.Debug_SetPlayerPos(game.World.GatePos);
+        game.Apply(Command.Enter);
         game.Apply(Command.Enter);
         Assert.Equal(2, game.Cycle);
         return game;

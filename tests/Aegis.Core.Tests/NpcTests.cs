@@ -96,6 +96,7 @@ public class NpcTests
         game.Debug_ClearCamp();
         game.Debug_SetPlayerPos(game.World.GatePos);
         game.Apply(Command.Enter);
+        game.Apply(Command.Enter);
         Assert.Equal(2, game.Cycle);
 
         BumpFirstNpc(game);

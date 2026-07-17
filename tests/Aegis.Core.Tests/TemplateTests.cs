@@ -95,6 +95,7 @@ public class TemplateTests
         game.Debug_ClearCamp();
         game.Debug_SetPlayerPos(game.World.GatePos);
         game.Apply(Command.Enter);
+        game.Apply(Command.Enter);
         Assert.Equal(2, game.Cycle);
 
         string witnessLine = $"{Plaintiff(game).Name} will hear of this by nightfall";
@@ -116,6 +117,7 @@ public class TemplateTests
 
         game.Debug_ClearCamp();
         game.Debug_SetPlayerPos(game.World.GatePos);
+        game.Apply(Command.Enter);
         game.Apply(Command.Enter);
         Assert.Equal(2, game.Cycle);
 

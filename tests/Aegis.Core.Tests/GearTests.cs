@@ -350,6 +350,7 @@ public class GearTests
         game.Debug_ClearCamp();
         game.Debug_SetPlayerPos(game.World.GatePos);
         game.Apply(Command.Enter);
+        game.Apply(Command.Enter);
     }
 
     /// <summary>Two same-seed games, one bare-handed and one armed, walked into the same first strike.</summary>

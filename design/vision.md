@@ -152,7 +152,7 @@ Coin does not cross. In your final days, wealth converts through **patronage**: 
 
 Difficulty comes from two dials:
 - **World Hostility Tier** (the NG+ number): a generation input, never a bolt-on multiplier. Each rung adds new enemy families, hazards, hostile-faction facts, scarcer havens, and only a modest stat bump. Every tier is backed by designed content.
-- **Covenants**: optional stackable modifiers chosen at world creation (harsher winters, vengeful factions, shrine-only anchoring), totaling a visible Threat score whose rewards are legend and cosmetic, never raw power.
+- **Covenants**: optional stackable modifiers chosen at world creation (harsher winters, vengeful factions, shrine-only anchoring), totaling a visible Threat score whose rewards are legend and cosmetic, never raw power. In the game's own register they are oaths, sworn at the waygate as the terms of the crossing, and the Threat score is the burden; the first four landed in D-047.
 
 Death scales in magnitude, never in shape: tighter reclaim windows, longer wounds, a faster-filling Toll, failures that echo further.
 
@@ -172,12 +172,12 @@ And the loop closes on itself: **your finished characters enter the mythology.**
 - Final race list (which originals join the anchors)
 - Spell list and magic-school content design
 - Storylet external data-file format and condition/effect vocabulary (v1 C# format spec'd; see `storylets.md` sec. 6)
-- Covenant, scar, Legend-boon, and hostility-tier content catalogs (first tier band landed in D-033: the barrow at tier 2+; tiers 3+ still need their own)
+- Scar, Legend-boon, further-oath (D-047 landed four), and hostility-tier content catalogs (first tier band landed in D-033: the barrow at tier 2+; tiers 3+ still need their own)
 - Story content open items: bottle-episode playability, Unbinder guise tells, templates 4-5 (see `story/aegis-arc.md` sec. 11, `story/world-story-templates.md` sec. 9; final names settled by D-043)
 
 ## 13. Document Map
 
-- `decisions.md`: the decision audit trail with rationale (46 and counting)
+- `decisions.md`: the decision audit trail with rationale (47 and counting)
 - `storylets.md`: storylet format and fact-graph schema spec (D-030)
 - `story/aegis-arc.md`: the trans-world Aegis arc spec (Canon: The Ledger; D-026)
 - `story/world-story-templates.md`: the world-story template contract, iron rules, and three launch templates

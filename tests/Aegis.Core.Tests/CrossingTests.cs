@@ -23,6 +23,7 @@ public class CrossingTests
         var game = new Game(42);
         game.Debug_SetPlayerPos(game.World.GatePos);
         game.Apply(Command.Enter);
+        game.Apply(Command.Enter);
 
         Assert.Equal(1, game.Cycle);
         Assert.Equal(42UL, game.World.Seed);
@@ -50,6 +51,7 @@ public class CrossingTests
         game.Debug_ClearCamp();
 
         game.Debug_SetPlayerPos(game.World.GatePos);
+        game.Apply(Command.Enter);
         game.Apply(Command.Enter);
 
         Assert.Equal(2, game.Cycle);
@@ -93,6 +95,7 @@ public class CrossingTests
             game.Player.Coin = 20;
             game.Debug_ClearCamp();
             game.Debug_SetPlayerPos(game.World.GatePos);
+            game.Apply(Command.Enter);
             game.Apply(Command.Enter);
             foreach (char key in "jjkkllhh..")
                 game.ApplyKey(key);

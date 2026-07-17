@@ -42,10 +42,13 @@ namespace Aegis.Core;
 /// v14 when D-046 added knacks: the sheet's digits now answer threshold
 /// questions (a v13 key that merely closed the sheet could now choose one
 /// forever), and chosen knacks change later damage, wind, and wear.
+/// v15 when D-047 added the terms of the crossing: '>' at an open waygate now
+/// opens the oath menu where a v14 '>' crossed at once, digits there swear
+/// terms on the next world, and oath-bound worlds generate more tenants.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 14;
+    public const int Version = 15;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

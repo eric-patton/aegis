@@ -50,6 +50,21 @@ public sealed class Game
     /// <summary>The pack menu (D-041): 'i' anywhere; digits wield or wear, anything else closes.</summary>
     public bool InGearMenu { get; private set; }
     public bool InSheetMenu { get; private set; }
+
+    /// <summary>
+    /// The terms of the crossing (D-047), open only at an open waygate: digits
+    /// swear or unswear oaths on the next world, '>' crosses under what stands
+    /// sworn, anything else steps back and the selection is let go.
+    /// </summary>
+    public bool InCrossingMenu { get; private set; }
+
+    private readonly HashSet<OathId> _chosenOaths = [];
+
+    /// <summary>The oaths currently marked in the open terms menu (Presenter reads this).</summary>
+    public IReadOnlyCollection<OathId> ChosenOaths => _chosenOaths;
+
+    /// <summary>The standing terms' summed weight: the visible Threat score (D-011).</summary>
+    public int Burden => World.Burden;
     public Npc? TalkNpc { get; private set; }
 
     /// <summary>Unbindings per world (D-016: a handful, refreshed at each crossing).</summary>
@@ -77,11 +92,16 @@ public sealed class Game
 
     /// <summary>
     /// Fact-derived pricing (D-025 v0): while a blight story stands uncompleted,
-    /// the larders are thin and bread costs half again as much.
+    /// the larders are thin and bread costs half again as much. The hungry road
+    /// (D-047) doubles whatever the world was asking.
     /// </summary>
     public int RationPrice =>
-        World.Facts.Exists("story", CreepingBlightTemplate.Id)
-        && !World.Facts.Exists("story_complete", CreepingBlightTemplate.Id) ? 6 : 4;
+        (World.Facts.Exists("story", CreepingBlightTemplate.Id)
+        && !World.Facts.Exists("story_complete", CreepingBlightTemplate.Id) ? 6 : 4)
+        * (World.Oaths.Contains(OathId.HungryRoad) ? 2 : 1);
+
+    /// <summary>How far one wear event moves the ledger: the spent edge (D-047) doubles it.</summary>
+    private int WearStep => World.Oaths.Contains(OathId.SpentEdge) ? 2 : 1;
 
     /// <summary>
     /// What the herbwife asks to dress the wound: priced by how much convalescence
@@ -177,6 +197,13 @@ public sealed class Game
         if (InSheetMenu)
         {
             HandleSheetMenuKey(key);
+            KeyApplied?.Invoke(key);
+            return;
+        }
+
+        if (InCrossingMenu)
+        {
+            HandleCrossingMenuKey(key);
             KeyApplied?.Invoke(key);
             return;
         }
@@ -310,7 +337,7 @@ public sealed class Game
                 Log.Add(Turn, "The shrine hums faintly. The Aegis anchors here. Press r to rest.", LogTone.Aegis);
             else if (t == Terrain.Waygate)
                 Log.Add(Turn, CampCleared
-                    ? "An arch of black iron links. It hums, and the air beyond it is not this world's. Press > to cross."
+                    ? "An arch of black iron links. It hums, and the air beyond it is not this world's. Press > to read the terms and cross."
                     : "An arch of black iron links, older than the stones around it. It is shut.", LogTone.Aegis);
             else if (t == Terrain.BarrowEntrance)
                 Log.Add(Turn, World.BarrowSite!.Cleared
@@ -409,8 +436,17 @@ public sealed class Game
                 Log.Add(Turn, $"\"{AegisVoice.GateShutLine}\"", LogTone.Aegis);
                 return false;
             }
-            CrossToNextWorld();
-            return true;
+            // Reachable with the menu already open only through Apply (tests):
+            // ApplyKey routes menu keys to the handler first. A second Enter
+            // then means what the handler's '>' means: cross as sworn.
+            if (InCrossingMenu)
+            {
+                InCrossingMenu = false;
+                CrossToNextWorld([.. OathCatalog.All.Select(o => o.Id).Where(_chosenOaths.Contains)]);
+                return true;
+            }
+            OpenCrossingMenu();
+            return false;
         }
         Log.Add(Turn, "There is nothing to enter here.");
         return false;
@@ -422,11 +458,17 @@ public sealed class Game
     /// deeper from a seed derived off the master. The completed deed is pressed
     /// into the new world's facts (D-013's mythology pipe).
     /// </summary>
-    private void CrossToNextWorld()
+    private void CrossToNextWorld(IReadOnlyList<OathId> oaths)
     {
         string prevWorld = World.Name;
         string prevSettlement = World.SettlementName;
+        // The far side of a sworn crossing (D-047): the burden carried through
+        // this world is honored in Legend, never in power.
+        int prevBurden = World.Burden;
         Player.WorldsWalked.Add(prevWorld);
+
+        if (oaths.Count > 0)
+            Log.Add(Turn, $"You set your hand on the arch and take up the terms: {string.Join(", ", oaths.Select(o => OathCatalog.Def(o).Name))}.", LogTone.Danger);
 
         if (Remnant is not null)
         {
@@ -437,6 +479,8 @@ public sealed class Game
         int converted = Player.Coin;
         Player.Legend += converted;
         Player.Coin = 0;
+        int honored = 10 * prevBurden;
+        Player.Legend += honored;
 
         // Repeat-weighting (D-040): the finished world's story travels into the next
         // draw as a generation input. It is itself a pure function of the seed
@@ -444,7 +488,7 @@ public sealed class Game
         string? prevStory = World.Facts.OfType("story").FirstOrDefault()?.Subject;
 
         Cycle++;
-        World = WorldGen.Generate(SeedTree.Derive(MasterSeed, "cycle", Cycle), tier: Cycle, prevStory: prevStory);
+        World = WorldGen.Generate(SeedTree.Derive(MasterSeed, "cycle", Cycle), tier: Cycle, prevStory: prevStory, oaths: oaths);
         _combatRng = new Rng(SeedTree.Derive(World.Seed, "combat"));
         _storylets.OnCrossing(World.Seed, FullCatalog());
         Monsters.Clear();
@@ -456,6 +500,8 @@ public sealed class Game
         InLayingMenu = false;
         InGearMenu = false;
         InSheetMenu = false;
+        InCrossingMenu = false;
+        _chosenOaths.Clear();
         TalkNpc = null;
         CurrentSite = null;
         UnbindingsLeft = UnbindingsPerWorld;
@@ -469,7 +515,9 @@ public sealed class Game
         Player.Stamina = Player.MaxStamina;
 
         World.Facts.Add("echo", "deed", prevSettlement,
-            $"In a world called {prevWorld}, the bearer emptied a goblin cave, and {prevSettlement} slept safe.");
+            prevBurden > 0
+                ? $"In a world called {prevWorld}, the bearer emptied a goblin cave under oath, and {prevSettlement} slept safe. The songs say they chose the harder walking."
+                : $"In a world called {prevWorld}, the bearer emptied a goblin cave, and {prevSettlement} slept safe.");
 
         // The long song (D-045): from the third world on, the walked worlds are one
         // song, compounding a verse per crossing, and every stead sings it wrong.
@@ -519,9 +567,13 @@ public sealed class Game
             Log.Add(Turn, $"\"{AegisVoice.CoinConvertedLine}\"", LogTone.Aegis);
             Log.Add(Turn, $"Your {converted} coin is weighed at the threshold and taken. Legend grows by {converted}.", LogTone.Reward);
         }
+        if (honored > 0)
+            Log.Add(Turn, $"The terms you carried through {prevWorld} are weighed with it. Legend grows by {honored} more.", LogTone.Reward);
 
         Log.Add(Turn, $"You wake at the shrine of {World.SettlementName}, in the world called {World.Name}.");
         Log.Add(Turn, "The air is older here, and hungrier.", LogTone.Danger);
+        if (World.Oaths.Count > 0)
+            Log.Add(Turn, $"The terms you took up hold here: {string.Join(", ", World.Oaths.Select(o => OathCatalog.Def(o).Name))}.", LogTone.Danger);
         Log.Add(Turn, $"In {World.SettlementName} they already sing of a stranger who emptied a goblin cave, in a world called {prevWorld}.");
         Log.Add(Turn, $"Rumor: goblins from a cave to the {Compass(World.ShrinePos, World.CampPos)} raid {World.SettlementName}'s stores by night.");
         if (World.BarrowSite is { } barrow)
@@ -961,6 +1013,45 @@ public sealed class Game
         TalkNpc = null;
     }
 
+    /// <summary>
+    /// The terms of the crossing (D-047): covenants in the game's register. The
+    /// arch will carry any burden freely taken up; what a burden buys is Legend
+    /// and a louder echo, never raw power. Post-resolution the same menu is the
+    /// bearer setting their own terms (arc sec 8): register, never mechanics.
+    /// </summary>
+    private void OpenCrossingMenu()
+    {
+        InCrossingMenu = true;
+        _chosenOaths.Clear();
+        Log.Add(Turn, "Terms are cut into the arch's iron, in a script that reads itself to you.", LogTone.Info);
+        Log.Add(Turn, Player.Resolution switch
+        {
+            Resolution.Kept => "\"The terms of the crossing, keeper: yours to set now. Name the kindling as hard as you please; the count honors what is carried.\"",
+            Resolution.Refused => "\"The old terms, bearer, and no commission behind them now. Take up any you will bear, for no reason but your own. I will keep the count of it all the same.\"",
+            _ => "\"The old terms. Whoever cut them meant this: a crossing may be made harder, freely, and what is carried is counted. Take up any you will bear, or none.\"",
+        }, LogTone.Aegis);
+    }
+
+    private void HandleCrossingMenuKey(char key)
+    {
+        int index = key - '1';
+        if (index >= 0 && index < OathCatalog.All.Count)
+        {
+            var oath = OathCatalog.All[index];
+            if (!_chosenOaths.Add(oath.Id)) _chosenOaths.Remove(oath.Id);
+            return;
+        }
+        if (key == '>')
+        {
+            InCrossingMenu = false;
+            CrossToNextWorld([.. OathCatalog.All.Select(o => o.Id).Where(_chosenOaths.Contains)]);
+            AdvanceTurn();
+            return;
+        }
+        InCrossingMenu = false;
+        Log.Add(Turn, "You step back from the arch. The terms keep.", LogTone.Info);
+    }
+
     private void HandleThresholdMenuKey(char key)
     {
         if (key == '1') { ResolveThreshold(kept: true); return; }
@@ -1344,7 +1435,7 @@ public sealed class Game
                 && Player.Skills.Uses(family) % 2 == 1;
             if (weapon is not null && !weapon.Worn && !edgeSpared)
             {
-                weapon.Wear++;
+                weapon.Wear = Math.Min(weapon.MaxWear, weapon.Wear + WearStep);
                 if (weapon.Worn)
                     Log.Add(Turn, $"The {weapon.Name}'s edge is gone: it lands like a bar of dull iron now. The smith's wheel would right it.", LogTone.Combat);
             }
@@ -1463,7 +1554,7 @@ public sealed class Game
                 && Player.Skills.Uses(SkillId.Warding) % 2 == 1;
             if (!armor.Worn && !strapSpared)
             {
-                armor.Wear++;
+                armor.Wear = Math.Min(armor.MaxWear, armor.Wear + WearStep);
                 if (armor.Worn)
                     Log.Add(Turn, $"The {armor.Name} hangs in cut batting now; it turns nothing more until it is mended.", LogTone.Combat);
             }
@@ -1840,6 +1931,8 @@ public sealed class Game
         InUnbindMenu = false;
         InThresholdMenu = false;
         InLayingMenu = false;
+        InCrossingMenu = false;
+        _chosenOaths.Clear();
         InGearMenu = false;
         InSheetMenu = false;
         TalkNpc = null;
@@ -1869,7 +1962,9 @@ public sealed class Game
         Mode = MapMode.Overworld;
         CurrentSite = null;
         Player.Pos = World.ShrinePos;
-        Player.WoundedTurns = 80;
+        // The slow mending (D-047): the death consequence scales in magnitude,
+        // never in shape (D-011): the same wound, held twice as long.
+        Player.WoundedTurns = World.Oaths.Contains(OathId.SlowMending) ? 160 : 80;
         Player.Hp = Player.EffectiveMaxHp;
         Player.Stamina = Player.MaxStamina;
 
@@ -1950,6 +2045,8 @@ public sealed class Game
         UnbinderY: World.Unbinder.Pos.Y,
         UnbindingsLeft: UnbindingsLeft,
         StoryTemplate: World.Facts.OfType("story").FirstOrDefault()?.Subject ?? "",
+        Oaths: string.Join(",", World.Oaths.Select(OathCatalog.IdOf)),
+        Burden: Burden,
         Hp: Player.Hp,
         MaxHp: Player.EffectiveMaxHp,
         Stamina: Player.Stamina,
@@ -1987,6 +2084,7 @@ public sealed class Game
         InLayingMenu: InLayingMenu,
         InGearMenu: InGearMenu,
         InSheetMenu: InSheetMenu,
+        InCrossingMenu: InCrossingMenu,
         TalkNpc: TalkNpc?.Name ?? "",
         WoundedTurns: Player.WoundedTurns,
         Deaths: Player.Deaths,
@@ -2042,6 +2140,8 @@ public sealed record Snapshot(
     int UnbinderY,
     int UnbindingsLeft,
     string StoryTemplate,
+    string Oaths,
+    int Burden,
     int Hp,
     int MaxHp,
     int Stamina,
@@ -2078,6 +2178,7 @@ public sealed record Snapshot(
     bool InLayingMenu,
     bool InGearMenu,
     bool InSheetMenu,
+    bool InCrossingMenu,
     string TalkNpc,
     int WoundedTurns,
     int Deaths,

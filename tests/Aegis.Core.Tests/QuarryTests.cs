@@ -331,6 +331,7 @@ public class QuarryTests
         game.Debug_ClearCamp();
         game.Debug_SetPlayerPos(game.World.GatePos);
         game.Apply(Command.Enter);
+        game.Apply(Command.Enter);
     }
 
     private static bool Reachable(GameMap map, Pos from, Pos to)

@@ -154,6 +154,7 @@ public class UnbinderTests
         game.Debug_ClearCamp();
         game.Debug_SetPlayerPos(game.World.GatePos);
         game.Apply(Command.Enter);
+        game.Apply(Command.Enter);
         Assert.Equal(2, game.Cycle);
         Assert.Equal(Game.UnbindingsPerWorld, game.UnbindingsLeft);
 
@@ -178,6 +179,7 @@ public class UnbinderTests
 
         game.Debug_ClearCamp();
         game.Debug_SetPlayerPos(game.World.GatePos);
+        game.Apply(Command.Enter);
         game.Apply(Command.Enter);
         Assert.Equal(2, game.Cycle);
 

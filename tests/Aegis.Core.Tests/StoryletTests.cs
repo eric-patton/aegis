@@ -74,6 +74,7 @@ public class StoryletTests
         game.Debug_ClearCamp();
         game.Debug_SetPlayerPos(game.World.GatePos);
         game.Apply(Command.Enter);
+        game.Apply(Command.Enter);
         Assert.Equal(2, game.Cycle);
         game.ApplyKey('r');
         Assert.Equal(1, game.Log.Recent(200).Count(e => e.Text.Contains("The first tally is small")));
@@ -102,6 +103,7 @@ public class StoryletTests
 
         game.Debug_ClearCamp();
         game.Debug_SetPlayerPos(game.World.GatePos);
+        game.Apply(Command.Enter);
         game.Apply(Command.Enter);
         Assert.Equal(2, game.Cycle);
 

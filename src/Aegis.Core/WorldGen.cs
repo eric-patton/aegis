@@ -38,6 +38,16 @@ public sealed class World
     /// <summary>Storylets compiled from this world's story template, cast-bound (D-032).</summary>
     public required List<Storylet> StoryStorylets { get; init; }
 
+    /// <summary>
+    /// The terms this world was crossed into under (D-047): oaths sworn at the
+    /// previous world's waygate. A generation input like the tier; they lapse at
+    /// this world's far gate. Empty for a first world and for a plain crossing.
+    /// </summary>
+    public required IReadOnlyList<OathId> Oaths { get; init; }
+
+    /// <summary>The summed weight of the standing terms: the visible Threat score (D-011).</summary>
+    public int Burden => Oaths.Sum(o => OathCatalog.Def(o).Weight);
+
     public Site CampSite => Sites.First(s => s.Kind == SiteKind.GoblinCamp);
     public Site? BarrowSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Barrow);
 
@@ -110,9 +120,16 @@ public static class WorldGen
     /// which is what keeps old save journals replayable. <paramref name="prevStory"/>
     /// is the finished world's story id (D-040): a generation input like the tier,
     /// legitimate because it is itself a pure function of the seed lineage.
+    /// <paramref name="oaths"/> is the terms sworn at the previous waygate (D-047):
+    /// a generation input that is player choice, which stays deterministic because
+    /// the choosing keys are journaled before this is ever called. With no oaths
+    /// the draws are exactly what they always were, so pinned worlds survive.
     /// </summary>
-    public static World Generate(ulong worldSeed, int tier = 1, string? prevStory = null)
+    public static World Generate(ulong worldSeed, int tier = 1, string? prevStory = null, IReadOnlyList<OathId>? oaths = null)
     {
+        oaths ??= [];
+        // The crowded dark (D-047): every den holds one more than the tier asks.
+        int crowd = oaths.Contains(OathId.CrowdedDark) ? 1 : 0;
         var facts = new FactGraph();
 
         var nameRng = new Rng(SeedTree.Derive(worldSeed, "names"));
@@ -149,7 +166,7 @@ public static class WorldGen
             CarvePathIfDisconnected(overworld, shrine, barrow);
         }
 
-        int goblinCount = Math.Min(3 + (tier - 1), 6);
+        int goblinCount = Math.Min(3 + (tier - 1), 6) + crowd;
         int goblinHp = 8 + 2 * (tier - 1);
         var (campMap, entry, goblinSpawns, chest) = GenerateCamp(worldSeed, goblinCount);
         var sites = new List<Site>
@@ -168,7 +185,7 @@ public static class WorldGen
 
         if (tier >= 2)
         {
-            int wightCount = Math.Min(2 + (tier - 2), 5);
+            int wightCount = Math.Min(2 + (tier - 2), 5) + crowd;
             int wightHp = 12 + 2 * (tier - 2);
             var (barrowMap, barrowEntry, wightSpawns, barrowChest) = GenerateBarrow(worldSeed, wightCount);
             sites.Add(new Site
@@ -317,7 +334,7 @@ public static class WorldGen
             overworld[quarryPos] = Terrain.QuarryEntrance;
             CarvePathIfDisconnected(overworld, shrine, quarryPos);
 
-            int gravenCount = Math.Min(3 + (tier - 3), 5);
+            int gravenCount = Math.Min(3 + (tier - 3), 5) + crowd;
             int gravenHp = 18 + 2 * (tier - 3);
             var (quarryMap, quarryEntry, gravenSpawns, quarryChest) = GenerateQuarry(worldSeed, gravenCount);
             sites.Add(new Site
@@ -389,7 +406,7 @@ public static class WorldGen
             overworld[hallPos] = Terrain.HallEntrance;
             CarvePathIfDisconnected(overworld, shrine, hallPos);
 
-            int houndCount = Math.Min(5 + (tier - 4), 8);
+            int houndCount = Math.Min(5 + (tier - 4), 8) + crowd;
             int houndHp = 10 + 2 * (tier - 4);
             var (hallMap, hallEntry, houndSpawns, hallChest) = GenerateHall(worldSeed, houndCount);
             sites.Add(new Site
@@ -438,6 +455,7 @@ public static class WorldGen
             Sites = sites,
             Npcs = npcs,
             StoryStorylets = storyStorylets,
+            Oaths = oaths,
         };
     }
 

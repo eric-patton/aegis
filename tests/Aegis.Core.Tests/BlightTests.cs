@@ -139,6 +139,7 @@ public class BlightTests
         game.Debug_ClearCamp();
         game.Debug_SetPlayerPos(game.World.GatePos);
         game.Apply(Command.Enter);
+        game.Apply(Command.Enter);
         Assert.Equal(2, game.Cycle);
         Assert.Equal("creeping-blight", game.World.Facts.OfType("story").Single().Subject);
         return game;

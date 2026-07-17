@@ -50,7 +50,39 @@ public static class Presenter
         if (game.InLayingMenu) DrawLayingMenu(frame, layout);
         if (game.InGearMenu) DrawGearMenu(frame, game, layout);
         if (game.InSheetMenu) DrawSheet(frame, game, layout);
+        if (game.InCrossingMenu) DrawCrossingMenu(frame, game, layout);
         return frame;
+    }
+
+    /// <summary>
+    /// The terms of the crossing (D-047): the oath list with what stands sworn,
+    /// the burden it sums to, and the two ways out (cross, or step back).
+    /// </summary>
+    private static void DrawCrossingMenu(Frame frame, Game game, Layout layout)
+    {
+        var oaths = OathCatalog.All;
+        const int boxW = 52;
+        int boxH = 7 + oaths.Count;
+        int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
+        int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
+
+        DrawBox(frame, x0, y0, boxW, boxH);
+        frame.Write(x0 + 2, y0 + 1, "The terms of the crossing", Hue.Cyan);
+
+        for (int i = 0; i < oaths.Count; i++)
+        {
+            bool sworn = game.ChosenOaths.Contains(oaths[i].Id);
+            frame.Write(x0 + 2, y0 + 3 + i,
+                $"{i + 1}) {(sworn ? 'x' : '-')} {oaths[i].Name}: {oaths[i].Blurb}",
+                sworn ? Hue.White : Hue.Gray);
+        }
+
+        int burden = oaths.Where(o => game.ChosenOaths.Contains(o.Id)).Sum(o => o.Weight);
+        frame.Write(x0 + 2, y0 + 4 + oaths.Count, burden > 0
+            ? $"The burden you take up: {burden}. Legend honors it."
+            : "No terms taken up. The crossing is plain.", Hue.Yellow);
+        frame.Write(x0 + 2, y0 + boxH - 2,
+            $"1-{oaths.Count} swear or unswear; > crosses; else steps back", Hue.DarkGray);
     }
 
     private static void DrawTalkMenu(Frame frame, Game game, Layout layout)

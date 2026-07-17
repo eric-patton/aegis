@@ -119,6 +119,7 @@ public class TradeTests
         game.Debug_ClearCamp();
         game.Debug_SetPlayerPos(game.World.GatePos);
         game.Apply(Command.Enter);
+        game.Apply(Command.Enter);
         Assert.Equal(CreepingBlightTemplate.Id, game.World.Facts.OfType("story").First().Subject);
         Assert.Equal(6, game.RationPrice);
 
@@ -149,6 +150,7 @@ public class TradeTests
 
         game.Debug_ClearCamp();
         game.Debug_SetPlayerPos(game.World.GatePos);
+        game.Apply(Command.Enter);
         game.Apply(Command.Enter);
         Assert.Equal(2, game.Cycle);
         Assert.Equal(3, game.Player.Rations);

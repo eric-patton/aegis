@@ -172,6 +172,7 @@ public class SkillsTests
         game.Debug_ClearCamp();
         game.Debug_SetPlayerPos(game.World.GatePos);
         game.Apply(Command.Enter);
+        game.Apply(Command.Enter);
         Assert.Equal(2, game.Cycle);
         Assert.Equal(2, game.Player.Skills.Level(SkillId.Hafted));
         Assert.Equal(1, game.Player.Skills.Level(SkillId.Warding));

@@ -1,6 +1,6 @@
 # The Aegis Arc (trans-world main story)
 
-**Status: ADOPTED (D-026).** Canon A "The Ledger" was chosen 2026-07-16; this document is the arc's spec. Rejected alternative canons are preserved in section 10 for the record. Names remain working placeholders (section 11).
+**Status: ADOPTED (D-026).** Canon A "The Ledger" was chosen 2026-07-16; this document is the arc's spec. Rejected alternative canons are preserved in section 10 for the record. Names are canon per D-043 (section 11).
 
 Grounding: D-010, D-013, D-019, D-020 in `../decisions.md`; technique source is the FFXIV study at `../../research/11-ffxiv-storytelling/00-synthesis.md`. Everything here must be deliverable as text storylets, topic entries, and line banks (no cutscenes, no voice, no runtime LLM).
 
@@ -32,7 +32,7 @@ Grounding: D-010, D-013, D-019, D-020 in `../decisions.md`; technique source is 
 
 Spoiler order note: this section states the full truth up front for the designer. Players receive it via the ladder in section 6.
 
-**The Chain.** The worlds are real, plural, and ordered: links on a chain descending toward the place where worlds are kindled, called the **Hearth** (all names in this document are working placeholders). Worlds nearer the Hearth are older, stranger, and hungrier: this is the diegetic reading of World Hostility Tiers. Each crossing carries the bearer one link deeper.
+**The Chain.** The worlds are real, plural, and ordered: links on a chain descending toward the place where worlds are kindled, called the **Hearth**. Worlds nearer the Hearth are older, stranger, and hungrier: this is the diegetic reading of World Hostility Tiers. Each crossing carries the bearer one link deeper.
 
 **The Aegis.** A made thing: a ward-intelligence forged in the last age of a dying order, the **Shieldwrights**, and sent out along the Chain with a mandate: *find and temper a soul fit to keep the Hearth*. It binds to one bearer at a time. It catches the soul at death because a broken bearer is a failed commission. It gathers the essence of deeds because deeds are the measure it was built to take: the Aegis is, among other things, a scale and a ledger. Crucially, **the Aegis does not fully remember any of this at the start.** Long service has worn it; its memory returns in pieces as it refills across cycles. The mystery drip is therefore honest: the Aegis is not coy, it is recovering. It learns the truth of itself only a step ahead of the player, and some steps behind.
 
@@ -146,7 +146,7 @@ Either way, the diegetic frame for **covenants** upgrades at resolution: the ter
 
 ## 11. Open questions for a future session
 
-- Final names: Aegis's forge-name, the Shieldwrights, the Chain, the Hearth, the Severed, the Unbinder (all placeholders). *D-037 picked "Skeld" as the forge-name working placeholder (AegisVoice.ForgeName); still revisable with the rest.*
+- Final names: Aegis's forge-name, the Shieldwrights, the Chain, the Hearth, the Severed, the Unbinder. *Resolved by D-043: the working names are canon. "Skeld" (AegisVoice.ForgeName, picked in D-037) is final: a maker's plain shield-word for a made shield. The epithets stay as plain weighted English, which is what authored names sound like in this game's register; coined names are reserved for persons and made things (the forge-name, NPC name pools). Two authored name-facts landed in content to make the keeps deliberate: the Shieldwrights' own name for themselves is lost to the Aegis's worn memory (vision storylet), and the Unbinder laid their name down with everything else (reveal-tier-2 topic), the mirror of the Aegis getting its name back.*
 - The Unbinder's guise design per world: how strongly disguised, and what constant tells (a phrase, a service, a mannerism) let attentive players clock them early. Early-clocking should be possible and rewarded (the study's hindsight-reread principle).
 - Whether the cycle-3 bottle vision is playable (the player briefly acts in the memory) or witnessed (text vision). Playable is stronger and costlier. *D-037 shipped witnessed for v1; upgrading to playable remains open.*
 - The exact mechanical dressing of the threshold scene (pure dialogue, or a final trial fight against a designed Severed "gatekeeper"). *D-039 resolved this: pure approach and dialogue, no gatekeeper fight, because cycle 4 made no-violence structural for Severed met as people and the finale must not unsay it.*

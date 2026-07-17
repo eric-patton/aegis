@@ -63,7 +63,7 @@ public static class AegisVoice
 
     public const string LaterCrossingLine = "Deeper, then. Hold fast to me.";
 
-    /// <summary>The Aegis's forge-name, recovered in cycle 2 (working placeholder, arc sec 11).</summary>
+    /// <summary>The Aegis's forge-name, recovered in cycle 2 (canon per D-043).</summary>
     public const string ForgeName = "Skeld";
 
     // Crossing rung "the failures" (arc sec 6, cycle 2): the stranger-kind named

@@ -697,7 +697,7 @@ public sealed class Game
 
         // Reveal tier 2 (D-038): the refusal, restated on demand, never softened.
         if (Player.UnbinderRevealTier >= 2)
-            topics.Add(("The refusal", "\"Would I do it again? Every dawn of every world. You want to know if the knife is clean. It is the cleanest thing I own. At the threshold it will be yours to take or wave away, and either answer will be yours. That is the entire point of me.\""));
+            topics.Add(("The refusal", "\"Would I do it again? Every dawn of every world. My name from before? Laid down with everything else; a name is a binding too, and I keep none. You want to know if the knife is clean. It is the cleanest thing I own. At the threshold it will be yours to take or wave away, and either answer will be yours. That is the entire point of me.\""));
 
         // The one permitted long thread (D-039, arc sec 9): the unfinished argument,
         // advanced a line at a time, the worldview unyielding in either branch.

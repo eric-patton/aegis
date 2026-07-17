@@ -280,7 +280,7 @@ public static class StoryletCatalog
                 ("A hall of anvils beneath a sky the color of quenching-water. Rows of shields being made: not hammered but argued into being, by smiths who speak each blow. The Shieldwrights.", LogTone.Info),
                 ("One of the shields is yours. You watch words laid into it like inlay: catch, carry, count. And over the anvil a commission is spoken: \"Find and temper a soul fit to keep the...\"", LogTone.Info),
                 ("The memory frays there, mid-word. The Aegis reaches after it and closes on nothing.", LogTone.Info),
-                ("\"A made thing. That much I knew. I did not remember being made. There were orders, bearer: I heard every word except what they were for.\"", LogTone.Aegis),
+                ("\"A made thing. That much I knew. I did not remember being made. I call them the Shieldwrights; whatever they called themselves has not come back. There were orders, bearer: I heard every word except what they were for.\"", LogTone.Aegis),
             ],
             Effect = g => g.Player.VisionSeen = true,
         },

@@ -9,6 +9,7 @@ public enum Command
     Exit,
     Grab,
     Rest,
+    Eat,
     Quit,
 }
 
@@ -30,6 +31,7 @@ public static class CommandMap
         '<' => Command.Exit,
         'g' => Command.Grab,
         'r' => Command.Rest,
+        'e' => Command.Eat,
         'q' => Command.Quit,
         _ => Command.None,
     };

@@ -13,11 +13,13 @@ namespace Aegis.Core;
 /// v3 when D-034 added the Unbinder to every world at every tier (a v2 journal
 /// walking their tile would open a talk menu that did not exist when it was played);
 /// v4 when D-035 added template selection (tier 2+ worlds draw to choose a story,
-/// so a v3 journal that crossed would replay against different content).
+/// so a v3 journal that crossed would replay against different content);
+/// v5 when D-036 added trade (villager talk menus gained purchase entries, so a
+/// v4 journal digit that merely closed a menu could now buy something).
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 4;
+    public const int Version = 5;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

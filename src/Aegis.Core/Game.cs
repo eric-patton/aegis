@@ -2,6 +2,9 @@ namespace Aegis.Core;
 
 public enum MapMode { Overworld, Site }
 
+/// <summary>What the stead sells (D-036): goods and services coin can become.</summary>
+public enum TradeGood { Ration, Mending }
+
 /// <summary>
 /// The deterministic game engine. No console, no I/O, no wall clock: state advances
 /// only through <see cref="Apply(Command)"/>, and all randomness flows from the seed
@@ -49,6 +52,27 @@ public sealed class Game
     /// <summary>The current conversation's topics, computed live from the fact graph at open.</summary>
     public IReadOnlyList<(string Label, string Answer)> Topics => _topics;
     private readonly List<(string Label, string Answer)> _topics = [];
+
+    /// <summary>What the current conversation partner sells (D-036), listed after the topics.</summary>
+    public IReadOnlyList<(TradeGood Good, string Label)> Offers => _offers;
+    private readonly List<(TradeGood Good, string Label)> _offers = [];
+
+    /// <summary>Most rations a person can carry: the sink recurs instead of stockpiling.</summary>
+    public const int RationCap = 5;
+
+    /// <summary>
+    /// Fact-derived pricing (D-025 v0): while a blight story stands uncompleted,
+    /// the larders are thin and bread costs half again as much.
+    /// </summary>
+    public int RationPrice =>
+        World.Facts.Exists("story", CreepingBlightTemplate.Id)
+        && !World.Facts.Exists("story_complete", CreepingBlightTemplate.Id) ? 6 : 4;
+
+    /// <summary>
+    /// What the herbwife asks to dress the wound: priced by how much convalescence
+    /// it buys off, so waiting it out is always the poor bearer's option.
+    /// </summary>
+    public int MendPrice => (Player.WoundedTurns + 3) / 4;
 
     /// <summary>
     /// Fired for every key that reached the engine while running (including menu keys
@@ -160,6 +184,7 @@ public sealed class Game
             Command.Exit => DoExit(),
             Command.Grab => DoGrab(),
             Command.Rest => DoRest(),
+            Command.Eat => DoEat(),
             _ => CommandMap.Delta(cmd) is { } d && DoMove(d.dx, d.dy),
         };
 
@@ -386,6 +411,8 @@ public sealed class Game
         InTalkMenu = true;
         _topics.Clear();
         _topics.AddRange(npc.Kind == NpcKind.Unbinder ? BuildUnbinderTopics(npc) : BuildTopics(npc));
+        _offers.Clear();
+        if (npc.Kind == NpcKind.Villager) _offers.AddRange(BuildOffers(npc));
 
         if (npc.Kind == NpcKind.Unbinder)
         {
@@ -468,6 +495,64 @@ public sealed class Game
         return topics;
     }
 
+    /// <summary>
+    /// The stead's trade surface (D-036): each seller offers what their role would
+    /// actually have. Purchases are talk-menu entries, not a separate mode, and the
+    /// menu stays open so buying twice is two key presses.
+    /// </summary>
+    private List<(TradeGood, string)> BuildOffers(Npc npc)
+    {
+        var offers = new List<(TradeGood, string)>();
+        if (npc.Id == "npc_steadholder")
+            offers.Add((TradeGood.Ration, $"Buy a ration ({RationPrice} coin)"));
+        if (npc.Id == "npc_herbwife" && Player.WoundedTurns > 0)
+            offers.Add((TradeGood.Mending, $"Have the wound dressed ({MendPrice} coin)"));
+        return offers;
+    }
+
+    private void TryBuyRation()
+    {
+        int price = RationPrice;
+        if (Player.Rations >= RationCap)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"You carry all a walking body can. Eat some of it first.\"");
+            return;
+        }
+        if (Player.Coin < price)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"That is {price} coin, and you hold {Player.Coin}. The larder is not a charity, stranger.\"");
+            return;
+        }
+
+        Player.Coin -= price;
+        Player.Rations++;
+        Log.Add(Turn, $"Bread, hard cheese, a fist of dried plums, wrapped in waxed cloth. ({Player.Rations} carried)", LogTone.Reward);
+        if (price > 4)
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Dear, I know. Prices are what the fields let them be, of late.\"");
+    }
+
+    private void TryBuyMending()
+    {
+        if (Player.WoundedTurns == 0)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"You are whole. Come back when you are not; most do.\"");
+            return;
+        }
+        int price = MendPrice;
+        if (Player.Coin < price)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Herbs cost, boiled linen costs. {price} coin, or let time do it for nothing.\"");
+            return;
+        }
+
+        Player.Coin -= price;
+        Player.WoundedTurns = 0;
+        _offers.RemoveAll(o => o.Good == TradeGood.Mending);
+        Log.Add(Turn, $"{TalkNpc!.Name} unwinds the old dressing, packs the wound with something that smells of thyme, and binds it properly.", LogTone.Reward);
+        Log.Add(Turn, "The wound's weight lifts. You are whole again.", LogTone.Info);
+        Log.Add(Turn, "\"Mended by another's hands. That is allowed. That is what steads are for.\"", LogTone.Aegis);
+    }
+
     private const string UnbinderFarewell = "Nothing needs to be counted. Walk well.";
 
     private void HandleTalkMenuKey(char key)
@@ -477,6 +562,14 @@ public sealed class Game
             var (label, answer) = _topics[key - '1'];
             Log.Add(Turn, $"You ask about {label.ToLowerInvariant()}.");
             Log.Add(Turn, $"{TalkNpc!.Name}: {answer}");
+            return;
+        }
+
+        if (TalkNpc!.Kind == NpcKind.Villager
+            && key > '0' + _topics.Count && key <= '0' + _topics.Count + _offers.Count)
+        {
+            var (good, _) = _offers[key - '1' - _topics.Count];
+            if (good == TradeGood.Ration) TryBuyRation(); else TryBuyMending();
             return;
         }
 
@@ -548,6 +641,30 @@ public sealed class Game
         Log.Add(Turn, $"Their fingers work at something above your collarbone that you cannot see. {AttributeSet.NameOf(attr)} eases to {Player.Attributes[attr]}; {refund} essence returns to you.", LogTone.Reward);
         if (Player.Unbindings == 1)
             Log.Add(Turn, "\"Strange, to be loosened. I held that shape with care. ...I will hold the new one the same.\"", LogTone.Aegis);
+    }
+
+    /// <summary>
+    /// Eating a ration (D-036): the only healing that works away from the shrine.
+    /// Takes a turn, so a mid-fight bite is a real gamble; monsters still act.
+    /// </summary>
+    private bool DoEat()
+    {
+        if (Player.Rations == 0)
+        {
+            Log.Add(Turn, "You carry nothing to eat.");
+            return false;
+        }
+        if (Player.Hp >= Player.EffectiveMaxHp && Player.Stamina >= Player.MaxStamina)
+        {
+            Log.Add(Turn, "You are neither hurt nor winded; the ration keeps.");
+            return false;
+        }
+
+        Player.Rations--;
+        Player.Hp = Math.Min(Player.EffectiveMaxHp, Player.Hp + 6);
+        Player.Stamina = Math.Min(Player.MaxStamina, Player.Stamina + 3);
+        Log.Add(Turn, $"You eat, quickly, watching the shadows. Warmth comes back to your hands. ({Player.Rations} left)", LogTone.Info);
+        return true;
     }
 
     /// <summary>Global rising cost per raise (D-014's Essence economy, Souls-style curve).</summary>
@@ -916,6 +1033,9 @@ public sealed class Game
         Coin: Player.Coin,
         Essence: Player.Essence,
         Legend: Player.Legend,
+        Rations: Player.Rations,
+        RationPrice: RationPrice,
+        MendPrice: Player.WoundedTurns > 0 ? MendPrice : 0,
         Might: Player.Attributes[Attr.Might],
         Grace: Player.Attributes[Attr.Grace],
         Vigor: Player.Attributes[Attr.Vigor],
@@ -975,6 +1095,9 @@ public sealed record Snapshot(
     int Coin,
     int Essence,
     int Legend,
+    int Rations,
+    int RationPrice,
+    int MendPrice,
     int Might,
     int Grace,
     int Vigor,

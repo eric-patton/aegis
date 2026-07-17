@@ -21,6 +21,12 @@ public sealed class Player
     /// <summary>Total unbindings ever performed on this character, all worlds.</summary>
     public int Unbindings { get; set; }
 
+    /// <summary>
+    /// Carried provisions (D-036): bought with coin, eaten anywhere with 'e'.
+    /// On your person, so they survive death (unlike coin) and crossings.
+    /// </summary>
+    public int Rations { get; set; }
+
     /// <summary>Derived from Vigor (D-015): the humble baseline of 5 gives 20.</summary>
     public int MaxHp => 10 + Attributes[Attr.Vigor] * 2;
 

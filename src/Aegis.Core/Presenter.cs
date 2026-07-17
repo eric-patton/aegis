@@ -55,7 +55,7 @@ public static class Presenter
         if (npc is null) return;
 
         bool unbinder = npc.Kind == NpcKind.Unbinder;
-        int entries = game.Topics.Count + (unbinder ? 1 : 0);
+        int entries = game.Topics.Count + (unbinder ? 1 : game.Offers.Count);
         const int boxW = 46;
         int boxH = 5 + entries;
         int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
@@ -71,6 +71,9 @@ public static class Presenter
         if (unbinder)
             frame.Write(x0 + 2, y0 + 3 + game.Topics.Count,
                 $"{entries}) The unbinding ({game.UnbindingsLeft} left this world)", Hue.Cyan);
+        for (int i = 0; i < game.Offers.Count; i++)
+            frame.Write(x0 + 2, y0 + 3 + game.Topics.Count + i,
+                $"{game.Topics.Count + i + 1}) {game.Offers[i].Label}", Hue.Yellow);
 
         frame.Write(x0 + 2, y0 + boxH - 2, $"1-{entries} choose; any other key to part ways", Hue.DarkGray);
     }
@@ -232,6 +235,7 @@ public static class Presenter
         Line($"ST  {Bar(p.Stamina, p.MaxStamina, 10)} {p.Stamina}/{p.MaxStamina}", Hue.Gray);
         Line($"Coin    {p.Coin}", Hue.Yellow);
         Line($"Essence {p.Essence}", Hue.Cyan);
+        if (p.Rations > 0) Line($"Rations {p.Rations}", Hue.Green);
         if (p.Legend > 0) Line($"Legend  {p.Legend}", Hue.Magenta);
         if (p.WoundedTurns > 0) Line($"WOUNDED ({p.WoundedTurns})", Hue.Red);
         y++;
@@ -269,7 +273,7 @@ public static class Presenter
         y++;
         Line("hjkl/yubn move  . wait", Hue.DarkGray);
         Line("g grab  >/< enter/exit", Hue.DarkGray);
-        Line("q quit", Hue.DarkGray);
+        Line("e eat  q quit", Hue.DarkGray);
     }
 
     private static string Bar(int value, int max, int slots)

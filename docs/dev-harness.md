@@ -53,6 +53,16 @@ instead). `state` carries `storyTemplate`. Blight worlds: the plea comes from th
 cast "afflicted" villager, evidence deep in the barrow (x >= 19) changes the ending
 the deed fires, and saves are format v4 (the tier-2+ selection draw).
 
+## Trade and provisions (D-036)
+
+The steadholder sells rations (talk menu, last entries after the topics; the menu
+stays open across purchases) and the herbwife dresses wounds for coin priced by
+remaining convalescence. `e` eats a carried ration anywhere: +6 hp, +3 stamina,
+takes a turn. Rations (cap 5) survive death and crossings; coin does neither.
+Ration price reads the fact graph: 6 coin while a blight story stands uncompleted,
+4 otherwise. `state` carries `rations`, `rationPrice`, and `mendPrice` (0 when
+whole). Purchase keys are journaled, so saves are format v5.
+
 ## The Unbinder and respec (D-034)
 
 Every world casts a wandering mender (`p`, camped away from the stead; villagers'

@@ -279,7 +279,7 @@ public class UnbinderTests
     }
 
     /// <summary>One BFS step toward a target, treating the target tile itself as enterable (bump).</summary>
-    private static char? StepTo(Game game, Pos goal)
+    internal static char? StepTo(Game game, Pos goal)
     {
         var map = game.World.Overworld;
         var from = game.Player.Pos;

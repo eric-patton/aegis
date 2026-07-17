@@ -27,11 +27,14 @@ namespace Aegis.Core;
 /// v9 when D-040 added the quarry to tier 3+ worlds and weighted story
 /// selection against repeating the previous world's template (a v8 journal
 /// that crossed past tier 1 could replay into a world telling a different
-/// story, and deep worlds now hold a site it never walked around).
+/// story, and deep worlds now hold a site it never walked around);
+/// v10 when D-041 added gear: a smith stands at every stead at every tier
+/// (a v9 journal walking their tile would open a menu that did not exist),
+/// deep chests hand out iron, and 'i' plus new menu digits carry meaning.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 9;
+    public const int Version = 10;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

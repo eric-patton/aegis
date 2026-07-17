@@ -27,6 +27,31 @@ public sealed class Player
     /// </summary>
     public int Rations { get; set; }
 
+    // Gear (D-041): the other half of the build. Banked like attributes: the
+    // remnant never takes it, and it crosses waygates untouched (vision secs 8, 10).
+
+    public GearItem? Weapon { get; set; }
+    public GearItem? Armor { get; set; }
+
+    /// <summary>Gear owned but not worn. Small by design: five items exist in the world.</summary>
+    public List<GearItem> Pack { get; } = [];
+
+    /// <summary>Everything owned, equipped first, in the gear menu's stable order.</summary>
+    public IEnumerable<GearItem> AllGear
+    {
+        get
+        {
+            if (Weapon is not null) yield return Weapon;
+            if (Armor is not null) yield return Armor;
+            foreach (var item in Pack) yield return item;
+        }
+    }
+
+    public bool OwnsGear(string id) => AllGear.Any(g => g.Id == id);
+
+    /// <summary>The Aegis speaks once at the first iron taken up; never again.</summary>
+    public bool GearLineHeard { get; set; }
+
     // Arc-ladder state (D-037, design/story/aegis-arc.md sec 6). The fact graph is
     // per-world, so rung progress lives on the character. Each flag is set by the
     // storylet or crossing scene that completes its rung; later rungs gate on
@@ -128,9 +153,10 @@ public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut, HurledStone, G
 /// Villagers live beside their houses; the Unbinder (D-034) is the wandering
 /// mender cast into every world under a fresh guise, and talks differently.
 /// The Severed kind (D-038) is a former bearer met as a person, not a foe:
-/// the game never makes them fightable, only listenable.
+/// the game never makes them fightable, only listenable. The Smith (D-041)
+/// keeps their own small menu so the villagers' nine digits stay unbreached.
 /// </summary>
-public enum NpcKind { Villager, Unbinder, Severed }
+public enum NpcKind { Villager, Unbinder, Severed, Smith }
 
 /// <summary>
 /// A named, placed person (D-031). Static in v1: they stand near their homes and

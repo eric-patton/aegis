@@ -3,7 +3,7 @@ namespace Aegis.Core;
 public enum MapMode { Overworld, Site }
 
 /// <summary>What the stead sells (D-036): goods and services coin can become.</summary>
-public enum TradeGood { Ration, Mending }
+public enum TradeGood { Ration, Mending, Gear, Repair }
 
 /// <summary>
 /// The deterministic game engine. No console, no I/O, no wall clock: state advances
@@ -38,6 +38,9 @@ public sealed class Game
 
     /// <summary>The keeping's choice menu (D-039), open only at the Hearth itself.</summary>
     public bool InThresholdMenu { get; private set; }
+
+    /// <summary>The pack menu (D-041): 'i' anywhere; digits wield or wear, anything else closes.</summary>
+    public bool InGearMenu { get; private set; }
     public Npc? TalkNpc { get; private set; }
 
     /// <summary>Unbindings per world (D-016: a handful, refreshed at each crossing).</summary>
@@ -57,8 +60,8 @@ public sealed class Game
     private readonly List<(string Label, string Answer)> _topics = [];
 
     /// <summary>What the current conversation partner sells (D-036), listed after the topics.</summary>
-    public IReadOnlyList<(TradeGood Good, string Label)> Offers => _offers;
-    private readonly List<(TradeGood Good, string Label)> _offers = [];
+    public IReadOnlyList<(TradeGood Good, string Arg, string Label)> Offers => _offers;
+    private readonly List<(TradeGood Good, string Arg, string Label)> _offers = [];
 
     /// <summary>Most rations a person can carry: the sink recurs instead of stockpiling.</summary>
     public const int RationCap = 5;
@@ -76,6 +79,13 @@ public sealed class Game
     /// it buys off, so waiting it out is always the poor bearer's option.
     /// </summary>
     public int MendPrice => (Player.WoundedTurns + 3) / 4;
+
+    /// <summary>
+    /// What the smith asks to see to everything the bearer owns (D-025's
+    /// auto-scaling sink): each item prices its own mending off its own value,
+    /// so wealth in iron taxes itself.
+    /// </summary>
+    public int RepairPrice => Player.AllGear.Sum(g => g.RepairPrice);
 
     /// <summary>
     /// Fired for every key that reached the engine while running (including menu keys
@@ -148,6 +158,13 @@ public sealed class Game
     {
         if (!Running) return;
 
+        if (InGearMenu)
+        {
+            HandleGearMenuKey(key);
+            KeyApplied?.Invoke(key);
+            return;
+        }
+
         if (InThresholdMenu)
         {
             HandleThresholdMenuKey(key);
@@ -202,6 +219,7 @@ public sealed class Game
             Command.Grab => DoGrab(),
             Command.Rest => DoRest(),
             Command.Eat => DoEat(),
+            Command.Gear => DoGearMenu(),
             _ => CommandMap.Delta(cmd) is { } d && DoMove(d.dx, d.dy),
         };
 
@@ -399,6 +417,7 @@ public sealed class Game
         InTalkMenu = false;
         InUnbindMenu = false;
         InThresholdMenu = false;
+        InGearMenu = false;
         TalkNpc = null;
         CurrentSite = null;
         UnbindingsLeft = UnbindingsPerWorld;
@@ -514,6 +533,33 @@ public sealed class Game
                 SiteKind.Quarry => $"Chisels still sharp under their oilcloth, and the crew's unpaid wages beside them: {coin} coin no one came back for.",
                 _ => $"The strongbox yields {coin} coin.",
             }, LogTone.Reward);
+
+            // Site loot beyond coin (D-041, the D-033 deferral): the deep chests
+            // each hold one signature piece. A bearer who already owns its like
+            // leaves the twin where it lies: five items exist, not five per world.
+            string? gearId = CurrentSite.Kind switch
+            {
+                SiteKind.Barrow => "grave_iron",
+                SiteKind.Quarry => "carvers_maul",
+                _ => null,
+            };
+            if (gearId is not null)
+            {
+                if (!Player.OwnsGear(gearId))
+                {
+                    var item = GearCatalog.Create(gearId);
+                    Log.Add(Turn, CurrentSite.Kind == SiteKind.Barrow
+                        ? $"Beneath the gold, wrapped in oiled wool, a blade of grave-iron: unrusted, and colder than the room. The {item.Name} is yours."
+                        : $"And under the chisels, the master carver's own: a maul with a head like a closing verdict. The {item.Name} is yours.", LogTone.Reward);
+                    AcquireGear(item);
+                }
+                else
+                {
+                    Log.Add(Turn, CurrentSite.Kind == SiteKind.Barrow
+                        ? "Beneath the gold lies a blade the twin of your own. You leave it with its dead."
+                        : "The master carver's maul lies here too, twin to the one you carry. You leave it to the pit.", LogTone.Info);
+                }
+            }
             return true;
         }
 
@@ -535,10 +581,11 @@ public sealed class Game
         {
             NpcKind.Unbinder => BuildUnbinderTopics(npc),
             NpcKind.Severed => BuildSeveredTopics(),
+            NpcKind.Smith => BuildSmithTopics(),
             _ => BuildTopics(npc),
         });
         _offers.Clear();
-        if (npc.Kind == NpcKind.Villager) _offers.AddRange(BuildOffers(npc));
+        if (npc.Kind is NpcKind.Villager or NpcKind.Smith) _offers.AddRange(BuildOffers(npc));
 
         if (npc.Kind == NpcKind.Severed)
         {
@@ -672,17 +719,48 @@ public sealed class Game
     }
 
     /// <summary>
+    /// The smith's own topics (D-041): a separate, small menu, so the villagers'
+    /// nine digits stay whole and the forge always has room for its wares.
+    /// </summary>
+    private List<(string Label, string Answer)> BuildSmithTopics()
+    {
+        var topics = new List<(string, string)>
+        {
+            ("The forge", "\"Plough-iron, hinge-iron, nail-iron: that is the trade. But iron that has been down in the dark comes up asking to be something else, and I have learned not to argue with it.\""),
+            ("Wearing iron", "\"An edge dulls and a jack splits: that is use, not fault. Bring them to me before they fail you, not after. The wheel and the awl put right what the work puts wrong.\""),
+        };
+        return topics;
+    }
+
+    /// <summary>
     /// The stead's trade surface (D-036): each seller offers what their role would
     /// actually have. Purchases are talk-menu entries, not a separate mode, and the
-    /// menu stays open so buying twice is two key presses.
+    /// menu stays open so buying twice is two key presses. The smith (D-041) sells
+    /// the plain three, each printing its requirement, and mends what use has worn.
     /// </summary>
-    private List<(TradeGood, string)> BuildOffers(Npc npc)
+    private List<(TradeGood, string, string)> BuildOffers(Npc npc)
     {
-        var offers = new List<(TradeGood, string)>();
+        var offers = new List<(TradeGood, string, string)>();
         if (npc.Id == "npc_steadholder")
-            offers.Add((TradeGood.Ration, $"Buy a ration ({RationPrice} coin)"));
+            offers.Add((TradeGood.Ration, "", $"Buy a ration ({RationPrice} coin)"));
         if (npc.Id == "npc_herbwife" && Player.WoundedTurns > 0)
-            offers.Add((TradeGood.Mending, $"Have the wound dressed ({MendPrice} coin)"));
+            offers.Add((TradeGood.Mending, "", $"Have the wound dressed ({MendPrice} coin)"));
+        if (npc.Kind == NpcKind.Smith)
+        {
+            // Sold pieces stay listed as owned rather than vanishing: menu digits
+            // must never shift under a buyer's fingers (learned live, D-041).
+            foreach (string id in GearCatalog.SmithStock)
+            {
+                var item = GearCatalog.Create(id);
+                string what = item.Slot == GearSlot.Weapon ? $"arm +{item.Bonus}" : $"wards {item.Bonus}";
+                string asks = item.Req > AttributeSet.Baseline ? $", {AttributeSet.NameOf(item.ReqAttr)} {item.Req}" : "";
+                offers.Add((TradeGood.Gear, id, Player.OwnsGear(id)
+                    ? $"{item.Name} (yours already)"
+                    : $"{item.Name} ({item.Value}c, {what}{asks})"));
+            }
+            if (RepairPrice > 0)
+                offers.Add((TradeGood.Repair, "", $"Have your gear seen to ({RepairPrice} coin)"));
+        }
         return offers;
     }
 
@@ -729,6 +807,51 @@ public sealed class Game
         Log.Add(Turn, "\"Mended by another's hands. That is allowed. That is what steads are for.\"", LogTone.Aegis);
     }
 
+    private void TryBuyGear(string id)
+    {
+        if (Player.OwnsGear(id))
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"You have its like already, and one is enough to keep. Wear the one you own; I will keep it honest.\"");
+            return;
+        }
+        var item = GearCatalog.Create(id);
+        if (Player.Coin < item.Value)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"That is {item.Value} coin of work, and you hold {Player.Coin}. Iron keeps; come back when your purse does.\"");
+            return;
+        }
+
+        Player.Coin -= item.Value;
+        Log.Add(Turn, $"{TalkNpc!.Name} takes your coin and puts the {item.Name} in your hands like it is being introduced to you.", LogTone.Reward);
+        if (!item.MeetsReq(Player.Attributes))
+            Log.Add(Turn, $"{TalkNpc.Name}: \"It asks more {AttributeSet.NameOf(item.ReqAttr).ToLowerInvariant()} than you carry yet. Wear it anyway, if you like. Iron is a patient teacher.\"");
+        AcquireGear(item);
+        // The stock shrinks by what was just bought; the mending entry may appear.
+        _offers.Clear();
+        _offers.AddRange(BuildOffers(TalkNpc));
+    }
+
+    private void TryRepairGear()
+    {
+        int price = RepairPrice;
+        if (price == 0)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Nothing here wants my wheel. Use it harder.\"");
+            return;
+        }
+        if (Player.Coin < price)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The mending is {price} coin, and you hold {Player.Coin}. Wear is honest debt; it will wait.\"");
+            return;
+        }
+
+        Player.Coin -= price;
+        foreach (var item in Player.AllGear) item.Wear = 0;
+        Log.Add(Turn, $"{TalkNpc!.Name} works without hurry: the wheel for the edges, the awl and waxed thread for the rest. What you carry is put right for {price} coin.", LogTone.Reward);
+        _offers.Clear();
+        _offers.AddRange(BuildOffers(TalkNpc));
+    }
+
     private const string UnbinderFarewell = "Nothing needs to be counted. Walk well.";
 
     private void HandleTalkMenuKey(char key)
@@ -741,11 +864,17 @@ public sealed class Game
             return;
         }
 
-        if (TalkNpc!.Kind == NpcKind.Villager
+        if (TalkNpc!.Kind is NpcKind.Villager or NpcKind.Smith
             && key > '0' + _topics.Count && key <= '0' + _topics.Count + _offers.Count)
         {
-            var (good, _) = _offers[key - '1' - _topics.Count];
-            if (good == TradeGood.Ration) TryBuyRation(); else TryBuyMending();
+            var (good, arg, _) = _offers[key - '1' - _topics.Count];
+            switch (good)
+            {
+                case TradeGood.Ration: TryBuyRation(); break;
+                case TradeGood.Mending: TryBuyMending(); break;
+                case TradeGood.Gear: TryBuyGear(arg); break;
+                case TradeGood.Repair: TryRepairGear(); break;
+            }
             return;
         }
 
@@ -887,6 +1016,79 @@ public sealed class Game
         return true;
     }
 
+    /// <summary>
+    /// Opens the pack (D-041). Costs no turn, like every menu: the fiction is a
+    /// glance down at your own hands, not a rummage.
+    /// </summary>
+    private bool DoGearMenu()
+    {
+        if (!Player.AllGear.Any())
+        {
+            Log.Add(Turn, "You carry no gear. Your hands, and what the Aegis makes of them.");
+            return false;
+        }
+        InGearMenu = true;
+        return false;
+    }
+
+    private void HandleGearMenuKey(char key)
+    {
+        var items = Player.AllGear.ToList();
+        if (key >= '1' && key <= '0' + items.Count)
+        {
+            var item = items[key - '1'];
+            if (item == Player.Weapon || item == Player.Armor)
+            {
+                Log.Add(Turn, $"The {item.Name} is already serving.");
+                return;
+            }
+            EquipGear(item);
+            return;
+        }
+
+        InGearMenu = false;
+        Log.Add(Turn, "You close the pack.");
+    }
+
+    /// <summary>Wields or wears a pack item; whatever held the slot goes to the pack.</summary>
+    private void EquipGear(GearItem item)
+    {
+        Player.Pack.Remove(item);
+        var displaced = item.Slot == GearSlot.Weapon ? Player.Weapon : Player.Armor;
+        if (displaced is not null) Player.Pack.Add(displaced);
+        if (item.Slot == GearSlot.Weapon) Player.Weapon = item; else Player.Armor = item;
+
+        Log.Add(Turn, item.Slot == GearSlot.Weapon
+            ? $"You heft the {item.Name}. It settles into your grip like an argument won."
+            : $"You lace on the {item.Name}.", LogTone.Info);
+        if (!item.MeetsReq(Player.Attributes))
+            Log.Add(Turn, $"It asks {AttributeSet.NameOf(item.ReqAttr)} {item.Req} of an arm that carries {Player.Attributes[item.ReqAttr]}. You can use it, badly, and it will tell you what to become.", LogTone.Info);
+        if (!Player.GearLineHeard)
+        {
+            Player.GearLineHeard = true;
+            Log.Add(Turn, "\"Iron of your own. Good. What I cannot turn aside, turn aside yourself.\"", LogTone.Aegis);
+        }
+    }
+
+    /// <summary>
+    /// Takes ownership of found or bought gear: an empty slot is filled on the
+    /// spot; a full one sends it to the pack for the 'i' menu to sort out.
+    /// </summary>
+    private void AcquireGear(GearItem item)
+    {
+        bool slotEmpty = item.Slot == GearSlot.Weapon ? Player.Weapon is null : Player.Armor is null;
+        if (slotEmpty)
+        {
+            Player.Pack.Add(item);
+            EquipGear(item);
+        }
+        else
+        {
+            Player.Pack.Add(item);
+            Log.Add(Turn, $"The {item.Name} goes into your pack. (i to manage your gear)", LogTone.Info);
+        }
+    }
+
     /// <summary>Global rising cost per raise (D-014's Essence economy, Souls-style curve).</summary>
     public int NextRaiseCost => 10 + 5 * Player.Attributes.TotalRaises;
 
@@ -943,12 +1145,21 @@ public sealed class Game
 
     private bool AttackMonster(Monster target)
     {
-        const int staminaCost = 3;
+        // Under-requirement gear is usable, badly (D-015): the swing costs extra
+        // wind on top of the halved edge the item itself reports.
+        var weapon = Player.Weapon;
+        int staminaCost = 3 + (weapon is not null && !weapon.MeetsReq(Player.Attributes) ? 1 : 0);
         int damage;
         if (Player.Stamina >= staminaCost)
         {
             Player.Stamina -= staminaCost;
-            damage = _combatRng.Range(2, 5) + Player.MeleeBonus;
+            damage = _combatRng.Range(2, 5) + Player.MeleeBonus + (weapon?.EffectiveBonus(Player.Attributes) ?? 0);
+            if (weapon is not null && !weapon.Worn)
+            {
+                weapon.Wear++;
+                if (weapon.Worn)
+                    Log.Add(Turn, $"The {weapon.Name}'s edge is gone: it lands like a bar of dull iron now. The smith's wheel would right it.", LogTone.Combat);
+            }
         }
         else
         {
@@ -997,6 +1208,25 @@ public sealed class Game
             CheckSiteCleared(CurrentSite!);
         }
         return true;
+    }
+
+    /// <summary>
+    /// Armor's whole job (D-041): every hit taken is thinned by the worn piece,
+    /// never below 1: iron helps, and nothing makes being hit free. Turning a
+    /// blow is what wears the armor down.
+    /// </summary>
+    private int Absorb(int raw)
+    {
+        var armor = Player.Armor;
+        if (armor is null) return raw;
+        int reduced = Math.Max(1, raw - armor.EffectiveBonus(Player.Attributes));
+        if (reduced < raw && !armor.Worn)
+        {
+            armor.Wear++;
+            if (armor.Worn)
+                Log.Add(Turn, $"The {armor.Name} hangs in cut batting now; it turns nothing more until it is mended.", LogTone.Combat);
+        }
+        return reduced;
     }
 
     private void CheckSiteCleared(Site site)
@@ -1071,14 +1301,14 @@ public sealed class Game
                 monster.Intent = null;
                 if (Player.Pos == intent.TargetCell)
                 {
-                    int damage = intent.Kind switch
+                    int damage = Absorb(intent.Kind switch
                     {
                         IntentKind.BarrowBlade => _combatRng.Range(5, 9),
                         IntentKind.SunderingCut => _combatRng.Range(7, 11),
                         IntentKind.HurledStone => _combatRng.Range(4, 8),
                         IntentKind.GravenFist => _combatRng.Range(6, 10),
                         _ => _combatRng.Range(4, 7),
-                    };
+                    });
                     Player.Hp -= damage;
                     Log.Add(Turn, intent.Kind switch
                     {
@@ -1125,7 +1355,7 @@ public sealed class Game
                 }
                 else
                 {
-                    int damage = _combatRng.Range(1, 3);
+                    int damage = Absorb(_combatRng.Range(1, 3));
                     Player.Hp -= damage;
                     Log.Add(Turn, $"The {monster.Name} bites you for {damage}.", LogTone.Combat);
                 }
@@ -1157,7 +1387,7 @@ public sealed class Game
             }
             else
             {
-                int damage = _combatRng.Range(2, 5);
+                int damage = Absorb(_combatRng.Range(2, 5));
                 Player.Hp -= damage;
                 Player.Stamina = Math.Max(0, Player.Stamina - 2);
                 Log.Add(Turn, $"The wight's grasp burns cold for {damage}. Your limbs stiffen.", LogTone.Combat);
@@ -1190,7 +1420,7 @@ public sealed class Game
             }
             else
             {
-                int damage = _combatRng.Range(2, 6);
+                int damage = Absorb(_combatRng.Range(2, 6));
                 Player.Hp -= damage;
                 if (Player.Essence > 0) Player.Essence--;
                 Log.Add(Turn, $"The severed one's touch takes {damage}, and something thinner than blood with it.", LogTone.Combat);
@@ -1236,7 +1466,7 @@ public sealed class Game
             }
             else
             {
-                int damage = _combatRng.Range(2, 4);
+                int damage = Absorb(_combatRng.Range(2, 4));
                 Player.Hp -= damage;
                 Log.Add(Turn, $"The graven man's grip scores you for {damage}. Stone dust in the wound.", LogTone.Combat);
             }
@@ -1316,6 +1546,7 @@ public sealed class Game
         InTalkMenu = false;
         InUnbindMenu = false;
         InThresholdMenu = false;
+        InGearMenu = false;
         TalkNpc = null;
 
         bool forfeited = Remnant is not null;
@@ -1430,6 +1661,14 @@ public sealed class Game
         Rations: Player.Rations,
         RationPrice: RationPrice,
         MendPrice: Player.WoundedTurns > 0 ? MendPrice : 0,
+        WeaponId: Player.Weapon?.Id ?? "",
+        WeaponWear: Player.Weapon?.Wear ?? 0,
+        ArmorId: Player.Armor?.Id ?? "",
+        ArmorWear: Player.Armor?.Wear ?? 0,
+        PackGear: string.Join(",", Player.Pack.Select(g => g.Id)),
+        RepairPrice: RepairPrice,
+        SmithX: World.Smith.Pos.X,
+        SmithY: World.Smith.Pos.Y,
         Might: Player.Attributes[Attr.Might],
         Grace: Player.Attributes[Attr.Grace],
         Vigor: Player.Attributes[Attr.Vigor],
@@ -1442,6 +1681,7 @@ public sealed class Game
         InTalkMenu: InTalkMenu,
         InUnbindMenu: InUnbindMenu,
         InThresholdMenu: InThresholdMenu,
+        InGearMenu: InGearMenu,
         TalkNpc: TalkNpc?.Name ?? "",
         WoundedTurns: Player.WoundedTurns,
         Deaths: Player.Deaths,
@@ -1504,6 +1744,14 @@ public sealed record Snapshot(
     int Rations,
     int RationPrice,
     int MendPrice,
+    string WeaponId,
+    int WeaponWear,
+    string ArmorId,
+    int ArmorWear,
+    string PackGear,
+    int RepairPrice,
+    int SmithX,
+    int SmithY,
     int Might,
     int Grace,
     int Vigor,
@@ -1516,6 +1764,7 @@ public sealed record Snapshot(
     bool InTalkMenu,
     bool InUnbindMenu,
     bool InThresholdMenu,
+    bool InGearMenu,
     string TalkNpc,
     int WoundedTurns,
     int Deaths,

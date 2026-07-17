@@ -47,6 +47,7 @@ public static class Presenter
         if (game.InTalkMenu) DrawTalkMenu(frame, game, layout);
         if (game.InUnbindMenu) DrawUnbindMenu(frame, game, layout);
         if (game.InThresholdMenu) DrawThresholdMenu(frame, layout);
+        if (game.InGearMenu) DrawGearMenu(frame, game, layout);
         return frame;
     }
 
@@ -127,6 +128,39 @@ public static class Presenter
         frame.Write(x0 + 2, y0 + 4, "1) Take up the keeping", Hue.White);
         frame.Write(x0 + 2, y0 + 5, "2) Lay the commission down and walk on", Hue.White);
         frame.Write(x0 + 2, y0 + boxH - 2, "1-2 choose; any other key to step back", Hue.DarkGray);
+    }
+
+    /// <summary>
+    /// The pack (D-041): what is owned, what is worn, what each piece asks and
+    /// gives. Requirements print here before any coin or essence is invested.
+    /// </summary>
+    private static void DrawGearMenu(Frame frame, Game game, Layout layout)
+    {
+        var items = game.Player.AllGear.ToList();
+        const int boxW = 46;
+        int boxH = 5 + items.Count;
+        int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
+        int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
+
+        DrawBox(frame, x0, y0, boxW, boxH);
+        frame.Write(x0 + 2, y0 + 1, "Your gear", Hue.White);
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            var item = items[i];
+            bool held = item == game.Player.Weapon || item == game.Player.Armor;
+            bool under = !item.MeetsReq(game.Player.Attributes);
+            string what = item.Slot == GearSlot.Weapon ? $"arm +{item.EffectiveBonus(game.Player.Attributes)}" : $"wards {item.EffectiveBonus(game.Player.Attributes)}";
+            string state = item.Worn ? " WORN" : $" {item.Wear}/{item.MaxWear}";
+            string asks = under ? $" {AttributeSet.NameOf(item.ReqAttr)} {item.Req}!" : "";
+            frame.Write(x0 + 2, y0 + 3 + i,
+                $"{i + 1}) {item.Name,-16}{(held ? '*' : ' ')} {what}{state}{asks}",
+                item.Worn || under ? Hue.Red : held ? Hue.White : Hue.Gray);
+        }
+
+        frame.Write(x0 + 2, y0 + boxH - 2,
+            items.Count > 0 ? $"1-{items.Count} wield or wear (* held); other closes" : "any key closes",
+            Hue.DarkGray);
     }
 
     private static void DrawBox(Frame frame, int x0, int y0, int boxW, int boxH)
@@ -277,6 +311,8 @@ public static class Presenter
         Line($"Essence {p.Essence}", Hue.Cyan);
         if (p.Rations > 0) Line($"Rations {p.Rations}", Hue.Green);
         if (p.Legend > 0) Line($"Legend  {p.Legend}", Hue.Magenta);
+        if (p.Weapon is { } wpn) Line($"Wpn {wpn.Name}{(wpn.Worn ? "!" : "")}", wpn.Worn ? Hue.Red : Hue.Gray);
+        if (p.Armor is { } arm) Line($"Arm {arm.Name}{(arm.Worn ? "!" : "")}", arm.Worn ? Hue.Red : Hue.Gray);
         if (p.WoundedTurns > 0) Line($"WOUNDED ({p.WoundedTurns})", Hue.Red);
         y++;
 
@@ -330,7 +366,7 @@ public static class Presenter
         y++;
         Line("hjkl/yubn move  . wait", Hue.DarkGray);
         Line("g grab  >/< enter/exit", Hue.DarkGray);
-        Line("e eat  q quit", Hue.DarkGray);
+        Line("e eat  i gear  q quit", Hue.DarkGray);
     }
 
     private static string Bar(int value, int max, int slots)

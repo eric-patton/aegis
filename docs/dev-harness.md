@@ -102,6 +102,25 @@ crossing, and rest lines; a new Unbinder topic). The two answers are
 mechanics-identical by design and by test; assert `arcProgress`, never prose.
 Saves are format v8 (tier-5+ worldgen changed and menu digits gained meaning).
 
+## Gear and the smith (D-041)
+
+Every stead has a smith (`p` beside the houses; `state` carries `smithX/smithY`).
+Their talk menu is their own: two topics, then the plain stock (woodsman's axe,
+quilted jack, riveted shirt), each entry printing price and any requirement, then
+"Have your gear seen to" whenever anything you own carries wear. Sold pieces stay
+listed as owned so menu digits never shift. Deep chests hold the other iron: the
+barrow's grave-iron blade and the quarry's carver's maul (once per character; a
+twin is left where it lies). `i` opens the pack anywhere: digits wield or wear,
+`*` marks held pieces, and requirements you miss print with a `!`. Weapons add to
+every full swing and wear per swing; armor thins every hit (never below 1) and
+wears per turned blow; a worn piece gives half its good until repaired. Repair is
+priced per item off its value (half at full wear). Under-requirement use is
+penalized, never blocked: half the bonus and an extra stamina per swing. Gear is
+banked on death (the remnant takes only coin and essence) and crosses whole.
+`state` carries `weaponId/weaponWear`, `armorId/armorWear`, `packGear`,
+`repairPrice`, and `inGearMenu`. Saves are format v10 (a person and a key gained
+meaning at every tier).
+
 ## Trade and provisions (D-036)
 
 The steadholder sells rations (talk menu, last entries after the topics; the menu

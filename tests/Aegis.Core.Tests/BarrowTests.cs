@@ -161,7 +161,8 @@ public class BarrowTests
         Assert.True(barrow.ChestLooted);
         Assert.False(game.World.CampSite.ChestLooted);
         Assert.InRange(game.Player.Coin - coinBefore, 15, 26);
-        Assert.Contains(game.Log.Recent(3), e => e.Text.Contains("Grave-gold"));
+        // The grab now also hands out the grave-iron blade (D-041), so the window is wider.
+        Assert.Contains(game.Log.Recent(8), e => e.Text.Contains("Grave-gold"));
     }
 
     /// <summary>

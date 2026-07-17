@@ -56,6 +56,9 @@ public sealed class World
     /// <summary>The old quarry (D-040): tier 3+, where the graven men stand. Optional depth, like the barrow.</summary>
     public Site? QuarrySite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Quarry);
 
+    /// <summary>The stead's smith (D-041): every world, every tier. Sells the plain three, mends what use has dulled.</summary>
+    public Npc Smith => Npcs.First(n => n.Kind == NpcKind.Smith);
+
     // Convenience views of the camp, the site every world has (and tests lean on).
     public GameMap Camp => CampSite.Map;
     public Pos CampPos => CampSite.OverworldPos;
@@ -327,6 +330,44 @@ public static class WorldGen
                 "An old quarry, worked and abandoned before the stead's first stone was laid. The carvers left mid-stroke, and their figures still stand in the pit.");
         }
 
+        // The smith (D-041): every stead has one, at every tier. Own stream, placed
+        // after every existing draw, so pinned worlds keep their layouts and only
+        // gain a person at the forge. Stands beside a house like the villagers, off
+        // the shrine column, never on an occupied tile.
+        var smithRng = new Rng(SeedTree.Derive(worldSeed, "smith"));
+        string smithName = NameGen.Person(ref smithRng);
+        var npcList = npcs;
+        var smithSpots = HouseAdjacentCandidates(overworld, settlement, shrine)
+            .Where(p => !npcList.Any(n => n.Pos == p))
+            // Nobody gets walled in: the forge must not take any neighbor's last
+            // open cardinal tile, and the smith must keep one of their own.
+            .Where(p => npcList.All(n => HasOpenCardinalNeighbor(overworld, npcList, n.Pos, alsoOccupied: p))
+                        && HasOpenCardinalNeighbor(overworld, npcList, p, alsoOccupied: p))
+            .ToList();
+        Pos smithPos;
+        if (smithSpots.Count > 0)
+        {
+            smithPos = smithRng.Pick(smithSpots);
+        }
+        else
+        {
+            // Deterministic fallback: the first open tile ringing the settlement.
+            smithPos = settlement;
+            foreach (var (fdx, fdy) in Directions.All8)
+            {
+                var q = settlement.Plus(fdx, fdy);
+                if (overworld.Walkable(q) && q != shrine && !npcs.Any(n => n.Pos == q)) { smithPos = q; break; }
+            }
+        }
+        npcs.Add(new Npc
+        {
+            Id = "npc_smith",
+            Name = smithName,
+            Role = "smith",
+            Pos = smithPos,
+            Kind = NpcKind.Smith,
+        });
+
         facts.Add("world_name", worldName, "");
         facts.Add("settlement", settlementName, $"{settlement.X},{settlement.Y}", "A small stead under the Aegis-shrine.");
         facts.Add("rest_point", "shrine", $"{shrine.X},{shrine.Y}", $"The shrine at {settlementName}. The Aegis anchors here.");
@@ -369,21 +410,7 @@ public static class WorldGen
     /// </summary>
     private static List<Npc> CastNpcs(GameMap overworld, ref Rng placeRng, ref Rng nameRng, Pos settlement, Pos shrine)
     {
-        var candidates = new List<Pos>();
-        for (int dy = -3; dy <= 3; dy++)
-            for (int dx = -3; dx <= 3; dx++)
-            {
-                var p = settlement.Plus(dx, dy);
-                if (!overworld.Walkable(p) || p == shrine || p.X == settlement.X) continue;
-                bool byHouse = false;
-                foreach (var (ddx, ddy) in Directions.All8)
-                {
-                    var q = p.Plus(ddx, ddy);
-                    if (overworld.InBounds(q) && overworld[q] == Terrain.House) { byHouse = true; break; }
-                }
-                if (byHouse) candidates.Add(p);
-            }
-
+        var candidates = HouseAdjacentCandidates(overworld, settlement, shrine);
         var npcs = new List<Npc>();
         foreach (string role in (string[])["steadholder", "herbwife", "woodward"])
         {
@@ -399,6 +426,37 @@ public static class WorldGen
             });
         }
         return npcs;
+    }
+
+    /// <summary>Whether a tile keeps at least one walkable cardinal neighbor free of people (and of one further occupied tile).</summary>
+    private static bool HasOpenCardinalNeighbor(GameMap map, List<Npc> npcs, Pos pos, Pos alsoOccupied)
+    {
+        foreach (var (dx, dy) in Directions.Cardinal)
+        {
+            var q = pos.Plus(dx, dy);
+            if (map.Walkable(q) && q != alsoOccupied && !npcs.Any(n => n.Pos == q)) return true;
+        }
+        return false;
+    }
+
+    /// <summary>Walkable tiles beside a house, off the shrine column, where the stead's people stand.</summary>
+    private static List<Pos> HouseAdjacentCandidates(GameMap overworld, Pos settlement, Pos shrine)
+    {
+        var candidates = new List<Pos>();
+        for (int dy = -3; dy <= 3; dy++)
+            for (int dx = -3; dx <= 3; dx++)
+            {
+                var p = settlement.Plus(dx, dy);
+                if (!overworld.Walkable(p) || p == shrine || p.X == settlement.X) continue;
+                bool byHouse = false;
+                foreach (var (ddx, ddy) in Directions.All8)
+                {
+                    var q = p.Plus(ddx, ddy);
+                    if (overworld.InBounds(q) && overworld[q] == Terrain.House) { byHouse = true; break; }
+                }
+                if (byHouse) candidates.Add(p);
+            }
+        return candidates;
     }
 
     private static GameMap GenerateOverworld(ulong masterSeed)

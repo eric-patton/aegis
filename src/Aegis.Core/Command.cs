@@ -10,6 +10,7 @@ public enum Command
     Grab,
     Rest,
     Eat,
+    Gear,
     Quit,
 }
 
@@ -32,6 +33,7 @@ public static class CommandMap
         'g' => Command.Grab,
         'r' => Command.Rest,
         'e' => Command.Eat,
+        'i' => Command.Gear,
         'q' => Command.Quit,
         _ => Command.None,
     };

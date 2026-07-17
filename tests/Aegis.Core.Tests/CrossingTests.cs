@@ -69,11 +69,15 @@ public class CrossingTests
         Assert.Equal(0, game.Player.WoundedTurns);
         Assert.Equal(game.Player.MaxHp, game.Player.Hp);
         Assert.False(game.CampCleared);
-        Assert.False(game.ChestLooted);
+        Assert.False(game.World.CampSite.ChestLooted);
 
-        // Tier 2 generation input: one more goblin, each tougher.
-        Assert.Equal(4, game.Monsters.Count);
-        Assert.All(game.Monsters, m => Assert.Equal(10, m.Hp));
+        // Tier 2 generation input: one more goblin, each tougher, and the barrow band opens.
+        var goblins = game.Monsters.Where(m => m.Kind == MonsterKind.Goblin).ToList();
+        var wights = game.Monsters.Where(m => m.Kind == MonsterKind.Wight).ToList();
+        Assert.Equal(4, goblins.Count);
+        Assert.All(goblins, m => Assert.Equal(10, m.Hp));
+        Assert.Equal(2, wights.Count);
+        Assert.All(wights, m => Assert.Equal(12, m.Hp));
 
         // The finished world is pressed into the new one as an echo (D-013).
         Assert.True(game.World.Facts.Exists("echo", "deed"));

@@ -86,6 +86,27 @@ public class TemplateTests
     }
 
     [Fact]
+    public void WitnessedEnding_AnswersTheCampDeedOnly_NotTheBarrows()
+    {
+        // Found live: clearing the barrow first made the plaintiff "hear of" a deed
+        // nobody asked for. The ending beat must answer its own story's deed.
+        var game = new Game(42);
+        game.Debug_ClearCamp();
+        game.Debug_SetPlayerPos(game.World.GatePos);
+        game.Apply(Command.Enter);
+        Assert.Equal(2, game.Cycle);
+
+        string witnessLine = $"{Plaintiff(game).Name} will hear of this by nightfall";
+        game.Debug_ClearSite(SiteKind.Barrow);
+        Assert.False(LogContains(game, witnessLine));
+        Assert.False(game.World.Facts.Exists("story_complete", RaidedSteadTemplate.Id));
+
+        game.Debug_ClearCamp();
+        Assert.True(LogContains(game, witnessLine));
+        Assert.True(game.World.Facts.Exists("story_complete", RaidedSteadTemplate.Id));
+    }
+
+    [Fact]
     public void NewWorld_RecastsTheStory_AndItPlaysAgain()
     {
         var game = new Game(42);

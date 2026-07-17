@@ -114,6 +114,37 @@ public static class StoryletCatalog
             ],
         },
 
+        // First step onto any barrow mound (tier 2+ worlds only): the honest-recovery
+        // drip brushing the arc's themes without explaining them.
+        new Storylet
+        {
+            Id = "barrow-shadow",
+            Trigger = StoryletTrigger.EnterTile,
+            Tile = Terrain.BarrowEntrance,
+            Scope = StoryletScope.Character,
+            Lines =
+            [
+                ("Under your feet, the turf gives like something breathing very slowly.", LogTone.Danger),
+                ("\"The dead here were left holding something. I know the weight of standing a post too long.\"", LogTone.Aegis),
+            ],
+        },
+
+        // The stead's answer to the barrow falling quiet: a small keepsake, and the
+        // deed written into the settlement's memory alongside the camp's.
+        new Storylet
+        {
+            Id = "stillness-repaid",
+            Trigger = StoryletTrigger.NearHouse,
+            Requires = [new FactPattern("deed", "barrow_stilled")],
+            Lines =
+            [
+                ("An old man stops you by the well. He presses a bent silver pin into your palm and does not explain it.", LogTone.Reward),
+                ("\"My grandmother's. She always said the mound would go quiet in her lifetime. Wrong by two lifetimes, near enough.\"", LogTone.Info),
+            ],
+            Effect = g => g.World.Facts.Add("boon", "grave_token", g.World.SettlementName,
+                "A bent silver pin from the barrow-age, given the day the mound went quiet."),
+        },
+
         // Ambient flavor: repeatable, cooldown-gated, deliberately slight.
         new Storylet
         {

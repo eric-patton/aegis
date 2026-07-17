@@ -145,16 +145,20 @@ public static class Presenter
         if (game.Remnant is { } remnant && remnant.MapId == map.Id)
             PutWorld(remnant.Pos, '%', Hue.Magenta);
 
-        if (game.Mode == MapMode.Site && !game.ChestLooted)
-            PutWorld(game.World.ChestPos, '$', Hue.Yellow);
+        if (game.CurrentSite is { ChestLooted: false } site)
+            PutWorld(site.ChestPos, '$', Hue.Yellow);
 
         if (game.Mode == MapMode.Overworld)
             foreach (var npc in game.World.Npcs)
                 PutWorld(npc.Pos, 'p', Hue.Green);
 
         foreach (var monster in game.LiveMonstersHere)
-            PutWorld(monster.Pos, 'g', monster.Intent is null ? Hue.Red : Hue.White,
+        {
+            char ch = monster.Kind == MonsterKind.Wight ? 'w' : 'g';
+            var calm = monster.Kind == MonsterKind.Wight ? Hue.Cyan : Hue.Red;
+            PutWorld(monster.Pos, ch, monster.Intent is null ? calm : Hue.White,
                 monster.Intent is null ? Hue.Black : Hue.DarkRed);
+        }
 
         PutWorld(game.Player.Pos, '@', Hue.White);
     }
@@ -172,6 +176,7 @@ public static class Presenter
         Terrain.Floor => ('.', Hue.Gray, Hue.Black),
         Terrain.ExitLadder => ('<', Hue.White, Hue.Black),
         Terrain.Waygate => ('O', Hue.Magenta, Hue.Black),
+        Terrain.BarrowEntrance => ('n', Hue.DarkYellow, Hue.Black),
         _ => ('?', Hue.Magenta, Hue.Black),
     };
 
@@ -197,11 +202,12 @@ public static class Presenter
 
         if (game.Mode == MapMode.Site)
         {
-            Line("Goblin cave", Hue.White);
-            int alive = game.Monsters.Count(m => m.Alive);
+            Line(game.CurrentSite!.Kind == SiteKind.Barrow ? "The barrow" : "Goblin cave", Hue.White);
+            int alive = game.LiveMonstersHere.Count();
             Line($"Foes here: {alive}", alive > 0 ? Hue.Red : Hue.DarkGreen);
             foreach (var monster in game.LiveMonstersHere.Where(m => m.Intent is not null))
-                Line("! crushing blow poised", Hue.Red);
+                Line(monster.Intent!.Kind == IntentKind.BarrowBlade
+                    ? "! barrow blade poised" : "! crushing blow poised", Hue.Red);
         }
         else
         {
@@ -209,6 +215,7 @@ public static class Presenter
             var here = game.CurrentMap[p.Pos];
             if (here == Terrain.Shrine) Line("At the shrine: r rests", Hue.Cyan);
             if (here == Terrain.CampEntrance) Line("Cave mouth: > enters", Hue.Red);
+            if (here == Terrain.BarrowEntrance) Line("Barrow mouth: > enters", Hue.DarkYellow);
             if (here == Terrain.Waygate)
                 Line(game.CampCleared ? "Waygate hums: > crosses" : "Waygate: shut", Hue.Magenta);
             foreach (var npc in game.World.Npcs)

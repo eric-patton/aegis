@@ -20,6 +20,7 @@ public enum Terrain : byte
     Floor,
     ExitLadder,
     Waygate,
+    BarrowEntrance,
 }
 
 public static class TerrainInfo

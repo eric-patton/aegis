@@ -60,8 +60,9 @@ Storylets only ever fire at these hook points, checked in the engine:
 | `EnterTile` | The player steps onto a tile of terrain `Tile`. | Shrine, Waygate, CampEntrance. |
 | `NearHouse` | The player steps onto a walkable tile adjacent (8-way) to a House. | Houses are not walkable; this is "visiting the settlement". |
 | `Rest` | The player rests at the shrine. | Fires after the rest heal, before the menu closes. |
-| `DeedWritten` | A `deed` fact is written to the graph. | The consequence surface. |
+| `DeedWritten` | A `deed` fact is written to the graph. | The consequence surface. A storylet answering a SPECIFIC deed must `Require` it: worlds hold several deeds (camp, barrow), and the trigger fires for each. Learned live in D-033. |
 | `AmbientTurn` | A rolled chance each turn that advances while on the overworld. | Low-stakes flavor; the pacing-director seam (D-021.5 grows here). |
+| `Talk` | A conversation opens (bump-to-talk, D-031). | `When` narrows to a specific speaker (e.g. the plaintiff). |
 
 One trigger event fires at most one storylet: all eligible candidates are collected,
 one is picked by weight. Nothing queues; a beat that misses its moment stays gated

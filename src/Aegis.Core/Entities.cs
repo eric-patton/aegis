@@ -31,16 +31,25 @@ public sealed class Player
     public int EffectiveMaxHp => WoundedTurns > 0 ? Math.Max(1, MaxHp * 4 / 5) : MaxHp;
 }
 
-public enum MonsterKind { Goblin }
+public enum MonsterKind { Goblin, Wight }
 
 public sealed class Monster
 {
     public required MonsterKind Kind { get; init; }
     public required Pos Pos { get; set; }
+
+    /// <summary>Which site this monster haunts; only the current site's monsters act.</summary>
+    public required string SiteId { get; init; }
+
     public int Hp { get; set; } = 8;
     public Intent? Intent { get; set; }
     public bool Alive => Hp > 0;
-    public string Name => Kind switch { MonsterKind.Goblin => "goblin", _ => "creature" };
+    public string Name => Kind switch
+    {
+        MonsterKind.Goblin => "goblin",
+        MonsterKind.Wight => "wight",
+        _ => "creature",
+    };
 }
 
 /// <summary>
@@ -54,7 +63,7 @@ public sealed class Intent
     public int TurnsUntilResolve { get; set; } = 1;
 }
 
-public enum IntentKind { CrushingBlow }
+public enum IntentKind { CrushingBlow, BarrowBlade }
 
 /// <summary>
 /// A named, placed person (D-031). Static in v1: they stand near their homes and

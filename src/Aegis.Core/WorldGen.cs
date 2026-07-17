@@ -1,5 +1,27 @@
 namespace Aegis.Core;
 
+public enum SiteKind { GoblinCamp, Barrow }
+
+/// <summary>A monster placed at generation time: kind, cell, and generated stats (D-011).</summary>
+public readonly record struct MonsterSpawn(MonsterKind Kind, Pos Pos, int Hp);
+
+/// <summary>
+/// An enterable place on the overworld with its own map (D-033). Cleared/looted state
+/// lives here because a Site's lifetime IS its world's: crossings regenerate both.
+/// </summary>
+public sealed class Site
+{
+    public required string Id { get; init; }
+    public required SiteKind Kind { get; init; }
+    public required GameMap Map { get; init; }
+    public required Pos OverworldPos { get; init; }
+    public required Pos EntryPos { get; init; }
+    public required List<MonsterSpawn> Spawns { get; init; }
+    public required Pos ChestPos { get; init; }
+    public bool ChestLooted { get; set; }
+    public bool Cleared { get; set; }
+}
+
 public sealed class World
 {
     public required ulong Seed { get; init; }
@@ -8,17 +30,23 @@ public sealed class World
     public required string SettlementName { get; init; }
     public required FactGraph Facts { get; init; }
     public required GameMap Overworld { get; init; }
-    public required GameMap Camp { get; init; }
     public required Pos ShrinePos { get; init; }
-    public required Pos CampPos { get; init; }
-    public required Pos CampEntryPos { get; init; }
     public required Pos GatePos { get; init; }
-    public required List<Pos> GoblinSpawns { get; init; }
-    public required Pos ChestPos { get; init; }
+    public required List<Site> Sites { get; init; }
     public required List<Npc> Npcs { get; init; }
 
     /// <summary>Storylets compiled from this world's story template, cast-bound (D-032).</summary>
     public required List<Storylet> StoryStorylets { get; init; }
+
+    public Site CampSite => Sites.First(s => s.Kind == SiteKind.GoblinCamp);
+    public Site? BarrowSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Barrow);
+
+    // Convenience views of the camp, the site every world has (and tests lean on).
+    public GameMap Camp => CampSite.Map;
+    public Pos CampPos => CampSite.OverworldPos;
+    public Pos CampEntryPos => CampSite.EntryPos;
+    public Pos ChestPos => CampSite.ChestPos;
+    public List<Pos> GoblinSpawns => [.. CampSite.Spawns.Select(s => s.Pos)];
 }
 
 /// <summary>
@@ -65,8 +93,51 @@ public static class WorldGen
         overworld[gate] = Terrain.Waygate;
         CarvePathIfDisconnected(overworld, shrine, gate);
 
+        // Tier 2+ content band (D-033): the barrow. Placed after the tier-1 draws so
+        // tier-1 worlds consume exactly the RNG they always did.
+        Pos barrow = default;
+        if (tier >= 2)
+        {
+            barrow = FindDistantSpot(overworld, ref placeRng, settlement, minDistance: 18);
+            while (barrow == camp || barrow == gate || barrow.Manhattan(camp) < 5 || barrow.Manhattan(gate) < 5)
+                barrow = FindDistantSpot(overworld, ref placeRng, settlement, minDistance: 18);
+            overworld[barrow] = Terrain.BarrowEntrance;
+            CarvePathIfDisconnected(overworld, shrine, barrow);
+        }
+
         int goblinCount = Math.Min(3 + (tier - 1), 6);
+        int goblinHp = 8 + 2 * (tier - 1);
         var (campMap, entry, goblinSpawns, chest) = GenerateCamp(worldSeed, goblinCount);
+        var sites = new List<Site>
+        {
+            new()
+            {
+                Id = "goblin-camp",
+                Kind = SiteKind.GoblinCamp,
+                Map = campMap,
+                OverworldPos = camp,
+                EntryPos = entry,
+                Spawns = [.. goblinSpawns.Select(p => new MonsterSpawn(MonsterKind.Goblin, p, goblinHp))],
+                ChestPos = chest,
+            },
+        };
+
+        if (tier >= 2)
+        {
+            int wightCount = Math.Min(2 + (tier - 2), 5);
+            int wightHp = 12 + 2 * (tier - 2);
+            var (barrowMap, barrowEntry, wightSpawns, barrowChest) = GenerateBarrow(worldSeed, wightCount);
+            sites.Add(new Site
+            {
+                Id = "barrow",
+                Kind = SiteKind.Barrow,
+                Map = barrowMap,
+                OverworldPos = barrow,
+                EntryPos = barrowEntry,
+                Spawns = [.. wightSpawns.Select(p => new MonsterSpawn(MonsterKind.Wight, p, wightHp))],
+                ChestPos = barrowChest,
+            });
+        }
 
         var npcs = CastNpcs(overworld, ref placeRng, ref nameRng, settlement, shrine);
 
@@ -78,6 +149,9 @@ public static class WorldGen
         facts.Add("rest_point", "shrine", $"{shrine.X},{shrine.Y}", $"The shrine at {settlementName}. The Aegis anchors here.");
         facts.Add("site", "goblin_camp", $"{camp.X},{camp.Y}", "A cave the goblins have made their own.");
         facts.Add("site", "waygate", $"{gate.X},{gate.Y}", "An arch of black iron links, older than the stones around it.");
+        if (tier >= 2)
+            facts.Add("site", "barrow", $"{barrow.X},{barrow.Y}",
+                "A long mound of turf over lintel stones, older than the waygate's iron. The dead under it do not lie easy.");
         facts.Add("grievance", "goblin_camp", settlementName, $"Goblins from the cave raid {settlementName}'s stores by night.");
         foreach (var npc in npcs)
             facts.Add("person", npc.Id, npc.Name, $"{npc.Name}, {npc.Role} of {settlementName}.");
@@ -90,13 +164,9 @@ public static class WorldGen
             SettlementName = settlementName,
             Facts = facts,
             Overworld = overworld,
-            Camp = campMap,
             ShrinePos = shrine,
-            CampPos = camp,
-            CampEntryPos = entry,
             GatePos = gate,
-            GoblinSpawns = goblinSpawns,
-            ChestPos = chest,
+            Sites = sites,
             Npcs = npcs,
             StoryStorylets = storyStorylets,
         };
@@ -313,6 +383,59 @@ public static class WorldGen
         while (chest == entry || goblins.Contains(chest)) chest = rng.Pick(deep);
 
         return (map, entry, goblins, chest);
+    }
+
+    public const int BarrowW = 34;
+    public const int BarrowH = 13;
+
+    /// <summary>
+    /// The barrow (D-033, tier 2+): a long central passage with burial chambers off it
+    /// on alternating sides. Deliberately not the camp's drunkard-walk cave: sites
+    /// should read differently at a glance. Wights keep to the chambers; the grave
+    /// goods sit in the deepest one.
+    /// </summary>
+    private static (GameMap Map, Pos Entry, List<Pos> Wights, Pos Chest) GenerateBarrow(ulong worldSeed, int wightCount)
+    {
+        var rng = new Rng(SeedTree.Derive(worldSeed, "site-barrow"));
+        var map = new GameMap("barrow", BarrowW, BarrowH, Terrain.Wall);
+        int mid = BarrowH / 2;
+
+        var entry = new Pos(2, mid);
+        for (int x = 2; x <= BarrowW - 3; x++) map[new Pos(x, mid)] = Terrain.Floor;
+        map[entry] = Terrain.ExitLadder;
+
+        var chambers = new List<List<Pos>>();
+        bool up = rng.Chance(0.5);
+        for (int cx = 7; cx <= BarrowW - 5; cx += 6)
+        {
+            int cy = up ? mid - 3 : mid + 3;
+            var cells = new List<Pos>();
+            for (int dy = -1; dy <= 1; dy++)
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    var p = new Pos(cx + dx, cy + dy);
+                    map[p] = Terrain.Floor;
+                    cells.Add(p);
+                }
+            map[new Pos(cx, up ? mid - 1 : mid + 1)] = Terrain.Floor;
+            chambers.Add(cells);
+            up = !up;
+        }
+
+        var deepFirst = ((IEnumerable<List<Pos>>)chambers).Reverse().ToList();
+        Pos chest = deepFirst[0][4]; // center cell of the deepest chamber
+
+        var wights = new List<Pos>();
+        int chamber = 0;
+        while (wights.Count < wightCount)
+        {
+            var p = rng.Pick(deepFirst[chamber % deepFirst.Count]);
+            if (p == chest || wights.Contains(p)) continue;
+            wights.Add(p);
+            chamber++;
+        }
+
+        return (map, entry, wights, chest);
     }
 }
 

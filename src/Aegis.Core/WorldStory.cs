@@ -49,11 +49,13 @@ public static class RaidedSteadTemplate
             },
 
             // Act 3, beat 1: the ending is witnessed the moment it happens (iron rule 6).
+            // Gated on THIS story's deed: other deeds (the barrow) fire DeedWritten too.
             new Storylet
             {
                 Id = "rs-witnessed-ending",
                 Trigger = StoryletTrigger.DeedWritten,
                 Priority = 10,
+                Requires = [new FactPattern("deed", "camp_cleared")],
                 Lines =
                 [
                     ($"Somewhere behind you, in {settlementName}, {name} will hear of this by nightfall.", LogTone.Info),

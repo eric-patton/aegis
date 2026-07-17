@@ -35,6 +35,16 @@ keys in the journal, so saves span world boundaries with no extra machinery. The
 status line shows `cyc N leg N` once either is nonzero; `state` carries `cycle`, `tier`,
 `legend`, and `gateX/gateY`.
 
+## Sites and tier bands (D-033)
+
+Enterable places are `Site`s (goblin camp everywhere; the barrow, `n` on the map, at
+tier 2+ only). `state` carries `barrowX/barrowY` (`-1` when the world has none),
+`barrowCleared`, and `currentSite`. Wights step only on even turns, drain stamina on
+hit, and telegraph a heavier blade; kite them and dodge sideways. Clearing the barrow
+is optional: only the camp deed opens the waygate. Worldgen for tier 2+ changed with
+D-033, so saves are format v2 (v1 journals that had crossed would replay wrong and
+are refused).
+
 Build and run from the repo root:
 
 ```

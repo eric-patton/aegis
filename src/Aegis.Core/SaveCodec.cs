@@ -3,15 +3,17 @@ using System.Text;
 namespace Aegis.Core;
 
 /// <summary>
-/// The save format, v1 (D-012, D-028): a header plus the input journal. Because the
+/// The save format (D-012, D-028): a header plus the input journal. Because the
 /// engine is deterministic and advances only on keys, seed + every applied key IS the
 /// complete game state; loading replays the journal. The codec is pure string work,
 /// no file I/O, so it lives in Core and tests cover it directly. Checkpoint
 /// compression can be layered on later without changing what a save means.
+/// Version history: v1 launch format; v2 when D-033 changed tier 2+ worldgen
+/// (journals that crossed a waygate would replay into a different world).
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 1;
+    public const int Version = 2;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

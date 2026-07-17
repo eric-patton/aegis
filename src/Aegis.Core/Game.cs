@@ -23,8 +23,12 @@ public sealed class Game
     public MapMode Mode { get; private set; } = MapMode.Overworld;
     public int Turn { get; private set; }
     public bool Running { get; private set; } = true;
-    public bool ChestLooted { get; private set; }
-    public bool CampCleared { get; private set; }
+
+    /// <summary>The site the player is inside, null on the overworld.</summary>
+    public Site? CurrentSite { get; private set; }
+
+    /// <summary>The camp deed is what opens the waygate (D-029); other sites are optional depth.</summary>
+    public bool CampCleared => World.CampSite.Cleared;
     public bool InShrineMenu { get; private set; }
     public bool InTalkMenu { get; private set; }
     public Npc? TalkNpc { get; private set; }
@@ -67,10 +71,10 @@ public sealed class Game
 
     private void SpawnMonsters()
     {
-        // Tier hardens each goblin as a generation-time stat, not a live multiplier.
-        int hp = 8 + 2 * (World.Tier - 1);
-        foreach (var spawn in World.GoblinSpawns)
-            Monsters.Add(new Monster { Kind = MonsterKind.Goblin, Pos = spawn, Hp = hp });
+        // Stats are generation inputs baked into the spawns (D-011), never live multipliers.
+        foreach (var site in World.Sites)
+            foreach (var spawn in site.Spawns)
+                Monsters.Add(new Monster { Kind = spawn.Kind, Pos = spawn.Pos, Hp = spawn.Hp, SiteId = site.Id });
     }
 
     internal static string Compass(Pos from, Pos to)
@@ -82,12 +86,12 @@ public sealed class Game
         return dir.Length == 0 ? "near" : dir;
     }
 
-    public GameMap CurrentMap => Mode == MapMode.Overworld ? World.Overworld : World.Camp;
+    public GameMap CurrentMap => Mode == MapMode.Overworld ? World.Overworld : CurrentSite!.Map;
 
     private string CurrentMapId => CurrentMap.Id;
 
     public IEnumerable<Monster> LiveMonstersHere =>
-        Mode == MapMode.Site ? Monsters.Where(m => m.Alive) : [];
+        Mode == MapMode.Site ? Monsters.Where(m => m.Alive && m.SiteId == CurrentSite!.Id) : [];
 
     /// <summary>
     /// Applies one key press: the single entry point every frontend and the save
@@ -149,7 +153,7 @@ public sealed class Game
 
         if (Mode == MapMode.Site)
         {
-            var blocker = Monsters.FirstOrDefault(m => m.Alive && m.Pos == target);
+            var blocker = Monsters.FirstOrDefault(m => m.Alive && m.SiteId == CurrentSite!.Id && m.Pos == target);
             if (blocker is not null) return AttackMonster(blocker);
         }
         else
@@ -188,13 +192,19 @@ public sealed class Game
                 Log.Add(Turn, CampCleared
                     ? "An arch of black iron links. It hums, and the air beyond it is not this world's. Press > to cross."
                     : "An arch of black iron links, older than the stones around it. It is shut.", LogTone.Aegis);
+            else if (t == Terrain.BarrowEntrance)
+                Log.Add(Turn, World.BarrowSite!.Cleared
+                    ? "The long mound. Its stones are only stones now."
+                    : "A long mound of turf over lintel stones. The passage under it exhales cold. Press > to stoop in.", LogTone.Danger);
         }
         else
         {
             if (Remnant is not null && Remnant.MapId == CurrentMapId && Remnant.Pos == p)
                 Log.Add(Turn, "Your remnant lies here: what you dropped when you fell. Press g to reclaim it.", LogTone.Reward);
-            else if (!ChestLooted && p == World.ChestPos)
-                Log.Add(Turn, "A battered strongbox sits here. Press g to open it.", LogTone.Reward);
+            else if (!CurrentSite!.ChestLooted && p == CurrentSite.ChestPos)
+                Log.Add(Turn, CurrentSite.Kind == SiteKind.Barrow
+                    ? "Grave goods lie here on a stone shelf, dressed in dust. Press g to take them."
+                    : "A battered strongbox sits here. Press g to open it.", LogTone.Reward);
             else if (t == Terrain.ExitLadder)
                 Log.Add(Turn, "Daylight above. Press < to climb out.");
         }
@@ -208,11 +218,16 @@ public sealed class Game
 
     private bool DoEnter()
     {
-        if (Mode == MapMode.Overworld && Player.Pos == World.CampPos)
+        if (Mode == MapMode.Overworld && World.Sites.FirstOrDefault(s => s.OverworldPos == Player.Pos) is { } site)
         {
             Mode = MapMode.Site;
-            Player.Pos = World.CampEntryPos;
-            Log.Add(Turn, "You descend into the goblin cave. The dark smells of smoke and old meat.", LogTone.Danger);
+            CurrentSite = site;
+            Player.Pos = site.EntryPos;
+            Log.Add(Turn, site.Kind switch
+            {
+                SiteKind.Barrow => "You stoop under the lintel stone. The air inside is still, and cold, and does not want you.",
+                _ => "You descend into the goblin cave. The dark smells of smoke and old meat.",
+            }, LogTone.Danger);
             return true;
         }
         if (Mode == MapMode.Overworld && Player.Pos == World.GatePos)
@@ -257,11 +272,10 @@ public sealed class Game
         _storylets.OnCrossing(World.Seed, FullCatalog());
         Monsters.Clear();
         SpawnMonsters();
-        ChestLooted = false;
-        CampCleared = false;
         InShrineMenu = false;
         InTalkMenu = false;
         TalkNpc = null;
+        CurrentSite = null;
 
         Mode = MapMode.Overworld;
         Player.Pos = World.ShrinePos;
@@ -292,15 +306,18 @@ public sealed class Game
         Log.Add(Turn, "The air is older here, and hungrier.", LogTone.Danger);
         Log.Add(Turn, $"In {World.SettlementName} they already sing of a stranger who emptied a goblin cave, in a world called {prevWorld}.");
         Log.Add(Turn, $"Rumor: goblins from a cave to the {Compass(World.ShrinePos, World.CampPos)} raid {World.SettlementName}'s stores by night.");
+        if (World.BarrowSite is { } barrow)
+            Log.Add(Turn, $"They speak lower of the long mound to the {Compass(World.ShrinePos, barrow.OverworldPos)}, where the dead do not lie easy.");
         _storylets.TryFire(this, StoryletTrigger.Arrival);
     }
 
     private bool DoExit()
     {
-        if (Mode == MapMode.Site && World.Camp[Player.Pos] == Terrain.ExitLadder)
+        if (Mode == MapMode.Site && CurrentSite!.Map[Player.Pos] == Terrain.ExitLadder)
         {
             Mode = MapMode.Overworld;
-            Player.Pos = World.CampPos;
+            Player.Pos = CurrentSite.OverworldPos;
+            CurrentSite = null;
             Log.Add(Turn, "You climb back into daylight.");
             return true;
         }
@@ -320,12 +337,15 @@ public sealed class Game
             return true;
         }
 
-        if (Mode == MapMode.Site && !ChestLooted && Player.Pos == World.ChestPos)
+        if (Mode == MapMode.Site && !CurrentSite!.ChestLooted && Player.Pos == CurrentSite.ChestPos)
         {
-            int coin = _combatRng.Range(10, 21);
+            bool barrow = CurrentSite.Kind == SiteKind.Barrow;
+            int coin = barrow ? _combatRng.Range(15, 27) : _combatRng.Range(10, 21);
             Player.Coin += coin;
-            ChestLooted = true;
-            Log.Add(Turn, $"The strongbox yields {coin} coin.", LogTone.Reward);
+            CurrentSite.ChestLooted = true;
+            Log.Add(Turn, barrow
+                ? $"Grave-gold: {coin} coin struck for rulers whose names did not keep."
+                : $"The strongbox yields {coin} coin.", LogTone.Reward);
             return true;
         }
 
@@ -375,6 +395,11 @@ public sealed class Game
             topics.Add(("The black arch", gate.Detail + (CampCleared
                 ? " \"They say it hums now. No one goes near to check.\""
                 : " \"Shut as long as any here remember. Best left so.\"")));
+
+        if (World.BarrowSite is { } barrowSite && World.Facts.Find("site", "barrow") is { } barrow)
+            topics.Add(("The long mound", barrow.Detail + (barrowSite.Cleared
+                ? " \"Quiet up there now, first time in living memory. Whoever settled them, the stead owes a debt it cannot name.\""
+                : " \"None go up. Of late there are lights along the mound at night, and the dogs will not face that way.\"")));
 
         if (World.Facts.OfType("echo").FirstOrDefault() is { } echo)
             topics.Add(("Old songs", $"\"There is a new one, though none can say who taught it. {echo.Detail}\""));
@@ -472,25 +497,40 @@ public sealed class Game
         }
         else
         {
-            int coin = _combatRng.Range(2, 7);
-            const int essence = 5;
+            // Wights hold little a living hand would spend, but they are dense with essence.
+            bool wight = target.Kind == MonsterKind.Wight;
+            int coin = wight ? _combatRng.Range(0, 3) : _combatRng.Range(2, 7);
+            int essence = wight ? 8 : 5;
             Player.Coin += coin;
             Player.Essence += essence;
-            Log.Add(Turn, $"The {target.Name} falls. You take {coin} coin and {essence} essence.", LogTone.Reward);
-            CheckCampCleared();
+            Log.Add(Turn, wight
+                ? $"The wight comes apart into grave-dust and quiet. You take {coin} coin and {essence} essence."
+                : $"The {target.Name} falls. You take {coin} coin and {essence} essence.", LogTone.Reward);
+            CheckSiteCleared(CurrentSite!);
         }
         return true;
     }
 
-    private void CheckCampCleared()
+    private void CheckSiteCleared(Site site)
     {
-        if (CampCleared || Monsters.Any(m => m.Alive)) return;
-        CampCleared = true;
-        World.Facts.Add("deed", "camp_cleared", World.SettlementName,
-            $"The goblin cave was emptied. {World.SettlementName}'s stores are safe.");
-        Log.Add(Turn, "The camp falls silent. The raids on " + World.SettlementName + " are ended.", LogTone.Reward);
-        Log.Add(Turn, "\"A deed with weight. It is counted.\"", LogTone.Aegis);
-        Log.Add(Turn, $"\"And far to the {Compass(World.CampPos, World.GatePos)} of this cave, something old has unlocked. I feel it the way you feel a door open in a dark house.\"", LogTone.Aegis);
+        if (site.Cleared || Monsters.Any(m => m.Alive && m.SiteId == site.Id)) return;
+        site.Cleared = true;
+
+        if (site.Kind == SiteKind.GoblinCamp)
+        {
+            World.Facts.Add("deed", "camp_cleared", World.SettlementName,
+                $"The goblin cave was emptied. {World.SettlementName}'s stores are safe.");
+            Log.Add(Turn, "The camp falls silent. The raids on " + World.SettlementName + " are ended.", LogTone.Reward);
+            Log.Add(Turn, "\"A deed with weight. It is counted.\"", LogTone.Aegis);
+            Log.Add(Turn, $"\"And far to the {Compass(World.CampPos, World.GatePos)} of this cave, something old has unlocked. I feel it the way you feel a door open in a dark house.\"", LogTone.Aegis);
+        }
+        else
+        {
+            World.Facts.Add("deed", "barrow_stilled", World.SettlementName,
+                $"The barrow's dead were put to rest. The lights on the mound above {World.SettlementName} have gone out.");
+            Log.Add(Turn, "The passage is still. Whatever the dead here were set to hold, no one is holding it now.", LogTone.Reward);
+            Log.Add(Turn, "\"They were given a task and no release. I remember the shape of that arrangement. It is counted, bearer, twice over.\"", LogTone.Aegis);
+        }
         _storylets.TryFire(this, StoryletTrigger.DeedWritten);
     }
 
@@ -499,7 +539,7 @@ public sealed class Game
         Turn++;
 
         if (Mode == MapMode.Site)
-            foreach (var monster in Monsters.Where(m => m.Alive))
+            foreach (var monster in Monsters.Where(m => m.Alive && m.SiteId == CurrentSite!.Id))
                 ActMonster(monster);
 
         if (Player.WoundedTurns > 0)
@@ -527,19 +567,26 @@ public sealed class Game
             if (intent.TurnsUntilResolve <= 0)
             {
                 monster.Intent = null;
+                bool blade = intent.Kind == IntentKind.BarrowBlade;
                 if (Player.Pos == intent.TargetCell)
                 {
-                    int damage = _combatRng.Range(4, 7);
+                    int damage = blade ? _combatRng.Range(5, 9) : _combatRng.Range(4, 7);
                     Player.Hp -= damage;
-                    Log.Add(Turn, $"The {monster.Name}'s crushing blow lands for {damage}!", LogTone.Danger);
+                    Log.Add(Turn, blade
+                        ? $"The wight's barrow blade opens you for {damage}!"
+                        : $"The {monster.Name}'s crushing blow lands for {damage}!", LogTone.Danger);
                 }
                 else
                 {
-                    Log.Add(Turn, $"The {monster.Name}'s crushing blow splinters empty stone.", LogTone.Combat);
+                    Log.Add(Turn, blade
+                        ? "The wight's bronze blade shears cold, empty air."
+                        : $"The {monster.Name}'s crushing blow splinters empty stone.", LogTone.Combat);
                 }
             }
             return;
         }
+
+        if (monster.Kind == MonsterKind.Wight) { ActWight(monster); return; }
 
         int dist = monster.Pos.Chebyshev(Player.Pos);
 
@@ -569,14 +616,83 @@ public sealed class Game
         if (dist <= 8) StepToward(monster);
     }
 
+    /// <summary>
+    /// The barrow family (D-033): grave-slow (a step only every other turn, so they can
+    /// be kited), a cold grasp that stiffens stamina, and a heavier telegraphed blade.
+    /// </summary>
+    private void ActWight(Monster monster)
+    {
+        int dist = monster.Pos.Chebyshev(Player.Pos);
+
+        if (dist == 1)
+        {
+            if (_combatRng.Chance(0.35))
+            {
+                monster.Intent = new Intent { Kind = IntentKind.BarrowBlade, TargetCell = Player.Pos };
+                Log.Add(Turn, "The wight draws back a blade of black bronze, patient as stone!", LogTone.Danger);
+            }
+            else if (_combatRng.Chance(Player.DodgeChance))
+            {
+                Log.Add(Turn, "The wight's grasp closes on air.", LogTone.Combat);
+            }
+            else
+            {
+                int damage = _combatRng.Range(2, 5);
+                Player.Hp -= damage;
+                Player.Stamina = Math.Max(0, Player.Stamina - 2);
+                Log.Add(Turn, $"The wight's grasp burns cold for {damage}. Your limbs stiffen.", LogTone.Combat);
+            }
+            return;
+        }
+
+        if (dist <= 8 && Turn % 2 == 0) StepWightToward(monster);
+    }
+
+    /// <summary>
+    /// Wights path properly (BFS, cardinal steps): they have walked these halls for an
+    /// age and do not fumble at their own doorways. Goblins keep their greedy stumble;
+    /// slowness, not stupidity, is the wight's weakness.
+    /// </summary>
+    private void StepWightToward(Monster monster)
+    {
+        var map = CurrentSite!.Map;
+        var from = monster.Pos;
+        var cameFrom = new Dictionary<Pos, Pos> { [from] = from };
+        var queue = new Queue<Pos>();
+        queue.Enqueue(from);
+        while (queue.Count > 0)
+        {
+            var p = queue.Dequeue();
+            if (p == Player.Pos) break;
+            foreach (var (dx, dy) in Directions.Cardinal)
+            {
+                var next = p.Plus(dx, dy);
+                bool open = next == Player.Pos
+                    || (map.Walkable(next)
+                        && !Monsters.Any(m => m.Alive && m != monster && m.SiteId == monster.SiteId && m.Pos == next));
+                if (open && !cameFrom.ContainsKey(next))
+                {
+                    cameFrom[next] = p;
+                    queue.Enqueue(next);
+                }
+            }
+        }
+        if (!cameFrom.ContainsKey(Player.Pos)) return;
+
+        var step = Player.Pos;
+        while (cameFrom[step] != from) step = cameFrom[step];
+        if (step != Player.Pos) monster.Pos = step;
+    }
+
     private void StepToward(Monster monster)
     {
+        var map = CurrentSite!.Map;
         var best = monster.Pos;
         int bestDist = monster.Pos.Manhattan(Player.Pos);
         foreach (var (dx, dy) in Directions.All8)
         {
             var next = monster.Pos.Plus(dx, dy);
-            if (!World.Camp.Walkable(next)) continue;
+            if (!map.Walkable(next)) continue;
             if (next == Player.Pos) continue;
             if (Monsters.Any(m => m.Alive && m != monster && m.Pos == next)) continue;
             int d = next.Manhattan(Player.Pos);
@@ -611,6 +727,7 @@ public sealed class Game
         Log.Add(Turn, $"\"{AegisVoice.DeathLine(Player.Deaths)}\"", LogTone.Aegis);
 
         Mode = MapMode.Overworld;
+        CurrentSite = null;
         Player.Pos = World.ShrinePos;
         Player.WoundedTurns = 80;
         Player.Hp = Player.EffectiveMaxHp;
@@ -623,13 +740,19 @@ public sealed class Game
 
     // Test hooks: deterministic surgery for unit tests, never used by frontends.
     internal void Debug_SetPlayerPos(Pos p) => Player.Pos = p;
-    internal void Debug_SetMode(MapMode mode) => Mode = mode;
+    internal void Debug_SetMode(MapMode mode)
+    {
+        Mode = mode;
+        CurrentSite = mode == MapMode.Site ? World.CampSite : null;
+    }
     internal void Debug_HurtPlayer(int damage) => Player.Hp -= damage;
     internal void Debug_ForceDeathCheck() { if (Player.Hp <= 0) HandleDeath(); }
-    internal void Debug_ClearCamp()
+    internal void Debug_ClearCamp() => Debug_ClearSite(SiteKind.GoblinCamp);
+    internal void Debug_ClearSite(SiteKind kind)
     {
-        foreach (var monster in Monsters) monster.Hp = 0;
-        CheckCampCleared();
+        var site = World.Sites.First(s => s.Kind == kind);
+        foreach (var monster in Monsters.Where(m => m.SiteId == site.Id)) monster.Hp = 0;
+        CheckSiteCleared(site);
     }
 
     public Snapshot TakeSnapshot() => new(
@@ -649,6 +772,10 @@ public sealed class Game
         CampY: World.CampPos.Y,
         GateX: World.GatePos.X,
         GateY: World.GatePos.Y,
+        BarrowX: World.BarrowSite?.OverworldPos.X ?? -1,
+        BarrowY: World.BarrowSite?.OverworldPos.Y ?? -1,
+        BarrowCleared: World.BarrowSite?.Cleared ?? false,
+        CurrentSite: CurrentSite?.Id ?? "",
         Hp: Player.Hp,
         MaxHp: Player.EffectiveMaxHp,
         Stamina: Player.Stamina,
@@ -699,6 +826,10 @@ public sealed record Snapshot(
     int CampY,
     int GateX,
     int GateY,
+    int BarrowX,
+    int BarrowY,
+    bool BarrowCleared,
+    string CurrentSite,
     int Hp,
     int MaxHp,
     int Stamina,

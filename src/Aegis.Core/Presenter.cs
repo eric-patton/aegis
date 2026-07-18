@@ -227,7 +227,7 @@ public static class Presenter
         var p = game.Player;
         var choice = game.PendingKnack;
         const int boxW = 50;
-        int boxH = choice is null ? 16 : 17 + choice.Options.Length;
+        int boxH = choice is null ? 17 : 18 + choice.Options.Length;
         int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
         int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
 
@@ -255,7 +255,12 @@ public static class Presenter
             frame.Write(x0 + 2, y0 + 8 + i, row, level > 0 ? Hue.White : Hue.Gray);
         }
 
+        // The lessons row (D-052): the fourth ledger, what other hands put in.
         frame.Write(x0 + 2, y0 + 13,
+            $"Taught   {(p.Lessons.Count > 0 ? string.Join(", ", p.Lessons.Select(l => LessonCatalog.Def(l).Short)) : "-")}",
+            p.Lessons.Count > 0 ? Hue.White : Hue.Gray);
+
+        frame.Write(x0 + 2, y0 + 14,
             game.Standing > 0
                 ? $"Legend {p.Legend,4}   {LegendStanding.TitleOf(game.Standing)}"
                 : $"Legend {p.Legend,4}",
@@ -263,10 +268,10 @@ public static class Presenter
 
         if (choice is not null)
         {
-            frame.Write(x0 + 2, y0 + 14,
+            frame.Write(x0 + 2, y0 + 15,
                 $"{SkillSet.NameOf(choice.Skill)} has settled into a question:", Hue.Cyan);
             for (int i = 0; i < choice.Options.Length; i++)
-                frame.Write(x0 + 2, y0 + 15 + i,
+                frame.Write(x0 + 2, y0 + 16 + i,
                     $"{i + 1}) {choice.Options[i].Name}: {choice.Options[i].Blurb}", Hue.White);
             frame.Write(x0 + 2, y0 + boxH - 2,
                 $"1-{choice.Options.Length} choose, for good; any other key closes", Hue.DarkGray);
@@ -357,6 +362,11 @@ public static class Presenter
 
         if (game.CurrentSite is { ChestLooted: false } site)
             PutWorld(site.ChestPos, '$', Hue.Yellow);
+
+        // The gleanings (D-052): drawn only for a bearer taught to see them.
+        if (game.Mode == MapMode.Overworld && game.Player.HasLesson(LessonId.Gleaning))
+            foreach (var spot in game.World.Gleanings)
+                PutWorld(spot, '"', Hue.Green);
 
         if (game.Mode == MapMode.Overworld)
             foreach (var npc in game.World.Npcs)

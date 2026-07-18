@@ -39,6 +39,14 @@ public sealed class World
     public required List<Storylet> StoryStorylets { get; init; }
 
     /// <summary>
+    /// What the wood sets out (D-052): forest spots worth gathering, placed in
+    /// every world whether or not anyone can see them. Only a bearer taught the
+    /// gleaning finds them; gathering removes the spot, and the far gate
+    /// regenerates the rest along with everything else.
+    /// </summary>
+    public required List<Pos> Gleanings { get; init; }
+
+    /// <summary>
     /// The terms this world was crossed into under (D-047): oaths sworn at the
     /// previous world's waygate. A generation input like the tier; they lapse at
     /// this world's far gate. Empty for a first world and for a plain crossing.
@@ -426,6 +434,23 @@ public static class WorldGen
                 "A roofless hall of grey stone, older than any stead-tale. At dusk, things lope from its doorway that were never whelped.");
         }
 
+        // The gleanings (D-052): what the wood sets out for taught eyes. Placed in
+        // every world on their own stream, after every other draw, so pinned worlds
+        // keep their layouts; only the gleaning lesson makes them visible, so
+        // worldgen never reads the character. Forest-only, spread out, and clear
+        // of anyone's stand: the entrances have already overwritten their tiles,
+        // so a Terrain.Forest check excludes every special place for free.
+        var gleanRng = new Rng(SeedTree.Derive(worldSeed, "gleanings"));
+        var gleanings = new List<Pos>();
+        for (int attempt = 0; attempt < 400 && gleanings.Count < 4; attempt++)
+        {
+            var p = new Pos(gleanRng.Range(2, OverworldW - 2), gleanRng.Range(2, OverworldH - 2));
+            if (overworld[p] != Terrain.Forest || p.Manhattan(settlement) < 6
+                || npcs.Any(n => n.Pos == p) || gleanings.Any(g => g.Manhattan(p) < 8))
+                continue;
+            gleanings.Add(p);
+        }
+
         facts.Add("world_name", worldName, "");
         facts.Add("settlement", settlementName, $"{settlement.X},{settlement.Y}", "A small stead under the Aegis-shrine.");
         facts.Add("rest_point", "shrine", $"{shrine.X},{shrine.Y}", $"The shrine at {settlementName}. The Aegis anchors here.");
@@ -458,6 +483,7 @@ public static class WorldGen
             Sites = sites,
             Npcs = npcs,
             StoryStorylets = storyStorylets,
+            Gleanings = gleanings,
             Oaths = oaths,
         };
     }

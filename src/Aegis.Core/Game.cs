@@ -3,7 +3,7 @@ namespace Aegis.Core;
 public enum MapMode { Overworld, Site }
 
 /// <summary>What the stead sells (D-036): goods and services coin can become.</summary>
-public enum TradeGood { Ration, Mending, Gear, Repair }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson }
 
 /// <summary>
 /// The deterministic game engine. No console, no I/O, no wall clock: state advances
@@ -332,6 +332,23 @@ public sealed class Game
         if (Mode == MapMode.Overworld && Directions.All8.Any(d =>
                 map.InBounds(target.Plus(d.dx, d.dy)) && map[target.Plus(d.dx, d.dy)] == Terrain.House))
             _storylets.TryFire(this, StoryletTrigger.NearHouse);
+
+        // The gleaning (D-052): the spots exist in every world; the lesson is
+        // what makes them visible and takeable. An untaught step gathers nothing.
+        if (Mode == MapMode.Overworld && Player.HasLesson(LessonId.Gleaning)
+            && World.Gleanings.Contains(target))
+        {
+            if (Player.Rations < RationCap)
+            {
+                World.Gleanings.Remove(target);
+                Player.Rations++;
+                Log.Add(Turn, $"Sweet roots under the bracken, right where the lesson said to look. You take them for the road. ({Player.Rations} carried)", LogTone.Reward);
+            }
+            else
+            {
+                Log.Add(Turn, "Good gleaning here, but you carry all a walking body can. You mark the spot and leave it standing.", LogTone.Info);
+            }
+        }
 
         // The keeping (D-039): stepping to the Hearth itself puts the choice on the
         // table. It reopens freely until answered; it never reopens after.
@@ -924,6 +941,10 @@ public sealed class Game
             offers.Add((TradeGood.Ration, "", $"Buy a ration ({RationPrice} coin)"));
         if (npc.Id == "npc_herbwife" && Player.WoundedTurns > 0)
             offers.Add((TradeGood.Mending, "", $"Have the wound dressed ({MendPrice} coin)"));
+        // The woodward's teaching entry (D-052). The villagers' nine digits hold:
+        // the fullest topic list is eight, and the woodward sells nothing else.
+        if (npc.Id == "npc_woodward")
+            offers.Add((TradeGood.Lesson, LessonCatalog.IdOf(LessonId.Gleaning), LessonLabel(LessonId.Gleaning)));
         if (npc.Kind == NpcKind.Smith)
         {
             // Sold pieces stay listed as owned rather than vanishing: menu digits
@@ -942,10 +963,68 @@ public sealed class Game
                     ? $"{item.Name} (yours already)"
                     : $"{item.Name} ({item.Value}c, {what}{asks})"));
             }
+            // The smith's teaching entry (D-052): always listed, like the stock,
+            // so the repair entry's digit never shifts under a buyer's fingers.
+            offers.Add((TradeGood.Lesson, LessonCatalog.IdOf(LessonId.TendedIron), LessonLabel(LessonId.TendedIron)));
             if (RepairPrice > 0)
                 offers.Add((TradeGood.Repair, "", $"Have your gear seen to ({RepairPrice} coin)"));
         }
         return offers;
+    }
+
+    /// <summary>A teaching entry's label (D-052): the asking before, the keeping after.</summary>
+    private string LessonLabel(LessonId id)
+    {
+        var def = LessonCatalog.Def(id);
+        return Player.HasLesson(id)
+            ? $"{char.ToUpperInvariant(def.Name[0])}{def.Name[1..]} (yours already)"
+            : $"Be shown {def.Name} ({def.Price} coin)";
+    }
+
+    /// <summary>
+    /// A mentor's teaching (D-052): coin buys a showing, once, and refusals never
+    /// take coin. A lesson once shown is shown for good, so the entry stays
+    /// listed and says so instead of vanishing (the D-041 menu rule).
+    /// </summary>
+    private void TryLearnLesson(string idStr)
+    {
+        var id = LessonCatalog.FromId(idStr);
+        var def = LessonCatalog.Def(id);
+        if (Player.HasLesson(id))
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"You have it. Shown once is shown; the rest is your own hands' business.\"");
+            return;
+        }
+        if (Player.Coin < def.Price)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Knowing has a price like anything else: {def.Price} coin, and you hold {Player.Coin}.\"");
+            return;
+        }
+
+        Player.Coin -= def.Price;
+        Player.Lessons.Add(id);
+        switch (id)
+        {
+            case LessonId.Gleaning:
+                Log.Add(Turn, $"{TalkNpc!.Name} walks you along the hedge-line, pointing with a thumb: which bracken hides sweet roots, which bark means grubs beneath it, what the deer found first. \"The wood sets a table. Most walk past it.\"");
+                Log.Add(Turn, "(The gleaning is yours: what the wood sets out will show along your walks. Step onto it to gather.)", LogTone.Reward);
+                break;
+            case LessonId.TendedIron:
+                Log.Add(Turn, $"{TalkNpc!.Name} shows you the evening habit of iron: wax into the straps, a stone drawn once along the edge, the day's grit out of every rivet before it beds in. \"The wheel does the great mendings. This keeps them rare.\"");
+                Log.Add(Turn, "(The tended iron is yours: resting will hold your gear back from the worst of its wear.)", LogTone.Reward);
+                break;
+        }
+        HearLessonLineOnce();
+        _offers.Clear();
+        _offers.AddRange(BuildOffers(TalkNpc!));
+    }
+
+    /// <summary>The Aegis marks the fourth ledger exactly once (D-052).</summary>
+    private void HearLessonLineOnce()
+    {
+        if (Player.LessonLineHeard) return;
+        Player.LessonLineHeard = true;
+        Log.Add(Turn, "\"Counts, choices, songs, and now what another's hands put into yours. None of it my doing. I begin to suspect I am the smallest part of my own work.\"", LogTone.Aegis);
     }
 
     private void TryBuyRation()
@@ -989,6 +1068,17 @@ public sealed class Game
         Log.Add(Turn, $"{TalkNpc!.Name} unwinds the old dressing, packs the wound with something that smells of thyme, and binds it properly.", LogTone.Reward);
         Log.Add(Turn, "The wound's weight lifts. You are whole again.", LogTone.Info);
         Log.Add(Turn, "\"Mended by another's hands. That is allowed. That is what steads are for.\"", LogTone.Aegis);
+
+        // The clean dressing (D-052): the first bought mending teaches it. Hands
+        // teach hands, and the mend the bearer paid for was the price of watching.
+        if (!Player.HasLesson(LessonId.CleanDressing))
+        {
+            Player.Lessons.Add(LessonId.CleanDressing);
+            Log.Add(Turn, $"{TalkNpc.Name} catches you watching and slows her hands so you can follow: how the cloth folds, where the pressure sits, which comes first.");
+            Log.Add(Turn, "\"There. Hands teach hands, and you will not always fall where I can reach you.\"");
+            Log.Add(Turn, "(The clean dressing is yours: eating while wounded now tends the wound as well.)", LogTone.Reward);
+            HearLessonLineOnce();
+        }
     }
 
     private void TryBuyGear(string id)
@@ -1058,6 +1148,7 @@ public sealed class Game
                 case TradeGood.Mending: TryBuyMending(); break;
                 case TradeGood.Gear: TryBuyGear(arg); break;
                 case TradeGood.Repair: TryRepairGear(); break;
+                case TradeGood.Lesson: TryLearnLesson(arg); break;
             }
             return;
         }
@@ -1293,7 +1384,10 @@ public sealed class Game
             Log.Add(Turn, "You carry nothing to eat.");
             return false;
         }
-        if (Player.Hp >= Player.EffectiveMaxHp && Player.Stamina >= Player.MaxStamina)
+        // The clean dressing (D-052): a taught bearer's meal is also wound-craft,
+        // so a wounded body at full strength still has a reason to eat.
+        bool canDress = Player.WoundedTurns > 0 && Player.HasLesson(LessonId.CleanDressing);
+        if (Player.Hp >= Player.EffectiveMaxHp && Player.Stamina >= Player.MaxStamina && !canDress)
         {
             Log.Add(Turn, "You are neither hurt nor winded; the ration keeps.");
             return false;
@@ -1303,6 +1397,15 @@ public sealed class Game
         Player.Hp = Math.Min(Player.EffectiveMaxHp, Player.Hp + 6);
         Player.Stamina = Math.Min(Player.MaxStamina, Player.Stamina + 3);
         Log.Add(Turn, $"You eat, quickly, watching the shadows. Warmth comes back to your hands. ({Player.Rations} left)", LogTone.Info);
+        if (canDress)
+        {
+            // Sixteen turns per ration: the herbwife's own rate, at the plain
+            // price of bread. Convenience is the good; the arithmetic is hers.
+            Player.WoundedTurns = Math.Max(0, Player.WoundedTurns - 16);
+            Log.Add(Turn, Player.WoundedTurns == 0
+                ? "While you chew you see to the wound as she showed you: clean cloth, firm hands. The last of its weight lifts; you are whole again."
+                : $"While you chew you see to the wound as she showed you: clean cloth, firm hands. It eases. ({Player.WoundedTurns} turns of weight remain)", LogTone.Info);
+        }
         return true;
     }
 
@@ -1460,6 +1563,23 @@ public sealed class Game
 
         Player.Hp = Player.EffectiveMaxHp;
         Player.Stamina = Player.MaxStamina;
+
+        // The tended iron (D-052): a taught bearer's rest holds their gear back
+        // from the worst of its wear. Only back to half: the deep wear is the
+        // wheel's business, so the smith's sink keeps its bottom half whole.
+        if (Player.HasLesson(LessonId.TendedIron))
+        {
+            bool tended = false;
+            foreach (var item in Player.AllGear)
+                if (item.Wear > item.MaxWear / 2)
+                {
+                    item.Wear = item.MaxWear / 2;
+                    tended = true;
+                }
+            if (tended)
+                Log.Add(Turn, "Before resting you see to your iron as the smith showed you: wax, stone, patience. The worst of the wear comes off; the deep wear waits for the wheel.", LogTone.Info);
+        }
+
         InShrineMenu = true;
         Log.Add(Turn, "You rest at the shrine. Warmth returns to you.", LogTone.Info);
         Log.Add(Turn, Player.Resolution == Resolution.None
@@ -2303,6 +2423,8 @@ public sealed class Game
             .Select(s => $"{SkillSet.NameOf(s).ToLowerInvariant()}:{Player.Skills.Level(s)}:{Player.Skills.Uses(s)}")),
         Perks: string.Join(",", Player.Perks.Select(PerkCatalog.IdOf)),
         PendingKnack: PendingKnack is { } knack ? SkillSet.NameOf(knack.Skill).ToLowerInvariant() : "",
+        Lessons: string.Join(",", Player.Lessons.Select(LessonCatalog.IdOf)),
+        Gleanings: World.Gleanings.Count,
         Might: Player.Attributes[Attr.Might],
         Grace: Player.Attributes[Attr.Grace],
         Vigor: Player.Attributes[Attr.Vigor],
@@ -2402,6 +2524,8 @@ public sealed record Snapshot(
     string Skills,
     string Perks,
     string PendingKnack,
+    string Lessons,
+    int Gleanings,
     int Might,
     int Grace,
     int Vigor,

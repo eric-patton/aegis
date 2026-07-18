@@ -57,10 +57,14 @@ namespace Aegis.Core;
 /// v19 when D-051 grew the terms: digits 5-7 at the crossing menu now swear
 /// oaths where a v18 key stepped back, and the hushed name changes prices,
 /// bread, the mending count, and which facts a world is born holding.
+/// v20 when D-052 added lessons: mentor menus gained teaching entries (a v19
+/// digit that merely closed a menu could now buy know-how), a taught step
+/// gathers gleanings a v19 walk stepped past, resting tends iron, and eating
+/// can dress the wound.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 19;
+    public const int Version = 20;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

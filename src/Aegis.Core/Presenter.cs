@@ -198,9 +198,14 @@ public static class Presenter
         for (int i = 0; i < items.Count; i++)
         {
             var item = items[i];
-            bool held = item == game.Player.Weapon || item == game.Player.Armor;
+            bool held = item == game.Player.Weapon || item == game.Player.Armor || item == game.Player.Bow;
             bool under = !item.MeetsReq(game.Player.Attributes);
-            string what = item.Slot == GearSlot.Weapon ? $"arm +{item.EffectiveBonus(game.Player.Attributes)}" : $"wards {item.EffectiveBonus(game.Player.Attributes)}";
+            string what = item.Slot switch
+            {
+                GearSlot.Weapon => $"arm +{item.EffectiveBonus(game.Player.Attributes)}",
+                GearSlot.Ranged => $"looses +{item.EffectiveBonus(game.Player.Attributes)}",
+                _ => $"wards {item.EffectiveBonus(game.Player.Attributes)}",
+            };
             string state = item.Worn ? " WORN" : $" {item.Wear}/{item.MaxWear}";
             string asks = under ? $" {AttributeSet.NameOf(item.ReqAttr)} {item.Req}!" : "";
             frame.Write(x0 + 2, y0 + 3 + i,
@@ -222,7 +227,7 @@ public static class Presenter
         var p = game.Player;
         var choice = game.PendingKnack;
         const int boxW = 50;
-        int boxH = choice is null ? 15 : 16 + choice.Options.Length;
+        int boxH = choice is null ? 16 : 17 + choice.Options.Length;
         int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
         int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
 
@@ -250,7 +255,7 @@ public static class Presenter
             frame.Write(x0 + 2, y0 + 8 + i, row, level > 0 ? Hue.White : Hue.Gray);
         }
 
-        frame.Write(x0 + 2, y0 + 12,
+        frame.Write(x0 + 2, y0 + 13,
             game.Standing > 0
                 ? $"Legend {p.Legend,4}   {LegendStanding.TitleOf(game.Standing)}"
                 : $"Legend {p.Legend,4}",
@@ -258,10 +263,10 @@ public static class Presenter
 
         if (choice is not null)
         {
-            frame.Write(x0 + 2, y0 + 13,
+            frame.Write(x0 + 2, y0 + 14,
                 $"{SkillSet.NameOf(choice.Skill)} has settled into a question:", Hue.Cyan);
             for (int i = 0; i < choice.Options.Length; i++)
-                frame.Write(x0 + 2, y0 + 14 + i,
+                frame.Write(x0 + 2, y0 + 15 + i,
                     $"{i + 1}) {choice.Options[i].Name}: {choice.Options[i].Blurb}", Hue.White);
             frame.Write(x0 + 2, y0 + boxH - 2,
                 $"1-{choice.Options.Length} choose, for good; any other key closes", Hue.DarkGray);
@@ -425,6 +430,7 @@ public static class Presenter
         if (p.Legend > 0) Line($"Legend  {p.Legend}", Hue.Magenta);
         if (game.Standing > 0) Line($" {LegendStanding.TitleOf(game.Standing)}", Hue.DarkGray);
         if (p.Weapon is { } wpn) Line($"Wpn {wpn.Name}{(wpn.Worn ? "!" : "")}", wpn.Worn ? Hue.Red : Hue.Gray);
+        if (p.Bow is { } bow) Line($"Bow {bow.Name}{(bow.Worn ? "!" : "")}", bow.Worn ? Hue.Red : Hue.Gray);
         if (p.Armor is { } arm) Line($"Arm {arm.Name}{(arm.Worn ? "!" : "")}", arm.Worn ? Hue.Red : Hue.Gray);
         if (p.WoundedTurns > 0) Line($"WOUNDED ({p.WoundedTurns})", Hue.Red);
         y++;
@@ -442,6 +448,7 @@ public static class Presenter
             }, Hue.White);
             int alive = game.LiveMonstersHere.Count();
             Line($"Foes here: {alive}", alive > 0 ? Hue.Red : Hue.DarkGreen);
+            if (game.InAim) Line("Shaft set: choose a line", Hue.Cyan);
             foreach (var monster in game.LiveMonstersHere.Where(m => m.Intent is not null))
                 Line(monster.Intent!.Kind switch
                 {
@@ -482,8 +489,8 @@ public static class Presenter
         y++;
         Line("hjkl/yubn move  . wait", Hue.DarkGray);
         Line("g grab  >/< enter/exit", Hue.DarkGray);
-        Line("e eat  i gear  c you", Hue.DarkGray);
-        Line("q quit", Hue.DarkGray);
+        Line("f loose  e eat  i gear", Hue.DarkGray);
+        Line("c you  q quit", Hue.DarkGray);
     }
 
     private static string Bar(int value, int max, int slots)

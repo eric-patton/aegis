@@ -1,6 +1,6 @@
 namespace Aegis.Core;
 
-public enum GearSlot { Weapon, Armor }
+public enum GearSlot { Weapon, Armor, Ranged }
 
 /// <summary>
 /// A piece of equipment (D-041, the D-015 contract made real): requirements are
@@ -54,15 +54,16 @@ public sealed class GearItem
 }
 
 /// <summary>
-/// The authored gear catalog (D-041). Six items, each with one home: the smith
-/// stocks the plain three; the grave-iron blade waits in the barrow's chest,
-/// the carver's maul in the quarry's toolcache, and the wright's mail in the
+/// The authored gear catalog (D-041). Seven items, each with one home: the smith
+/// stocks the plain four (the hunting bow, D-050, is bowyer's work the forge
+/// takes in trade); the grave-iron blade waits in the barrow's chest, the
+/// carver's maul in the quarry's toolcache, and the wright's mail in the
 /// fallen hall's coffer (site loot beyond coin, the D-033 deferral). Instances
 /// are minted fresh so wear never leaks between games.
 /// </summary>
 public static class GearCatalog
 {
-    public static readonly string[] SmithStock = ["woodaxe", "quilted_jack", "riveted_shirt"];
+    public static readonly string[] SmithStock = ["woodaxe", "quilted_jack", "riveted_shirt", "hunting_bow"];
 
     public static GearItem Create(string id) => id switch
     {
@@ -81,6 +82,16 @@ public static class GearCatalog
         {
             Id = id, Name = "riveted shirt", Slot = GearSlot.Armor,
             Bonus = 2, ReqAttr = Attr.Vigor, Req = 7, Value = 20, MaxWear = 50,
+        },
+        // The bearer's ranged verb (D-050) and the first iron gated on Grace
+        // (the D-041 deferral): the bow asks the eye and the step, not the arm.
+        // Wear is its whole ammunition: every draw frays the string a little,
+        // and the smith restrings it like any edge.
+        "hunting_bow" => new GearItem
+        {
+            Id = id, Name = "hunting bow", Slot = GearSlot.Ranged,
+            Bonus = 2, ReqAttr = Attr.Grace, Req = 7, Value = 16, MaxWear = 40,
+            Family = SkillId.Ranged,
         },
         "grave_iron" => new GearItem
         {

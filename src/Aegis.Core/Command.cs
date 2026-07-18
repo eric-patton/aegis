@@ -12,6 +12,7 @@ public enum Command
     Eat,
     Gear,
     Sheet,
+    Loose,
     Quit,
 }
 
@@ -36,6 +37,7 @@ public static class CommandMap
         'e' => Command.Eat,
         'i' => Command.Gear,
         'c' => Command.Sheet,
+        'f' => Command.Loose,
         'q' => Command.Quit,
         _ => Command.None,
     };

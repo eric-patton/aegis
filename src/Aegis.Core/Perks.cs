@@ -13,6 +13,7 @@ public enum PerkId
     FollowThrough, KindGrip,
     KnuckleAndBone, DeepBreath,
     BracedShoulder, MendedStrap,
+    HuntersEye, LightDraw,
 }
 
 /// <summary>
@@ -60,6 +61,13 @@ public static class PerkCatalog
             new(PerkId.MendedStrap, "the mended strap", "armor wears half as fast",
                 "You take the blow along the strap, not across it, and the iron thanks you."),
         ]),
+        new(SkillId.Ranged, 2,
+        [
+            new(PerkId.HuntersEye, "the hunter's eye", "shafts strike 1 deeper",
+                "You stop watching the shaft and start watching the mark. The shaft takes the hint."),
+            new(PerkId.LightDraw, "the light draw", "a loose asks 1 less wind",
+                "The draw finds the bow's own depth and stops there. The string does the rest."),
+        ]),
     ];
 
     public static PerkDef Def(PerkId id) =>
@@ -76,6 +84,8 @@ public static class PerkCatalog
         PerkId.DeepBreath => "deep_breath",
         PerkId.BracedShoulder => "braced_shoulder",
         PerkId.MendedStrap => "mended_strap",
+        PerkId.HuntersEye => "hunters_eye",
+        PerkId.LightDraw => "light_draw",
         _ => id.ToString().ToLowerInvariant(),
     };
 }

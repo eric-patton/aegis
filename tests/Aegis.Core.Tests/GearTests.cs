@@ -38,18 +38,20 @@ public class GearTests
     }
 
     [Fact]
-    public void Smith_SellsThePlainThree_RefusesTheBroke_AndDropsSoldStock()
+    public void Smith_SellsThePlainFour_RefusesTheBroke_AndDropsSoldStock()
     {
         var game = new Game(42);
         NpcTests.BumpNpc(game, game.World.Smith);
 
         Assert.True(game.InTalkMenu);
         Assert.Equal(2, game.Topics.Count);
-        Assert.Equal(3, game.Offers.Count(o => o.Good == TradeGood.Gear));
+        Assert.Equal(4, game.Offers.Count(o => o.Good == TradeGood.Gear));
         Assert.DoesNotContain(game.Offers, o => o.Good == TradeGood.Repair);
 
-        // The riveted shirt prints its requirement before any coin moves.
+        // The riveted shirt prints its requirement before any coin moves; the
+        // bow (D-050) prints the first Grace asking in the catalog.
         Assert.Contains(game.Offers, o => o.Arg == "riveted_shirt" && o.Label.Contains("Vigor 7"));
+        Assert.Contains(game.Offers, o => o.Arg == "hunting_bow" && o.Label.Contains("Grace 7") && o.Label.Contains("looses +2"));
 
         // Broke: the axe stays on the wall.
         game.Player.Coin = 5;

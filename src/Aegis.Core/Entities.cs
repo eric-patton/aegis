@@ -33,6 +33,9 @@ public sealed class Player
     public GearItem? Weapon { get; set; }
     public GearItem? Armor { get; set; }
 
+    /// <summary>The strung bow (D-050): its own slot, so the axe never leaves the other hand.</summary>
+    public GearItem? Bow { get; set; }
+
     /// <summary>Gear owned but not worn. Small by design: six items exist in the world.</summary>
     public List<GearItem> Pack { get; } = [];
 
@@ -42,6 +45,7 @@ public sealed class Player
         get
         {
             if (Weapon is not null) yield return Weapon;
+            if (Bow is not null) yield return Bow;
             if (Armor is not null) yield return Armor;
             foreach (var item in Pack) yield return item;
         }
@@ -137,6 +141,9 @@ public sealed class Player
 
     /// <summary>Flat melee bonus from Might above baseline.</summary>
     public int MeleeBonus => Math.Max(0, (Attributes[Attr.Might] - AttributeSet.Baseline) / 2);
+
+    /// <summary>Flat ranged bonus from Grace above baseline (D-050): the eye and the release, not the arm.</summary>
+    public int AimBonus => Math.Max(0, (Attributes[Attr.Grace] - AttributeSet.Baseline) / 2);
 
     /// <summary>Chance to slip a direct (non-telegraphed) attack, from Grace. Telegraphs are dodged by feet, not stats.</summary>
     public double DodgeChance => Math.Clamp((Attributes[Attr.Grace] - AttributeSet.Baseline) * 0.04, 0, 0.4);

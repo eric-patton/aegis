@@ -52,6 +52,13 @@ public sealed class Game
     public bool InSheetMenu { get; private set; }
 
     /// <summary>
+    /// A shaft set to the string (D-050): 'f' arms it, the next direction key
+    /// looses along that line, anything else lowers the bow. Turn-free like a
+    /// menu; the world holds still while the eye chooses.
+    /// </summary>
+    public bool InAim { get; private set; }
+
+    /// <summary>
     /// The terms of the crossing (D-047), open only at an open waygate: digits
     /// swear or unswear oaths on the next world, '>' crosses under what stands
     /// sworn, anything else steps back and the selection is let go.
@@ -248,6 +255,13 @@ public sealed class Game
             return;
         }
 
+        if (InAim)
+        {
+            HandleAimKey(key);
+            KeyApplied?.Invoke(key);
+            return;
+        }
+
         var cmd = CommandMap.FromKey(key);
         if (cmd == Command.None) return;
 
@@ -276,6 +290,7 @@ public sealed class Game
             Command.Eat => DoEat(),
             Command.Gear => DoGearMenu(),
             Command.Sheet => DoSheet(),
+            Command.Loose => DoLoose(),
             _ => CommandMap.Delta(cmd) is { } d && DoMove(d.dx, d.dy),
         };
 
@@ -891,7 +906,12 @@ public sealed class Game
             foreach (string id in GearCatalog.SmithStock)
             {
                 var item = GearCatalog.Create(id);
-                string what = item.Slot == GearSlot.Weapon ? $"arm +{item.Bonus}" : $"wards {item.Bonus}";
+                string what = item.Slot switch
+                {
+                    GearSlot.Weapon => $"arm +{item.Bonus}",
+                    GearSlot.Ranged => $"looses +{item.Bonus}",
+                    _ => $"wards {item.Bonus}",
+                };
                 string asks = item.Req > AttributeSet.Baseline ? $", {AttributeSet.NameOf(item.ReqAttr)} {item.Req}" : "";
                 offers.Add((TradeGood.Gear, id, Player.OwnsGear(id)
                     ? $"{item.Name} (yours already)"
@@ -1282,7 +1302,7 @@ public sealed class Game
         if (key >= '1' && key <= '0' + items.Count)
         {
             var item = items[key - '1'];
-            if (item == Player.Weapon || item == Player.Armor)
+            if (item == Player.Weapon || item == Player.Armor || item == Player.Bow)
             {
                 Log.Add(Turn, $"The {item.Name} is already serving.");
                 return;
@@ -1349,13 +1369,26 @@ public sealed class Game
     private void EquipGear(GearItem item)
     {
         Player.Pack.Remove(item);
-        var displaced = item.Slot == GearSlot.Weapon ? Player.Weapon : Player.Armor;
+        var displaced = item.Slot switch
+        {
+            GearSlot.Weapon => Player.Weapon,
+            GearSlot.Ranged => Player.Bow,
+            _ => Player.Armor,
+        };
         if (displaced is not null) Player.Pack.Add(displaced);
-        if (item.Slot == GearSlot.Weapon) Player.Weapon = item; else Player.Armor = item;
+        switch (item.Slot)
+        {
+            case GearSlot.Weapon: Player.Weapon = item; break;
+            case GearSlot.Ranged: Player.Bow = item; break;
+            default: Player.Armor = item; break;
+        }
 
-        Log.Add(Turn, item.Slot == GearSlot.Weapon
-            ? $"You heft the {item.Name}. It settles into your grip like an argument won."
-            : $"You lace on the {item.Name}.", LogTone.Info);
+        Log.Add(Turn, item.Slot switch
+        {
+            GearSlot.Weapon => $"You heft the {item.Name}. It settles into your grip like an argument won.",
+            GearSlot.Ranged => $"You string the {item.Name} and hang it ready at your shoulder.",
+            _ => $"You lace on the {item.Name}.",
+        }, LogTone.Info);
         if (!item.MeetsReq(Player.Attributes))
             Log.Add(Turn, $"It asks {AttributeSet.NameOf(item.ReqAttr)} {item.Req} of an arm that carries {Player.Attributes[item.ReqAttr]}. You can use it, badly, and it will tell you what to become.", LogTone.Info);
         if (!Player.GearLineHeard)
@@ -1371,7 +1404,12 @@ public sealed class Game
     /// </summary>
     private void AcquireGear(GearItem item)
     {
-        bool slotEmpty = item.Slot == GearSlot.Weapon ? Player.Weapon is null : Player.Armor is null;
+        bool slotEmpty = item.Slot switch
+        {
+            GearSlot.Weapon => Player.Weapon is null,
+            GearSlot.Ranged => Player.Bow is null,
+            _ => Player.Armor is null,
+        };
         if (slotEmpty)
         {
             Player.Pack.Add(item);
@@ -1489,43 +1527,172 @@ public sealed class Game
         }
         else
         {
-            // The dead hold little a living hand would spend, but they are dense
-            // with essence; a severed one is nothing else at all.
-            int coin = target.Kind switch
-            {
-                MonsterKind.Wight => _combatRng.Range(0, 3),
-                MonsterKind.Severed => 0,
-                MonsterKind.Graven => _combatRng.Range(1, 5),
-                MonsterKind.Hound => _combatRng.Range(1, 4),
-                _ => _combatRng.Range(2, 7),
-            };
-            int essence = target.Kind switch
-            {
-                MonsterKind.Wight => 8,
-                MonsterKind.Severed => 15,
-                MonsterKind.Graven => 10,
-                MonsterKind.Hound => 6,
-                _ => 5,
-            };
-            Player.Coin += coin;
-            Player.Essence += essence;
-            Log.Add(Turn, target.Kind switch
-            {
-                MonsterKind.Wight => $"The wight comes apart into grave-dust and quiet. You take {coin} coin and {essence} essence.",
-                MonsterKind.Severed => $"The severed one comes apart slowly, almost gratefully. What it held pours into the Aegis: {essence} essence, and no coin at all.",
-                MonsterKind.Graven => $"The graven man breaks along its chisel-lines and stands again as what it always was: quarry-stone. You take {coin} coin and {essence} essence.",
-                MonsterKind.Hound => $"The iron hound drops mid-stride and lies still: a made thing, and whatever ran it has run out. You take {coin} coin and {essence} essence.",
-                _ => $"The {target.Name} falls. You take {coin} coin and {essence} essence.",
-            }, LogTone.Reward);
+            HarvestRemains(target);
             // The follow-through (D-046): a hafted swing that finishes its foe
             // hands part of its wind back. Quiet; the wind bar says it.
             if (trained == SkillId.Hafted && Player.HasPerk(PerkId.FollowThrough))
                 Player.Stamina = Math.Min(Player.Stamina + 2, Player.MaxStamina);
-            CheckSiteCleared(CurrentSite!);
         }
 
         if (trained is { } skill) GainSkill(skill);
         return true;
+    }
+
+    /// <summary>
+    /// What a felled foe leaves behind, however it fell (melee or the loosed
+    /// line, D-050). The dead hold little a living hand would spend, but they
+    /// are dense with essence; a severed one is nothing else at all.
+    /// </summary>
+    private void HarvestRemains(Monster target)
+    {
+        int coin = target.Kind switch
+        {
+            MonsterKind.Wight => _combatRng.Range(0, 3),
+            MonsterKind.Severed => 0,
+            MonsterKind.Graven => _combatRng.Range(1, 5),
+            MonsterKind.Hound => _combatRng.Range(1, 4),
+            _ => _combatRng.Range(2, 7),
+        };
+        int essence = target.Kind switch
+        {
+            MonsterKind.Wight => 8,
+            MonsterKind.Severed => 15,
+            MonsterKind.Graven => 10,
+            MonsterKind.Hound => 6,
+            _ => 5,
+        };
+        Player.Coin += coin;
+        Player.Essence += essence;
+        Log.Add(Turn, target.Kind switch
+        {
+            MonsterKind.Wight => $"The wight comes apart into grave-dust and quiet. You take {coin} coin and {essence} essence.",
+            MonsterKind.Severed => $"The severed one comes apart slowly, almost gratefully. What it held pours into the Aegis: {essence} essence, and no coin at all.",
+            MonsterKind.Graven => $"The graven man breaks along its chisel-lines and stands again as what it always was: quarry-stone. You take {coin} coin and {essence} essence.",
+            MonsterKind.Hound => $"The iron hound drops mid-stride and lies still: a made thing, and whatever ran it has run out. You take {coin} coin and {essence} essence.",
+            _ => $"The {target.Name} falls. You take {coin} coin and {essence} essence.",
+        }, LogTone.Reward);
+        CheckSiteCleared(CurrentSite!);
+    }
+
+    /// <summary>How far a shaft flies: one cell short of a graven man's throw, so the pit is never outranged from safety.</summary>
+    public const int BowRange = 8;
+
+    /// <summary>What a loose asks in wind: a swing's price, lightened by the knack, taxed by an unmet requirement (D-015).</summary>
+    private int LooseCost => 3
+        - (Player.HasPerk(PerkId.LightDraw) ? 1 : 0)
+        + (Player.Bow is { } bow && !bow.MeetsReq(Player.Attributes) ? 1 : 0);
+
+    /// <summary>
+    /// The bearer's ranged verb (D-050), first key of two: 'f' sets the shaft
+    /// and costs nothing; the next direction key looses along that line. The
+    /// draw refuses without the wind to pay it: at range, unlike cornered in
+    /// melee, keeping the shaft costs only tempo.
+    /// </summary>
+    private bool DoLoose()
+    {
+        if (Player.Bow is null)
+        {
+            Log.Add(Turn, "You have no bow to loose.");
+            return false;
+        }
+        if (Mode != MapMode.Site)
+        {
+            Log.Add(Turn, "Nothing under this sky calls for a shaft.");
+            return false;
+        }
+        if (Player.Stamina < LooseCost)
+        {
+            Log.Add(Turn, "You have not the wind to draw; the shaft stays on the string.", LogTone.Combat);
+            return false;
+        }
+
+        InAim = true;
+        Log.Add(Turn, "You set a shaft to the string. Choose a line; any other key lowers the bow.");
+        return false;
+    }
+
+    private void HandleAimKey(char key)
+    {
+        InAim = false;
+        if (CommandMap.Delta(CommandMap.FromKey(key)) is { } d)
+        {
+            LooseShaft(d.dx, d.dy);
+            AdvanceTurn();
+        }
+        else
+        {
+            Log.Add(Turn, "You lower the bow, and keep the shaft.");
+        }
+    }
+
+    /// <summary>
+    /// The loosed line (D-050): the shaft flies flat along one of the eight
+    /// lines, stops at the first body or the first stone, and reaches eight
+    /// cells at the furthest. Cover breaks it exactly as it breaks the graven
+    /// men's throws: the pillars answer to both sides now.
+    /// </summary>
+    private void LooseShaft(int dx, int dy)
+    {
+        var bow = Player.Bow!;
+        Player.Stamina -= LooseCost;
+
+        // The string frays a little with every draw, hit or miss: wear is the
+        // bow's whole ammunition, and the smith restrings it like any edge.
+        if (!bow.Worn)
+        {
+            bow.Wear = Math.Min(bow.MaxWear, bow.Wear + WearStep);
+            if (bow.Worn)
+                Log.Add(Turn, $"The {bow.Name}'s string is frayed past trusting: it throws soft until the smith sees it.", LogTone.Combat);
+        }
+
+        var map = CurrentMap;
+        var pos = Player.Pos;
+        for (int step = 0; step < BowRange; step++)
+        {
+            pos = pos.Plus(dx, dy);
+            if (!map.Walkable(pos))
+            {
+                Log.Add(Turn, "The shaft splinters against stone.", LogTone.Combat);
+                return;
+            }
+
+            var target = Monsters.FirstOrDefault(m => m.Alive && m.SiteId == CurrentSite!.Id && m.Pos == pos);
+            if (target is null) continue;
+
+            // A shaft from a resolved bearer's hand is still the old way (D-045):
+            // there is no gentle unmaking at the length of a pit.
+            if (target.Kind == MonsterKind.Severed && Player.Resolution != Resolution.None && !_layingDeclined)
+            {
+                _layingDeclined = true;
+                Log.Add(Turn, "\"From this distance, then. The old way has a reach, bearer. So be it.\"", LogTone.Aegis);
+            }
+
+            int damage = _combatRng.Range(1, 4) + bow.EffectiveBonus(Player.Attributes)
+                + Player.AimBonus + Player.Skills.Bonus(SkillId.Ranged)
+                + (Player.HasPerk(PerkId.HuntersEye) ? 1 : 0);
+            target.Hp -= damage;
+
+            if (target.Alive)
+            {
+                Log.Add(Turn, $"Your shaft takes the {target.Name} for {damage}.", LogTone.Combat);
+                if (target.Dormant)
+                {
+                    target.Dormant = false;
+                    Log.Add(Turn, "Grit sifts from the figure. The head grinds around, hunting the line the shaft flew.", LogTone.Danger);
+                }
+            }
+            else
+            {
+                HarvestRemains(target);
+            }
+
+            // Only a shaft that found a body teaches (D-014's cost gating held
+            // to its spirit: distance and stone would school a scarecrow).
+            GainSkill(SkillId.Ranged);
+            return;
+        }
+
+        Log.Add(Turn, "The shaft flies the length of its line and finds only distance.", LogTone.Combat);
     }
 
     /// <summary>
@@ -1544,6 +1711,7 @@ public sealed class Game
             SkillId.Blades => $"The edge finds its line without being asked. (Blades rises to {after})",
             SkillId.Hafted => $"The haft has stopped arguing with your grip. (Hafted rises to {after})",
             SkillId.Brawling => $"Your fists have learned where the bones are not. (Brawling rises to {after})",
+            SkillId.Ranged => $"The shaft goes where the eye went, not where the hand hoped. (Ranged rises to {after})",
             _ => $"You take the blow where the iron is thickest. (Warding rises to {after})",
         }, LogTone.Reward);
 
@@ -2011,6 +2179,7 @@ public sealed class Game
         CurrentSite = mode == MapMode.Site ? World.CampSite : null;
     }
     internal void Debug_HurtPlayer(int damage) => Player.Hp -= damage;
+    internal void Debug_GrantGear(string id) => AcquireGear(GearCatalog.Create(id));
     internal void Debug_ForceDeathCheck() { if (Player.Hp <= 0) HandleDeath(); }
     internal void Debug_ClearCamp() => Debug_ClearSite(SiteKind.GoblinCamp);
     internal void Debug_ClearSite(SiteKind kind)
@@ -2093,6 +2262,8 @@ public sealed class Game
         WeaponWear: Player.Weapon?.Wear ?? 0,
         ArmorId: Player.Armor?.Id ?? "",
         ArmorWear: Player.Armor?.Wear ?? 0,
+        BowId: Player.Bow?.Id ?? "",
+        BowWear: Player.Bow?.Wear ?? 0,
         PackGear: string.Join(",", Player.Pack.Select(g => g.Id)),
         RepairPrice: RepairPrice,
         SmithX: World.Smith.Pos.X,
@@ -2117,6 +2288,7 @@ public sealed class Game
         InGearMenu: InGearMenu,
         InSheetMenu: InSheetMenu,
         InCrossingMenu: InCrossingMenu,
+        InAim: InAim,
         TalkNpc: TalkNpc?.Name ?? "",
         WoundedTurns: Player.WoundedTurns,
         Deaths: Player.Deaths,
@@ -2190,6 +2362,8 @@ public sealed record Snapshot(
     int WeaponWear,
     string ArmorId,
     int ArmorWear,
+    string BowId,
+    int BowWear,
     string PackGear,
     int RepairPrice,
     int SmithX,
@@ -2213,6 +2387,7 @@ public sealed record Snapshot(
     bool InGearMenu,
     bool InSheetMenu,
     bool InCrossingMenu,
+    bool InAim,
     string TalkNpc,
     int WoundedTurns,
     int Deaths,

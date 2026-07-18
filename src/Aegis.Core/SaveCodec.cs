@@ -51,10 +51,13 @@ namespace Aegis.Core;
 /// v17 when D-049 rewove name generation: worlds draw from their own larger
 /// pool and reroll against the walked list, so every generated name (and the
 /// facts and songs that carry them) differs from what a v16 journal saw.
+/// v18 when D-050 put a bow in the bearer's hands: 'f' arms and a direction
+/// looses, both journaled, the smith's stock gained a fourth ware (shifting
+/// the mending entry's digit), and every shaft changes later state.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 17;
+    public const int Version = 18;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

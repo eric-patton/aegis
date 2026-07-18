@@ -47,7 +47,7 @@ public class OathsTests
         game.ApplyKey('>');
         game.ApplyKey('>');
 
-        var expected = WorldGen.Generate(SeedTree.Derive(42, "cycle", 2), tier: 2, prevStory: prevStory);
+        var expected = WorldGen.Generate(SeedTree.Derive(42, "cycle", 2), tier: 2, prevStory: prevStory, takenNames: game.Player.WorldsWalked);
         Assert.Equal(expected.Name, game.World.Name);
         Assert.Equal(expected.Overworld.ContentHash(), game.World.Overworld.ContentHash());
         Assert.Equal(expected.Camp.ContentHash(), game.World.Camp.ContentHash());

@@ -124,8 +124,11 @@ public static class WorldGen
     /// a generation input that is player choice, which stays deterministic because
     /// the choosing keys are journaled before this is ever called. With no oaths
     /// the draws are exactly what they always were, so pinned worlds survive.
+    /// <paramref name="takenNames"/> is the names of the character's walked worlds
+    /// (D-049): the world-name weave rerolls against them so the long song never
+    /// repeats a verse. The list is itself journal-derived, so still deterministic.
     /// </summary>
-    public static World Generate(ulong worldSeed, int tier = 1, string? prevStory = null, IReadOnlyList<OathId>? oaths = null)
+    public static World Generate(ulong worldSeed, int tier = 1, string? prevStory = null, IReadOnlyList<OathId>? oaths = null, IReadOnlyCollection<string>? takenNames = null)
     {
         oaths ??= [];
         // The crowded dark (D-047): every den holds one more than the tier asks.
@@ -133,7 +136,7 @@ public static class WorldGen
         var facts = new FactGraph();
 
         var nameRng = new Rng(SeedTree.Derive(worldSeed, "names"));
-        string worldName = NameGen.World(ref nameRng);
+        string worldName = NameGen.World(ref nameRng, takenNames);
         string settlementName = NameGen.Settlement(ref nameRng);
 
         var overworld = GenerateOverworld(worldSeed);

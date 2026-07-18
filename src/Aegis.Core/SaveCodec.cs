@@ -48,10 +48,13 @@ namespace Aegis.Core;
 /// v16 when D-048 derived standing from Legend: the welcome now sets out bread
 /// at each arrival, the storied pay a coin less for it, and a fourth unbinding
 /// waits at high standing, so a v15 journal would replay to different state.
+/// v17 when D-049 rewove name generation: worlds draw from their own larger
+/// pool and reroll against the walked list, so every generated name (and the
+/// facts and songs that carry them) differs from what a v16 journal saw.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 16;
+    public const int Version = 17;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

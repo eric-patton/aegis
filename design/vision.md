@@ -173,11 +173,11 @@ And the loop closes on itself: **your finished characters enter the mythology.**
 - Spell list and magic-school content design
 - Storylet external data-file format and condition/effect vocabulary (v1 C# format spec'd; see `storylets.md` sec. 6)
 - Scar, Legend-rung (D-048 landed five, hospitality-boon shaped), further-oath (D-047 landed four), and hostility-tier content catalogs (first tier band landed in D-033: the barrow at tier 2+; tiers 3+ still need their own)
-- Story content open items: bottle-episode playability, Unbinder guise tells, templates 4-5 (see `story/aegis-arc.md` sec. 11, `story/world-story-templates.md` sec. 9; final names settled by D-043)
+- Story content open items: bottle-episode playability, Unbinder guise tells, templates 4-5 (see `story/aegis-arc.md` sec. 11, `story/world-story-templates.md` sec. 9; final names settled by D-043; generated world, stead, and person naming rewoven in D-049 with worlds unique per character)
 
 ## 13. Document Map
 
-- `decisions.md`: the decision audit trail with rationale (48 and counting)
+- `decisions.md`: the decision audit trail with rationale (49 and counting)
 - `storylets.md`: storylet format and fact-graph schema spec (D-030)
 - `story/aegis-arc.md`: the trans-world Aegis arc spec (Canon: The Ledger; D-026)
 - `story/world-story-templates.md`: the world-story template contract, iron rules, and three launch templates

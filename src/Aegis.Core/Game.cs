@@ -494,7 +494,9 @@ public sealed class Game
         string? prevStory = World.Facts.OfType("story").FirstOrDefault()?.Subject;
 
         Cycle++;
-        World = WorldGen.Generate(SeedTree.Derive(MasterSeed, "cycle", Cycle), tier: Cycle, prevStory: prevStory, oaths: oaths);
+        // The walked list already carries this world's name (added above), so the
+        // next world's weave avoids every verse of the long song (D-049).
+        World = WorldGen.Generate(SeedTree.Derive(MasterSeed, "cycle", Cycle), tier: Cycle, prevStory: prevStory, oaths: oaths, takenNames: Player.WorldsWalked);
         _combatRng = new Rng(SeedTree.Derive(World.Seed, "combat"));
         _storylets.OnCrossing(World.Seed, FullCatalog());
         Monsters.Clear();

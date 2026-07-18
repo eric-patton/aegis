@@ -523,7 +523,15 @@ public static class WorldGen
             int carlCount = Math.Min(4 + (tier - 5), 6) + crowd;
             int carlHp = 14 + 2 * (tier - 5);
             int boarHp = 20 + 2 * (tier - 5);
-            var (fortMap, fortEntry, carlSpawns, boarSpawns, fortChest) = GenerateRingfort(worldSeed, carlCount);
+            // The sword-thegn (D-058): the endless country's forts, past the
+            // arc's own march, post a veteran of the watch who fights by reading
+            // the bearer. Tier 7+ only, so tier-5 and -6 forts are untouched.
+            int thegnCount = tier >= 7 ? Math.Min(1 + (tier - 7) / 2, 3) : 0;
+            // Tanky on purpose: a veteran you cannot burst down in one blow is a
+            // veteran the heave stays tempting against, and the temptation is the
+            // trap. It outlasts a single heave, so the reader gets its turn.
+            int thegnHp = 28 + 2 * (tier - 7);
+            var (fortMap, fortEntry, carlSpawns, boarSpawns, thegnSpawns, fortChest) = GenerateRingfort(worldSeed, carlCount, thegnCount);
             sites.Add(new Site
             {
                 Id = "ringfort",
@@ -532,11 +540,15 @@ public static class WorldGen
                 OverworldPos = fortPos,
                 EntryPos = fortEntry,
                 Spawns = [.. carlSpawns.Select(p => new MonsterSpawn(MonsterKind.Carl, p, carlHp)),
-                          .. boarSpawns.Select(p => new MonsterSpawn(MonsterKind.Boar, p, boarHp))],
+                          .. boarSpawns.Select(p => new MonsterSpawn(MonsterKind.Boar, p, boarHp)),
+                          .. thegnSpawns.Select(p => new MonsterSpawn(MonsterKind.Thegn, p, thegnHp))],
                 ChestPos = fortChest,
             });
             facts.Add("site", "ringfort", $"{fortPos.X},{fortPos.Y}",
                 "A ring-walled fort older than the war anyone can name. The watch on its walls was never stood down, and the beasts they kept have not gone tame.");
+            if (thegnCount > 0)
+                facts.Add("site_note", "sword_thegn", $"{fortPos.X},{fortPos.Y}",
+                    "Among the watch stands one who keeps to the old drill: never the first blow, only the answer. It has kept it long past anyone left to answer for.");
         }
 
         // The fen-leaguer (D-057): tier 6+ worlds hold the fifth band's site,
@@ -1146,8 +1158,8 @@ public static class WorldGen
     /// its rubble follows the quarry's rule (all eight neighbors open floor),
     /// so cover can never disconnect the ground it breaks.
     /// </summary>
-    private static (GameMap Map, Pos Entry, List<Pos> Carls, List<Pos> Boars, Pos Chest)
-        GenerateRingfort(ulong worldSeed, int carlCount)
+    private static (GameMap Map, Pos Entry, List<Pos> Carls, List<Pos> Boars, List<Pos> Thegns, Pos Chest)
+        GenerateRingfort(ulong worldSeed, int carlCount, int thegnCount)
     {
         var rng = new Rng(SeedTree.Derive(worldSeed, "site-ringfort"));
         var map = new GameMap("ringfort", RingfortW, RingfortH, Terrain.Floor);
@@ -1238,8 +1250,28 @@ public static class WorldGen
             if (!boars.Contains(p) && spaced) boars.Add(p);
         }
 
+        // The veteran of the watch (D-058): the deepest forts post a sword-thegn
+        // in the ward among the carls. Its own stream ("site-thegn"), drawn only
+        // when a fort holds one, so the carls, boars, chest, and rubble a
+        // shallower fort drew stand byte-identical: no tier-5 or -6 layout moves.
+        // It keeps the ward, spaced off the carls and clear of the inner gate.
+        var thegns = new List<Pos>();
+        if (thegnCount > 0)
+        {
+            var thegnRng = new Rng(SeedTree.Derive(worldSeed, "site-thegn"));
+            guard = 4000;
+            while (thegns.Count < thegnCount)
+            {
+                var p = thegnRng.Pick(ward);
+                bool spaced = guard-- <= 0
+                    || (carls.All(q => q.Manhattan(p) >= 3) && thegns.All(q => q.Manhattan(p) >= 4));
+                if (p != chest && p.Chebyshev(innerGate) >= 2 && spaced
+                    && !carls.Contains(p) && !thegns.Contains(p)) thegns.Add(p);
+            }
+        }
+
         map[entry] = Terrain.ExitLadder;
-        return (map, entry, carls, boars, chest);
+        return (map, entry, carls, boars, thegns, chest);
     }
 
     public const int LeaguerW = 33;

@@ -14,6 +14,7 @@ public enum Command
     Sheet,
     Loose,
     Thrust,
+    Heave,
     Quit,
 }
 
@@ -40,6 +41,7 @@ public static class CommandMap
         'c' => Command.Sheet,
         'f' => Command.Loose,
         't' => Command.Thrust,
+        'w' => Command.Heave,
         'q' => Command.Quit,
         _ => Command.None,
     };

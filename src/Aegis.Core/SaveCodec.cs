@@ -77,10 +77,14 @@ namespace Aegis.Core;
 /// v25 when D-057 raised the fen-leaguer in tier-6+ worlds: a mere and its
 /// works stand where a v24 walk that deep crossed plain ground, held by a
 /// watch that did not exist when the journal was played.
+/// v26 when D-058 wound up the heave: 'w' gained meaning (a v25 journal's
+/// stray 'w' was ignored and now sets the feet), the heave lands blows no v25
+/// journal recorded, and tier-7+ forts post a sword-thegn where a v25 walk
+/// that deep met only carls.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 25;
+    public const int Version = 26;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

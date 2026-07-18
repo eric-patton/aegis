@@ -62,6 +62,13 @@ public sealed class Game
     public bool InThrust { get; private set; }
 
     /// <summary>
+    /// The heave wound up (D-058): 'w' with iron in hand sets the feet; the next
+    /// direction key winds the blow at that line. Turn-free like the aim and the
+    /// point: the choice of where to commit costs nothing until it is made.
+    /// </summary>
+    public bool InHeave { get; private set; }
+
+    /// <summary>
     /// The terms of the crossing (D-047), open only at an open waygate: digits
     /// swear or unswear oaths on the next world, '>' crosses under what stands
     /// sworn, anything else steps back and the selection is let go.
@@ -272,6 +279,13 @@ public sealed class Game
             return;
         }
 
+        if (InHeave)
+        {
+            HandleHeaveKey(key);
+            KeyApplied?.Invoke(key);
+            return;
+        }
+
         var cmd = CommandMap.FromKey(key);
         if (cmd == Command.None) return;
 
@@ -290,6 +304,18 @@ public sealed class Game
             return;
         }
 
+        // A wound-up heave commits you (D-058): the next thing you do looses it,
+        // hit or miss, on the cell you chose. Turn-free peeks (the pack, the
+        // sheet) still open; anything that would cost the field a turn spends it
+        // on loosing the blow instead. There is no taking it back: that is the
+        // whole of the commitment the field already read.
+        if (Player.HeaveTarget is { } heaveCell && cmd is not (Command.Gear or Command.Sheet))
+        {
+            ResolveHeave(heaveCell);
+            AdvanceTurn();
+            return;
+        }
+
         bool tookTime = cmd switch
         {
             Command.Wait => DoWait(),
@@ -302,6 +328,7 @@ public sealed class Game
             Command.Sheet => DoSheet(),
             Command.Loose => DoLoose(),
             Command.Thrust => DoThrust(),
+            Command.Heave => DoHeave(),
             _ => CommandMap.Delta(cmd) is { } d && DoMove(d.dx, d.dy),
         };
 
@@ -1965,6 +1992,7 @@ public sealed class Game
             MonsterKind.Carl => _combatRng.Range(2, 6),
             MonsterKind.Boar => 0,
             MonsterKind.Warder => _combatRng.Range(2, 6),
+            MonsterKind.Thegn => _combatRng.Range(3, 7),
             _ => _combatRng.Range(2, 7),
         };
         int essence = target.Kind switch
@@ -1976,6 +2004,7 @@ public sealed class Game
             MonsterKind.Carl => 8,
             MonsterKind.Boar => 6,
             MonsterKind.Warder => 9,
+            MonsterKind.Thegn => 12,
             _ => 5,
         };
         // The lean dark (D-051): the dark yields half its essence, rounded
@@ -1999,6 +2028,7 @@ public sealed class Game
                 ? $"The war-boar goes down heavy enough to feel through your boots. No purse on a beast: you take {essence} essence, and the knife takes meat for the road. ({Player.Rations} carried)"
                 : $"The war-boar goes down heavy enough to feel through your boots. No purse on a beast: you take {essence} essence, and leave more meat than a walking body can carry.",
             MonsterKind.Warder => $"The sling-warder sits down against the bank like a man at the end of a long watch, and does not get up. You take {coin} coin and {essence} essence.",
+            MonsterKind.Thegn => $"The sword-thegn lowers its point and folds down without a sound, the way it did everything: unhurried, and at last relieved of a watch no one remembered setting. You take {coin} coin and {essence} essence.",
             _ => $"The {target.Name} falls. You take {coin} coin and {essence} essence.",
         }, LogTone.Reward);
         CheckSiteCleared(CurrentSite!);
@@ -2212,6 +2242,142 @@ public sealed class Game
         }
 
         Log.Add(Turn, "The point finds only the air two strides out.", LogTone.Combat);
+    }
+
+    /// <summary>
+    /// What a heave asks in wind (D-058): the dearest melee price, because the
+    /// blow is the biggest single thing a hand can throw and the wind-up buys a
+    /// turn's exposure with it. The unmet requirement taxes it like any iron
+    /// (D-015); no knack lightens it.
+    /// </summary>
+    private int HeaveCost => 5
+        + (Player.Weapon is { } w && !w.MeetsReq(Player.Attributes) ? 1 : 0);
+
+    /// <summary>
+    /// The heave (D-058), first key of two: 'w' with iron in hand sets the feet
+    /// and costs nothing; the next direction key winds the blow at that line.
+    /// Commitment runs both ways (D-004): what the field's telegraphs are to the
+    /// bearer, this is to the field. Bare fists keep their verbs in the knacks
+    /// (D-056), and only a body under this sky is worth so heavy a blow.
+    /// </summary>
+    private bool DoHeave()
+    {
+        if (Player.Weapon is null)
+        {
+            Log.Add(Turn, "A heave wants iron in the hand; bare fists have their own quickness, not this weight.");
+            return false;
+        }
+        if (Mode != MapMode.Site)
+        {
+            Log.Add(Turn, "Nothing under this open sky is worth so heavy a blow.");
+            return false;
+        }
+        if (Player.Stamina < HeaveCost)
+        {
+            Log.Add(Turn, "You have not the wind to wind it; the blow stays in your shoulder.", LogTone.Combat);
+            return false;
+        }
+
+        InHeave = true;
+        Log.Add(Turn, "You set your feet to wind a heavy blow. Choose a line; any other key eases off.");
+        return false;
+    }
+
+    private void HandleHeaveKey(char key)
+    {
+        InHeave = false;
+        if (CommandMap.Delta(CommandMap.FromKey(key)) is { } d)
+        {
+            CommitHeave(d.dx, d.dy);
+            AdvanceTurn();
+        }
+        else
+        {
+            Log.Add(Turn, "You ease off, and keep your feet under you.");
+        }
+    }
+
+    /// <summary>
+    /// The wind-up (D-058): the wind is spent now and the cell is locked now,
+    /// and the blow stands one turn, visible, for the field to answer before it
+    /// falls. There is no taking it back; the next act looses it. This is the
+    /// whole of the exposure, the mirror of a monster's declared intent.
+    /// </summary>
+    private void CommitHeave(int dx, int dy)
+    {
+        Player.Stamina -= HeaveCost;
+        Player.HeaveTarget = Player.Pos.Plus(dx, dy);
+        Log.Add(Turn, $"You wind the {Player.Weapon!.Name} up and back, all your weight gathering behind it. Everything here can see it come.", LogTone.Combat);
+    }
+
+    /// <summary>
+    /// The heave loosed (D-058): the biggest single blow a hand throws, on the
+    /// cell chosen a turn ago. A body that left the cell is a body the blow
+    /// never touches, because a telegraph is dodged by feet, and the field's
+    /// feet answer the bearer's as the bearer's answer the field. It pays a full
+    /// swing's wear, hit or miss, and teaches only where it finds a body.
+    /// </summary>
+    private void ResolveHeave(Pos cell)
+    {
+        Player.HeaveTarget = null;
+        var weapon = Player.Weapon!;
+        var family = weapon.Family;
+
+        // A full swing's wear and parity, hit or miss (the thrust's rule, D-056).
+        bool edgeSpared = (family == SkillId.Hafted && Player.HasPerk(PerkId.KindGrip)
+                || family == SkillId.Blades && Player.HasPerk(PerkId.StroppedEdge))
+            && Player.Skills.Uses(family) % 2 == 1;
+        if (!weapon.Worn && !edgeSpared)
+        {
+            weapon.Wear = Math.Min(weapon.MaxWear, weapon.Wear + WearStep);
+            if (weapon.Worn)
+                Log.Add(Turn, $"The {weapon.Name}'s edge is gone: it lands like a bar of dull iron now. The smith's wheel would right it.", LogTone.Combat);
+        }
+
+        var target = Monsters.FirstOrDefault(m => m.Alive && m.SiteId == CurrentSite!.Id && m.Pos == cell);
+        if (target is null)
+        {
+            Log.Add(Turn, "The heave comes down on ground gone empty and cracks it: a blow that big, spent on nothing.", LogTone.Combat);
+            return;
+        }
+
+        int damage = _combatRng.Range(6, 12) + 2 * Player.MeleeBonus + 2 * weapon.EffectiveBonus(Player.Attributes)
+            + Player.Skills.Bonus(family)
+            + (family == SkillId.Blades && Player.HasPerk(PerkId.DrawnCut) ? 1 : 0)
+            + (family == SkillId.Hafted && Player.HasPerk(PerkId.TrueArc) ? 1 : 0);
+        target.Hp -= damage;
+
+        if (target.Alive)
+        {
+            Log.Add(Turn, $"The heave lands full on the {target.Name} for {damage}.", LogTone.Combat);
+            if (target.Dormant)
+            {
+                if (target.Kind == MonsterKind.Warder) RouseLeaguer(target);
+                else
+                {
+                    target.Dormant = false;
+                    Log.Add(Turn, "Grit sifts from the figure. The head grinds around to face you.", LogTone.Danger);
+                }
+            }
+            // The checked swing (D-055): a landed paid hafted blow breaks the
+            // wind-up outright, at the heave's weight as at the swing's.
+            if (family == SkillId.Hafted && Player.HasPerk(PerkId.CheckedSwing) && target.Intent is not null)
+            {
+                target.Intent = null;
+                Log.Add(Turn, $"The weight staggers the {target.Name}; the blow it was raising dies unthrown.", LogTone.Combat);
+            }
+        }
+        else
+        {
+            HarvestRemains(target);
+            // The follow-through (D-046): a hafted killing blow hands wind back,
+            // heave or swing.
+            if (family == SkillId.Hafted && Player.HasPerk(PerkId.FollowThrough))
+                Player.Stamina = Math.Min(Player.Stamina + 2, Player.MaxStamina);
+        }
+
+        // Only a heave that found a body teaches (D-014's cost gating).
+        GainSkill(family);
     }
 
     /// <summary>
@@ -2571,6 +2737,7 @@ public sealed class Game
         if (monster.Kind == MonsterKind.Carl) { ActCarl(monster); return; }
         if (monster.Kind == MonsterKind.Boar) { ActBoar(monster); return; }
         if (monster.Kind == MonsterKind.Warder) { ActWarder(monster); return; }
+        if (monster.Kind == MonsterKind.Thegn) { ActThegn(monster); return; }
 
         int dist = monster.Pos.Chebyshev(Player.Pos);
 
@@ -3012,6 +3179,66 @@ public sealed class Game
     }
 
     /// <summary>
+    /// The sword-thegn (D-058): the even hand made flesh (D-055 named the
+    /// principle; this is the foe drilled into it). It was taught to never
+    /// strike first and only to answer, and the teaching has outlived the war,
+    /// the cause, and the hand that gave it. So it comes on at a walk and trades
+    /// measured blows, patient, and waits. Its teeth is the counter: a heave
+    /// wound up within its reach is the opening it has waited an age for, and it
+    /// steps inside the winding blow and breaks it unthrown, the checked swing
+    /// (D-055) turned at last on the bearer. A blow it must still close on it
+    /// cannot answer the same way; there is nothing yet to step inside. Its
+    /// counter spent, it stands a breath open, and a reader's own commitment can
+    /// be read: bait the answer and the guard is there to be cracked.
+    /// </summary>
+    private void ActThegn(Monster monster)
+    {
+        if (monster.ExposedTurns > 0) { monster.ExposedTurns--; return; }
+
+        int dist = monster.Pos.Chebyshev(Player.Pos);
+
+        // The counter: a heave wound up in its face dies half-drawn, and the
+        // point comes back on the bearer. Telegraph-free: this is a read, and a
+        // read finds you. The spent counter opens it for a breath.
+        if (dist == 1 && Player.HeaveTarget is not null)
+        {
+            Player.HeaveTarget = null;
+            int damage = Absorb(_combatRng.Range(5, 9));
+            Player.Hp -= damage;
+            monster.ExposedTurns = 1;
+            Log.Add(Turn, $"The sword-thegn was waiting for exactly this. It steps inside the winding blow: your heave dies half-drawn as the point comes back and finds you for {damage}.", LogTone.Danger);
+            Log.Add(Turn, "Its counter spent, the sword-thegn stands a breath out of its guard.", LogTone.Combat);
+            return;
+        }
+
+        if (dist == 1)
+        {
+            if (_combatRng.Chance(0.5))
+            {
+                if (_combatRng.Chance(Player.DodgeChance))
+                {
+                    Log.Add(Turn, "The sword-thegn's measured cut you turn aside.", LogTone.Combat);
+                }
+                else
+                {
+                    int damage = Absorb(_combatRng.Range(2, 5));
+                    Player.Hp -= damage;
+                    Log.Add(Turn, $"The sword-thegn's cut comes in unhurried and certain and opens you for {damage}.", LogTone.Combat);
+                }
+            }
+            else
+            {
+                Log.Add(Turn, "The sword-thegn holds its guard and watches your hands, waiting for you to over-reach.", LogTone.Combat);
+            }
+            return;
+        }
+
+        // A swordsman's feet, not a shield's: it closes at a walk, every turn,
+        // wanting the bind the counter needs.
+        if (dist <= 10) StepBfsToward(monster);
+    }
+
+    /// <summary>
     /// Proper pathing (BFS, cardinal steps) for the dead and the severed: they have
     /// walked their halls for an age and do not fumble at their own doorways.
     /// Goblins keep their greedy stumble.
@@ -3244,6 +3471,8 @@ public sealed class Game
         InCrossingMenu: InCrossingMenu,
         InAim: InAim,
         InThrust: InThrust,
+        InHeave: InHeave,
+        HeaveLoaded: Player.HeaveTarget is not null,
         TalkNpc: TalkNpc?.Name ?? "",
         WoundedTurns: Player.WoundedTurns,
         Deaths: Player.Deaths,
@@ -3355,6 +3584,8 @@ public sealed record Snapshot(
     bool InCrossingMenu,
     bool InAim,
     bool InThrust,
+    bool InHeave,
+    bool HeaveLoaded,
     string TalkNpc,
     int WoundedTurns,
     int Deaths,

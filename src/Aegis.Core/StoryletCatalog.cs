@@ -254,6 +254,25 @@ public static class StoryletCatalog
             ],
         },
 
+        // Closing on the sword-thegn (D-058, tier 7+ forts): world-texture tied
+        // to the encounter itself. The deep bands' story of duty outliving its
+        // object, worn now as a fighter's drill: the even hand still keeping the
+        // form long past anyone left to keep it for.
+        new Storylet
+        {
+            Id = "the-even-hand",
+            Trigger = StoryletTrigger.EnterTile,
+            Tile = Terrain.Floor,
+            Priority = 6,
+            When = g => g.CurrentSite?.Kind == SiteKind.Ringfort
+                && g.LiveMonstersHere.Any(m => m.Kind == MonsterKind.Thegn && m.Pos.Chebyshev(g.Player.Pos) <= 2),
+            Lines =
+            [
+                ("One of the watch does not come at you and does not run. It settles its weight, turns its point down, and waits, eyes on your hands: the old drill, never the first blow, only the answer.", LogTone.Danger),
+                ("There is no one left to answer for, and it has forgotten that, or was never told. It only knows the form, and the form is patient. Give it nothing to answer, or make the answer cost more than the opening you hand it.", LogTone.Danger),
+            ],
+        },
+
         // The stead's answer to the watch standing down: the far grazing opens.
         new Storylet
         {

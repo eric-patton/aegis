@@ -394,6 +394,12 @@ public static class Presenter
                 }
             }
 
+        // The bearer's own committed blow (D-058): commitment runs both ways, so
+        // the heave marks its cell the way a monster's intent marks its own, in
+        // the bearer's own amber rather than the field's red.
+        if (game.Player.HeaveTarget is { } heaveCell)
+            PutWorld(heaveCell, '!', Hue.White, Hue.DarkYellow);
+
         if (game.Remnant is { } remnant && remnant.MapId == map.Id)
             PutWorld(remnant.Pos, '%', Hue.Magenta);
 
@@ -420,6 +426,7 @@ public static class Presenter
                 MonsterKind.Carl => 'c',
                 MonsterKind.Boar => 'b',
                 MonsterKind.Warder => 'v',
+                MonsterKind.Thegn => 't',
                 _ => 'g',
             };
             var calm = monster.Kind switch
@@ -433,6 +440,8 @@ public static class Presenter
                 MonsterKind.Boar => Hue.DarkRed,
                 // A watching warder is drawn low, part of the works it stands.
                 MonsterKind.Warder => monster.Dormant ? Hue.DarkGray : Hue.DarkGreen,
+                // The sword-thegn stands steel-grey and still, giving nothing away.
+                MonsterKind.Thegn => Hue.Gray,
                 _ => Hue.Red,
             };
             PutWorld(monster.Pos, ch, monster.Intent is null ? calm : Hue.White,
@@ -511,6 +520,8 @@ public static class Presenter
             Line($"Foes here: {alive}", alive > 0 ? Hue.Red : Hue.DarkGreen);
             if (game.InAim) Line("Shaft set: choose a line", Hue.Cyan);
             if (game.InThrust) Line("Spear leveled: choose a line", Hue.Cyan);
+            if (game.InHeave) Line("Feet set: choose a line", Hue.DarkYellow);
+            if (game.Player.HeaveTarget is not null) Line("! heave wound up: act to loose", Hue.DarkYellow);
             foreach (var monster in game.LiveMonstersHere.Where(m => m.Intent is not null))
                 Line(monster.Intent!.Kind switch
                 {

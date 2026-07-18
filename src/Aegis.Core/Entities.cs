@@ -15,6 +15,15 @@ public sealed class Player
     public int WoundedTurns { get; set; }
     public int Deaths { get; set; }
 
+    /// <summary>
+    /// A heavy blow wound up and not yet loosed (D-058): commitment runs both
+    /// ways (D-004). 'w' and a line set the cell; the wind-up costs its stamina
+    /// now and stands one turn, visible, for the field to answer; the next act
+    /// looses it on this cell, hit or miss. Journal-derived like everything on
+    /// the bearer: a save that lands mid-wind-up replays the same declaration.
+    /// </summary>
+    public Pos? HeaveTarget { get; set; }
+
     /// <summary>Cycle of the first conversation with any world's Unbinder; 0 = never met (D-034).</summary>
     public int FirstUnbinderCycle { get; set; }
 
@@ -197,7 +206,7 @@ public sealed class Player
 /// <summary>How the threshold resolved (D-039): unresolved, the keeping taken up, or laid down.</summary>
 public enum Resolution { None, Kept, Refused }
 
-public enum MonsterKind { Goblin, Wight, Severed, Graven, Hound, Carl, Boar, Warder }
+public enum MonsterKind { Goblin, Wight, Severed, Graven, Hound, Carl, Boar, Warder, Thegn }
 
 public sealed class Monster
 {
@@ -236,6 +245,7 @@ public sealed class Monster
         MonsterKind.Carl => "shield-carl",
         MonsterKind.Boar => "war-boar",
         MonsterKind.Warder => "sling-warder",
+        MonsterKind.Thegn => "sword-thegn",
         _ => "creature",
     };
 }

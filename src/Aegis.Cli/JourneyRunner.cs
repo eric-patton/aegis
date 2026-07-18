@@ -26,7 +26,7 @@ public static class JourneyRunner
 
     private sealed record Crossing(
         int FromCycle, string FromWorld, int ToCycle, string ToWorld,
-        int Turn, int DeathsInWorld,
+        int Turn, int DeathsInWorld, string Arms,
         IReadOnlyList<SiteOutcome> Sites, IReadOnlyList<Read> Before, IReadOnlyList<Read> After);
 
     public static int Run(string[] args)
@@ -139,7 +139,7 @@ public static class JourneyRunner
             {
                 crossings.Add(new Crossing(
                     cycleBefore, worldBefore, game.Cycle, game.World.Name,
-                    game.Turn, deathsThisWorld, sitesBefore, beforeReads, Bestiary(game, game.Cycle)));
+                    game.Turn, deathsThisWorld, Arms(game), sitesBefore, beforeReads, Bestiary(game, game.Cycle)));
                 keysThisWorld = 0;
                 deathsThisWorld = 0;
                 skip.Clear();
@@ -170,6 +170,17 @@ public static class JourneyRunner
     private static string ShortSite(SiteKind kind) =>
         kind == SiteKind.GoblinCamp ? "camp" : kind.ToString().ToLowerInvariant();
 
+    /// <summary>The bearer's iron and the attributes that drive it: what the coin from the dark bought (D-064).</summary>
+    private static string Arms(Game game)
+    {
+        var p = game.Player;
+        string weapon = p.Weapon?.Name ?? "bare fists";
+        string armor = p.Armor?.Name ?? "no mail";
+        string bow = p.Bow?.Name ?? "no bow";
+        var a = p.Attributes;
+        return $"{weapon}, {armor}, {bow}  (Vig {a[Attr.Vigor]}, Might {a[Attr.Might]}, Grace {a[Attr.Grace]})";
+    }
+
     private static string Where(Game game) =>
         game.Mode == MapMode.Site
             ? $"underground with {game.LiveMonstersHere.Count()} foe(s) standing"
@@ -197,6 +208,7 @@ public static class JourneyRunner
             w.WriteLine($"  sites cleared: {(cleared.Length == 0 ? "none" : cleared)}"
                         + (standing.Length == 0 ? "" : $"; left standing: {standing}"));
             w.WriteLine($"  {c.DeathsInWorld} death(s) in that world.");
+            w.WriteLine($"  arms: {c.Arms}");
 
             if (c.Before.Count == 0)
             {

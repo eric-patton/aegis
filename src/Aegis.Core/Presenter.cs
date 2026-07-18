@@ -222,7 +222,7 @@ public static class Presenter
         var p = game.Player;
         var choice = game.PendingKnack;
         const int boxW = 50;
-        int boxH = choice is null ? 14 : 15 + choice.Options.Length;
+        int boxH = choice is null ? 15 : 16 + choice.Options.Length;
         int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
         int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
 
@@ -250,12 +250,18 @@ public static class Presenter
             frame.Write(x0 + 2, y0 + 8 + i, row, level > 0 ? Hue.White : Hue.Gray);
         }
 
+        frame.Write(x0 + 2, y0 + 12,
+            game.Standing > 0
+                ? $"Legend {p.Legend,4}   {LegendStanding.TitleOf(game.Standing)}"
+                : $"Legend {p.Legend,4}",
+            game.Standing > 0 ? Hue.Magenta : Hue.Gray);
+
         if (choice is not null)
         {
-            frame.Write(x0 + 2, y0 + 12,
+            frame.Write(x0 + 2, y0 + 13,
                 $"{SkillSet.NameOf(choice.Skill)} has settled into a question:", Hue.Cyan);
             for (int i = 0; i < choice.Options.Length; i++)
-                frame.Write(x0 + 2, y0 + 13 + i,
+                frame.Write(x0 + 2, y0 + 14 + i,
                     $"{i + 1}) {choice.Options[i].Name}: {choice.Options[i].Blurb}", Hue.White);
             frame.Write(x0 + 2, y0 + boxH - 2,
                 $"1-{choice.Options.Length} choose, for good; any other key closes", Hue.DarkGray);
@@ -417,6 +423,7 @@ public static class Presenter
         Line($"Essence {p.Essence}", Hue.Cyan);
         if (p.Rations > 0) Line($"Rations {p.Rations}", Hue.Green);
         if (p.Legend > 0) Line($"Legend  {p.Legend}", Hue.Magenta);
+        if (game.Standing > 0) Line($" {LegendStanding.TitleOf(game.Standing)}", Hue.DarkGray);
         if (p.Weapon is { } wpn) Line($"Wpn {wpn.Name}{(wpn.Worn ? "!" : "")}", wpn.Worn ? Hue.Red : Hue.Gray);
         if (p.Armor is { } arm) Line($"Arm {arm.Name}{(arm.Worn ? "!" : "")}", arm.Worn ? Hue.Red : Hue.Gray);
         if (p.WoundedTurns > 0) Line($"WOUNDED ({p.WoundedTurns})", Hue.Red);

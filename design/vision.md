@@ -146,7 +146,7 @@ No LLM at runtime, ever: the game is deterministic, testable, offline, and seed-
 Finish a world's story and the Aegis offers the crossing. Three buckets:
 - **Character: full carry.** Stats, skills, gear, recipes, lore, bestiary knowledge.
 - **World: always fresh.** A new seed, new map, new factions, new history. NG+4 is not the same castle with fatter knights; it is a place no one has seen.
-- **Legend: the bounded meta-layer.** Titles, the Hall of Legends, small boons on a diminishing-returns curve. The first hour of each new world feels like a visible step up; it never trivializes one.
+- **Legend: the bounded meta-layer.** Titles, the Hall of Legends, small boons on a diminishing-returns curve. The first hour of each new world feels like a visible step up; it never trivializes one. The first rungs landed in D-048: standing derives from Legend on a square curve (never spent, never drained), titles speak at the crossing, and the boons are hospitality (the welcome, the hearth-price, the menders' honor), never combat power; the Hall of Legends as a place is still to come.
 
 Coin does not cross. In your final days, wealth converts through **patronage**: endow a guild, raise a monument, fund a shrine, commission your statue. Patronage becomes Legend credit and candidate facts for future worldgen.
 
@@ -172,12 +172,12 @@ And the loop closes on itself: **your finished characters enter the mythology.**
 - Final race list (which originals join the anchors)
 - Spell list and magic-school content design
 - Storylet external data-file format and condition/effect vocabulary (v1 C# format spec'd; see `storylets.md` sec. 6)
-- Scar, Legend-boon, further-oath (D-047 landed four), and hostility-tier content catalogs (first tier band landed in D-033: the barrow at tier 2+; tiers 3+ still need their own)
+- Scar, Legend-rung (D-048 landed five, hospitality-boon shaped), further-oath (D-047 landed four), and hostility-tier content catalogs (first tier band landed in D-033: the barrow at tier 2+; tiers 3+ still need their own)
 - Story content open items: bottle-episode playability, Unbinder guise tells, templates 4-5 (see `story/aegis-arc.md` sec. 11, `story/world-story-templates.md` sec. 9; final names settled by D-043)
 
 ## 13. Document Map
 
-- `decisions.md`: the decision audit trail with rationale (47 and counting)
+- `decisions.md`: the decision audit trail with rationale (48 and counting)
 - `storylets.md`: storylet format and fact-graph schema spec (D-030)
 - `story/aegis-arc.md`: the trans-world Aegis arc spec (Canon: The Ledger; D-026)
 - `story/world-story-templates.md`: the world-story template contract, iron rules, and three launch templates

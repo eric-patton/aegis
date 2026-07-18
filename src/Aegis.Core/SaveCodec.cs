@@ -45,10 +45,13 @@ namespace Aegis.Core;
 /// v15 when D-047 added the terms of the crossing: '>' at an open waygate now
 /// opens the oath menu where a v14 '>' crossed at once, digits there swear
 /// terms on the next world, and oath-bound worlds generate more tenants.
+/// v16 when D-048 derived standing from Legend: the welcome now sets out bread
+/// at each arrival, the storied pay a coin less for it, and a fourth unbinding
+/// waits at high standing, so a v15 journal would replay to different state.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 15;
+    public const int Version = 16;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

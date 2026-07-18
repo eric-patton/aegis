@@ -65,6 +65,9 @@ public sealed class Game
 
     /// <summary>The standing terms' summed weight: the visible Threat score (D-011).</summary>
     public int Burden => World.Burden;
+
+    /// <summary>The songs' weighing of the bearer (D-048): derived from Legend, never stored.</summary>
+    public int Standing => LegendStanding.StandingFor(Player.Legend);
     public Npc? TalkNpc { get; private set; }
 
     /// <summary>Unbindings per world (D-016: a handful, refreshed at each crossing).</summary>
@@ -92,12 +95,14 @@ public sealed class Game
 
     /// <summary>
     /// Fact-derived pricing (D-025 v0): while a blight story stands uncompleted,
-    /// the larders are thin and bread costs half again as much. The hungry road
-    /// (D-047) doubles whatever the world was asking.
+    /// the larders are thin and bread costs half again as much. The hearth-price
+    /// (D-048) takes a coin off for the storied before the hungry road (D-047)
+    /// doubles whatever the world was asking.
     /// </summary>
     public int RationPrice =>
-        (World.Facts.Exists("story", CreepingBlightTemplate.Id)
+        ((World.Facts.Exists("story", CreepingBlightTemplate.Id)
         && !World.Facts.Exists("story_complete", CreepingBlightTemplate.Id) ? 6 : 4)
+        - (Standing >= 2 ? 1 : 0))
         * (World.Oaths.Contains(OathId.HungryRoad) ? 2 : 1);
 
     /// <summary>How far one wear event moves the ledger: the spent edge (D-047) doubles it.</summary>
@@ -465,6 +470,7 @@ public sealed class Game
         // The far side of a sworn crossing (D-047): the burden carried through
         // this world is honored in Legend, never in power.
         int prevBurden = World.Burden;
+        int standingBefore = Standing;
         Player.WorldsWalked.Add(prevWorld);
 
         if (oaths.Count > 0)
@@ -504,7 +510,9 @@ public sealed class Game
         _chosenOaths.Clear();
         TalkNpc = null;
         CurrentSite = null;
-        UnbindingsLeft = UnbindingsPerWorld;
+        // The menders' honor (D-048): a world's Unbinder will loosen one more
+        // raise for a bearer the songs carry high.
+        UnbindingsLeft = UnbindingsPerWorld + (Standing >= 4 ? 1 : 0);
         _layingTarget = null;
         _layingDeclined = false;
 
@@ -570,11 +578,31 @@ public sealed class Game
         if (honored > 0)
             Log.Add(Turn, $"The terms you carried through {prevWorld} are weighed with it. Legend grows by {honored} more.", LogTone.Reward);
 
+        // The songs' weighing (D-048): standing is derived, so a rise can only
+        // happen here, where Legend is minted, and the threshold announces it.
+        if (Standing > standingBefore)
+        {
+            Log.Add(Turn, $"The weighing tips. In the songs of the worlds you are {LegendStanding.TitleOf(Standing)}.", LogTone.Reward);
+            if (!Player.StandingLineHeard)
+            {
+                Player.StandingLineHeard = true;
+                Log.Add(Turn, "\"A third ledger, then. This one no body keeps: the worlds keep it, and set it to tune. I cannot read it, bearer. I can only hear it sung.\"", LogTone.Aegis);
+            }
+        }
+
         Log.Add(Turn, $"You wake at the shrine of {World.SettlementName}, in the world called {World.Name}.");
         Log.Add(Turn, "The air is older here, and hungrier.", LogTone.Danger);
         if (World.Oaths.Count > 0)
             Log.Add(Turn, $"The terms you took up hold here: {string.Join(", ", World.Oaths.Select(o => OathCatalog.Def(o).Name))}.", LogTone.Danger);
         Log.Add(Turn, $"In {World.SettlementName} they already sing of a stranger who emptied a goblin cave, in a world called {prevWorld}.");
+        // The welcome (D-048): the songs walked ahead, and the stead answers them
+        // in bread. Hospitality scales with standing and never past the cap.
+        int welcome = Math.Min(Math.Min(Standing, 3), RationCap - Player.Rations);
+        if (welcome > 0)
+        {
+            Player.Rations += welcome;
+            Log.Add(Turn, $"By the shrine stone, bread has been set out against your coming, wrapped in waxed cloth. ({Player.Rations} carried)", LogTone.Reward);
+        }
         Log.Add(Turn, $"Rumor: goblins from a cave to the {Compass(World.ShrinePos, World.CampPos)} raid {World.SettlementName}'s stores by night.");
         if (World.BarrowSite is { } barrow)
             Log.Add(Turn, $"They speak lower of the long mound to the {Compass(World.ShrinePos, barrow.OverworldPos)}, where the dead do not lie easy.");
@@ -2054,6 +2082,8 @@ public sealed class Game
         Coin: Player.Coin,
         Essence: Player.Essence,
         Legend: Player.Legend,
+        Standing: Standing,
+        Title: LegendStanding.TitleOf(Standing),
         Rations: Player.Rations,
         RationPrice: RationPrice,
         MendPrice: Player.WoundedTurns > 0 ? MendPrice : 0,
@@ -2149,6 +2179,8 @@ public sealed record Snapshot(
     int Coin,
     int Essence,
     int Legend,
+    int Standing,
+    string Title,
     int Rations,
     int RationPrice,
     int MendPrice,

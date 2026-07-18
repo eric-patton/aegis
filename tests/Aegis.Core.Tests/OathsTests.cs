@@ -156,7 +156,7 @@ public class OathsTests
 
         // 7 coin converted plus 10 Legend per point of burden carried through.
         Assert.Equal(legendBefore + 7 + 20, game.Player.Legend);
-        Assert.Contains(game.Log.Recent(12), e => e.Text.Contains("Legend grows by 20 more"));
+        Assert.Contains(game.Log.Recent(16), e => e.Text.Contains("Legend grows by 20 more"));
         Assert.Equal(0, game.Burden); // the terms lapsed at the far gate
     }
 

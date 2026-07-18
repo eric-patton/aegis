@@ -73,6 +73,9 @@ public sealed class Player
     /// <summary>The Aegis speaks once at the first knack taken; never again.</summary>
     public bool KnackLineHeard { get; set; }
 
+    /// <summary>The Aegis speaks once at the first standing rise (D-048); never again.</summary>
+    public bool StandingLineHeard { get; set; }
+
     // Arc-ladder state (D-037, design/story/aegis-arc.md sec 6). The fact graph is
     // per-world, so rung progress lives on the character. Each flag is set by the
     // storylet or crossing scene that completes its rung; later rungs gate on

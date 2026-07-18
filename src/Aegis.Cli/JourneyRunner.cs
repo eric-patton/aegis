@@ -72,6 +72,12 @@ public static class JourneyRunner
         int keysThisWorld = 0;
         int prevDeaths = 0;
         int deathsThisWorld = 0;
+        // What the reclaim won back (D-065): a remnant taken is one the crossing did not
+        // forfeit. Counted by watching the drop vanish with no death and no crossing to
+        // explain it, which leaves only a reclaim (the 'g' that DoGrab honors).
+        int remnantsReclaimed = 0;
+        int coinReclaimed = 0;
+        int essenceReclaimed = 0;
         string stop;
 
         while (true)
@@ -117,10 +123,21 @@ public static class JourneyRunner
                 break;
             }
 
+            var remnantBefore = game.Remnant;
             game.ApplyKey(key.Value);
             keys.Append(key.Value);
             totalKeys++;
             keysThisWorld++;
+
+            // A remnant that vanished this key without a fresh death or a crossing to
+            // account for it was reclaimed, not forfeited: bank what it held (D-065).
+            if (remnantBefore is not null && game.Remnant is null
+                && game.Player.Deaths == prevDeaths && game.Cycle == cycleBefore)
+            {
+                remnantsReclaimed++;
+                coinReclaimed += remnantBefore.Coin;
+                essenceReclaimed += remnantBefore.Essence;
+            }
 
             if (game.Player.Deaths > prevDeaths)
             {
@@ -148,7 +165,8 @@ public static class JourneyRunner
             }
         }
 
-        Report(seed, cycles, crossings, stop, game, totalKeys, keys, emitKeys);
+        Report(seed, cycles, crossings, stop, game, totalKeys, keys, emitKeys,
+            remnantsReclaimed, coinReclaimed, essenceReclaimed);
         return 0;
     }
 
@@ -188,7 +206,8 @@ public static class JourneyRunner
 
     private static void Report(
         ulong seed, int cycles, List<Crossing> crossings, string stop,
-        Game game, int totalKeys, StringBuilder keys, bool emitKeys)
+        Game game, int totalKeys, StringBuilder keys, bool emitKeys,
+        int remnantsReclaimed, int coinReclaimed, int essenceReclaimed)
     {
         var w = Console.Out;
         w.WriteLine($"AEGIS JOURNEY   seed {seed}   target {cycles} crossing(s)");
@@ -233,6 +252,8 @@ public static class JourneyRunner
         w.WriteLine($"OUTCOME: reached cycle {game.Cycle} (tier {game.World.Tier}), {crossings.Count} crossing(s) made.");
         w.WriteLine($"         {stop}.");
         w.WriteLine($"         {totalKeys} keys pressed, {game.Turn} turns, {game.Player.Deaths} death(s) total.");
+        w.WriteLine($"         reclaimed {remnantsReclaimed} remnant(s) from where it fell: "
+                    + $"{coinReclaimed} coin, {essenceReclaimed} essence kept back from the dark (D-065).");
         w.WriteLine("         a seeded journey replays identically: the pilot reads only game state.");
         if (emitKeys)
         {

@@ -13,10 +13,12 @@ namespace Aegis.Cli;
 /// power the deep sites ask, then an edge, then the hunting bow. It fights the way D-004
 /// says the game can be fought: never stand on the aimed cell, strike the body that is
 /// spoken for, and answer a foe that stands off (the sling-warder on the leaguer's works,
-/// D-057) with the loosed line instead of a chase that never closes. A site it still
-/// cannot bring to ground the runner budgets and writes off, handing the pilot a skip-set
-/// of the ones to leave standing, so it engages, learns the tell, and moves on rather
-/// than spinning.
+/// D-057) with the loosed line instead of a chase that never closes. When a death leaves a
+/// remnant behind, it walks back over the ground it fell on, the foes there down, and takes
+/// its coin and Essence back rather than letting the next crossing forfeit them (D-065). A
+/// site it still cannot bring to ground the runner budgets and writes off, handing the
+/// pilot a skip-set of the ones to leave standing, so it engages, learns the tell, and
+/// moves on rather than spinning.
 ///
 /// It is a pure function of game state (and the runner's skip-set, which is itself
 /// derived deterministically), so a seeded run is perfectly reproducible: the same seed
@@ -54,6 +56,10 @@ public static class JourneyPilot
             // Still work to do here: clear it. Otherwise climb back to daylight.
             if (!site.Cleared && !skip.Contains(site.Id))
                 return FightOrApproach(g);
+            // Held, foes down: take back a remnant a death left here before climbing out
+            // (D-065). Only when the site is cleared, never one we gave up on: chasing coin
+            // through the foes that beat us only courts the death that would forfeit it.
+            if (site.Cleared && ReclaimHere(g) is { } grab) return grab;
             var ladder = site.EntryPos;
             if (p.Pos == ladder) return '<';
             // Head for the ladder; if live foes box the route, bump through them.
@@ -99,6 +105,12 @@ public static class JourneyPilot
             return NavKey(g, g.World.Overworld, p.Pos, target.OverworldPos, OverworldBlocked(g));
         }
 
+        // Every site is cleared or written off. Before the arch forfeits it, fetch a
+        // remnant left somewhere safe to walk back into: out on the overworld, or down a
+        // site already cleared of its foes (D-065). One left in a site we gave up on is
+        // left to the dark; the coin is not worth re-entering ground that killed us.
+        if (ReclaimDetour(g, skip) is { } reclaim) return reclaim;
+
         // Every site is cleared or written off: the deed is done, the arch will answer.
         var gate = g.World.GatePos;
         if (p.Pos == gate) return '>';       // set a hand on the arch: the terms open.
@@ -130,6 +142,13 @@ public static class JourneyPilot
         // being neared or struck, so the bot walks up to it and bumps it awake.
         var foes = g.LiveMonstersHere.ToList();
         if (foes.Count == 0) return null;
+
+        // Standing on our own remnant mid-fight: take it now (D-065). A death here would
+        // forfeit it, so the sure coin in hand beats one more swing, unless a stone is due
+        // on this very cell next turn, which the dodge below must answer first.
+        if (g.Remnant is { } rem && g.CurrentMap.Id == rem.MapId && p.Pos == rem.Pos
+            && !foes.Any(m => m.Intent is { } it && it.TargetCell == p.Pos && it.TurnsUntilResolve <= 1))
+            return 'g';
 
         // A sling-warder keeps its distance and cannot be run down on foot (D-057). If we
         // carry a bow, answer it in kind rather than chasing a retreat that never ends;
@@ -407,6 +426,49 @@ public static class JourneyPilot
             if (g.Offers[i].Good == TradeGood.Gear && g.Offers[i].Arg == id)
                 return (char)('1' + g.Topics.Count + i);
         return null;
+    }
+
+    // ---- the reclaim (D-065): what a death drops, a life gets one chance to take back ----
+
+    /// <summary>
+    /// Take back a remnant lying on the map underfoot: walk onto it and grab it. A death
+    /// drops the fallen's coin and Essence where it fell, and the next death or the crossing
+    /// forfeits it for good (D-008), so a site held with its foes down is the safe ground to
+    /// walk back over. Null when no remnant of worth lies on this map.
+    /// </summary>
+    private static char? ReclaimHere(Game g)
+    {
+        if (g.Remnant is not { } rem || rem.Coin + rem.Essence <= 0) return null;
+        if (g.CurrentMap.Id != rem.MapId) return null;
+        var p = g.Player;
+        if (p.Pos == rem.Pos) return 'g';
+        return NavKey(g, g.CurrentMap, p.Pos, rem.Pos, LiveFoeCells(g))
+            ?? NavKey(g, g.CurrentMap, p.Pos, rem.Pos, Empty);
+    }
+
+    /// <summary>
+    /// The move that fetches a remnant from off the current map, when it is safe to do so:
+    /// out on the overworld, walked straight to; or down a site already cleared of foes,
+    /// entered at its mouth so <see cref="ReclaimHere"/> takes it from the entry. A remnant
+    /// in a site we gave up on, or one still tenanted, is left alone: the runner routes the
+    /// bot into a live site to clear it anyway, and re-entering a site that beat us for coin
+    /// only risks the death that forfeits the coin. Null when nothing is safely retrievable.
+    /// </summary>
+    private static char? ReclaimDetour(Game g, IReadOnlySet<string> skip)
+    {
+        if (g.Remnant is not { } rem || rem.Coin + rem.Essence <= 0) return null;
+        var p = g.Player;
+
+        if (g.World.Overworld.Id == rem.MapId)
+        {
+            if (p.Pos == rem.Pos) return 'g';
+            return NavKey(g, g.World.Overworld, p.Pos, rem.Pos, OverworldBlocked(g));
+        }
+
+        var site = g.World.Sites.FirstOrDefault(s => s.Map.Id == rem.MapId);
+        if (site is null || skip.Contains(site.Id) || !site.Cleared) return null;
+        if (p.Pos == site.OverworldPos) return '>';
+        return NavKey(g, g.World.Overworld, p.Pos, site.OverworldPos, OverworldBlocked(g));
     }
 
     // ---- navigation: breadth-first, one step at a time ----

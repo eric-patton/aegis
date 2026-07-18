@@ -61,10 +61,14 @@ namespace Aegis.Core;
 /// digit that merely closed a menu could now buy know-how), a taught step
 /// gathers gleanings a v19 walk stepped past, resting tends iron, and eating
 /// can dress the wound.
+/// v21 when D-053 raised the ringfort in tier-5+ worlds: deep maps changed
+/// under old journals (a new gate stands where a v20 walk crossed plain
+/// ground, and the gleanings settle differently around it), and the fort
+/// holds a watch that did not exist when they were played.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 20;
+    public const int Version = 21;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

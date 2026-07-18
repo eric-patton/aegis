@@ -353,9 +353,28 @@ public static class Presenter
         }
 
         // Telegraphed intent cells: the readable danger the combat design runs on.
+        // A boar's charge (D-053) is a lane, not a cell: the whole run is marked,
+        // to the length it can carry, because sideways is the only honest dodge.
         foreach (var monster in game.LiveMonstersHere)
             if (monster.Intent is { } intent)
-                PutWorld(intent.TargetCell, '!', Hue.White, Hue.DarkRed);
+            {
+                if (intent.Kind == IntentKind.BoarCharge)
+                {
+                    int dx = Math.Sign(intent.TargetCell.X - monster.Pos.X);
+                    int dy = Math.Sign(intent.TargetCell.Y - monster.Pos.Y);
+                    var lane = monster.Pos;
+                    for (int i = 0; i < Game.BowRange; i++)
+                    {
+                        lane = lane.Plus(dx, dy);
+                        if (!map.Walkable(lane)) break;
+                        PutWorld(lane, '!', Hue.White, Hue.DarkRed);
+                    }
+                }
+                else
+                {
+                    PutWorld(intent.TargetCell, '!', Hue.White, Hue.DarkRed);
+                }
+            }
 
         if (game.Remnant is { } remnant && remnant.MapId == map.Id)
             PutWorld(remnant.Pos, '%', Hue.Magenta);
@@ -380,6 +399,8 @@ public static class Presenter
                 MonsterKind.Severed => 's',
                 MonsterKind.Graven => 'm',
                 MonsterKind.Hound => 'd',
+                MonsterKind.Carl => 'c',
+                MonsterKind.Boar => 'b',
                 _ => 'g',
             };
             var calm = monster.Kind switch
@@ -389,6 +410,8 @@ public static class Presenter
                 // A sleeping graven man is drawn like the stone it is pretending to be.
                 MonsterKind.Graven => monster.Dormant ? Hue.DarkGray : Hue.DarkYellow,
                 MonsterKind.Hound => Hue.DarkCyan,
+                MonsterKind.Carl => Hue.Yellow,
+                MonsterKind.Boar => Hue.DarkRed,
                 _ => Hue.Red,
             };
             PutWorld(monster.Pos, ch, monster.Intent is null ? calm : Hue.White,
@@ -417,6 +440,7 @@ public static class Presenter
         Terrain.Hearth => ('*', Hue.Yellow, Hue.Black),
         Terrain.QuarryEntrance => ('x', Hue.DarkYellow, Hue.Black),
         Terrain.HallEntrance => ('H', Hue.DarkCyan, Hue.Black),
+        Terrain.RingfortEntrance => ('0', Hue.Yellow, Hue.Black),
         _ => ('?', Hue.Magenta, Hue.Black),
     };
 

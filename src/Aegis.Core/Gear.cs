@@ -54,12 +54,13 @@ public sealed class GearItem
 }
 
 /// <summary>
-/// The authored gear catalog (D-041). Seven items, each with one home: the smith
+/// The authored gear catalog (D-041). Eight items, each with one home: the smith
 /// stocks the plain four (the hunting bow, D-050, is bowyer's work the forge
 /// takes in trade); the grave-iron blade waits in the barrow's chest, the
-/// carver's maul in the quarry's toolcache, and the wright's mail in the
-/// fallen hall's coffer (site loot beyond coin, the D-033 deferral). Instances
-/// are minted fresh so wear never leaks between games.
+/// carver's maul in the quarry's toolcache, the wright's mail in the fallen
+/// hall's coffer, and the yew warbow in the ringfort's arms-chest (site loot
+/// beyond coin, the D-033 deferral). Instances are minted fresh so wear never
+/// leaks between games.
 /// </summary>
 public static class GearCatalog
 {
@@ -109,6 +110,16 @@ public static class GearCatalog
         {
             Id = id, Name = "wright's mail", Slot = GearSlot.Armor,
             Bonus = 3, ReqAttr = Attr.Vigor, Req = 9, Value = 34, MaxWear = 55,
+        },
+        // The watch's own answer (D-053): the ringfort punishes the bow, and
+        // its arms-chest holds the better one: the deep ranged signature D-050
+        // deferred. The boards stop this one too; the answer to the answer is
+        // a heavier draw, never an exemption.
+        "warbow" => new GearItem
+        {
+            Id = id, Name = "yew warbow", Slot = GearSlot.Ranged,
+            Bonus = 4, ReqAttr = Attr.Grace, Req = 9, Value = 32, MaxWear = 50,
+            Family = SkillId.Ranged,
         },
         _ => throw new ArgumentException($"Unknown gear id: {id}"),
     };

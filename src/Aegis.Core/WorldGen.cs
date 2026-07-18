@@ -1,6 +1,6 @@
 namespace Aegis.Core;
 
-public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall }
+public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort }
 
 /// <summary>A monster placed at generation time: kind, cell, and generated stats (D-011).</summary>
 public readonly record struct MonsterSpawn(MonsterKind Kind, Pos Pos, int Hp);
@@ -76,6 +76,9 @@ public sealed class World
 
     /// <summary>The fallen hall (D-044): tier 4+, where the iron hounds run. Optional depth, like the quarry.</summary>
     public Site? HallSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Hall);
+
+    /// <summary>The tier-5+ band's site (D-053): the old watch, and the bow's answer.</summary>
+    public Site? RingfortSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Ringfort);
 
     /// <summary>The stead's smith (D-041): every world, every tier. Sells the plain three, mends what use has dulled.</summary>
     public Npc Smith => Npcs.First(n => n.Kind == NpcKind.Smith);
@@ -403,10 +406,11 @@ public static class WorldGen
         // The fallen hall (D-044): tier 4+ worlds hold the third band's site, where
         // the iron hounds run. Own stream, placed after every existing draw
         // (including the smith's), so pinned worlds keep their layouts exactly.
+        Pos hallPos = default;
         if (tier >= 4)
         {
             var hallRng = new Rng(SeedTree.Derive(worldSeed, "hall"));
-            Pos hallPos = FindDistantSpot(overworld, ref hallRng, settlement, minDistance: 20);
+            hallPos = FindDistantSpot(overworld, ref hallRng, settlement, minDistance: 20);
             while (overworld[hallPos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills)
                    || hallPos.Manhattan(camp) < 5 || hallPos.Manhattan(gate) < 5
                    || hallPos.Manhattan(barrow) < 5 || hallPos.Manhattan(hollowPos) < 5
@@ -432,6 +436,43 @@ public static class WorldGen
             });
             facts.Add("site", "hall", $"{hallPos.X},{hallPos.Y}",
                 "A roofless hall of grey stone, older than any stead-tale. At dusk, things lope from its doorway that were never whelped.");
+        }
+
+        // The ringfort (D-053): tier 5+ worlds hold the fourth band's site, where
+        // the old watch stands. Own streams, placed after every existing draw
+        // (and before the gleanings, whose forest check must see its gate tile),
+        // so pinned tier-1-4 worlds keep their layouts exactly.
+        if (tier >= 5)
+        {
+            var fortRng = new Rng(SeedTree.Derive(worldSeed, "ringfort"));
+            Pos fortPos = FindDistantSpot(overworld, ref fortRng, settlement, minDistance: 20);
+            while (overworld[fortPos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills)
+                   || fortPos.Manhattan(camp) < 5 || fortPos.Manhattan(gate) < 5
+                   || fortPos.Manhattan(barrow) < 5 || fortPos.Manhattan(hollowPos) < 5
+                   || fortPos.Manhattan(quarryPos) < 5 || fortPos.Manhattan(hallPos) < 5
+                   || fortPos.Manhattan(stairPos) < 5
+                   || npcs.Any(n => n.Pos == fortPos))
+                fortPos = FindDistantSpot(overworld, ref fortRng, settlement, minDistance: 20);
+            overworld[fortPos] = Terrain.RingfortEntrance;
+            CarvePathIfDisconnected(overworld, shrine, fortPos);
+
+            int carlCount = Math.Min(4 + (tier - 5), 6) + crowd;
+            int carlHp = 14 + 2 * (tier - 5);
+            int boarHp = 20 + 2 * (tier - 5);
+            var (fortMap, fortEntry, carlSpawns, boarSpawns, fortChest) = GenerateRingfort(worldSeed, carlCount);
+            sites.Add(new Site
+            {
+                Id = "ringfort",
+                Kind = SiteKind.Ringfort,
+                Map = fortMap,
+                OverworldPos = fortPos,
+                EntryPos = fortEntry,
+                Spawns = [.. carlSpawns.Select(p => new MonsterSpawn(MonsterKind.Carl, p, carlHp)),
+                          .. boarSpawns.Select(p => new MonsterSpawn(MonsterKind.Boar, p, boarHp))],
+                ChestPos = fortChest,
+            });
+            facts.Add("site", "ringfort", $"{fortPos.X},{fortPos.Y}",
+                "A ring-walled fort older than the war anyone can name. The watch on its walls was never stood down, and the beasts they kept have not gone tame.");
         }
 
         // The gleanings (D-052): what the wood sets out for taught eyes. Placed in
@@ -965,6 +1006,114 @@ public static class WorldGen
 
         map[entry] = Terrain.ExitLadder;
         return (map, entry, hounds, chest);
+    }
+
+    public const int RingfortW = 35;
+    public const int RingfortH = 19;
+
+    /// <summary>
+    /// The ringfort (D-053): two ring-walls and the lanes between them. The
+    /// outer wall is the map's own border; the inner rampart stands whole but
+    /// for one gate, never on the entry's side, so reaching the ward means
+    /// walking the long straight lanes of the courtyard: the same clean lines
+    /// a bowman wants are the lanes the war-boars run. The carls keep the ward;
+    /// its rubble follows the quarry's rule (all eight neighbors open floor),
+    /// so cover can never disconnect the ground it breaks.
+    /// </summary>
+    private static (GameMap Map, Pos Entry, List<Pos> Carls, List<Pos> Boars, Pos Chest)
+        GenerateRingfort(ulong worldSeed, int carlCount)
+    {
+        var rng = new Rng(SeedTree.Derive(worldSeed, "site-ringfort"));
+        var map = new GameMap("ringfort", RingfortW, RingfortH, Terrain.Floor);
+        int mid = RingfortH / 2;
+
+        for (int x = 0; x < RingfortW; x++)
+        {
+            map[new Pos(x, 0)] = Terrain.Wall;
+            map[new Pos(x, RingfortH - 1)] = Terrain.Wall;
+        }
+        for (int y = 0; y < RingfortH; y++)
+        {
+            map[new Pos(0, y)] = Terrain.Wall;
+            map[new Pos(RingfortW - 1, y)] = Terrain.Wall;
+        }
+
+        var entry = new Pos(2, mid);
+
+        // The inner rampart, whole but for its one gate.
+        for (int x = 8; x <= 26; x++)
+        {
+            map[new Pos(x, 4)] = Terrain.Wall;
+            map[new Pos(x, 14)] = Terrain.Wall;
+        }
+        for (int y = 4; y <= 14; y++)
+        {
+            map[new Pos(8, y)] = Terrain.Wall;
+            map[new Pos(26, y)] = Terrain.Wall;
+        }
+        Pos innerGate = rng.Range(0, 3) switch
+        {
+            0 => new Pos(26, mid),
+            1 => new Pos(17, 4),
+            _ => new Pos(17, 14),
+        };
+        map[innerGate] = Terrain.Floor;
+
+        // Rubble in the ward: scattered cover, never touching cover.
+        int rubble = 0;
+        for (int attempt = 0; attempt < 200 && rubble < 4; attempt++)
+        {
+            var p = new Pos(rng.Range(10, 25), rng.Range(6, 13));
+            bool clear = true;
+            for (int dy = -1; dy <= 1 && clear; dy++)
+                for (int dx = -1; dx <= 1 && clear; dx++)
+                    if (map[p.Plus(dx, dy)] != Terrain.Floor) clear = false;
+            if (!clear) continue;
+            map[p] = Terrain.Wall;
+            rubble++;
+        }
+
+        var ward = new List<Pos>();
+        for (int y = 5; y <= 13; y++)
+            for (int x = 9; x <= 25; x++)
+            {
+                var p = new Pos(x, y);
+                if (map[p] == Terrain.Floor) ward.Add(p);
+            }
+
+        Pos chest = rng.Pick(ward);
+        while (chest.Chebyshev(innerGate) < 6) chest = rng.Pick(ward);
+
+        var carls = new List<Pos>();
+        int guard = 4000;
+        while (carls.Count < carlCount)
+        {
+            var p = rng.Pick(ward);
+            bool spaced = guard-- <= 0 || carls.All(q => q.Manhattan(p) >= 3);
+            if (p != chest && !carls.Contains(p) && spaced) carls.Add(p);
+        }
+
+        // The boars have the run of the courtyard lanes, far from the gate.
+        var courtyard = new List<Pos>();
+        for (int y = 1; y < RingfortH - 1; y++)
+            for (int x = 1; x < RingfortW - 1; x++)
+            {
+                var p = new Pos(x, y);
+                if (map[p] == Terrain.Floor && (x < 8 || x > 26 || y < 4 || y > 14)
+                    && p.Manhattan(entry) > 10)
+                    courtyard.Add(p);
+            }
+        var boars = new List<Pos>();
+        guard = 4000;
+        while (boars.Count < 2)
+        {
+            var p = rng.Pick(courtyard);
+            bool spaced = guard-- <= 0 || boars.All(q => q.Manhattan(p) >= 6);
+            if (!boars.Contains(p) && spaced) boars.Add(p);
+        }
+
+        map[entry] = Terrain.ExitLadder;
+        return (map, entry, carls, boars, chest);
     }
 }
 

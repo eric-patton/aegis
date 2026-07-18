@@ -167,7 +167,7 @@ public sealed class Player
 /// <summary>How the threshold resolved (D-039): unresolved, the keeping taken up, or laid down.</summary>
 public enum Resolution { None, Kept, Refused }
 
-public enum MonsterKind { Goblin, Wight, Severed, Graven, Hound }
+public enum MonsterKind { Goblin, Wight, Severed, Graven, Hound, Carl, Boar }
 
 public sealed class Monster
 {
@@ -186,6 +186,13 @@ public sealed class Monster
     /// </summary>
     public bool Dormant { get; set; }
 
+    /// <summary>
+    /// Standing open (D-053): a carl whose blow is spent holds its board wide,
+    /// and a boar that missed its charge stands blown. While it runs, the
+    /// monster neither steps nor strikes, and shafts find it.
+    /// </summary>
+    public int ExposedTurns { get; set; }
+
     public bool Alive => Hp > 0;
     public string Name => Kind switch
     {
@@ -194,6 +201,8 @@ public sealed class Monster
         MonsterKind.Severed => "severed one",
         MonsterKind.Graven => "graven man",
         MonsterKind.Hound => "iron hound",
+        MonsterKind.Carl => "shield-carl",
+        MonsterKind.Boar => "war-boar",
         _ => "creature",
     };
 }
@@ -209,7 +218,7 @@ public sealed class Intent
     public int TurnsUntilResolve { get; set; } = 1;
 }
 
-public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut, HurledStone, GravenFist, ThroatLunge }
+public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut, HurledStone, GravenFist, ThroatLunge, SeaxStab, BoarCharge }
 
 /// <summary>
 /// Villagers live beside their houses; the Unbinder (D-034) is the wandering

@@ -26,6 +26,7 @@ public enum Terrain : byte
     Hearth,
     QuarryEntrance,
     HallEntrance,
+    RingfortEntrance,
 }
 
 public static class TerrainInfo

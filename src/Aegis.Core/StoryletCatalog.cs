@@ -237,6 +237,36 @@ public static class StoryletCatalog
             ],
         },
 
+        // Inside the ringfort's ward (D-053, tier 5+ worlds): world-texture.
+        // Duty outliving its master is the deep bands' one recurring story,
+        // told here in scratches on stone.
+        new Storylet
+        {
+            Id = "the-tally-wall",
+            Trigger = StoryletTrigger.EnterTile,
+            Tile = Terrain.Floor,
+            Priority = 5,
+            When = g => g.CurrentSite?.Kind == SiteKind.Ringfort && g.Player.Pos.X >= 14,
+            Lines =
+            [
+                ("Inside the rampart the stone is scratched waist-high: tally-strokes in fives, weathered shallow, running on past any counting worth the name.", LogTone.Info),
+                ("Watches kept, and no one ever came to collect the count. Toward the end the strokes grow smaller, as if the hand were saving stone.", LogTone.Info),
+            ],
+        },
+
+        // The stead's answer to the watch standing down: the far grazing opens.
+        new Storylet
+        {
+            Id = "the-walls-gone-quiet",
+            Trigger = StoryletTrigger.NearHouse,
+            Requires = [new FactPattern("deed", "watch_relieved")],
+            Lines =
+            [
+                ("A drover is telling it at the well with his hat in both hands: he walked the old lanes at first light, the whole ring of them, and nothing on the walls turned to mark him.", LogTone.Info),
+                ("The steadholder hears him out, then studies the hills a while. \"Good grass between those rings.\" By dusk half the stead has said it after.", LogTone.Info),
+            ],
+        },
+
         // Meeting the wandering mender in a LATER world than the first meeting: the
         // first thread a player can pull that runs between worlds. Completes its own
         // small answer (these wanderers know you) and unlocks asking about it.

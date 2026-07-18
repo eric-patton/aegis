@@ -392,6 +392,10 @@ public sealed class Game
                 Log.Add(Turn, World.HallSite!.Cleared
                     ? "The fallen hall. Grey stone open to the sky, and nothing comes out to pace you."
                     : "A roofless hall of grey stone, its gate long fallen. In the shadow of the columns, low shapes stand watching the doorway, and none of them breathes. Press > to go in.", LogTone.Danger);
+            else if (t == Terrain.RingfortEntrance)
+                Log.Add(Turn, World.RingfortSite!.Cleared
+                    ? "The ringfort stands empty. Wind in the gate-mouth, and the lanes between the walls going back to grass."
+                    : "A ring-walled fort, grey and whole, its gate open on a grass lane. On the walls stand figures with boards at a spacing no wind ever kept, and something heavy moves between the rings. Press > to go in.", LogTone.Danger);
             else if (t == Terrain.ThresholdEntrance)
                 Log.Add(Turn, !Player.CommissionHeard
                     ? "A stair descends into the hill, cut clean and swept clean, though nothing lives near to sweep it. The dark below is not night-dark."
@@ -410,6 +414,7 @@ public sealed class Game
                     SiteKind.Hollow => "A bundle of kept things lies here, wrapped against rain with great care. Press g to take it.",
                     SiteKind.Quarry => "The carvers' toolcache sits under a shelf of slate, sealed tight against an age of dust. Press g to open it.",
                     SiteKind.Hall => "A warded coffer stands against the chamber wall, its clasp unrusted after an age. Press g to open it.",
+                    SiteKind.Ringfort => "An arms-chest sits at the heart of the ward, its lid sound under an age of dust. Press g to open it.",
                     _ => "A battered strongbox sits here. Press g to open it.",
                 }, LogTone.Reward);
             else if (t == Terrain.ExitLadder)
@@ -654,6 +659,8 @@ public sealed class Game
             Log.Add(Turn, $"Of the old quarry to the {Compass(World.ShrinePos, quarry.OverworldPos)} they say the carvers left mid-stroke, and that the figures in the pit are never quite where the last teller said they stood.");
         if (World.HallSite is { } hall)
             Log.Add(Turn, $"Of the fallen hall to the {Compass(World.ShrinePos, hall.OverworldPos)} the counsel is old and short: bar the byre at dusk, count the flock at dawn, and never go counting what runs between.");
+        if (World.RingfortSite is { } fort)
+            Log.Add(Turn, $"Of the ringfort to the {Compass(World.ShrinePos, fort.OverworldPos)} the counsel is oldest of all: the watch on its walls was never stood down, and what they pastured between the rings has not gone tame.");
         if (World.SeveredNpc is { } calm)
             Log.Add(Turn, $"A hermit called {calm.Name} keeps a fire to the {Compass(World.ShrinePos, calm.Pos)}. The stead trades them nothing, owes them nothing, and minds them not at all: they have simply always been there.");
         _storylets.TryFire(this, StoryletTrigger.Arrival);
@@ -693,6 +700,7 @@ public sealed class Game
                 SiteKind.Hollow => _combatRng.Range(4, 10),
                 SiteKind.Quarry => _combatRng.Range(12, 24),
                 SiteKind.Hall => _combatRng.Range(13, 25),
+                SiteKind.Ringfort => _combatRng.Range(15, 28),
                 _ => _combatRng.Range(10, 21),
             };
             Player.Coin += coin;
@@ -703,17 +711,19 @@ public sealed class Game
                 SiteKind.Hollow => $"What they kept: a child's wooden horse, a ring sized for a thinner hand, and {coin} coin of a mint no one living has seen.",
                 SiteKind.Quarry => $"Chisels still sharp under their oilcloth, and the crew's unpaid wages beside them: {coin} coin no one came back for.",
                 SiteKind.Hall => $"Under an oiled cloth folded by patient hands: {coin} coin of a mint older than the quarry's wages.",
+                SiteKind.Ringfort => $"The watch's pay-chest, tallied and locked against a paymaster who never rode in: {coin} coin, every wage accounted.",
                 _ => $"The strongbox yields {coin} coin.",
             }, LogTone.Reward);
 
             // Site loot beyond coin (D-041, the D-033 deferral): the deep chests
             // each hold one signature piece. A bearer who already owns its like
-            // leaves the twin where it lies: six items exist, not six per world.
+            // leaves the twin where it lies: the catalog exists once, never once per world.
             string? gearId = CurrentSite.Kind switch
             {
                 SiteKind.Barrow => "grave_iron",
                 SiteKind.Quarry => "carvers_maul",
                 SiteKind.Hall => "wrights_mail",
+                SiteKind.Ringfort => "warbow",
                 _ => null,
             };
             if (gearId is not null)
@@ -725,6 +735,7 @@ public sealed class Game
                     {
                         SiteKind.Barrow => $"Beneath the gold, wrapped in oiled wool, a blade of grave-iron: unrusted, and colder than the room. The {item.Name} is yours.",
                         SiteKind.Hall => $"And beneath the coin, folded shirt-wise as if put away for morning: rings of grey iron finer than any smith of this age draws. The {item.Name} is yours.",
+                        SiteKind.Ringfort => $"And racked above the coin, strung and waxed as if the watch expected relief by the next moon: a bow of dark yew a head taller than the smith's work. The {item.Name} is yours.",
                         _ => $"And under the chisels, the master carver's own: a maul with a head like a closing verdict. The {item.Name} is yours.",
                     }, LogTone.Reward);
                     AcquireGear(item);
@@ -735,6 +746,7 @@ public sealed class Game
                     {
                         SiteKind.Barrow => "Beneath the gold lies a blade the twin of your own. You leave it with its dead.",
                         SiteKind.Hall => "Folded beneath the coin lies mail the twin of your own. You leave it put away.",
+                        SiteKind.Ringfort => "Racked above the coin hangs a warbow the twin of your own. You leave it strung against a relief that is never coming.",
                         _ => "The master carver's maul lies here too, twin to the one you carry. You leave it to the pit.",
                     }, LogTone.Info);
                 }
@@ -1696,6 +1708,8 @@ public sealed class Game
             MonsterKind.Severed => 0,
             MonsterKind.Graven => _combatRng.Range(1, 5),
             MonsterKind.Hound => _combatRng.Range(1, 4),
+            MonsterKind.Carl => _combatRng.Range(2, 6),
+            MonsterKind.Boar => 0,
             _ => _combatRng.Range(2, 7),
         };
         int essence = target.Kind switch
@@ -1704,6 +1718,8 @@ public sealed class Game
             MonsterKind.Severed => 15,
             MonsterKind.Graven => 10,
             MonsterKind.Hound => 6,
+            MonsterKind.Carl => 8,
+            MonsterKind.Boar => 6,
             _ => 5,
         };
         // The lean dark (D-051): the dark yields half its essence, rounded
@@ -1711,12 +1727,21 @@ public sealed class Game
         if (World.Oaths.Contains(OathId.LeanDark)) essence /= 2;
         Player.Coin += coin;
         Player.Essence += essence;
+        // A beast carries no purse, but it carries meat (D-053): the knife
+        // takes a ration if a walking body can hold one. The first foe that
+        // pays in bread's own coin.
+        bool meat = target.Kind == MonsterKind.Boar && Player.Rations < RationCap;
+        if (meat) Player.Rations++;
         Log.Add(Turn, target.Kind switch
         {
             MonsterKind.Wight => $"The wight comes apart into grave-dust and quiet. You take {coin} coin and {essence} essence.",
             MonsterKind.Severed => $"The severed one comes apart slowly, almost gratefully. What it held pours into the Aegis: {essence} essence, and no coin at all.",
             MonsterKind.Graven => $"The graven man breaks along its chisel-lines and stands again as what it always was: quarry-stone. You take {coin} coin and {essence} essence.",
             MonsterKind.Hound => $"The iron hound drops mid-stride and lies still: a made thing, and whatever ran it has run out. You take {coin} coin and {essence} essence.",
+            MonsterKind.Carl => $"The shield-carl folds down behind its board, a watch relieved at last. You take {coin} coin and {essence} essence.",
+            MonsterKind.Boar => meat
+                ? $"The war-boar goes down heavy enough to feel through your boots. No purse on a beast: you take {essence} essence, and the knife takes meat for the road. ({Player.Rations} carried)"
+                : $"The war-boar goes down heavy enough to feel through your boots. No purse on a beast: you take {essence} essence, and leave more meat than a walking body can carry.",
             _ => $"The {target.Name} falls. You take {coin} coin and {essence} essence.",
         }, LogTone.Reward);
         CheckSiteCleared(CurrentSite!);
@@ -1813,6 +1838,16 @@ public sealed class Game
             {
                 _layingDeclined = true;
                 Log.Add(Turn, "\"From this distance, then. The old way has a reach, bearer. So be it.\"", LogTone.Aegis);
+            }
+
+            // The board (D-053): a walking carl keeps its linden between you
+            // and it. The wind and the string are spent; nothing is bought or
+            // taught. The board leaves its line only while the seax is about
+            // its blow, and in the blown turns after.
+            if (target.Kind == MonsterKind.Carl && target.Intent is null && target.ExposedTurns == 0)
+            {
+                Log.Add(Turn, "The shaft thuds into the linden board and stands there, quivering.", LogTone.Combat);
+                return;
             }
 
             int damage = _combatRng.Range(1, 4) + bow.EffectiveBonus(Player.Attributes)
@@ -1946,6 +1981,13 @@ public sealed class Game
             Log.Add(Turn, "The hall is quiet. Wind over the wall-tops, and nothing pacing you behind the columns.", LogTone.Reward);
             Log.Add(Turn, "\"They were not wicked, bearer. They were hungry, and everyone whose work it was to feed them is gone. It is counted.\"", LogTone.Aegis);
         }
+        else if (site.Kind == SiteKind.Ringfort)
+        {
+            World.Facts.Add("deed", "watch_relieved", World.SettlementName,
+                "The old watch of the ringfort stands relieved. The lanes between the walls are only lanes now.");
+            Log.Add(Turn, "The fort is still. Boards lie where they were held, and nothing walks the wall-tops but wind.", LogTone.Reward);
+            Log.Add(Turn, "\"A wall watched for a war that ended before the stead's first stone. No relief ever rode in, bearer, so you are it. It is counted.\"", LogTone.Aegis);
+        }
         else
         {
             World.Facts.Add("deed", "severed_laid", World.SettlementName,
@@ -1989,7 +2031,12 @@ public sealed class Game
             if (intent.TurnsUntilResolve <= 0)
             {
                 monster.Intent = null;
-                if (Player.Pos == intent.TargetCell)
+                if (intent.Kind == IntentKind.BoarCharge)
+                {
+                    // The charge (D-053) resolves along its lane, not on one cell.
+                    ResolveCharge(monster, intent);
+                }
+                else if (Player.Pos == intent.TargetCell)
                 {
                     int damage = Absorb(intent.Kind switch
                     {
@@ -1998,6 +2045,7 @@ public sealed class Game
                         IntentKind.HurledStone => _combatRng.Range(4, 8),
                         IntentKind.GravenFist => _combatRng.Range(6, 10),
                         IntentKind.ThroatLunge => _combatRng.Range(6, 10),
+                        IntentKind.SeaxStab => _combatRng.Range(6, 10),
                         _ => _combatRng.Range(4, 7),
                     }, telegraphed: true);
                     Player.Hp -= damage;
@@ -2008,6 +2056,7 @@ public sealed class Game
                         IntentKind.HurledStone => $"The hurled stone takes you square for {damage}!",
                         IntentKind.GravenFist => $"The graven fist comes down like a falling lintel for {damage}!",
                         IntentKind.ThroatLunge => $"The iron hound hits you full-length, jaws first, for {damage}!",
+                        IntentKind.SeaxStab => $"The seax comes over the board's rim and finds you for {damage}!",
                         _ => $"The {monster.Name}'s crushing blow lands for {damage}!",
                     }, LogTone.Danger);
                 }
@@ -2020,8 +2069,17 @@ public sealed class Game
                         IntentKind.HurledStone => "The stone bursts on the floor where you stood, loud as the quarry's last working day.",
                         IntentKind.GravenFist => "The graven fist cracks the floor where you stood.",
                         IntentKind.ThroatLunge => "The hound's lunge carries it through the space you left; it lands badly and comes up snarling.",
+                        IntentKind.SeaxStab => "The seax jabs over the rim into air gone empty.",
                         _ => $"The {monster.Name}'s crushing blow splinters empty stone.",
                     }, LogTone.Combat);
+                }
+
+                // The blow spent, the board leaves its line (D-053): hit or
+                // miss, the carl stands open, and shafts find it.
+                if (intent.Kind == IntentKind.SeaxStab)
+                {
+                    monster.ExposedTurns = 2;
+                    Log.Add(Turn, "The blow spent, the shield-carl's board hangs wide of its line.", LogTone.Combat);
                 }
             }
             return;
@@ -2031,6 +2089,8 @@ public sealed class Game
         if (monster.Kind == MonsterKind.Severed) { ActSevered(monster); return; }
         if (monster.Kind == MonsterKind.Graven) { ActGraven(monster); return; }
         if (monster.Kind == MonsterKind.Hound) { ActHound(monster); return; }
+        if (monster.Kind == MonsterKind.Carl) { ActCarl(monster); return; }
+        if (monster.Kind == MonsterKind.Boar) { ActBoar(monster); return; }
 
         int dist = monster.Pos.Chebyshev(Player.Pos);
 
@@ -2220,6 +2280,130 @@ public sealed class Game
     }
 
     /// <summary>
+    /// The fort's watch (D-053): the game's answer to the loosed line. The
+    /// linden board is raised against the far thing: a shaft loosed at a
+    /// walking carl stops in the wood and teaches nothing. The board leaves
+    /// its line only while the seax is about its blow, and in the blown turns
+    /// after: those are the archer's windows. Up close the axe comes under the
+    /// board, and the carl fights like any patient dead thing.
+    /// </summary>
+    private void ActCarl(Monster monster)
+    {
+        if (monster.ExposedTurns > 0) { monster.ExposedTurns--; return; }
+        int dist = monster.Pos.Chebyshev(Player.Pos);
+
+        if (dist == 1)
+        {
+            if (_combatRng.Chance(0.4))
+            {
+                monster.Intent = new Intent { Kind = IntentKind.SeaxStab, TargetCell = Player.Pos };
+                Log.Add(Turn, "The shield-carl locks its board and draws the seax back behind it!", LogTone.Danger);
+            }
+            else if (_combatRng.Chance(Player.DodgeChance))
+            {
+                Log.Add(Turn, "The board's iron rim sweeps past; you are not where it looked.", LogTone.Combat);
+            }
+            else
+            {
+                int damage = Absorb(_combatRng.Range(2, 4));
+                Player.Hp -= damage;
+                Log.Add(Turn, $"The board's iron rim clips you for {damage}.", LogTone.Combat);
+            }
+            return;
+        }
+
+        if (dist <= 10 && Turn % 2 == 0) StepBfsToward(monster);
+    }
+
+    /// <summary>
+    /// The fort's beasts (D-053): the charger. A war-boar with a clear straight
+    /// lane and room for a run-up wheels onto it and comes: the same clean
+    /// lines a bowman wants are the lanes it runs, so range is never safety
+    /// here. It cannot charge from beside you: closing is the counterplay,
+    /// where the tusks can only worry. A missed charge leaves it blown.
+    /// </summary>
+    private void ActBoar(Monster monster)
+    {
+        if (monster.ExposedTurns > 0) { monster.ExposedTurns--; return; }
+        int dist = monster.Pos.Chebyshev(Player.Pos);
+
+        if (dist >= 3 && dist <= 8 && ChargeLaneClear(monster) && _combatRng.Chance(0.6))
+        {
+            monster.Intent = new Intent { Kind = IntentKind.BoarCharge, TargetCell = Player.Pos };
+            Log.Add(Turn, "The war-boar wheels onto your line: hoof-scrape, dropped head, one long breath!", LogTone.Danger);
+            return;
+        }
+
+        if (dist == 1)
+        {
+            if (_combatRng.Chance(Player.DodgeChance))
+            {
+                Log.Add(Turn, "The tusks hook air; the boar shoulders past.", LogTone.Combat);
+            }
+            else
+            {
+                int damage = Absorb(_combatRng.Range(2, 5));
+                Player.Hp -= damage;
+                Log.Add(Turn, $"Close in, the boar has no run: the tusks can only rake you for {damage}.", LogTone.Combat);
+            }
+            return;
+        }
+
+        if (dist <= 12) StepBfsToward(monster);
+    }
+
+    /// <summary>A straight lane (one of the eight lines) from boar to bearer, every cell open: charge country.</summary>
+    private bool ChargeLaneClear(Monster monster)
+    {
+        int dx = Player.Pos.X - monster.Pos.X, dy = Player.Pos.Y - monster.Pos.Y;
+        if (dx != 0 && dy != 0 && Math.Abs(dx) != Math.Abs(dy)) return false;
+        var map = CurrentSite!.Map;
+        var p = monster.Pos;
+        int sx = Math.Sign(dx), sy = Math.Sign(dy);
+        while (true)
+        {
+            p = p.Plus(sx, sy);
+            if (p == Player.Pos) return true;
+            if (!map.Walkable(p) || Monsters.Any(m => m.Alive && m != monster && m.SiteId == monster.SiteId && m.Pos == p))
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// The charge resolved (D-053): the boar runs its declared lane the length
+    /// of it. The lane is dodged sideways, never backward: it runs through
+    /// where you were and on through where you are, if where you are is still
+    /// on the line. A missed charge leaves it standing blown: the window the
+    /// fort teaches.
+    /// </summary>
+    private void ResolveCharge(Monster monster, Intent intent)
+    {
+        var map = CurrentSite!.Map;
+        int sx = Math.Sign(intent.TargetCell.X - monster.Pos.X);
+        int sy = Math.Sign(intent.TargetCell.Y - monster.Pos.Y);
+        for (int step = 0; step < BowRange; step++)
+        {
+            var next = monster.Pos.Plus(sx, sy);
+            if (next == Player.Pos)
+            {
+                int damage = Absorb(_combatRng.Range(7, 11), telegraphed: true);
+                Player.Hp -= damage;
+                Log.Add(Turn, $"The war-boar takes you full on the tusks for {damage}: the lane was its whole argument!", LogTone.Danger);
+                return;
+            }
+            if (!map.Walkable(next) || Monsters.Any(m => m.Alive && m != monster && m.SiteId == monster.SiteId && m.Pos == next))
+            {
+                monster.ExposedTurns = 2;
+                Log.Add(Turn, "The charge slams to its end against stone; the boar stands blown, flanks heaving.", LogTone.Combat);
+                return;
+            }
+            monster.Pos = next;
+        }
+        monster.ExposedTurns = 2;
+        Log.Add(Turn, "The boar ploughs through where you stood and slews to a stop, blown.", LogTone.Combat);
+    }
+
+    /// <summary>
     /// Proper pathing (BFS, cardinal steps) for the dead and the severed: they have
     /// walked their halls for an age and do not fumble at their own doorways.
     /// Goblins keep their greedy stumble.
@@ -2373,6 +2557,9 @@ public sealed class Game
         HallX: World.HallSite?.OverworldPos.X ?? -1,
         HallY: World.HallSite?.OverworldPos.Y ?? -1,
         HallCleared: World.HallSite?.Cleared ?? false,
+        RingfortX: World.RingfortSite?.OverworldPos.X ?? -1,
+        RingfortY: World.RingfortSite?.OverworldPos.Y ?? -1,
+        RingfortCleared: World.RingfortSite?.Cleared ?? false,
         ArcProgress: string.Join(",", new[]
         {
             Player.SeveredTruthHeard ? "truth" : null,
@@ -2491,6 +2678,9 @@ public sealed record Snapshot(
     int HallX,
     int HallY,
     bool HallCleared,
+    int RingfortX,
+    int RingfortY,
+    bool RingfortCleared,
     string ArcProgress,
     string CurrentSite,
     int UnbinderX,

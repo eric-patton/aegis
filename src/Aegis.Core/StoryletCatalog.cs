@@ -267,6 +267,37 @@ public static class StoryletCatalog
             ],
         },
 
+        // Inside the songhall (D-054, every world): world-texture. The hall is
+        // the counter-room to the deep bands: the one interior where nothing
+        // fights back and everything keeps.
+        new Storylet
+        {
+            Id = "the-keeping-of-songs",
+            Trigger = StoryletTrigger.EnterTile,
+            Tile = Terrain.Floor,
+            Priority = 5,
+            When = g => g.CurrentSite?.Kind == SiteKind.Songhall,
+            Lines =
+            [
+                ("Under the turf roof the years hang in verses, cut small along the east wall, five summers to a plank. Benches worn pale where the same folk have sat since before they were the same folk.", LogTone.Info),
+                ("Nothing here is bought to be carried out. What the hall takes in, it keeps, and what it keeps, it sings.", LogTone.Info),
+            ],
+        },
+
+        // The stead's answer to a stone it raised on the songs' word alone
+        // (D-054): the trace fact travels at the crossing, never by worldgen.
+        new Storylet
+        {
+            Id = "the-stone-at-the-door",
+            Trigger = StoryletTrigger.NearHouse,
+            Requires = [new FactPattern("patronage", "raised_stone")],
+            Lines =
+            [
+                ("By the well they are talking of the stone at the songhall door: raised to a walker no one here has met, on no order anyone here gave. The mason only says the work was paid for, and would not say by what.", LogTone.Info),
+                ("An old man runs his thumb along the cut name and allows that it wants weather. \"Stone learns its keep,\" he says. \"Same as anyone.\"", LogTone.Info),
+            ],
+        },
+
         // Meeting the wandering mender in a LATER world than the first meeting: the
         // first thread a player can pull that runs between worlds. Completes its own
         // small answer (these wanderers know you) and unlocks asking about it.

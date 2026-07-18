@@ -65,10 +65,13 @@ namespace Aegis.Core;
 /// under old journals (a new gate stands where a v20 walk crossed plain
 /// ground, and the gleanings settle differently around it), and the fort
 /// holds a watch that did not exist when they were played.
+/// v22 when D-054 raised the songhall in every stead: a door tile stands on
+/// grass a v21 walk crossed plain, a skald stands where no one stood, and
+/// their menu digits pledge coin no old journal could spend.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 21;
+    public const int Version = 22;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

@@ -11,7 +11,8 @@ public class BarrowTests
         {
             var t1 = WorldGen.Generate(seed);
             Assert.Null(t1.BarrowSite);
-            Assert.Single(t1.Sites);
+            // A first world holds the camp and the songhall (D-054) and no den deeper.
+            Assert.Equal(2, t1.Sites.Count);
             Assert.False(t1.Facts.Exists("site", "barrow"));
 
             var t2 = WorldGen.Generate(seed, tier: 2);

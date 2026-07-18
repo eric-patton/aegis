@@ -92,6 +92,26 @@ public sealed class Player
     /// <summary>The Aegis speaks once at the first standing rise (D-048); never again.</summary>
     public bool StandingLineHeard { get; set; }
 
+    /// <summary>
+    /// Patron deeds pledged in the current world (D-054): the coin is already
+    /// spent, and the pledge waits for the crossing to be weighed. Death never
+    /// takes a pledge: coin dropped in a remnant was never pledged coin.
+    /// </summary>
+    public List<PatronDeedId> PledgedDeeds { get; } = [];
+
+    /// <summary>
+    /// Patron deeds weighed at a crossing (D-054): permanent, like everything
+    /// on the character. Their traces stand in the songhall of every world the
+    /// bearer's songs reach from then on.
+    /// </summary>
+    public List<PatronDeedId> PatronDeeds { get; } = [];
+
+    /// <summary>Pledged or standing: either way the hall will not take it twice.</summary>
+    public bool HasPatronDeed(PatronDeedId id) => PledgedDeeds.Contains(id) || PatronDeeds.Contains(id);
+
+    /// <summary>The Aegis speaks once at the first pledge (D-054); never again.</summary>
+    public bool PatronLineHeard { get; set; }
+
     // Arc-ladder state (D-037, design/story/aegis-arc.md sec 6). The fact graph is
     // per-world, so rung progress lives on the character. Each flag is set by the
     // storylet or crossing scene that completes its rung; later rungs gate on
@@ -227,7 +247,7 @@ public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut, HurledStone, G
 /// the game never makes them fightable, only listenable. The Smith (D-041)
 /// keeps their own small menu so the villagers' nine digits stay unbreached.
 /// </summary>
-public enum NpcKind { Villager, Unbinder, Severed, Smith }
+public enum NpcKind { Villager, Unbinder, Severed, Smith, Skald }
 
 /// <summary>
 /// A named, placed person (D-031). Static in v1: they stand near their homes and

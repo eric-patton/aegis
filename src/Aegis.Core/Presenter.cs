@@ -440,6 +440,8 @@ public static class Presenter
         Terrain.Hearth => ('*', Hue.Yellow, Hue.Black),
         Terrain.QuarryEntrance => ('x', Hue.DarkYellow, Hue.Black),
         Terrain.HallEntrance => ('H', Hue.DarkCyan, Hue.Black),
+        Terrain.SonghallEntrance => ('S', Hue.Cyan, Hue.Black),
+        Terrain.Plinth => ('T', Hue.White, Hue.Black),
         Terrain.RingfortEntrance => ('0', Hue.Yellow, Hue.Black),
         _ => ('?', Hue.Magenta, Hue.Black),
     };

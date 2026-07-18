@@ -3,7 +3,7 @@ namespace Aegis.Core;
 public enum MapMode { Overworld, Site }
 
 /// <summary>What the stead sells (D-036): goods and services coin can become.</summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge }
 
 /// <summary>
 /// The deterministic game engine. No console, no I/O, no wall clock: state advances
@@ -396,6 +396,8 @@ public sealed class Game
                 Log.Add(Turn, World.RingfortSite!.Cleared
                     ? "The ringfort stands empty. Wind in the gate-mouth, and the lanes between the walls going back to grass."
                     : "A ring-walled fort, grey and whole, its gate open on a grass lane. On the walls stand figures with boards at a spacing no wind ever kept, and something heavy moves between the rings. Press > to go in.", LogTone.Danger);
+            else if (t == Terrain.SonghallEntrance)
+                Log.Add(Turn, "The stead's songhall: turf roof, smoke at the roof-hole, and low singing sometimes when the wind sits right. Press > to step in.", LogTone.Info);
             else if (t == Terrain.ThresholdEntrance)
                 Log.Add(Turn, !Player.CommissionHeard
                     ? "A stair descends into the hill, cut clean and swept clean, though nothing lives near to sweep it. The dark below is not night-dark."
@@ -419,10 +421,54 @@ public sealed class Game
                 }, LogTone.Reward);
             else if (t == Terrain.ExitLadder)
                 Log.Add(Turn, "Daylight above. Press < to climb out.");
-            else if (t == Terrain.Hearth && Player.Resolution != Resolution.None)
+            else if (t == Terrain.Hearth && CurrentSite!.Kind == SiteKind.Threshold && Player.Resolution != Resolution.None)
                 Log.Add(Turn, Player.Resolution == Resolution.Kept
                     ? "The Hearth. It leans toward you the way a fire leans toward its keeper. The count is warm to the touch."
                     : "The Hearth burns alone, by your leave. It does not reproach you. Fires never do.", LogTone.Aegis);
+            else if (CurrentSite!.Kind == SiteKind.Songhall)
+                DescribeSonghallFixture(t, p);
+        }
+    }
+
+    /// <summary>
+    /// The songhall's reading surfaces (D-054). The room never changes; what the
+    /// bearer's patronage has put in it does, read at runtime off the character,
+    /// so worldgen never learns whose songs these are. In a hushed world (D-051)
+    /// the traces go dark with everything else the songs carry: the deed stands,
+    /// but nothing here was told to raise it.
+    /// </summary>
+    private void DescribeSonghallFixture(Terrain t, Pos p)
+    {
+        bool hushed = World.Oaths.Contains(OathId.HushedName);
+        if (t == Terrain.Plinth)
+        {
+            if (!hushed && Player.PatronDeeds.Contains(PatronDeedId.RaisedStone))
+                Log.Add(Turn, "On the plinth by the door stands a raised stone, grey and new-cut, and the name cut into it is yours. The songs walked ahead, and the stead answered in stone.", LogTone.Reward);
+            else if (Player.PledgedDeeds.Contains(PatronDeedId.RaisedStone))
+                Log.Add(Turn, "The plinth's socket is swept and chalk-marked: your pledge is made, and the stone will stand wherever the songs go next.", LogTone.Info);
+            else
+                Log.Add(Turn, "A stone plinth stands bare by the door, its socket cut and empty. It has waited a long time for someone worth a stone.", LogTone.Info);
+        }
+        else if (t == Terrain.Hearth)
+        {
+            if (!hushed && Player.PatronDeeds.Contains(PatronDeedId.EndowedHearth))
+                Log.Add(Turn, "The long hearth burns high and fed, the woodstore full to the beams: your endowment, carried ahead by the songs. Any walker off the road eats here now, at a fire with your name in it.", LogTone.Reward);
+            else if (Player.PledgedDeeds.Contains(PatronDeedId.EndowedHearth))
+                Log.Add(Turn, "The long hearth burns as it always has, but the skald's chest holds your endowment now, waiting for the songs to carry it.", LogTone.Info);
+            else
+                Log.Add(Turn, "The long hearth burns low, tended by whoever sits nearest. The woodstore beside it is down to bark and ends.", LogTone.Info);
+        }
+        else if (p == WorldGen.SonghallVersePos)
+        {
+            Log.Add(Turn, "The east wall is scored with verses, cut small: the year's songs, the drovers' songs, five summers to a plank.", LogTone.Info);
+            if (World.Facts.OfType("echo").FirstOrDefault() is { } echo)
+                Log.Add(Turn, $"Among them, new-cut and already sung wrong at the well: {echo.Detail}", LogTone.Info);
+            else
+                Log.Add(Turn, "Nothing in them names a walker. The last plank hangs half bare: room, if any road ever sends a verse worth the cutting.", LogTone.Info);
+            if (!hushed && Player.PatronDeeds.Contains(PatronDeedId.TrueVerse))
+                Log.Add(Turn, $"And set apart, cut deeper, in a hand that took no liberties: your own verse, the account as you gave it. {Player.WorldsWalked.Count} worlds walked, and every stead left sleeping sound. The singers do not change a word of it.", LogTone.Reward);
+            else if (Player.PledgedDeeds.Contains(PatronDeedId.TrueVerse))
+                Log.Add(Turn, "At the wall's foot the carver's chalk is up for a verse not yet cut: yours, as you gave it, waiting on the crossing.", LogTone.Info);
         }
     }
 
@@ -454,6 +500,8 @@ public sealed class Game
                 Log.Add(Turn, Player.Resolution == Resolution.None
                     ? "You go down. The door of shrine-stone stands open, and the warmth beyond it is a kitchen's, not a forge's. Somewhere ahead, a fire is burning that has never once gone out."
                     : "You go down again. The door stands open. It will always stand open to you now.", LogTone.Aegis);
+            else if (site.Kind == SiteKind.Songhall)
+                Log.Add(Turn, "You step in under the turf roof. Woodsmoke, wax, and under both the smell of cut oak: the hall keeps its songs the way a granary keeps seed.", LogTone.Info);
             else
                 Log.Add(Turn, site.Kind switch
                 {
@@ -524,6 +572,13 @@ public sealed class Game
         Player.Coin = 0;
         int honored = 10 * prevBurden;
         Player.Legend += honored;
+        // The patron's weighing (D-054): pledged coin crosses as Legend at half
+        // again its count, because patronized coin sings louder than counted
+        // coin, and the deed itself joins the character for good.
+        int patronized = Player.PledgedDeeds.Sum(d => PatronCatalog.Def(d).Worth);
+        Player.Legend += patronized;
+        Player.PatronDeeds.AddRange(Player.PledgedDeeds);
+        Player.PledgedDeeds.Clear();
 
         // Repeat-weighting (D-040): the finished world's story travels into the next
         // draw as a generation input. It is itself a pure function of the seed
@@ -566,10 +621,22 @@ public sealed class Game
         // The hushed name (D-051): the deed's song does not travel into a hushed
         // world at all, so nothing there can hum it, sing it, or know the walker.
         if (!hushed)
+        {
             World.Facts.Add("echo", "deed", prevSettlement,
                 prevBurden > 0
                     ? $"In a world called {prevWorld}, the bearer emptied a goblin cave under oath, and {prevSettlement} slept safe. The songs say they chose the harder walking."
                     : $"In a world called {prevWorld}, the bearer emptied a goblin cave, and {prevSettlement} slept safe.");
+            // The traces (D-054): what patronage built travels with the songs,
+            // pressed into each new world's facts at the crossing, never drawn
+            // by worldgen. A hushed world's stead was never told what to raise.
+            foreach (var deed in Player.PatronDeeds)
+                World.Facts.Add("patronage", PatronCatalog.IdOf(deed), World.SettlementName, deed switch
+                {
+                    PatronDeedId.RaisedStone => $"A stone stands at {World.SettlementName}'s songhall door, raised against the walker's coming and cut with the walker's name.",
+                    PatronDeedId.EndowedHearth => $"The songhall hearth at {World.SettlementName} burns fed from a walker's endowment: any stranger off the road eats at it.",
+                    _ => $"On {World.SettlementName}'s verse-wall one verse is cut deeper than the rest, in the walker's own words, and the singers do not change it.",
+                });
+        }
 
         // The long song (D-045): from the third world on, the walked worlds are one
         // song, compounding a verse per crossing, and every stead sings it wrong.
@@ -621,6 +688,8 @@ public sealed class Game
         }
         if (honored > 0)
             Log.Add(Turn, $"The terms you carried through {prevWorld} are weighed with it. Legend grows by {honored} more.", LogTone.Reward);
+        if (patronized > 0)
+            Log.Add(Turn, $"And what you pledged in {prevWorld} is weighed last, at half again its coin: a patron's deed sings louder than a purse. Legend grows by {patronized} more.", LogTone.Reward);
 
         // The songs' weighing (D-048): standing is derived, so a rise can only
         // happen here, where Legend is minted, and the threshold announces it.
@@ -643,8 +712,11 @@ public sealed class Game
         else
             Log.Add(Turn, $"In {World.SettlementName} they already sing of a stranger who emptied a goblin cave, in a world called {prevWorld}.");
         // The welcome (D-048): the songs walked ahead, and the stead answers them
-        // in bread. Hospitality scales with standing and never past the cap.
-        int welcome = hushed ? 0 : Math.Min(Math.Min(Standing, 3), RationCap - Player.Rations);
+        // in bread. Hospitality scales with standing and never past the cap. The
+        // endowed hearth (D-054) adds one loaf from the hall's own store: the
+        // single mechanical thing patronage buys, and it is bread, not power.
+        int hearthLoaf = Player.PatronDeeds.Contains(PatronDeedId.EndowedHearth) ? 1 : 0;
+        int welcome = hushed ? 0 : Math.Min(Math.Min(Standing, 3) + hearthLoaf, RationCap - Player.Rations);
         if (welcome > 0)
         {
             Player.Rations += welcome;
@@ -773,10 +845,11 @@ public sealed class Game
             NpcKind.Unbinder => BuildUnbinderTopics(npc),
             NpcKind.Severed => BuildSeveredTopics(),
             NpcKind.Smith => BuildSmithTopics(),
+            NpcKind.Skald => BuildSkaldTopics(),
             _ => BuildTopics(npc),
         });
         _offers.Clear();
-        if (npc.Kind is NpcKind.Villager or NpcKind.Smith) _offers.AddRange(BuildOffers(npc));
+        if (npc.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald) _offers.AddRange(BuildOffers(npc));
 
         if (npc.Kind == NpcKind.Severed)
         {
@@ -941,6 +1014,31 @@ public sealed class Game
     }
 
     /// <summary>
+    /// The skald's own topics (D-054): a separate, small menu like the smith's.
+    /// "Your name" is the meta-layer's reading surface: the one place the third
+    /// ledger is read back to the bearer in numbers, because reading the count
+    /// aloud is precisely a skald's work.
+    /// </summary>
+    private List<(string Label, string Answer)> BuildSkaldTopics()
+    {
+        var topics = new List<(string, string)>
+        {
+            ("The hall", "\"Raised before my grandmother's day, for keeping what will not keep in a granary. Every year the stead cuts its songs into the east wall, and I keep them in my chest besides. Walkers' verses too, when the road sends any worth the cutting.\""),
+        };
+
+        if (Player.Legend <= 0)
+            topics.Add(("Your name", "\"No song carries you yet, stranger. That is not a lack; it is room. The wall has kept planks bare longer than you have been walking.\""));
+        else if (Standing >= LegendStanding.MaxStanding)
+            topics.Add(("Your name", $"\"The songs weigh what you have carried at {Player.Legend}, and there is no weighing past where you stand. You are {LegendStanding.TitleOf(Standing)}. The wall will be learning your verses long after both of us.\""));
+        else
+            topics.Add(("Your name", Standing == 0
+                ? $"\"The songs weigh what you have carried at {Player.Legend}. Not yet a name; the first weighing tips at {LegendStanding.Threshold(1)}. Walk, and come read the wall again.\""
+                : $"\"The songs weigh what you have carried at {Player.Legend}. In them you are {LegendStanding.TitleOf(Standing)}; the next weighing tips at {LegendStanding.Threshold(Standing + 1)}. The wall keeps room.\""));
+
+        return topics;
+    }
+
+    /// <summary>
     /// The stead's trade surface (D-036): each seller offers what their role would
     /// actually have. Purchases are talk-menu entries, not a separate mode, and the
     /// menu stays open so buying twice is two key presses. The smith (D-041) sells
@@ -981,7 +1079,67 @@ public sealed class Game
             if (RepairPrice > 0)
                 offers.Add((TradeGood.Repair, "", $"Have your gear seen to ({RepairPrice} coin)"));
         }
+        // The patron's ladder (D-054): every deed always listed, in price order,
+        // states and all, so the digits never shift under a patron's fingers.
+        if (npc.Kind == NpcKind.Skald)
+            foreach (var def in PatronCatalog.All)
+                offers.Add((TradeGood.Pledge, PatronCatalog.IdOf(def.Id), PledgeLabel(def)));
         return offers;
+    }
+
+    /// <summary>A deed's offer label (D-054): the asking, the waiting, or the standing.</summary>
+    private string PledgeLabel(PatronDeedDef def)
+    {
+        string name = $"{char.ToUpperInvariant(def.Name[0])}{def.Name[1..]}";
+        if (Player.PatronDeeds.Contains(def.Id)) return $"{name} (it stands)";
+        if (Player.PledgedDeeds.Contains(def.Id)) return $"{name} (pledged)";
+        return $"Pledge {def.Name} ({def.Price} coin)";
+    }
+
+    /// <summary>
+    /// A patron's pledge (D-054, paying D-025's patronage crossing): the coin is
+    /// counted out now, into a chest it never comes back out of, which is what
+    /// makes it a sink and not a purchase. The weighing waits for the crossing,
+    /// where Legend is minted and nowhere else (D-048's one-home rule).
+    /// </summary>
+    private void TryPledgeDeed(string idStr)
+    {
+        var id = PatronCatalog.FromId(idStr);
+        var def = PatronCatalog.Def(id);
+        if (Player.PatronDeeds.Contains(id))
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"It stands already, in every hall your songs have reached. Go and see it; seeing is free.\"");
+            return;
+        }
+        if (Player.PledgedDeeds.Contains(id))
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Pledged, and the chest holds it. The songs will carry it over the next crossing you make. Patience is the cheapest thing I sell.\"");
+            return;
+        }
+        if (Player.Coin < def.Price)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"{char.ToUpperInvariant(def.Name[0])}{def.Name[1..]} asks {def.Price} coin, and you hold {Player.Coin}. The hall keeps; it does not lend.\"");
+            return;
+        }
+
+        Player.Coin -= def.Price;
+        Player.PledgedDeeds.Add(id);
+        World.Facts.Add("pledge", PatronCatalog.IdOf(id), World.SettlementName,
+            $"A walker has pledged {def.Name} at {World.SettlementName}'s songhall.");
+        Log.Add(Turn, $"You count {def.Price} coin into the skald's chest against {def.Name}. ({Player.Coin} left)", LogTone.Reward);
+        Log.Add(Turn, id switch
+        {
+            PatronDeedId.RaisedStone => $"{TalkNpc!.Name}: \"A stone, then. Stone is the plainest promise there is: it stands where it is put. The songs will see it put.\"",
+            PatronDeedId.EndowedHearth => $"{TalkNpc!.Name}: \"A fed fire, then. Bread and warmth at your name for whoever the road uses hardest. That is the oldest verse in the hall, and you have just bought a line of it.\"",
+            _ => $"{TalkNpc!.Name}: \"Your own account, cut as you give it. I warn you fairly: the singers will garble everything around it, and the one true verse will make the garble show. That is what it is for.\"",
+        });
+        if (!Player.PatronLineHeard)
+        {
+            Player.PatronLineHeard = true;
+            Log.Add(Turn, "\"Coin into song. Of everything you have spent, bearer, that is the first spending I will hear again in another world. I am told I do not forget; now something else will do the keeping.\"", LogTone.Aegis);
+        }
+        _offers.Clear();
+        _offers.AddRange(BuildOffers(TalkNpc!));
     }
 
     /// <summary>A teaching entry's label (D-052): the asking before, the keeping after.</summary>
@@ -1150,7 +1308,7 @@ public sealed class Game
             return;
         }
 
-        if (TalkNpc!.Kind is NpcKind.Villager or NpcKind.Smith
+        if (TalkNpc!.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald
             && key > '0' + _topics.Count && key <= '0' + _topics.Count + _offers.Count)
         {
             var (good, arg, _) = _offers[key - '1' - _topics.Count];
@@ -1161,6 +1319,7 @@ public sealed class Game
                 case TradeGood.Gear: TryBuyGear(arg); break;
                 case TradeGood.Repair: TryRepairGear(); break;
                 case TradeGood.Lesson: TryLearnLesson(arg); break;
+                case TradeGood.Pledge: TryPledgeDeed(arg); break;
             }
             return;
         }
@@ -2606,6 +2765,12 @@ public sealed class Game
         RepairPrice: RepairPrice,
         SmithX: World.Smith.Pos.X,
         SmithY: World.Smith.Pos.Y,
+        SonghallX: World.SonghallSite.OverworldPos.X,
+        SonghallY: World.SonghallSite.OverworldPos.Y,
+        SkaldX: World.Skald.Pos.X,
+        SkaldY: World.Skald.Pos.Y,
+        PledgedDeeds: string.Join(",", Player.PledgedDeeds.Select(PatronCatalog.IdOf)),
+        PatronDeeds: string.Join(",", Player.PatronDeeds.Select(PatronCatalog.IdOf)),
         Skills: string.Join(",", Enum.GetValues<SkillId>()
             .Select(s => $"{SkillSet.NameOf(s).ToLowerInvariant()}:{Player.Skills.Level(s)}:{Player.Skills.Uses(s)}")),
         Perks: string.Join(",", Player.Perks.Select(PerkCatalog.IdOf)),
@@ -2711,6 +2876,12 @@ public sealed record Snapshot(
     int RepairPrice,
     int SmithX,
     int SmithY,
+    int SonghallX,
+    int SonghallY,
+    int SkaldX,
+    int SkaldY,
+    string PledgedDeeds,
+    string PatronDeeds,
     string Skills,
     string Perks,
     string PendingKnack,

@@ -1,6 +1,6 @@
 namespace Aegis.Core;
 
-public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort }
+public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort, Songhall }
 
 /// <summary>A monster placed at generation time: kind, cell, and generated stats (D-011).</summary>
 public readonly record struct MonsterSpawn(MonsterKind Kind, Pos Pos, int Hp);
@@ -82,6 +82,12 @@ public sealed class World
 
     /// <summary>The stead's smith (D-041): every world, every tier. Sells the plain three, mends what use has dulled.</summary>
     public Npc Smith => Npcs.First(n => n.Kind == NpcKind.Smith);
+
+    /// <summary>The stead's songhall (D-054): every world, every tier. The place where the third ledger is kept.</summary>
+    public Site SonghallSite => Sites.First(s => s.Kind == SiteKind.Songhall);
+
+    /// <summary>The songhall's keeper (D-054): stands at the hall door, reads the songs' weighing, takes the pledges.</summary>
+    public Npc Skald => Npcs.First(n => n.Kind == NpcKind.Skald);
 
     // Convenience views of the camp, the site every world has (and tests lean on).
     public GameMap Camp => CampSite.Map;
@@ -402,6 +408,62 @@ public static class WorldGen
             Pos = smithPos,
             Kind = NpcKind.Smith,
         });
+
+        // The songhall (D-054): every stead keeps one, at every tier, because the
+        // songs are kept where people live, not where they die. Own stream, placed
+        // after every existing draw (and before the gleanings, whose forest check
+        // must see its door tile), so pinned worlds keep their layouts and only
+        // gain the hall and its keeper. It stands at the stead's edge: the one
+        // site a bearer can walk to between errands.
+        var songhallRng = new Rng(SeedTree.Derive(worldSeed, "songhall"));
+        string skaldName = NameGen.Person(ref songhallRng);
+        Pos songhallPos = settlement;
+        for (int r = 3; r <= 9 && songhallPos == settlement; r++)
+        {
+            var ring = new List<Pos>();
+            for (int y = settlement.Y - r; y <= settlement.Y + r; y++)
+                for (int x = settlement.X - r; x <= settlement.X + r; x++)
+                {
+                    var p = new Pos(x, y);
+                    if (p.Chebyshev(settlement) != r || !overworld.InBounds(p)) continue;
+                    if (overworld[p] != Terrain.Grass || p.Chebyshev(shrine) < 2) continue;
+                    if (npcs.Any(n => n.Pos == p)) continue;
+                    ring.Add(p);
+                }
+            if (ring.Count > 0) songhallPos = songhallRng.Pick(ring);
+        }
+        overworld[songhallPos] = Terrain.SonghallEntrance;
+        CarvePathIfDisconnected(overworld, shrine, songhallPos);
+
+        var skaldSpots = new List<Pos>();
+        foreach (var (sdx, sdy) in Directions.All8)
+        {
+            var q = songhallPos.Plus(sdx, sdy);
+            if (overworld.Walkable(q) && q != shrine && !npcs.Any(n => n.Pos == q)) skaldSpots.Add(q);
+        }
+        npcs.Add(new Npc
+        {
+            Id = "npc_skald",
+            Name = skaldName,
+            Role = "skald",
+            Pos = skaldSpots.Count > 0 ? songhallRng.Pick(skaldSpots) : songhallPos.Plus(0, 1),
+            Kind = NpcKind.Skald,
+        });
+
+        var (songhallMap, songhallEntry) = GenerateSonghall();
+        sites.Add(new Site
+        {
+            Id = "songhall",
+            Kind = SiteKind.Songhall,
+            Map = songhallMap,
+            OverworldPos = songhallPos,
+            EntryPos = songhallEntry,
+            Spawns = [],
+            ChestPos = songhallEntry,
+            ChestLooted = true,
+        });
+        facts.Add("site", "songhall", $"{songhallPos.X},{songhallPos.Y}",
+            "The stead's songhall: turf roof, one long hearth, and the year's songs cut into the east wall. Walkers' verses too, when the road sends any worth the cutting.");
 
         // The fallen hall (D-044): tier 4+ worlds hold the third band's site, where
         // the iron hounds run. Own stream, placed after every existing draw
@@ -867,6 +929,33 @@ public static class WorldGen
         var entry = new Pos(2, mid);
         map[entry] = Terrain.ExitLadder;
         return (map, entry, hearth);
+    }
+
+    public const int SonghallW = 26;
+    public const int SonghallH = 9;
+
+    /// <summary>The floor tile under the east wall's verses (D-054): where the songs are read.</summary>
+    public static readonly Pos SonghallVersePos = new(24, 4);
+
+    /// <summary>
+    /// The songhall (D-054): one long room, fully authored, no carve RNG and no
+    /// spawns, because it is the same hall in every stead the way the stead's
+    /// life is the same life: door west, plinth by the door, the long hearth at
+    /// the middle, and the east wall scored with verses. What varies between
+    /// worlds is not the room but what the bearer's patronage has put in it.
+    /// </summary>
+    private static (GameMap Map, Pos Entry) GenerateSonghall()
+    {
+        var map = new GameMap("songhall", SonghallW, SonghallH, Terrain.Wall);
+        for (int y = 1; y <= SonghallH - 2; y++)
+            for (int x = 1; x <= SonghallW - 2; x++)
+                map[new Pos(x, y)] = Terrain.Floor;
+
+        map[new Pos(13, 4)] = Terrain.Hearth;
+        map[new Pos(5, 2)] = Terrain.Plinth;
+        var entry = new Pos(2, 4);
+        map[entry] = Terrain.ExitLadder;
+        return (map, entry);
     }
 
     public const int QuarryW = 32;

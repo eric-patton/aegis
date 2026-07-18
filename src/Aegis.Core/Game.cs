@@ -2693,7 +2693,7 @@ public sealed class Game
                 // tell, hit or miss, and the knowledge banks with the bearer
                 // across the crossing. This is the one clause of D-004 still
                 // owed since the first combat decision: the read is earned.
-                Player.WitnessTell(monster.Kind);
+                Player.WitnessTell(monster.Kind, Cycle);
                 bool landed = Player.Pos == intent.TargetCell;
                 if (intent.Kind == IntentKind.BoarCharge)
                 {
@@ -3505,6 +3505,8 @@ public sealed class Game
         Lessons: string.Join(",", Player.Lessons.Select(LessonCatalog.IdOf)),
         Reads: string.Join(",", Player.Reads.OrderBy(kv => (int)kv.Key)
             .Select(kv => $"{kv.Key.ToString().ToLowerInvariant()}:{kv.Value}")),
+        ReadTiers: string.Join(",", Player.Reads.OrderBy(kv => (int)kv.Key)
+            .Select(kv => $"{kv.Key.ToString().ToLowerInvariant()}:{Player.ReadOf(kv.Key, Cycle)}")),
         Gleanings: World.Gleanings.Count,
         Might: Player.Attributes[Attr.Might],
         Grace: Player.Attributes[Attr.Grace],
@@ -3619,6 +3621,7 @@ public sealed record Snapshot(
     string PendingKnack,
     string Lessons,
     string Reads,
+    string ReadTiers,
     int Gleanings,
     int Might,
     int Grace,

@@ -109,10 +109,88 @@ public class BestiaryTests
         Cross(game);
         Assert.Equal(2, game.Cycle);
 
-        // The harder world is new ground, but the reads are the bearer's own.
+        // The bank itself crosses whole: the counts are the bearer's own, undimmed.
         Assert.Equal(2, game.Player.Reads.GetValueOrDefault(MonsterKind.Goblin));
         Assert.Equal(1, game.Player.Reads.GetValueOrDefault(MonsterKind.Wight));
-        Assert.Equal(ReadTier.Read, game.Player.ReadOf(MonsterKind.Wight));
+        // And a named kind holds its name across the crossing: the wight, read once
+        // a tier ago, still reads here. D-061 dulls the weight, never the name.
+        Assert.Equal(ReadTier.Read, game.Player.ReadOf(MonsterKind.Wight, game.Cycle));
+    }
+
+    [Fact]
+    public void AHarderWorld_SoftensAKeenRead_AndOneLookHereResharpensIt()
+    {
+        var game = new Game(42);
+        // Learn the goblin cold in the first world: name, shape, and weight.
+        for (int i = 0; i < Player.ReadKeen; i++) game.Player.WitnessTell(MonsterKind.Goblin, game.Cycle);
+        Assert.Equal(ReadTier.Keen, game.Player.ReadOf(MonsterKind.Goblin, game.Cycle));
+
+        Cross(game);
+        Assert.Equal(2, game.Cycle);
+
+        // The bank is undimmed, but the harder world's kind moves a shade strangely:
+        // the weight goes quiet. Keen softens to Read; the name and shape still hold.
+        Assert.Equal(Player.ReadKeen, game.Player.Reads[MonsterKind.Goblin]);
+        Assert.Equal(ReadTier.Read, game.Player.ReadOf(MonsterKind.Goblin, game.Cycle));
+
+        // One wind-up watched here restamps the read to this tier, and it snaps back
+        // cold: the veteran re-sharpens in a single look, where a stranger would climb.
+        game.Player.WitnessTell(MonsterKind.Goblin, game.Cycle);
+        Assert.Equal(ReadTier.Keen, game.Player.ReadOf(MonsterKind.Goblin, game.Cycle));
+    }
+
+    [Fact]
+    public void ANamedKind_NeverDullsBackToABlur_NoMatterHowFarTheClimb()
+    {
+        var p = new Player();
+        p.WitnessTell(MonsterKind.Wight, tier: 1);   // named once, at the foot of the chain
+
+        // Many tiers on, the weight is long gone, but the name still holds: the
+        // dulling floors at Read, because a carry once earned is never fully taken back.
+        Assert.Equal(ReadTier.Read, p.ReadOf(MonsterKind.Wight, tier: 8));
+        Assert.NotEqual(ReadTier.Blur, p.ReadOf(MonsterKind.Wight, tier: 99));
+    }
+
+    [Fact]
+    public void KeenEyes_HoldTheWeightDeeperIntoTheClimb()
+    {
+        // A plain bearer who read the hound cold at the first tier loses its weight
+        // after a single crossing.
+        var plain = new Player();
+        for (int i = 0; i < Player.ReadKeen; i++) plain.WitnessTell(MonsterKind.Hound, tier: 1);
+        Assert.Equal(ReadTier.Read, plain.ReadOf(MonsterKind.Hound, tier: 2));
+
+        // A keen eye's acuity offsets the dulling: it still reads the weight tiers
+        // deeper, so Wits keeps earning its keep past the head start it already buys.
+        var keen = new Player();
+        keen.Attributes[Attr.Wits] = AttributeSet.Baseline + 2;
+        for (int i = 0; i < Player.ReadKeen; i++) keen.WitnessTell(MonsterKind.Hound, tier: 1);
+        Assert.Equal(ReadTier.Keen, keen.ReadOf(MonsterKind.Hound, tier: 2));
+        Assert.Equal(ReadTier.Keen, keen.ReadOf(MonsterKind.Hound, tier: 3));
+    }
+
+    [Fact]
+    public void AWitsReadOfAStranger_IsTheBearersOwn_AndNeverDulled()
+    {
+        var keen = new Player();
+        keen.Attributes[Attr.Wits] = AttributeSet.Baseline + 3;
+        // Never faced this kind, deep in the climb: innate acuity is not the world's
+        // to dull, so a keen eye still reads a stranger's weight on sight.
+        Assert.Empty(keen.Reads);
+        Assert.Equal(ReadTier.Keen, keen.ReadOf(MonsterKind.Boar, tier: 9));
+    }
+
+    [Fact]
+    public void TheDulling_ShowsInTheSnapshot_WhileTheBankReadsUndimmed()
+    {
+        var game = new Game(42);
+        for (int i = 0; i < Player.ReadKeen; i++) game.Player.WitnessTell(MonsterKind.Goblin, game.Cycle);
+        Cross(game);
+
+        // The bank field carries the undimmed count; the tiers field shows what the
+        // bearer actually reads here, softened by the climb. Both are observable.
+        Assert.Contains("goblin:3", game.TakeSnapshot().Reads);
+        Assert.Contains("goblin:Read", game.TakeSnapshot().ReadTiers);
     }
 
     [Fact]

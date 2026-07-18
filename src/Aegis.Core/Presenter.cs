@@ -375,7 +375,7 @@ public static class Presenter
                 // lane, a warder's nine-cell burst) is drawn for a bearer who has
                 // read the kind before. The aimed cell is always shown, so the
                 // dodge is always there; the shape is what the read reveals.
-                if (game.Player.ReadOf(monster.Kind) == ReadTier.Blur)
+                if (game.Player.ReadOf(monster.Kind, game.Cycle) == ReadTier.Blur)
                 {
                     PutWorld(intent.TargetCell, '!', Hue.White, Hue.DarkRed);
                 }
@@ -547,7 +547,7 @@ public static class Presenter
             };
             foreach (var monster in game.LiveMonstersHere.Where(m => m.Intent is not null))
             {
-                var tier = game.Player.ReadOf(monster.Kind);
+                var tier = game.Player.ReadOf(monster.Kind, game.Cycle);
                 if (tier == ReadTier.Blur)
                 {
                     Line($"! {monster.Name} coils, unread", Hue.DarkRed);

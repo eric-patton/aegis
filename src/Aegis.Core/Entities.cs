@@ -118,27 +118,55 @@ public sealed class Player
     /// </summary>
     public Dictionary<MonsterKind, int> Reads { get; } = new();
 
+    /// <summary>
+    /// The tier (Cycle) at which each read was last sharpened (D-061). A harder
+    /// world's kinds move a shade strangely, so a read earned lower on the chain
+    /// reads a notch softer here: the dulling is the gap between this stamp and
+    /// the current tier. One wind-up watched here restamps it, snapping the read
+    /// back cold. Like the bank itself, this is rebuilt by replay, never serialized.
+    /// </summary>
+    public Dictionary<MonsterKind, int> ReadTierStamp { get; } = new();
+
     /// <summary>One witnessed wind-up (or Wits 6) names a kind's tell; three (or Wits 8) reads its weight too.</summary>
     public const int ReadNamed = 1;
     public const int ReadKeen = 3;
 
-    /// <summary>A wind-up watched to its end teaches the tell, hit or miss. Capped: a tell read cold is read cold.</summary>
-    public void WitnessTell(MonsterKind kind)
+    /// <summary>
+    /// A wind-up watched to its end teaches the tell, hit or miss, and stamps
+    /// the tier it was read at (D-061), so a later, harder world knows how far
+    /// downstream the reading was. Capped: a tell read cold is read cold, but the
+    /// stamp still refreshes, which is how a veteran re-sharpens in a single look.
+    /// </summary>
+    public void WitnessTell(MonsterKind kind, int tier = 1)
     {
         int seen = Reads.GetValueOrDefault(kind);
         if (seen < ReadKeen) Reads[kind] = seen + 1;
+        ReadTierStamp[kind] = tier;
     }
 
     /// <summary>
-    /// How clearly the bearer reads a kind's telegraph (D-059). Witnessed
-    /// wind-ups bank toward the read; Wits above the baseline is a head start,
-    /// so a keen-eyed bearer reads a stranger on sight. This is clarity, never
-    /// the dodge: the marked cell is always dodgeable by feet, but a stranger's
-    /// wind-up shows only where it falls, not the shape of it or its weight.
+    /// How clearly the bearer reads a kind's telegraph (D-059, dulled across the
+    /// chain by D-061). Witnessed wind-ups bank toward the read; Wits above the
+    /// baseline is a head start, so a keen-eyed bearer reads a stranger on sight.
+    /// A harder world dulls an earned read by the tiers climbed since it was last
+    /// sharpened, but never below its name (Read): the carry is never taken back.
+    /// Dulling steps exactly one clarity tier, Keen down to Read, so what goes
+    /// quiet is the weight of the blow; the name and the whole marked shape still
+    /// hold (a named kind always shows where and how wide, never less safe), until
+    /// one look here restamps it cold. Innate acuity (the Wits head start) is the
+    /// bearer's own and is never dulled. This is clarity, never the dodge: the
+    /// marked cell is always dodgeable by feet.
     /// </summary>
-    public ReadTier ReadOf(MonsterKind kind)
+    public ReadTier ReadOf(MonsterKind kind, int tier = 1)
     {
-        int read = Reads.GetValueOrDefault(kind) + Math.Max(0, Attributes[Attr.Wits] - AttributeSet.Baseline);
+        int banked = Reads.GetValueOrDefault(kind);
+        int dulled = banked;
+        if (banked >= ReadNamed)
+        {
+            dulled -= Math.Max(0, tier - ReadTierStamp.GetValueOrDefault(kind, tier));
+            if (dulled < ReadNamed) dulled = ReadNamed;   // a named kind never dulls back to a blur
+        }
+        int read = dulled + Math.Max(0, Attributes[Attr.Wits] - AttributeSet.Baseline);
         return read >= ReadKeen ? ReadTier.Keen : read >= ReadNamed ? ReadTier.Read : ReadTier.Blur;
     }
 

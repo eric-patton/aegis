@@ -77,6 +77,16 @@ public sealed class Player
     /// <summary>The Aegis speaks once at the first knack taken; never again.</summary>
     public bool KnackLineHeard { get; set; }
 
+    /// <summary>The Aegis speaks once at the first level-4 knack (D-055); never again.</summary>
+    public bool DeepKnackLineHeard { get; set; }
+
+    /// <summary>
+    /// Every draw of the string, hit or miss: the waxed string's clock (D-055).
+    /// Wear frays on draws while marks are counted on hits, so the parity skip
+    /// needs its own count. Journal-derived like everything on the character.
+    /// </summary>
+    public int Looses { get; set; }
+
     /// <summary>
     /// Lessons (D-052, the proficiency half of D-016): discrete know-how shown
     /// by the stead's own people, never trained. Banked and crossing like the

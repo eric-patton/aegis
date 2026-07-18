@@ -1647,13 +1647,13 @@ public sealed class Game
         var choice = PendingKnack;
         if (choice is not null && key >= '1' && key <= '0' + choice.Options.Length)
         {
-            ChooseKnack(choice.Options[key - '1']);
+            ChooseKnack(choice, choice.Options[key - '1']);
             return;
         }
         InSheetMenu = false;
     }
 
-    private void ChooseKnack(PerkDef perk)
+    private void ChooseKnack(KnackChoice choice, PerkDef perk)
     {
         Player.Perks.Add(perk.Id);
         Log.Add(Turn, $"{perk.ChosenLine} ({perk.Name} is yours, for good.)", LogTone.Reward);
@@ -1661,6 +1661,13 @@ public sealed class Game
         {
             Player.KnackLineHeard = true;
             Log.Add(Turn, "\"The body's ledger keeps choices now, not only counts. Still none of my doing, bearer. It is becoming quite a book.\"", LogTone.Aegis);
+        }
+        // The first deep answer gets its own remark (D-055); the queue puts the
+        // level-2 questions first, so this is never also the first knack.
+        if (choice.Level >= 4 && !Player.DeepKnackLineHeard)
+        {
+            Player.DeepKnackLineHeard = true;
+            Log.Add(Turn, "\"A second answer from the same hand. The craft is not widening, bearer; it is narrowing. I mean that as praise.\"", LogTone.Aegis);
         }
     }
 
@@ -1800,22 +1807,30 @@ public sealed class Game
         var family = weapon?.Family ?? SkillId.Brawling;
         int staminaCost = 3
             - (family == SkillId.Blades && Player.HasPerk(PerkId.SpareMotion) ? 1 : 0)
+            - (weapon is null && Player.HasPerk(PerkId.ShortPath) ? 1 : 0)
             + (weapon is not null && !weapon.MeetsReq(Player.Attributes) ? 1 : 0);
         int damage;
         SkillId? trained = null;
         if (Player.Stamina >= staminaCost)
         {
             Player.Stamina -= staminaCost;
+            // The read moment (D-055): a body in its wind-up is a body already
+            // spoken for. The answered cut and the caught arm collect on it.
             damage = _combatRng.Range(2, 5) + Player.MeleeBonus + (weapon?.EffectiveBonus(Player.Attributes) ?? 0)
                 + Player.Skills.Bonus(family)
                 + (family == SkillId.Blades && Player.HasPerk(PerkId.DrawnCut) ? 1 : 0)
-                + (weapon is null && Player.HasPerk(PerkId.KnuckleAndBone) ? 2 : 0);
+                + (family == SkillId.Blades && Player.HasPerk(PerkId.AnsweredCut) && target.Intent is not null ? 2 : 0)
+                + (family == SkillId.Hafted && Player.HasPerk(PerkId.TrueArc) ? 1 : 0)
+                + (weapon is null && Player.HasPerk(PerkId.KnuckleAndBone) ? 2 : 0)
+                + (weapon is null && Player.HasPerk(PerkId.CaughtArm) && target.Intent is not null ? 3 : 0);
             // Only a full swing teaches (D-014's cost gating: this one was paid
             // for in wind and wear). Feeble flailing is free, and free is unfed.
             trained = family;
-            // The kind grip (D-046): every second counted hafted swing spares
-            // the edge. Uses parity, so replay and the wear ledger agree.
-            bool edgeSpared = family == SkillId.Hafted && Player.HasPerk(PerkId.KindGrip)
+            // The kind grip (D-046) and the stropped edge (D-055): every second
+            // counted swing spares the edge. Uses parity, so replay and the
+            // wear ledger agree.
+            bool edgeSpared = (family == SkillId.Hafted && Player.HasPerk(PerkId.KindGrip)
+                    || family == SkillId.Blades && Player.HasPerk(PerkId.StroppedEdge))
                 && Player.Skills.Uses(family) % 2 == 1;
             if (weapon is not null && !weapon.Worn && !edgeSpared)
             {
@@ -1839,6 +1854,14 @@ public sealed class Game
             {
                 target.Dormant = false;
                 Log.Add(Turn, "Grit sifts from the figure. The head grinds around to face you.", LogTone.Danger);
+            }
+            // The checked swing (D-055): a landed hafted blow breaks the wind-up
+            // outright. Only a paid swing has the weight; feeble flailing checks
+            // nothing.
+            if (trained == SkillId.Hafted && Player.HasPerk(PerkId.CheckedSwing) && target.Intent is not null)
+            {
+                target.Intent = null;
+                Log.Add(Turn, $"The weight staggers the {target.Name}; the blow it was raising dies unthrown.", LogTone.Combat);
             }
         }
         else
@@ -1906,6 +1929,11 @@ public sealed class Game
         CheckSiteCleared(CurrentSite!);
     }
 
+    /// <summary>Live tenants standing within arm's reach: the shield-wall's head-count (D-055).</summary>
+    private int FoesBeside() => CurrentSite is { } site
+        ? Monsters.Count(m => m.Alive && m.SiteId == site.Id && m.Pos.Chebyshev(Player.Pos) == 1)
+        : 0;
+
     /// <summary>How far a shaft flies: one cell short of a graven man's throw, so the pit is never outranged from safety.</summary>
     public const int BowRange = 8;
 
@@ -1970,7 +1998,11 @@ public sealed class Game
 
         // The string frays a little with every draw, hit or miss: wear is the
         // bow's whole ammunition, and the smith restrings it like any edge.
-        if (!bow.Worn)
+        // The waxed string (D-055) spares every second draw; the clock counts
+        // draws, not marks, because that is what frays.
+        bool stringSpared = Player.HasPerk(PerkId.WaxedString) && Player.Looses % 2 == 1;
+        Player.Looses++;
+        if (!bow.Worn && !stringSpared)
         {
             bow.Wear = Math.Min(bow.MaxWear, bow.Wear + WearStep);
             if (bow.Worn)
@@ -2009,9 +2041,13 @@ public sealed class Game
                 return;
             }
 
+            // The picked moment (D-055): a body mid-motion, winding up or
+            // standing open, takes the shaft 2 deeper. At range the moment is
+            // yours to pick; the knack is the picking.
             int damage = _combatRng.Range(1, 4) + bow.EffectiveBonus(Player.Attributes)
                 + Player.AimBonus + Player.Skills.Bonus(SkillId.Ranged)
-                + (Player.HasPerk(PerkId.HuntersEye) ? 1 : 0);
+                + (Player.HasPerk(PerkId.HuntersEye) ? 1 : 0)
+                + (Player.HasPerk(PerkId.PickedMoment) && (target.Intent is not null || target.ExposedTurns > 0) ? 2 : 0);
             target.Hp -= damage;
 
             if (target.Alive)
@@ -2064,11 +2100,14 @@ public sealed class Game
         }
 
         // A threshold crossed opens its question (D-046). Announced here, put by
-        // the sheet, and standing open forever until answered.
+        // the sheet, and standing open forever until answered. The level-4 wave
+        // (D-055) announces itself as what it is: the same craft, asked again.
         foreach (var choice in PerkCatalog.Choices)
             if (choice.Skill == id && before < choice.Level && after >= choice.Level
                 && !choice.Options.Any(o => Player.HasPerk(o.Id)))
-                Log.Add(Turn, $"Your {SkillSet.NameOf(id)} has settled into a question of style. The sheet ('c') will put it to you.", LogTone.Reward);
+                Log.Add(Turn, choice.Level >= 4
+                    ? $"Your {SkillSet.NameOf(id)} has deepened into a second question. The sheet ('c') will put it to you."
+                    : $"Your {SkillSet.NameOf(id)} has settled into a question of style. The sheet ('c') will put it to you.", LogTone.Reward);
     }
 
     /// <summary>
@@ -2086,9 +2125,13 @@ public sealed class Game
         // Warding is armor-craft, not toughness: it only helps while iron is
         // worn, and only a blow the iron actually turned teaches it (D-042).
         // The braced shoulder (D-046) reads the wind-up: a telegraphed blow
-        // that still lands is turned 2 further.
+        // that still lands is turned 2 further. The shield-wall (D-055) reads
+        // the crowd: each foe beside you past the first is turned 1 more, up
+        // to 2; the fitted iron turns 1 more with no reading at all.
         int reduced = Math.Max(1, raw - armor.EffectiveBonus(Player.Attributes) - Player.Skills.Bonus(SkillId.Warding)
-            - (telegraphed && Player.HasPerk(PerkId.BracedShoulder) ? 2 : 0));
+            - (telegraphed && Player.HasPerk(PerkId.BracedShoulder) ? 2 : 0)
+            - (Player.HasPerk(PerkId.ShieldWall) ? Math.Min(2, Math.Max(0, FoesBeside() - 1)) : 0)
+            - (Player.HasPerk(PerkId.FittedIron) ? 1 : 0));
         if (reduced < raw)
         {
             // The mended strap (D-046): every second turned blow spares the
@@ -2774,7 +2817,7 @@ public sealed class Game
         Skills: string.Join(",", Enum.GetValues<SkillId>()
             .Select(s => $"{SkillSet.NameOf(s).ToLowerInvariant()}:{Player.Skills.Level(s)}:{Player.Skills.Uses(s)}")),
         Perks: string.Join(",", Player.Perks.Select(PerkCatalog.IdOf)),
-        PendingKnack: PendingKnack is { } knack ? SkillSet.NameOf(knack.Skill).ToLowerInvariant() : "",
+        PendingKnack: PendingKnack is { } knack ? $"{SkillSet.NameOf(knack.Skill).ToLowerInvariant()} {knack.Level}" : "",
         Lessons: string.Join(",", Player.Lessons.Select(LessonCatalog.IdOf)),
         Gleanings: World.Gleanings.Count,
         Might: Player.Attributes[Attr.Might],

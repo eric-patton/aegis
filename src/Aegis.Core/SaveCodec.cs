@@ -68,10 +68,13 @@ namespace Aegis.Core;
 /// v22 when D-054 raised the songhall in every stead: a door tile stands on
 /// grass a v21 walk crossed plain, a skald stands where no one stood, and
 /// their menu digits pledge coin no old journal could spend.
+/// v23 when D-055 opened the level-4 knack questions: a sheet digit a v22
+/// journal pressed to no effect now answers a question forever, and the
+/// chosen knacks change later damage, wind, and wear.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 22;
+    public const int Version = 23;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

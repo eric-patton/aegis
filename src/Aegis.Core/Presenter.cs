@@ -226,7 +226,7 @@ public static class Presenter
     {
         var p = game.Player;
         var choice = game.PendingKnack;
-        const int boxW = 50;
+        const int boxW = 54;
         int boxH = choice is null ? 17 : 18 + choice.Options.Length;
         int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
         int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
@@ -248,10 +248,13 @@ public static class Presenter
         {
             var skill = (SkillId)i;
             int level = p.Skills.Level(skill);
-            var knack = PerkCatalog.Choices.FirstOrDefault(c => c.Skill == skill)?
-                .Options.FirstOrDefault(o => p.HasPerk(o.Id));
-            string row = $"{SkillSet.NameOf(skill),-9}{level,2}   {p.Skills.Uses(skill)}/{SkillSet.UsesForLevel(level + 1)}";
-            if (knack is not null) row += $"   {knack.Name}";
+            // Both waves' answers on one row (D-055), articles dropped so two
+            // knacks and the uses fraction share the box's width.
+            var knacks = PerkCatalog.Choices.Where(c => c.Skill == skill)
+                .SelectMany(c => c.Options).Where(o => p.HasPerk(o.Id))
+                .Select(o => o.Name.StartsWith("the ") ? o.Name[4..] : o.Name).ToList();
+            string row = $"{SkillSet.NameOf(skill),-9}{level,2}  {p.Skills.Uses(skill)}/{SkillSet.UsesForLevel(level + 1)}";
+            if (knacks.Count > 0) row += $"  {string.Join(", ", knacks)}";
             frame.Write(x0 + 2, y0 + 8 + i, row, level > 0 ? Hue.White : Hue.Gray);
         }
 
@@ -269,7 +272,9 @@ public static class Presenter
         if (choice is not null)
         {
             frame.Write(x0 + 2, y0 + 15,
-                $"{SkillSet.NameOf(choice.Skill)} has settled into a question:", Hue.Cyan);
+                choice.Level >= 4
+                    ? $"{SkillSet.NameOf(choice.Skill)} has deepened into a second question:"
+                    : $"{SkillSet.NameOf(choice.Skill)} has settled into a question:", Hue.Cyan);
             for (int i = 0; i < choice.Options.Length; i++)
                 frame.Write(x0 + 2, y0 + 16 + i,
                     $"{i + 1}) {choice.Options[i].Name}: {choice.Options[i].Blurb}", Hue.White);

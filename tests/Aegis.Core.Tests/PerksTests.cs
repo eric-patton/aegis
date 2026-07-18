@@ -24,7 +24,9 @@ public class PerksTests
         Assert.Contains(game.Log.Recent(8), e => e.Text.Contains("question of style"));
 
         var snap = game.TakeSnapshot();
-        Assert.Equal("hafted", snap.PendingKnack);
+        // The snapshot names the question's level too (D-055): a skill can
+        // carry two questions now, and the surface should say which is put.
+        Assert.Equal("hafted 2", snap.PendingKnack);
         Assert.Equal("", snap.Perks);
     }
 
@@ -55,7 +57,8 @@ public class PerksTests
         Assert.Equal("", snap.PendingKnack);
         var after = string.Join("\n", Presenter.Render(game).ToTextLines());
         Assert.DoesNotContain("settled into a question", after);
-        Assert.Contains("the follow-through", after);
+        // The skill row drops the article (D-055): two knacks share the width.
+        Assert.Contains("follow-through", after);
 
         game.ApplyKey(' ');
         Assert.False(game.InSheetMenu);

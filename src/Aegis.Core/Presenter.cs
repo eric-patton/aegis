@@ -490,6 +490,7 @@ public static class Presenter
             int alive = game.LiveMonstersHere.Count();
             Line($"Foes here: {alive}", alive > 0 ? Hue.Red : Hue.DarkGreen);
             if (game.InAim) Line("Shaft set: choose a line", Hue.Cyan);
+            if (game.InThrust) Line("Spear leveled: choose a line", Hue.Cyan);
             foreach (var monster in game.LiveMonstersHere.Where(m => m.Intent is not null))
                 Line(monster.Intent!.Kind switch
                 {

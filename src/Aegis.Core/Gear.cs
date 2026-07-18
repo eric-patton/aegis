@@ -3,6 +3,17 @@ namespace Aegis.Core;
 public enum GearSlot { Weapon, Armor, Ranged }
 
 /// <summary>
+/// What the iron does beyond its numbers (D-056, paying D-004's oldest promise:
+/// weapons change verbs). Arc: a paid swing carries through into everything
+/// else at the bearer's side. Answer: a telegraphed blow stood through and
+/// taken is answered over the iron, instantly and for free. Reach: the point
+/// strikes two strides out ('t' sets it, a direction sends it). The bow's verb
+/// is the loosed line itself (D-050), and bare fists keep their verbs in the
+/// knacks, so both carry None.
+/// </summary>
+public enum MoveVerb { None, Arc, Answer, Reach }
+
+/// <summary>
 /// A piece of equipment (D-041, the D-015 contract made real): requirements are
 /// printed, and falling short penalizes rather than blocks. Gear lives on the
 /// bearer, so like rations it survives death (the remnant takes coin and essence
@@ -31,6 +42,9 @@ public sealed class GearItem
     /// <summary>Which skill a weapon trains and draws on (D-042). Armor ignores it; bare hands are Brawling.</summary>
     public SkillId Family { get; init; } = SkillId.Brawling;
 
+    /// <summary>The weapon's verb (D-056). Hangs on the piece, not the family: the axe and the spear share a skill and not a verb.</summary>
+    public MoveVerb Move { get; init; } = MoveVerb.None;
+
     /// <summary>Fully worn: a dull edge or cut batting. Half the good, until the smith sees it.</summary>
     public bool Worn => Wear >= MaxWear;
 
@@ -54,9 +68,9 @@ public sealed class GearItem
 }
 
 /// <summary>
-/// The authored gear catalog (D-041). Eight items, each with one home: the smith
-/// stocks the plain four (the hunting bow, D-050, is bowyer's work the forge
-/// takes in trade); the grave-iron blade waits in the barrow's chest, the
+/// The authored gear catalog (D-041). Nine items, each with one home: the smith
+/// stocks the plain five (the hunting bow, D-050, is bowyer's work the forge
+/// takes in trade; the ash spear, D-056, carries the reach); the grave-iron blade waits in the barrow's chest, the
 /// carver's maul in the quarry's toolcache, the wright's mail in the fallen
 /// hall's coffer, and the yew warbow in the ringfort's arms-chest (site loot
 /// beyond coin, the D-033 deferral). Instances are minted fresh so wear never
@@ -64,7 +78,7 @@ public sealed class GearItem
 /// </summary>
 public static class GearCatalog
 {
-    public static readonly string[] SmithStock = ["woodaxe", "quilted_jack", "riveted_shirt", "hunting_bow"];
+    public static readonly string[] SmithStock = ["woodaxe", "quilted_jack", "riveted_shirt", "hunting_bow", "ash_spear"];
 
     public static GearItem Create(string id) => id switch
     {
@@ -72,7 +86,7 @@ public static class GearCatalog
         {
             Id = id, Name = "woodsman's axe", Slot = GearSlot.Weapon,
             Bonus = 2, ReqAttr = Attr.Might, Req = 5, Value = 8, MaxWear = 40,
-            Family = SkillId.Hafted,
+            Family = SkillId.Hafted, Move = MoveVerb.Arc,
         },
         "quilted_jack" => new GearItem
         {
@@ -94,17 +108,26 @@ public static class GearCatalog
             Bonus = 2, ReqAttr = Attr.Grace, Req = 7, Value = 16, MaxWear = 40,
             Family = SkillId.Ranged,
         },
+        // The reach (D-056): the smith's fifth ware and the catalog's third verb.
+        // The asking sits between the axe's and the grave-iron's, because what
+        // is bought is not the arm: it is the two strides the world keeps.
+        "ash_spear" => new GearItem
+        {
+            Id = id, Name = "ash spear", Slot = GearSlot.Weapon,
+            Bonus = 3, ReqAttr = Attr.Might, Req = 6, Value = 14, MaxWear = 40,
+            Family = SkillId.Hafted, Move = MoveVerb.Reach,
+        },
         "grave_iron" => new GearItem
         {
             Id = id, Name = "grave-iron blade", Slot = GearSlot.Weapon,
             Bonus = 4, ReqAttr = Attr.Might, Req = 7, Value = 18, MaxWear = 45,
-            Family = SkillId.Blades,
+            Family = SkillId.Blades, Move = MoveVerb.Answer,
         },
         "carvers_maul" => new GearItem
         {
             Id = id, Name = "carver's maul", Slot = GearSlot.Weapon,
             Bonus = 5, ReqAttr = Attr.Might, Req = 8, Value = 26, MaxWear = 45,
-            Family = SkillId.Hafted,
+            Family = SkillId.Hafted, Move = MoveVerb.Arc,
         },
         "wrights_mail" => new GearItem
         {

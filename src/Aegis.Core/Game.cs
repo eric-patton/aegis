@@ -58,6 +58,9 @@ public sealed class Game
     /// </summary>
     public bool InAim { get; private set; }
 
+    /// <summary>The point set (D-056): 't' with the spear in hand; the next direction key sends the thrust.</summary>
+    public bool InThrust { get; private set; }
+
     /// <summary>
     /// The terms of the crossing (D-047), open only at an open waygate: digits
     /// swear or unswear oaths on the next world, '>' crosses under what stands
@@ -262,6 +265,13 @@ public sealed class Game
             return;
         }
 
+        if (InThrust)
+        {
+            HandleThrustKey(key);
+            KeyApplied?.Invoke(key);
+            return;
+        }
+
         var cmd = CommandMap.FromKey(key);
         if (cmd == Command.None) return;
 
@@ -291,6 +301,7 @@ public sealed class Game
             Command.Gear => DoGearMenu(),
             Command.Sheet => DoSheet(),
             Command.Loose => DoLoose(),
+            Command.Thrust => DoThrust(),
             _ => CommandMap.Delta(cmd) is { } d && DoMove(d.dx, d.dy),
         };
 
@@ -1695,6 +1706,20 @@ public sealed class Game
             GearSlot.Ranged => $"You string the {item.Name} and hang it ready at your shoulder.",
             _ => $"You lace on the {item.Name}.",
         }, LogTone.Info);
+        // The iron's verb (D-056), said once at the taking-up, so the hand
+        // knows what it holds beyond the numbers.
+        switch (item.Move)
+        {
+            case MoveVerb.Arc:
+                Log.Add(Turn, "Iron this broad does not stop at one body: a full swing carries through everything at your side.", LogTone.Info);
+                break;
+            case MoveVerb.Answer:
+                Log.Add(Turn, "An edge this quick answers for itself: any read blow you stand through is returned over the iron.", LogTone.Info);
+                break;
+            case MoveVerb.Reach:
+                Log.Add(Turn, "Its length is a verb of its own: 't' levels the point at anything two strides out.", LogTone.Info);
+                break;
+        }
         if (!item.MeetsReq(Player.Attributes))
             Log.Add(Turn, $"It asks {AttributeSet.NameOf(item.ReqAttr)} {item.Req} of an arm that carries {Player.Attributes[item.ReqAttr]}. You can use it, badly, and it will tell you what to become.", LogTone.Info);
         if (!Player.GearLineHeard)
@@ -1873,6 +1898,32 @@ public sealed class Game
                 Player.Stamina = Math.Min(Player.Stamina + 2, Player.MaxStamina);
         }
 
+        // The arc (D-056): a paid swing of broad iron carries through into
+        // everything else at the bearer's side, at half its weight. One swing,
+        // one wear, one counted use: the carry is the same blow still moving.
+        if (trained is not null && weapon is { Move: MoveVerb.Arc })
+        {
+            foreach (var other in Monsters.Where(m => m.Alive && m != target
+                && m.SiteId == CurrentSite!.Id && m.Pos.Chebyshev(Player.Pos) == 1).ToList())
+            {
+                int carry = Math.Max(1, damage / 2);
+                other.Hp -= carry;
+                if (other.Alive)
+                {
+                    Log.Add(Turn, $"The swing carries through into the {other.Name} for {carry}.", LogTone.Combat);
+                    if (other.Dormant)
+                    {
+                        other.Dormant = false;
+                        Log.Add(Turn, "Grit sifts from the figure. The head grinds around to face you.", LogTone.Danger);
+                    }
+                }
+                else
+                {
+                    HarvestRemains(other);
+                }
+            }
+        }
+
         if (trained is { } skill) GainSkill(skill);
         return true;
     }
@@ -1983,6 +2034,153 @@ public sealed class Game
         {
             Log.Add(Turn, "You lower the bow, and keep the shaft.");
         }
+    }
+
+    /// <summary>How far the spear reaches (D-056): two strides, the length of the ash.</summary>
+    public const int SpearReach = 2;
+
+    /// <summary>
+    /// What a thrust asks in wind (D-056): more than a swing, because the good
+    /// bought is the two strides the world keeps. No knack lightens it; the
+    /// unmet asking taxes it like any iron (D-015).
+    /// </summary>
+    private int ThrustCost => 4
+        + (Player.Weapon is { } w && !w.MeetsReq(Player.Attributes) ? 1 : 0);
+
+    /// <summary>
+    /// The reach (D-056), first key of two: 't' sets the point and costs
+    /// nothing; the next direction key sends the thrust down that line. Like
+    /// the draw, a winded arm refuses outright: at reach, keeping the point
+    /// up costs only tempo.
+    /// </summary>
+    private bool DoThrust()
+    {
+        if (Player.Weapon is not { Move: MoveVerb.Reach })
+        {
+            Log.Add(Turn, "You hold nothing with that kind of reach.");
+            return false;
+        }
+        if (Mode != MapMode.Site)
+        {
+            Log.Add(Turn, "Nothing under this sky stands off at the spear's length.");
+            return false;
+        }
+        if (Player.Stamina < ThrustCost)
+        {
+            Log.Add(Turn, "You have not the wind to keep the point up; the spear stays couched.", LogTone.Combat);
+            return false;
+        }
+
+        InThrust = true;
+        Log.Add(Turn, "You level the spear. Choose a line; any other key lowers the point.");
+        return false;
+    }
+
+    private void HandleThrustKey(char key)
+    {
+        InThrust = false;
+        if (CommandMap.Delta(CommandMap.FromKey(key)) is { } d)
+        {
+            ThrustSpear(d.dx, d.dy);
+            AdvanceTurn();
+        }
+        else
+        {
+            Log.Add(Turn, "You lower the point.");
+        }
+    }
+
+    /// <summary>
+    /// The thrust (D-056): a full swing at the spear's length. It stops at the
+    /// first body or the first stone within two strides, pays wind and edge
+    /// like the swing it is, and only a thrust that finds a body teaches. The
+    /// board stops it like any far thing (D-053): a spear at reach is exactly
+    /// what the linden was raised against.
+    /// </summary>
+    private void ThrustSpear(int dx, int dy)
+    {
+        var spear = Player.Weapon!;
+        Player.Stamina -= ThrustCost;
+
+        // The kind grip (D-046) spares the haft's every second counted use,
+        // thrust or swing: the clock is the skill's, not the verb's.
+        bool edgeSpared = Player.HasPerk(PerkId.KindGrip) && Player.Skills.Uses(SkillId.Hafted) % 2 == 1;
+        if (!spear.Worn && !edgeSpared)
+        {
+            spear.Wear = Math.Min(spear.MaxWear, spear.Wear + WearStep);
+            if (spear.Worn)
+                Log.Add(Turn, $"The {spear.Name}'s point is rolled and dull: it pushes where it used to bite. The smith's wheel would right it.", LogTone.Combat);
+        }
+
+        var map = CurrentMap;
+        var pos = Player.Pos;
+        for (int step = 0; step < SpearReach; step++)
+        {
+            pos = pos.Plus(dx, dy);
+            if (!map.Walkable(pos))
+            {
+                Log.Add(Turn, "The point checks against stone.", LogTone.Combat);
+                return;
+            }
+
+            var target = Monsters.FirstOrDefault(m => m.Alive && m.SiteId == CurrentSite!.Id && m.Pos == pos);
+            if (target is null) continue;
+
+            // A thrust from a resolved bearer's hand is still the old way
+            // (D-045): the spear's two strides change nothing the shaft's
+            // eight did not already say.
+            if (target.Kind == MonsterKind.Severed && Player.Resolution != Resolution.None && !_layingDeclined)
+            {
+                _layingDeclined = true;
+                Log.Add(Turn, "\"From this distance, then. The old way has a reach, bearer. So be it.\"", LogTone.Aegis);
+            }
+
+            // The board (D-053): a walking carl keeps its linden between you
+            // and any far point. The wind and the edge are spent; nothing is
+            // bought or taught.
+            if (target.Kind == MonsterKind.Carl && target.Intent is null && target.ExposedTurns == 0)
+            {
+                Log.Add(Turn, "The point drives into the linden board and is turned along the grain.", LogTone.Combat);
+                return;
+            }
+
+            int damage = _combatRng.Range(2, 5) + Player.MeleeBonus + spear.EffectiveBonus(Player.Attributes)
+                + Player.Skills.Bonus(SkillId.Hafted)
+                + (Player.HasPerk(PerkId.TrueArc) ? 1 : 0);
+            target.Hp -= damage;
+
+            if (target.Alive)
+            {
+                Log.Add(Turn, $"Your thrust takes the {target.Name} at the spear's length for {damage}.", LogTone.Combat);
+                if (target.Dormant)
+                {
+                    target.Dormant = false;
+                    Log.Add(Turn, "Grit sifts from the figure. The head grinds around to face you.", LogTone.Danger);
+                }
+                // The checked swing (D-055) has the same weight at the ash's
+                // length: a paid landed blow breaks the wind-up outright.
+                if (Player.HasPerk(PerkId.CheckedSwing) && target.Intent is not null)
+                {
+                    target.Intent = null;
+                    Log.Add(Turn, $"The weight staggers the {target.Name}; the blow it was raising dies unthrown.", LogTone.Combat);
+                }
+            }
+            else
+            {
+                HarvestRemains(target);
+                // The follow-through (D-046) knows no distance: a hafted
+                // killing blow hands part of its wind back.
+                if (Player.HasPerk(PerkId.FollowThrough))
+                    Player.Stamina = Math.Min(Player.Stamina + 2, Player.MaxStamina);
+            }
+
+            // Only a thrust that found a body teaches (D-014's cost gating,
+            // the shaft's rule at the spear's length).
+            GainSkill(SkillId.Hafted);
+            return;
+        }
+
+        Log.Add(Turn, "The point finds only the air two strides out.", LogTone.Combat);
     }
 
     /// <summary>
@@ -2233,12 +2431,13 @@ public sealed class Game
             if (intent.TurnsUntilResolve <= 0)
             {
                 monster.Intent = null;
+                bool landed = Player.Pos == intent.TargetCell;
                 if (intent.Kind == IntentKind.BoarCharge)
                 {
                     // The charge (D-053) resolves along its lane, not on one cell.
                     ResolveCharge(monster, intent);
                 }
-                else if (Player.Pos == intent.TargetCell)
+                else if (landed)
                 {
                     int damage = Absorb(intent.Kind switch
                     {
@@ -2282,6 +2481,31 @@ public sealed class Game
                 {
                     monster.ExposedTurns = 2;
                     Log.Add(Turn, "The blow spent, the shield-carl's board hangs wide of its line.", LogTone.Combat);
+                }
+
+                // The answer (D-056): a read blow stood through and taken, with
+                // answering iron in hand and the striker within its length, is
+                // answered instantly and for free. The price was already paid
+                // in blood; the blow dodged is the blow never answered. A cut
+                // at the hollow's keeper is the old way, so while the laying
+                // moment stands open the hand holds (D-045).
+                if (landed && intent.Kind != IntentKind.BoarCharge && Player.Hp > 0
+                    && Player.Weapon is { Move: MoveVerb.Answer } blade
+                    && monster.Pos.Chebyshev(Player.Pos) == 1)
+                {
+                    if (monster.Kind == MonsterKind.Severed && Player.Resolution != Resolution.None && !_layingDeclined)
+                    {
+                        Log.Add(Turn, "Your hand starts the answer, and you hold it.", LogTone.Combat);
+                    }
+                    else
+                    {
+                        int answer = 1 + blade.EffectiveBonus(Player.Attributes);
+                        monster.Hp -= answer;
+                        if (monster.Alive)
+                            Log.Add(Turn, $"You take the blow standing and answer over the iron: the {monster.Name} is cut for {answer}.", LogTone.Combat);
+                        else
+                            HarvestRemains(monster);
+                    }
                 }
             }
             return;
@@ -2837,6 +3061,7 @@ public sealed class Game
         InSheetMenu: InSheetMenu,
         InCrossingMenu: InCrossingMenu,
         InAim: InAim,
+        InThrust: InThrust,
         TalkNpc: TalkNpc?.Name ?? "",
         WoundedTurns: Player.WoundedTurns,
         Deaths: Player.Deaths,
@@ -2947,6 +3172,7 @@ public sealed record Snapshot(
     bool InSheetMenu,
     bool InCrossingMenu,
     bool InAim,
+    bool InThrust,
     string TalkNpc,
     int WoundedTurns,
     int Deaths,

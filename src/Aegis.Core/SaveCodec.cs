@@ -71,10 +71,13 @@ namespace Aegis.Core;
 /// v23 when D-055 opened the level-4 knack questions: a sheet digit a v22
 /// journal pressed to no effect now answers a question forever, and the
 /// chosen knacks change later damage, wind, and wear.
+/// v24 when D-056 gave the iron its verbs: 't' gained meaning, the arc and
+/// the answer land blows no v23 journal recorded, and the smith stocks a
+/// fifth ware, so the teaching and repair digits shifted under old fingers.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 23;
+    public const int Version = 24;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

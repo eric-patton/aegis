@@ -12,7 +12,8 @@ public class RangedTests
     [Fact]
     public void TheBow_IsTheSmithsFourthWare_AndTheFirstGraceIron()
     {
-        Assert.Equal("hunting_bow", GearCatalog.SmithStock[^1]);
+        // Fourth of five since D-056 hung the ash spear beside it.
+        Assert.Equal("hunting_bow", GearCatalog.SmithStock[3]);
 
         var bow = GearCatalog.Create("hunting_bow");
         Assert.Equal(GearSlot.Ranged, bow.Slot);

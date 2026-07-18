@@ -13,6 +13,7 @@ public enum Command
     Gear,
     Sheet,
     Loose,
+    Thrust,
     Quit,
 }
 
@@ -38,6 +39,7 @@ public static class CommandMap
         'i' => Command.Gear,
         'c' => Command.Sheet,
         'f' => Command.Loose,
+        't' => Command.Thrust,
         'q' => Command.Quit,
         _ => Command.None,
     };

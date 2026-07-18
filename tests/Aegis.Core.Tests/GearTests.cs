@@ -45,7 +45,8 @@ public class GearTests
 
         Assert.True(game.InTalkMenu);
         Assert.Equal(2, game.Topics.Count);
-        Assert.Equal(4, game.Offers.Count(o => o.Good == TradeGood.Gear));
+        // The plain five since D-056 (the ash spear joined the wall).
+        Assert.Equal(5, game.Offers.Count(o => o.Good == TradeGood.Gear));
         Assert.DoesNotContain(game.Offers, o => o.Good == TradeGood.Repair);
 
         // The riveted shirt prints its requirement before any coin moves; the

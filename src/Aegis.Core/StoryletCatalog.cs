@@ -102,6 +102,38 @@ public static class StoryletCatalog
             ],
         },
 
+        // The burden made visible (D-051): the stead lives one season under terms
+        // it never swore, and only the Aegis can say whose they are.
+        new Storylet
+        {
+            Id = "the-hard-season",
+            Trigger = StoryletTrigger.NearHouse,
+            When = g => g.Burden > 0,
+            Lines =
+            [
+                ("By the byre door a woman counts sacks, loses the count, and starts again. \"A lean year,\" she says, to nobody. \"Lean, and long.\"", LogTone.Info),
+                ("\"They do not know whose terms hold over their season, bearer. I do. The count honors what is carried; it does not ask who else carries it.\"", LogTone.Aegis),
+            ],
+        },
+
+        // Standing walks ahead (D-051): the first time a stead knows the bearer
+        // before a word is said. Once per character: being known stops being news.
+        new Storylet
+        {
+            Id = "the-known-face",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.Character,
+            Priority = 10,
+            When = g => g.TalkNpc?.Kind == NpcKind.Villager
+                && g.Standing >= 2
+                && !g.World.Oaths.Contains(OathId.HushedName),
+            Lines =
+            [
+                ("They put a hand up before you can begin: not a stranger's greeting. \"We know. The song came through days ahead of you, and half the stead has watched the road since.\"", LogTone.Info),
+                ("\"So the third ledger walks ahead of us now. Mind it, bearer: a door opened before you knock is a kind of debt.\"", LogTone.Aegis),
+            ],
+        },
+
         // First conversation with anyone, once per character: the Aegis notices people.
         new Storylet
         {

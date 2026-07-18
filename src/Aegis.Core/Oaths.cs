@@ -6,6 +6,9 @@ public enum OathId
     HungryRoad,
     SpentEdge,
     SlowMending,
+    OldBlood,
+    LeanDark,
+    HushedName,
 }
 
 /// <summary>One oath's catalog entry. Blurbs are written for the terms menu: one line, plain register.</summary>
@@ -26,6 +29,11 @@ public static class OathCatalog
         new(OathId.HungryRoad, "the hungry road", "bread costs double", 1),
         new(OathId.SpentEdge, "the spent edge", "iron wears twice as fast", 1),
         new(OathId.SlowMending, "the slow mending", "wounds last twice as long", 1),
+        // D-051's second wave. The old blood is the first oath to weigh 2: it
+        // bites in every fight in the world, and the burden scale says so.
+        new(OathId.OldBlood, "the old blood", "every blow lands 1 deeper", 2),
+        new(OathId.LeanDark, "the lean dark", "essence comes up halved", 1),
+        new(OathId.HushedName, "the hushed name", "the songs fall silent", 1),
     ];
 
     public static OathDef Def(OathId id) => All.First(o => o.Id == id);
@@ -37,6 +45,9 @@ public static class OathCatalog
         OathId.HungryRoad => "hungry_road",
         OathId.SpentEdge => "spent_edge",
         OathId.SlowMending => "slow_mending",
+        OathId.OldBlood => "old_blood",
+        OathId.LeanDark => "lean_dark",
+        OathId.HushedName => "hushed_name",
         _ => id.ToString().ToLowerInvariant(),
     };
 }

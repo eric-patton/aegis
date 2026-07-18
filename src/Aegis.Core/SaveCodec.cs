@@ -54,10 +54,13 @@ namespace Aegis.Core;
 /// v18 when D-050 put a bow in the bearer's hands: 'f' arms and a direction
 /// looses, both journaled, the smith's stock gained a fourth ware (shifting
 /// the mending entry's digit), and every shaft changes later state.
+/// v19 when D-051 grew the terms: digits 5-7 at the crossing menu now swear
+/// oaths where a v18 key stepped back, and the hushed name changes prices,
+/// bread, the mending count, and which facts a world is born holding.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 18;
+    public const int Version = 19;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

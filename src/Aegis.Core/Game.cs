@@ -109,7 +109,7 @@ public sealed class Game
     public int RationPrice =>
         ((World.Facts.Exists("story", CreepingBlightTemplate.Id)
         && !World.Facts.Exists("story_complete", CreepingBlightTemplate.Id) ? 6 : 4)
-        - (Standing >= 2 ? 1 : 0))
+        - (Standing >= 2 && !World.Oaths.Contains(OathId.HushedName) ? 1 : 0))
         * (World.Oaths.Contains(OathId.HungryRoad) ? 2 : 1);
 
     /// <summary>How far one wear event moves the ledger: the spent edge (D-047) doubles it.</summary>
@@ -528,8 +528,10 @@ public sealed class Game
         TalkNpc = null;
         CurrentSite = null;
         // The menders' honor (D-048): a world's Unbinder will loosen one more
-        // raise for a bearer the songs carry high.
-        UnbindingsLeft = UnbindingsPerWorld + (Standing >= 4 ? 1 : 0);
+        // raise for a bearer the songs carry high. The hushed name (D-051)
+        // silences it with every other favor standing buys.
+        bool hushed = World.Oaths.Contains(OathId.HushedName);
+        UnbindingsLeft = UnbindingsPerWorld + (Standing >= 4 && !hushed ? 1 : 0);
         _layingTarget = null;
         _layingDeclined = false;
 
@@ -539,10 +541,13 @@ public sealed class Game
         Player.Hp = Player.MaxHp;
         Player.Stamina = Player.MaxStamina;
 
-        World.Facts.Add("echo", "deed", prevSettlement,
-            prevBurden > 0
-                ? $"In a world called {prevWorld}, the bearer emptied a goblin cave under oath, and {prevSettlement} slept safe. The songs say they chose the harder walking."
-                : $"In a world called {prevWorld}, the bearer emptied a goblin cave, and {prevSettlement} slept safe.");
+        // The hushed name (D-051): the deed's song does not travel into a hushed
+        // world at all, so nothing there can hum it, sing it, or know the walker.
+        if (!hushed)
+            World.Facts.Add("echo", "deed", prevSettlement,
+                prevBurden > 0
+                    ? $"In a world called {prevWorld}, the bearer emptied a goblin cave under oath, and {prevSettlement} slept safe. The songs say they chose the harder walking."
+                    : $"In a world called {prevWorld}, the bearer emptied a goblin cave, and {prevSettlement} slept safe.");
 
         // The long song (D-045): from the third world on, the walked worlds are one
         // song, compounding a verse per crossing, and every stead sings it wrong.
@@ -611,10 +616,13 @@ public sealed class Game
         Log.Add(Turn, "The air is older here, and hungrier.", LogTone.Danger);
         if (World.Oaths.Count > 0)
             Log.Add(Turn, $"The terms you took up hold here: {string.Join(", ", World.Oaths.Select(o => OathCatalog.Def(o).Name))}.", LogTone.Danger);
-        Log.Add(Turn, $"In {World.SettlementName} they already sing of a stranger who emptied a goblin cave, in a world called {prevWorld}.");
+        if (hushed)
+            Log.Add(Turn, $"No song of you has come ahead. In {World.SettlementName} you are only a stranger off the road.");
+        else
+            Log.Add(Turn, $"In {World.SettlementName} they already sing of a stranger who emptied a goblin cave, in a world called {prevWorld}.");
         // The welcome (D-048): the songs walked ahead, and the stead answers them
         // in bread. Hospitality scales with standing and never past the cap.
-        int welcome = Math.Min(Math.Min(Standing, 3), RationCap - Player.Rations);
+        int welcome = hushed ? 0 : Math.Min(Math.Min(Standing, 3), RationCap - Player.Rations);
         if (welcome > 0)
         {
             Player.Rations += welcome;
@@ -788,7 +796,14 @@ public sealed class Game
         if (CampCleared)
             topics.Add(("The quiet nights", $"\"The raids are ended, and everyone knows whose doing that was. {World.SettlementName} sleeps whole again.\""));
         else if (World.Facts.OfType("grievance").FirstOrDefault() is { } grievance)
-            topics.Add(("The goblin raids", $"\"{grievance.Detail} We have fed them to keep the peace. It has not bought much peace.\""));
+        {
+            // The crowded dark felt from inside (D-051): the stead lives in the
+            // oath-bound world too, and its one visible den is the camp.
+            string crowded = World.Oaths.Contains(OathId.CrowdedDark)
+                ? " And there are more of them this year than the oldest of us can account for."
+                : "";
+            topics.Add(("The goblin raids", $"\"{grievance.Detail} We have fed them to keep the peace. It has not bought much peace.{crowded}\""));
+        }
 
         if (World.Facts.Find("rest_point", "shrine") is { } shrine)
             topics.Add(("The shrine", $"{shrine.Detail} \"Old past knowing. We keep it swept all the same.\""));
@@ -812,7 +827,17 @@ public sealed class Game
             topics.Add(("The wanderer", $"\"{wanderer.Detail} Not the first such to pass through, if the old folk are believed.\""));
 
         if (World.Facts.OfType("echo").FirstOrDefault() is { } echo)
-            topics.Add(("Old songs", $"\"There is a new one, though none can say who taught it. {echo.Detail}\""));
+        {
+            // Standing heard from the stead's side (D-051): the higher the songs
+            // carry the bearer, the less the singer pretends not to notice. In a
+            // hushed world no echo fact exists, so the topic silences itself.
+            string knowing = Standing >= 3
+                ? " They sing it looking at the door you came in by. No one here thinks the walker is a stranger."
+                : Standing >= 1
+                    ? " And whoever taught it, the walker in it is about your height. Make of that what you like."
+                    : "";
+            topics.Add(("Old songs", $"\"There is a new one, though none can say who taught it. {echo.Detail}{knowing}\""));
+        }
 
         return topics;
     }
@@ -1561,6 +1586,9 @@ public sealed class Game
             MonsterKind.Hound => 6,
             _ => 5,
         };
+        // The lean dark (D-051): the dark yields half its essence, rounded
+        // against the bearer. Coin is unbothered: it was never the dark's to give.
+        if (World.Oaths.Contains(OathId.LeanDark)) essence /= 2;
         Player.Coin += coin;
         Player.Essence += essence;
         Log.Add(Turn, target.Kind switch
@@ -1736,6 +1764,9 @@ public sealed class Game
     /// </summary>
     private int Absorb(int raw, bool telegraphed = false)
     {
+        // The old blood (D-051): every tenant of the world strikes 1 deeper.
+        // On the raw blow, before iron, so armor still earns its keep.
+        if (World.Oaths.Contains(OathId.OldBlood)) raw += 1;
         var armor = Player.Armor;
         if (armor is null) return raw;
         // Warding is armor-craft, not toughness: it only helps while iron is

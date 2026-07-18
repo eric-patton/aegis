@@ -1,6 +1,6 @@
 namespace Aegis.Core;
 
-public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort, Songhall }
+public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort, Songhall, Leaguer }
 
 /// <summary>A monster placed at generation time: kind, cell, and generated stats (D-011).</summary>
 public readonly record struct MonsterSpawn(MonsterKind Kind, Pos Pos, int Hp);
@@ -79,6 +79,7 @@ public sealed class World
 
     /// <summary>The tier-5+ band's site (D-053): the old watch, and the bow's answer.</summary>
     public Site? RingfortSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Ringfort);
+    public Site? LeaguerSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Leaguer);
 
     /// <summary>The stead's smith (D-041): every world, every tier. Sells the plain three, mends what use has dulled.</summary>
     public Npc Smith => Npcs.First(n => n.Kind == NpcKind.Smith);
@@ -504,10 +505,11 @@ public static class WorldGen
         // the old watch stands. Own streams, placed after every existing draw
         // (and before the gleanings, whose forest check must see its gate tile),
         // so pinned tier-1-4 worlds keep their layouts exactly.
+        Pos fortPos = default;
         if (tier >= 5)
         {
             var fortRng = new Rng(SeedTree.Derive(worldSeed, "ringfort"));
-            Pos fortPos = FindDistantSpot(overworld, ref fortRng, settlement, minDistance: 20);
+            fortPos = FindDistantSpot(overworld, ref fortRng, settlement, minDistance: 20);
             while (overworld[fortPos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills)
                    || fortPos.Manhattan(camp) < 5 || fortPos.Manhattan(gate) < 5
                    || fortPos.Manhattan(barrow) < 5 || fortPos.Manhattan(hollowPos) < 5
@@ -535,6 +537,41 @@ public static class WorldGen
             });
             facts.Add("site", "ringfort", $"{fortPos.X},{fortPos.Y}",
                 "A ring-walled fort older than the war anyone can name. The watch on its walls was never stood down, and the beasts they kept have not gone tame.");
+        }
+
+        // The fen-leaguer (D-057): tier 6+ worlds hold the fifth band's site,
+        // the siege that outlived its object. Own streams, placed after every
+        // existing draw and before the gleanings (whose forest check must see
+        // its bank tile), so pinned tier-1-5 worlds keep their layouts exactly.
+        if (tier >= 6)
+        {
+            var leaguerRng = new Rng(SeedTree.Derive(worldSeed, "leaguer"));
+            Pos merePos = FindDistantSpot(overworld, ref leaguerRng, settlement, minDistance: 20);
+            while (overworld[merePos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills)
+                   || merePos.Manhattan(camp) < 5 || merePos.Manhattan(gate) < 5
+                   || merePos.Manhattan(barrow) < 5 || merePos.Manhattan(hollowPos) < 5
+                   || merePos.Manhattan(quarryPos) < 5 || merePos.Manhattan(hallPos) < 5
+                   || merePos.Manhattan(fortPos) < 5 || merePos.Manhattan(stairPos) < 5
+                   || npcs.Any(n => n.Pos == merePos))
+                merePos = FindDistantSpot(overworld, ref leaguerRng, settlement, minDistance: 20);
+            overworld[merePos] = Terrain.LeaguerEntrance;
+            CarvePathIfDisconnected(overworld, shrine, merePos);
+
+            int warderCount = Math.Min(5 + (tier - 6), 8) + crowd;
+            int warderHp = 12 + 2 * (tier - 6);
+            var (mereMap, mereEntry, warderSpawns, mereChest) = GenerateLeaguer(worldSeed, warderCount);
+            sites.Add(new Site
+            {
+                Id = "leaguer",
+                Kind = SiteKind.Leaguer,
+                Map = mereMap,
+                OverworldPos = merePos,
+                EntryPos = mereEntry,
+                Spawns = [.. warderSpawns.Select(p => new MonsterSpawn(MonsterKind.Warder, p, warderHp))],
+                ChestPos = mereChest,
+            });
+            facts.Add("site", "leaguer", $"{merePos.X},{merePos.Y}",
+                "A broad black mere ringed with old siege-works. The watch on the banks has never lifted its leaguer, and stones still fall on the causeway.");
         }
 
         // The gleanings (D-052): what the wood sets out for taught eyes. Placed in
@@ -1203,6 +1240,97 @@ public static class WorldGen
 
         map[entry] = Terrain.ExitLadder;
         return (map, entry, carls, boars, chest);
+    }
+
+    public const int LeaguerW = 33;
+    public const int LeaguerH = 21;
+
+    // The holm's bounds, published so the storylet on its crown can read them.
+    public const int HolmMinX = 14, HolmMaxX = 18, HolmMinY = 8, HolmMaxY = 12;
+
+    /// <summary>
+    /// The fen-leaguer (D-057): a broad black mere inside a ring of siege-works,
+    /// one causeway out to the bare holm the works were raised against. No other
+    /// site holds water, so the read is instant: the mere stops feet and not
+    /// eyes, the banks are the warders' ground, and the causeway is the one
+    /// road to the cist. Mounds on the works follow the quarry's rule (all
+    /// eight neighbors open floor), so cover never disconnects the ring; the
+    /// ring, the causeway, and the holm connect by construction.
+    /// </summary>
+    private static (GameMap Map, Pos Entry, List<Pos> Warders, Pos Chest)
+        GenerateLeaguer(ulong worldSeed, int warderCount)
+    {
+        var rng = new Rng(SeedTree.Derive(worldSeed, "site-leaguer"));
+        var map = new GameMap("leaguer", LeaguerW, LeaguerH, Terrain.Floor);
+        int midY = LeaguerH / 2;
+
+        for (int x = 0; x < LeaguerW; x++)
+        {
+            map[new Pos(x, 0)] = Terrain.Wall;
+            map[new Pos(x, LeaguerH - 1)] = Terrain.Wall;
+        }
+        for (int y = 0; y < LeaguerH; y++)
+        {
+            map[new Pos(0, y)] = Terrain.Wall;
+            map[new Pos(LeaguerW - 1, y)] = Terrain.Wall;
+        }
+
+        // The mere, leaving three strides of works inside the outer bank.
+        for (int y = 4; y <= LeaguerH - 5; y++)
+            for (int x = 4; x <= LeaguerW - 5; x++)
+                map[new Pos(x, y)] = Terrain.Water;
+
+        // The holm, and the one causeway out to it from the western works.
+        for (int y = HolmMinY; y <= HolmMaxY; y++)
+            for (int x = HolmMinX; x <= HolmMaxX; x++)
+                map[new Pos(x, y)] = Terrain.Floor;
+        for (int x = 4; x < HolmMinX; x++)
+            map[new Pos(x, midY)] = Terrain.Floor;
+
+        var entry = new Pos(2, midY);
+
+        // Mounds on the works: the eight-open rule keeps the ring whole, and
+        // keeps them off the causeway for free (its neighbors are water). The
+        // holm stays bare: nothing was ever built on the besieged ground.
+        int mounds = 0;
+        for (int attempt = 0; attempt < 300 && mounds < 6; attempt++)
+        {
+            var p = new Pos(rng.Range(2, LeaguerW - 2), rng.Range(2, LeaguerH - 2));
+            bool clear = p.Manhattan(entry) >= 3
+                && (p.X < HolmMinX - 1 || p.X > HolmMaxX + 1 || p.Y < HolmMinY - 1 || p.Y > HolmMaxY + 1);
+            for (int dy = -1; dy <= 1 && clear; dy++)
+                for (int dx = -1; dx <= 1 && clear; dx++)
+                    if (map[p.Plus(dx, dy)] != Terrain.Floor) clear = false;
+            if (!clear) continue;
+            map[p] = Terrain.Wall;
+            mounds++;
+        }
+
+        // The warders stand the works, spread the whole way around, none of
+        // them close enough to the entry to make the first step a fight.
+        var works = new List<Pos>();
+        for (int y = 1; y < LeaguerH - 1; y++)
+            for (int x = 1; x < LeaguerW - 1; x++)
+            {
+                var p = new Pos(x, y);
+                if (map[p] == Terrain.Floor && (x <= 3 || x >= LeaguerW - 4 || y <= 3 || y >= LeaguerH - 4)
+                    && p.Manhattan(entry) > 6)
+                    works.Add(p);
+            }
+        var warders = new List<Pos>();
+        int guard = 4000;
+        while (warders.Count < warderCount)
+        {
+            var p = rng.Pick(works);
+            bool spaced = guard-- <= 0 || warders.All(q => q.Manhattan(p) >= 4);
+            if (!warders.Contains(p) && spaced) warders.Add(p);
+        }
+
+        // The cist sits on the holm's crown: the far end of the one road.
+        var chest = new Pos((HolmMinX + HolmMaxX) / 2, midY);
+
+        map[entry] = Terrain.ExitLadder;
+        return (map, entry, warders, chest);
     }
 }
 

@@ -197,7 +197,7 @@ public sealed class Player
 /// <summary>How the threshold resolved (D-039): unresolved, the keeping taken up, or laid down.</summary>
 public enum Resolution { None, Kept, Refused }
 
-public enum MonsterKind { Goblin, Wight, Severed, Graven, Hound, Carl, Boar }
+public enum MonsterKind { Goblin, Wight, Severed, Graven, Hound, Carl, Boar, Warder }
 
 public sealed class Monster
 {
@@ -213,6 +213,8 @@ public sealed class Monster
     /// <summary>
     /// Standing as a statue (D-040): graven men begin dormant and do nothing
     /// until the bearer comes near in their line of sight, or strikes them.
+    /// The leaguer's warders (D-057) begin the same way, but wake as one:
+    /// the first sighting is a horn, and the horn is for everybody.
     /// </summary>
     public bool Dormant { get; set; }
 
@@ -233,6 +235,7 @@ public sealed class Monster
         MonsterKind.Hound => "iron hound",
         MonsterKind.Carl => "shield-carl",
         MonsterKind.Boar => "war-boar",
+        MonsterKind.Warder => "sling-warder",
         _ => "creature",
     };
 }
@@ -248,7 +251,7 @@ public sealed class Intent
     public int TurnsUntilResolve { get; set; } = 1;
 }
 
-public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut, HurledStone, GravenFist, ThroatLunge, SeaxStab, BoarCharge }
+public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut, HurledStone, GravenFist, ThroatLunge, SeaxStab, BoarCharge, LoftedStone }
 
 /// <summary>
 /// Villagers live beside their houses; the Unbinder (D-034) is the wandering

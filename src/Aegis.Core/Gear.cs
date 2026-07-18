@@ -68,13 +68,13 @@ public sealed class GearItem
 }
 
 /// <summary>
-/// The authored gear catalog (D-041). Nine items, each with one home: the smith
+/// The authored gear catalog (D-041). Ten items, each with one home: the smith
 /// stocks the plain five (the hunting bow, D-050, is bowyer's work the forge
 /// takes in trade; the ash spear, D-056, carries the reach); the grave-iron blade waits in the barrow's chest, the
 /// carver's maul in the quarry's toolcache, the wright's mail in the fallen
-/// hall's coffer, and the yew warbow in the ringfort's arms-chest (site loot
-/// beyond coin, the D-033 deferral). Instances are minted fresh so wear never
-/// leaks between games.
+/// hall's coffer, the yew warbow in the ringfort's arms-chest (site loot
+/// beyond coin, the D-033 deferral), and the scaled byrnie under the
+/// leaguer's cist. Instances are minted fresh so wear never leaks between games.
 /// </summary>
 public static class GearCatalog
 {
@@ -143,6 +143,14 @@ public static class GearCatalog
             Id = id, Name = "yew warbow", Slot = GearSlot.Ranged,
             Bonus = 4, ReqAttr = Attr.Grace, Req = 9, Value = 32, MaxWear = 50,
             Family = SkillId.Ranged,
+        },
+        // The holm-holder's harness (D-057): the armor ladder's next rung, out
+        // of the leaguer's cist. Made for the besieged side of a siege: it sat
+        // an age under falling stones, and the falling stones are still there.
+        "scaled_byrnie" => new GearItem
+        {
+            Id = id, Name = "scaled byrnie", Slot = GearSlot.Armor,
+            Bonus = 4, ReqAttr = Attr.Vigor, Req = 11, Value = 44, MaxWear = 60,
         },
         _ => throw new ArgumentException($"Unknown gear id: {id}"),
     };

@@ -74,10 +74,13 @@ namespace Aegis.Core;
 /// v24 when D-056 gave the iron its verbs: 't' gained meaning, the arc and
 /// the answer land blows no v23 journal recorded, and the smith stocks a
 /// fifth ware, so the teaching and repair digits shifted under old fingers.
+/// v25 when D-057 raised the fen-leaguer in tier-6+ worlds: a mere and its
+/// works stand where a v24 walk that deep crossed plain ground, held by a
+/// watch that did not exist when the journal was played.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 24;
+    public const int Version = 25;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

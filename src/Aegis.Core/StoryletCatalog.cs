@@ -267,6 +267,38 @@ public static class StoryletCatalog
             ],
         },
 
+        // On the holm's crown (D-057, tier 6+ worlds): world-texture. The deep
+        // bands' recurring story, duty outliving its master, at its furthest
+        // turn: here the duty has outlived its object too.
+        new Storylet
+        {
+            Id = "the-bare-holm",
+            Trigger = StoryletTrigger.EnterTile,
+            Tile = Terrain.Floor,
+            Priority = 5,
+            When = g => g.CurrentSite?.Kind == SiteKind.Leaguer
+                && g.Player.Pos.X >= WorldGen.HolmMinX && g.Player.Pos.X <= WorldGen.HolmMaxX
+                && g.Player.Pos.Y >= WorldGen.HolmMinY && g.Player.Pos.Y <= WorldGen.HolmMaxY,
+            Lines =
+            [
+                ("The holm is bare rock, old nests, and a fire-ring with an age of moss in it. Whatever the leaguer was raised against left long before the grass grew over the banks.", LogTone.Info),
+                ("Out across the water the slings keep their watch on you all the same. The siege goes on. There has been nothing to besiege for a very long time.", LogTone.Info),
+            ],
+        },
+
+        // The stead's answer to the leaguer lifting: the low road across the fen.
+        new Storylet
+        {
+            Id = "the-low-road",
+            Trigger = StoryletTrigger.NearHouse,
+            Requires = [new FactPattern("deed", "siege_lifted")],
+            Lines =
+            [
+                ("A carter is telling it at the well: he took the low road past the mere, the one the old folk strike off every map they teach, and nothing on the banks rose whirring to mark him.", LogTone.Info),
+                ("The steadholder chews on it a while. \"Half a day saved to the far grazings, if the low road holds.\" By evening two more carts have gone that way, loaded light, just in case.", LogTone.Info),
+            ],
+        },
+
         // Inside the songhall (D-054, every world): world-texture. The hall is
         // the counter-room to the deep bands: the one interior where nothing
         // fights back and everything keeps.

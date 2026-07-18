@@ -375,6 +375,19 @@ public static class Presenter
                         PutWorld(lane, '!', Hue.White, Hue.DarkRed);
                     }
                 }
+                else if (intent.Kind == IntentKind.LoftedStone)
+                {
+                    // The lofted cast (D-057) bursts: the mark is nine cells,
+                    // the full price at its middle and the graze around it,
+                    // because a dodge the drawing undersells is not a dodge.
+                    for (int dy = -1; dy <= 1; dy++)
+                        for (int dx = -1; dx <= 1; dx++)
+                        {
+                            var cell = intent.TargetCell.Plus(dx, dy);
+                            if (map.Walkable(cell))
+                                PutWorld(cell, '!', Hue.White, dx == 0 && dy == 0 ? Hue.DarkRed : Hue.Red);
+                        }
+                }
                 else
                 {
                     PutWorld(intent.TargetCell, '!', Hue.White, Hue.DarkRed);
@@ -406,6 +419,7 @@ public static class Presenter
                 MonsterKind.Hound => 'd',
                 MonsterKind.Carl => 'c',
                 MonsterKind.Boar => 'b',
+                MonsterKind.Warder => 'v',
                 _ => 'g',
             };
             var calm = monster.Kind switch
@@ -417,6 +431,8 @@ public static class Presenter
                 MonsterKind.Hound => Hue.DarkCyan,
                 MonsterKind.Carl => Hue.Yellow,
                 MonsterKind.Boar => Hue.DarkRed,
+                // A watching warder is drawn low, part of the works it stands.
+                MonsterKind.Warder => monster.Dormant ? Hue.DarkGray : Hue.DarkGreen,
                 _ => Hue.Red,
             };
             PutWorld(monster.Pos, ch, monster.Intent is null ? calm : Hue.White,
@@ -448,6 +464,7 @@ public static class Presenter
         Terrain.SonghallEntrance => ('S', Hue.Cyan, Hue.Black),
         Terrain.Plinth => ('T', Hue.White, Hue.Black),
         Terrain.RingfortEntrance => ('0', Hue.Yellow, Hue.Black),
+        Terrain.LeaguerEntrance => ('U', Hue.Blue, Hue.Black),
         _ => ('?', Hue.Magenta, Hue.Black),
     };
 
@@ -485,6 +502,9 @@ public static class Presenter
                 SiteKind.Threshold => "The last stair",
                 SiteKind.Quarry => "The old quarry",
                 SiteKind.Hall => "The fallen hall",
+                SiteKind.Ringfort => "The ringfort",
+                SiteKind.Songhall => "The songhall",
+                SiteKind.Leaguer => "The fen-leaguer",
                 _ => "Goblin cave",
             }, Hue.White);
             int alive = game.LiveMonstersHere.Count();
@@ -499,6 +519,7 @@ public static class Presenter
                     IntentKind.HurledStone => "! hurled stone incoming",
                     IntentKind.GravenFist => "! graven fist poised",
                     IntentKind.ThroatLunge => "! throat-lunge gathering",
+                    IntentKind.LoftedStone => "! sling-stone falling",
                     _ => "! crushing blow poised",
                 }, Hue.Red);
         }
@@ -512,6 +533,9 @@ public static class Presenter
             if (here == Terrain.HollowEntrance) Line("Stone ring: > enters", Hue.White);
             if (here == Terrain.QuarryEntrance) Line("Quarry rim: > descends", Hue.DarkYellow);
             if (here == Terrain.HallEntrance) Line("Fallen gate: > enters", Hue.DarkCyan);
+            if (here == Terrain.RingfortEntrance) Line("Fort gate: > enters", Hue.Yellow);
+            if (here == Terrain.LeaguerEntrance) Line("Leaguer banks: > enters", Hue.Blue);
+            if (here == Terrain.SonghallEntrance) Line("Songhall door: > enters", Hue.Cyan);
             if (here == Terrain.ThresholdEntrance)
                 Line(game.Player.CommissionHeard ? "Deep stair: > descends" : "Deep stair: shut", Hue.Magenta);
             if (here == Terrain.Waygate)

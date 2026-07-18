@@ -174,7 +174,7 @@ public sealed class Game
                     Pos = spawn.Pos,
                     Hp = spawn.Hp,
                     SiteId = site.Id,
-                    Dormant = spawn.Kind == MonsterKind.Graven,
+                    Dormant = spawn.Kind is MonsterKind.Graven or MonsterKind.Warder,
                 });
     }
 
@@ -407,6 +407,10 @@ public sealed class Game
                 Log.Add(Turn, World.RingfortSite!.Cleared
                     ? "The ringfort stands empty. Wind in the gate-mouth, and the lanes between the walls going back to grass."
                     : "A ring-walled fort, grey and whole, its gate open on a grass lane. On the walls stand figures with boards at a spacing no wind ever kept, and something heavy moves between the rings. Press > to go in.", LogTone.Danger);
+            else if (t == Terrain.LeaguerEntrance)
+                Log.Add(Turn, World.LeaguerSite!.Cleared
+                    ? "The leaguer stands empty around its mere. Wind riffles the black water, and the causeway is only a road now."
+                    : "Earth-banks ring a broad black mere, dug by an army and never filled in. On the banks stand figures with boards up and slings hanging ready, and every one of them faces the bare holm at the water's middle. Press > to walk the works.", LogTone.Danger);
             else if (t == Terrain.SonghallEntrance)
                 Log.Add(Turn, "The stead's songhall: turf roof, smoke at the roof-hole, and low singing sometimes when the wind sits right. Press > to step in.", LogTone.Info);
             else if (t == Terrain.ThresholdEntrance)
@@ -428,6 +432,7 @@ public sealed class Game
                     SiteKind.Quarry => "The carvers' toolcache sits under a shelf of slate, sealed tight against an age of dust. Press g to open it.",
                     SiteKind.Hall => "A warded coffer stands against the chamber wall, its clasp unrusted after an age. Press g to open it.",
                     SiteKind.Ringfort => "An arms-chest sits at the heart of the ward, its lid sound under an age of dust. Press g to open it.",
+                    SiteKind.Leaguer => "A cist of stacked stone sits on the holm's crown, its capstone set square against the weather. Press g to lift it.",
                     _ => "A battered strongbox sits here. Press g to open it.",
                 }, LogTone.Reward);
             else if (t == Terrain.ExitLadder)
@@ -520,6 +525,7 @@ public sealed class Game
                     SiteKind.Hollow => "You step between the stones. The air changes, the way a room changes when someone in it has been waiting.",
                     SiteKind.Quarry => "You climb down into the old quarry. Half-cut figures stand about the pit in no order, and the silence has a mineral patience to it.",
                     SiteKind.Hall => "You pass under the fallen gate. Grass in the floor-cracks, sky where the roof was, and from the far end of the hall, the click of claws on stone.",
+                    SiteKind.Leaguer => "You come up onto the works. Black water on your right hand the whole way round, a bare holm at its middle, and on the banks ahead, boards standing at their mounds like teeth in an old jaw.",
                     _ => "You descend into the goblin cave. The dark smells of smoke and old meat.",
                 }, LogTone.Danger);
             if (site.Kind == SiteKind.Hollow && !site.Cleared)
@@ -744,6 +750,8 @@ public sealed class Game
             Log.Add(Turn, $"Of the fallen hall to the {Compass(World.ShrinePos, hall.OverworldPos)} the counsel is old and short: bar the byre at dusk, count the flock at dawn, and never go counting what runs between.");
         if (World.RingfortSite is { } fort)
             Log.Add(Turn, $"Of the ringfort to the {Compass(World.ShrinePos, fort.OverworldPos)} the counsel is oldest of all: the watch on its walls was never stood down, and what they pastured between the rings has not gone tame.");
+        if (World.LeaguerSite is { } mere)
+            Log.Add(Turn, $"Of the black mere to the {Compass(World.ShrinePos, mere.OverworldPos)} the stead keeps no counsel at all, only a habit: when a whirring carries off the water on a still day, they bide indoors until it stops.");
         if (World.SeveredNpc is { } calm)
             Log.Add(Turn, $"A hermit called {calm.Name} keeps a fire to the {Compass(World.ShrinePos, calm.Pos)}. The stead trades them nothing, owes them nothing, and minds them not at all: they have simply always been there.");
         _storylets.TryFire(this, StoryletTrigger.Arrival);
@@ -784,6 +792,7 @@ public sealed class Game
                 SiteKind.Quarry => _combatRng.Range(12, 24),
                 SiteKind.Hall => _combatRng.Range(13, 25),
                 SiteKind.Ringfort => _combatRng.Range(15, 28),
+                SiteKind.Leaguer => _combatRng.Range(16, 30),
                 _ => _combatRng.Range(10, 21),
             };
             Player.Coin += coin;
@@ -795,6 +804,7 @@ public sealed class Game
                 SiteKind.Quarry => $"Chisels still sharp under their oilcloth, and the crew's unpaid wages beside them: {coin} coin no one came back for.",
                 SiteKind.Hall => $"Under an oiled cloth folded by patient hands: {coin} coin of a mint older than the quarry's wages.",
                 SiteKind.Ringfort => $"The watch's pay-chest, tallied and locked against a paymaster who never rode in: {coin} coin, every wage accounted.",
+                SiteKind.Leaguer => $"Under the capstone, packed in wool: {coin} coin of the holm-holder's hoard, laid by against a spending day that never came.",
                 _ => $"The strongbox yields {coin} coin.",
             }, LogTone.Reward);
 
@@ -807,6 +817,7 @@ public sealed class Game
                 SiteKind.Quarry => "carvers_maul",
                 SiteKind.Hall => "wrights_mail",
                 SiteKind.Ringfort => "warbow",
+                SiteKind.Leaguer => "scaled_byrnie",
                 _ => null,
             };
             if (gearId is not null)
@@ -819,6 +830,7 @@ public sealed class Game
                         SiteKind.Barrow => $"Beneath the gold, wrapped in oiled wool, a blade of grave-iron: unrusted, and colder than the room. The {item.Name} is yours.",
                         SiteKind.Hall => $"And beneath the coin, folded shirt-wise as if put away for morning: rings of grey iron finer than any smith of this age draws. The {item.Name} is yours.",
                         SiteKind.Ringfort => $"And racked above the coin, strung and waxed as if the watch expected relief by the next moon: a bow of dark yew a head taller than the smith's work. The {item.Name} is yours.",
+                        SiteKind.Leaguer => $"And beneath the hoard, folded scale on scale: grey steel made for sitting sieges under falling stones. The {item.Name} is yours.",
                         _ => $"And under the chisels, the master carver's own: a maul with a head like a closing verdict. The {item.Name} is yours.",
                     }, LogTone.Reward);
                     AcquireGear(item);
@@ -830,6 +842,7 @@ public sealed class Game
                         SiteKind.Barrow => "Beneath the gold lies a blade the twin of your own. You leave it with its dead.",
                         SiteKind.Hall => "Folded beneath the coin lies mail the twin of your own. You leave it put away.",
                         SiteKind.Ringfort => "Racked above the coin hangs a warbow the twin of your own. You leave it strung against a relief that is never coming.",
+                        SiteKind.Leaguer => "Beneath the hoard lies a scaled byrnie the twin of your own. You leave it to keep the holm.",
                         _ => "The master carver's maul lies here too, twin to the one you carry. You leave it to the pit.",
                     }, LogTone.Info);
                 }
@@ -1877,8 +1890,12 @@ public sealed class Game
             Log.Add(Turn, $"You strike the {target.Name} for {damage}.", LogTone.Combat);
             if (target.Dormant)
             {
-                target.Dormant = false;
-                Log.Add(Turn, "Grit sifts from the figure. The head grinds around to face you.", LogTone.Danger);
+                if (target.Kind == MonsterKind.Warder) RouseLeaguer(target);
+                else
+                {
+                    target.Dormant = false;
+                    Log.Add(Turn, "Grit sifts from the figure. The head grinds around to face you.", LogTone.Danger);
+                }
             }
             // The checked swing (D-055): a landed hafted blow breaks the wind-up
             // outright. Only a paid swing has the weight; feeble flailing checks
@@ -1913,8 +1930,12 @@ public sealed class Game
                     Log.Add(Turn, $"The swing carries through into the {other.Name} for {carry}.", LogTone.Combat);
                     if (other.Dormant)
                     {
-                        other.Dormant = false;
-                        Log.Add(Turn, "Grit sifts from the figure. The head grinds around to face you.", LogTone.Danger);
+                        if (other.Kind == MonsterKind.Warder) RouseLeaguer(other);
+                        else
+                        {
+                            other.Dormant = false;
+                            Log.Add(Turn, "Grit sifts from the figure. The head grinds around to face you.", LogTone.Danger);
+                        }
                     }
                 }
                 else
@@ -1943,6 +1964,7 @@ public sealed class Game
             MonsterKind.Hound => _combatRng.Range(1, 4),
             MonsterKind.Carl => _combatRng.Range(2, 6),
             MonsterKind.Boar => 0,
+            MonsterKind.Warder => _combatRng.Range(2, 6),
             _ => _combatRng.Range(2, 7),
         };
         int essence = target.Kind switch
@@ -1953,6 +1975,7 @@ public sealed class Game
             MonsterKind.Hound => 6,
             MonsterKind.Carl => 8,
             MonsterKind.Boar => 6,
+            MonsterKind.Warder => 9,
             _ => 5,
         };
         // The lean dark (D-051): the dark yields half its essence, rounded
@@ -1975,6 +1998,7 @@ public sealed class Game
             MonsterKind.Boar => meat
                 ? $"The war-boar goes down heavy enough to feel through your boots. No purse on a beast: you take {essence} essence, and the knife takes meat for the road. ({Player.Rations} carried)"
                 : $"The war-boar goes down heavy enough to feel through your boots. No purse on a beast: you take {essence} essence, and leave more meat than a walking body can carry.",
+            MonsterKind.Warder => $"The sling-warder sits down against the bank like a man at the end of a long watch, and does not get up. You take {coin} coin and {essence} essence.",
             _ => $"The {target.Name} falls. You take {coin} coin and {essence} essence.",
         }, LogTone.Reward);
         CheckSiteCleared(CurrentSite!);
@@ -2136,11 +2160,14 @@ public sealed class Game
             }
 
             // The board (D-053): a walking carl keeps its linden between you
-            // and any far point. The wind and the edge are spent; nothing is
-            // bought or taught.
-            if (target.Kind == MonsterKind.Carl && target.Intent is null && target.ExposedTurns == 0)
+            // and any far point, and a warder on the works keeps its own
+            // (D-057). The wind and the edge are spent; nothing is bought or
+            // taught. A point taken on a dormant warder's board is a sighting.
+            if (target.Kind is MonsterKind.Carl or MonsterKind.Warder
+                && target.Intent is null && target.ExposedTurns == 0)
             {
                 Log.Add(Turn, "The point drives into the linden board and is turned along the grain.", LogTone.Combat);
+                if (target.Dormant) RouseLeaguer(target);
                 return;
             }
 
@@ -2154,8 +2181,12 @@ public sealed class Game
                 Log.Add(Turn, $"Your thrust takes the {target.Name} at the spear's length for {damage}.", LogTone.Combat);
                 if (target.Dormant)
                 {
-                    target.Dormant = false;
-                    Log.Add(Turn, "Grit sifts from the figure. The head grinds around to face you.", LogTone.Danger);
+                    if (target.Kind == MonsterKind.Warder) RouseLeaguer(target);
+                    else
+                    {
+                        target.Dormant = false;
+                        Log.Add(Turn, "Grit sifts from the figure. The head grinds around to face you.", LogTone.Danger);
+                    }
                 }
                 // The checked swing (D-055) has the same weight at the ash's
                 // length: a paid landed blow breaks the wind-up outright.
@@ -2230,12 +2261,16 @@ public sealed class Game
             }
 
             // The board (D-053): a walking carl keeps its linden between you
-            // and it. The wind and the string are spent; nothing is bought or
-            // taught. The board leaves its line only while the seax is about
-            // its blow, and in the blown turns after.
-            if (target.Kind == MonsterKind.Carl && target.Intent is null && target.ExposedTurns == 0)
+            // and it, and a warder on the works keeps its own (D-057). The
+            // wind and the string are spent; nothing is bought or taught. The
+            // board leaves its line only while its bearer's own blow or cast
+            // is about its work, and in the blown turns after. A shaft taken
+            // on a dormant warder's board is a sighting.
+            if (target.Kind is MonsterKind.Carl or MonsterKind.Warder
+                && target.Intent is null && target.ExposedTurns == 0)
             {
                 Log.Add(Turn, "The shaft thuds into the linden board and stands there, quivering.", LogTone.Combat);
+                if (target.Dormant) RouseLeaguer(target);
                 return;
             }
 
@@ -2253,8 +2288,12 @@ public sealed class Game
                 Log.Add(Turn, $"Your shaft takes the {target.Name} for {damage}.", LogTone.Combat);
                 if (target.Dormant)
                 {
-                    target.Dormant = false;
-                    Log.Add(Turn, "Grit sifts from the figure. The head grinds around, hunting the line the shaft flew.", LogTone.Danger);
+                    if (target.Kind == MonsterKind.Warder) RouseLeaguer(target);
+                    else
+                    {
+                        target.Dormant = false;
+                        Log.Add(Turn, "Grit sifts from the figure. The head grinds around, hunting the line the shaft flew.", LogTone.Danger);
+                    }
                 }
             }
             else
@@ -2388,6 +2427,13 @@ public sealed class Game
             Log.Add(Turn, "The fort is still. Boards lie where they were held, and nothing walks the wall-tops but wind.", LogTone.Reward);
             Log.Add(Turn, "\"A wall watched for a war that ended before the stead's first stone. No relief ever rode in, bearer, so you are it. It is counted.\"", LogTone.Aegis);
         }
+        else if (site.Kind == SiteKind.Leaguer)
+        {
+            World.Facts.Add("deed", "siege_lifted", World.SettlementName,
+                "The leaguer around the black mere is lifted. Nothing watches the holm now but herons.");
+            Log.Add(Turn, "The works are still. The mere settles glass-flat, and for the first time in an age nothing on its banks is counting.", LogTone.Reward);
+            Log.Add(Turn, "\"Sit until the holm yields, they were told. It never yielded, bearer; it only emptied, and no one thought to tell them that either. It is counted.\"", LogTone.Aegis);
+        }
         else
         {
             World.Facts.Add("deed", "severed_laid", World.SettlementName,
@@ -2436,6 +2482,11 @@ public sealed class Game
                 {
                     // The charge (D-053) resolves along its lane, not on one cell.
                     ResolveCharge(monster, intent);
+                }
+                else if (intent.Kind == IntentKind.LoftedStone)
+                {
+                    // The lofted cast (D-057) falls on its marked ground and bursts.
+                    ResolveLoft(monster, intent);
                 }
                 else if (landed)
                 {
@@ -2488,8 +2539,10 @@ public sealed class Game
                 // answered instantly and for free. The price was already paid
                 // in blood; the blow dodged is the blow never answered. A cut
                 // at the hollow's keeper is the old way, so while the laying
-                // moment stands open the hand holds (D-045).
-                if (landed && intent.Kind != IntentKind.BoarCharge && Player.Hp > 0
+                // moment stands open the hand holds (D-045). A lofted stone
+                // (D-057) falls from the sky's top, not from a hand in reach:
+                // there is nothing to answer over.
+                if (landed && intent.Kind is not IntentKind.BoarCharge and not IntentKind.LoftedStone && Player.Hp > 0
                     && Player.Weapon is { Move: MoveVerb.Answer } blade
                     && monster.Pos.Chebyshev(Player.Pos) == 1)
                 {
@@ -2517,6 +2570,7 @@ public sealed class Game
         if (monster.Kind == MonsterKind.Hound) { ActHound(monster); return; }
         if (monster.Kind == MonsterKind.Carl) { ActCarl(monster); return; }
         if (monster.Kind == MonsterKind.Boar) { ActBoar(monster); return; }
+        if (monster.Kind == MonsterKind.Warder) { ActWarder(monster); return; }
 
         int dist = monster.Pos.Chebyshev(Player.Pos);
 
@@ -2827,6 +2881,134 @@ public sealed class Game
         }
         monster.ExposedTurns = 2;
         Log.Add(Turn, "The boar ploughs through where you stood and slews to a stop, blown.", LogTone.Combat);
+    }
+
+    /// <summary>How far a warder's loft carries: past the bows, because the mere was dug to be sat behind.</summary>
+    public const int LoftRange = 10;
+
+    /// <summary>
+    /// The leaguer's watch (D-057): board and sling, the shielded thrower the
+    /// fort deferred. The board is the carl's rule at the sling's range: shafts
+    /// and thrust points stop in the linden while the warder stands its ground
+    /// or gives it, and only the whirl and the blown turns after the cast open
+    /// it. The loft needs no line of sight: the stone comes over banks and
+    /// mounds both, so cover is no roof here; feet are. It never advances:
+    /// crowded, it gives ground to reopen its range, and only cornered against
+    /// its own works does the board's rim come down. Chasing one pins it
+    /// silent; its fellows loft at the chaser: the leaguer's whole argument.
+    /// </summary>
+    private void ActWarder(Monster monster)
+    {
+        if (monster.Dormant)
+        {
+            if (monster.Pos.Chebyshev(Player.Pos) <= 8
+                && CurrentSite!.Map.LineOfSight(monster.Pos, Player.Pos))
+                RouseLeaguer(monster);
+            return;
+        }
+
+        if (monster.ExposedTurns > 0) { monster.ExposedTurns--; return; }
+        int dist = monster.Pos.Chebyshev(Player.Pos);
+
+        if (dist <= 2)
+        {
+            if (BestRetreat(monster) is { } back)
+            {
+                if (dist == 1)
+                    Log.Add(Turn, "The sling-warder backs off behind its board, giving ground it clearly knows by heart.", LogTone.Combat);
+                monster.Pos = back;
+                return;
+            }
+            if (dist == 1)
+            {
+                // Cornered, the rim is all it has: this kind was never the
+                // fort's melee half, and it knows it.
+                if (_combatRng.Chance(Player.DodgeChance))
+                {
+                    Log.Add(Turn, "Backed to the water's edge, the warder swings its rim wide of where you were.", LogTone.Combat);
+                }
+                else
+                {
+                    int damage = Absorb(_combatRng.Range(2, 4));
+                    Player.Hp -= damage;
+                    Log.Add(Turn, $"Cornered, the sling-warder cracks its board's rim across you for {damage}.", LogTone.Combat);
+                }
+            }
+            return;
+        }
+
+        if (dist <= LoftRange && _combatRng.Chance(0.5))
+        {
+            monster.Intent = new Intent
+            {
+                Kind = IntentKind.LoftedStone,
+                TargetCell = Player.Pos,
+                TurnsUntilResolve = 2,
+            };
+            Log.Add(Turn, "Across the works a sling rises into the whirl: a low whirring, climbing!", LogTone.Danger);
+        }
+        // Out of the sling's reach it does nothing at all: the leaguer holds
+        // the line it was set, and has held it through longer waits than you.
+    }
+
+    /// <summary>The cardinal step that opens the most ground, dry-footed; null when the works allow none.</summary>
+    private Pos? BestRetreat(Monster monster)
+    {
+        Pos? best = null;
+        int bestDist = monster.Pos.Chebyshev(Player.Pos);
+        foreach (var (dx, dy) in Directions.Cardinal)
+        {
+            var p = monster.Pos.Plus(dx, dy);
+            if (!CurrentSite!.Map.Walkable(p) || p == Player.Pos
+                || Monsters.Any(m => m.Alive && m != monster && m.SiteId == monster.SiteId && m.Pos == p))
+                continue;
+            int d = p.Chebyshev(Player.Pos);
+            if (d > bestDist) { bestDist = d; best = p; }
+        }
+        return best;
+    }
+
+    /// <summary>
+    /// The horn (D-057): the leaguer wakes as one, or not at all. Five bands
+    /// of the deep taught the dark to come at the bearer a tenant at a time;
+    /// the works were dug by soldiers, and soldiers post a signal.
+    /// </summary>
+    private void RouseLeaguer(Monster sighted)
+    {
+        if (!sighted.Dormant) return;
+        foreach (var m in Monsters.Where(m => m.Alive && m.SiteId == sighted.SiteId && m.Kind == MonsterKind.Warder))
+            m.Dormant = false;
+        Log.Add(Turn, "A horn sounds low across the water, cracked with age, and every board on the banks comes up as one.", LogTone.Danger);
+    }
+
+    /// <summary>
+    /// The stone comes down (D-057). Standing on the mark is the full price,
+    /// standing beside it is a graze, and two strides of honest walking is the
+    /// whole dodge: the loft is dodged by feet that keep moving, never by
+    /// cover. The cast made, the board hangs wide: the window the leaguer
+    /// teaches, twinned with the whirl that came before it.
+    /// </summary>
+    private void ResolveLoft(Monster monster, Intent intent)
+    {
+        int dist = Player.Pos.Chebyshev(intent.TargetCell);
+        if (dist == 0)
+        {
+            int damage = Absorb(_combatRng.Range(7, 11), telegraphed: true);
+            Player.Hp -= damage;
+            Log.Add(Turn, $"The sling-stone comes down out of the sky's top and takes you square for {damage}!", LogTone.Danger);
+        }
+        else if (dist == 1)
+        {
+            int damage = Absorb(Math.Max(1, _combatRng.Range(7, 11) / 2), telegraphed: true);
+            Player.Hp -= damage;
+            Log.Add(Turn, $"The stone bursts a stride off: shards and mere-mud rake you for {damage}.", LogTone.Danger);
+        }
+        else
+        {
+            Log.Add(Turn, "The stone comes down where you stood and bursts, loud over the water.", LogTone.Combat);
+        }
+        monster.ExposedTurns = 2;
+        Log.Add(Turn, "The cast made, the sling-warder's board hangs wide while the arm gathers back.", LogTone.Combat);
     }
 
     /// <summary>

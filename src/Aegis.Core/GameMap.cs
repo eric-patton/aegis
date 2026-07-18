@@ -29,6 +29,7 @@ public enum Terrain : byte
     RingfortEntrance,
     SonghallEntrance,
     Plinth,
+    LeaguerEntrance,
 }
 
 public static class TerrainInfo
@@ -40,6 +41,13 @@ public static class TerrainInfo
         Terrain.House => false,
         _ => true,
     };
+
+    /// <summary>
+    /// What blinds a line of sight (D-057): stone and timber, never water. The
+    /// leaguer's mere stops feet, not eyes. No earlier site holds water or a
+    /// house, so every line drawn before this distinction existed is unchanged.
+    /// </summary>
+    public static bool Opaque(Terrain t) => t is Terrain.Wall or Terrain.House;
 }
 
 public sealed class GameMap
@@ -70,9 +78,11 @@ public sealed class GameMap
     public bool Walkable(Pos p) => InBounds(p) && TerrainInfo.Walkable(this[p]);
 
     /// <summary>
-    /// Whether a straight line between two cells crosses no unwalkable tile
+    /// Whether a straight line between two cells crosses no opaque tile
     /// (endpoints excluded). Bresenham, symmetric by construction of the octant
     /// walk; the graven men's throwing sight (D-040), blocked by quarry pillars.
+    /// Since D-057 the test is opacity, not walkability: the mere is clear to
+    /// the eye, and no older site held a tile where the two answers differ.
     /// </summary>
     public bool LineOfSight(Pos from, Pos to)
     {
@@ -86,7 +96,8 @@ public sealed class GameMap
             int e2 = 2 * err;
             if (e2 >= dy) { err += dy; x += sx; }
             if (e2 <= dx) { err += dx; y += sy; }
-            if ((x != to.X || y != to.Y) && !Walkable(new Pos(x, y))) return false;
+            var step = new Pos(x, y);
+            if ((x != to.X || y != to.Y) && (!InBounds(step) || TerrainInfo.Opaque(this[step]))) return false;
         }
     }
 

@@ -47,7 +47,7 @@ public static class Presenter
         if (game.InTalkMenu) DrawTalkMenu(frame, game, layout);
         if (game.InUnbindMenu) DrawUnbindMenu(frame, game, layout);
         if (game.InThresholdMenu) DrawThresholdMenu(frame, layout);
-        if (game.InLayingMenu) DrawLayingMenu(frame, layout);
+        if (game.InLayingMenu) DrawLayingMenu(frame, game, layout);
         if (game.InGearMenu) DrawGearMenu(frame, game, layout);
         if (game.InSheetMenu) DrawSheet(frame, game, layout);
         if (game.InCrossingMenu) DrawCrossingMenu(frame, game, layout);
@@ -164,20 +164,27 @@ public static class Presenter
         frame.Write(x0 + 2, y0 + boxH - 2, "1-2 choose; any other key to step back", Hue.DarkGray);
     }
 
-    /// <summary>The laying-down (D-045): the post-resolution choice, at arm's length.</summary>
-    private static void DrawLayingMenu(Frame frame, Layout layout)
+    /// <summary>
+    /// The laying-down (D-045): the post-resolution choice, at arm's length. A
+    /// storied, merciful bearer is also offered the rarest answer (D-060): the
+    /// mending. The extra option is render-only, so no old journal's log shifts.
+    /// </summary>
+    private static void DrawLayingMenu(Frame frame, Game game, Layout layout)
     {
+        bool mend = game.CanRestoreSevered;
         const int boxW = 46;
-        const int boxH = 9;
+        int boxH = mend ? 10 : 9;
         int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
         int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
 
         DrawBox(frame, x0, y0, boxW, boxH);
         frame.Write(x0 + 2, y0 + 1, "The Severed One", Hue.White);
-        frame.Write(x0 + 2, y0 + 2, "It waits. The count is yours to weigh.", Hue.Cyan);
+        frame.Write(x0 + 2, y0 + 2, mend ? "It waits. The count is yours to weigh, or to carry." : "It waits. The count is yours to weigh.", Hue.Cyan);
         frame.Write(x0 + 2, y0 + 4, "1) The old way", Hue.White);
         frame.Write(x0 + 2, y0 + 5, "2) Lay it down gently", Hue.White);
-        frame.Write(x0 + 2, y0 + boxH - 2, "1-2 choose; any other key to step back", Hue.DarkGray);
+        if (mend)
+            frame.Write(x0 + 2, y0 + 6, "3) Mend it, and set it in the songs", Hue.White);
+        frame.Write(x0 + 2, y0 + boxH - 2, mend ? "1-3 choose; any other key to step back" : "1-2 choose; any other key to step back", Hue.DarkGray);
     }
 
     /// <summary>

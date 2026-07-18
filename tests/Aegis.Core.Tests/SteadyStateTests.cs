@@ -211,6 +211,179 @@ public class SteadyStateTests
         Assert.Single(game.Log.Entries, e => e.Text.Contains("Songs are ledgers"));
     }
 
+    [Fact]
+    public void TheMending_IsOffered_OnlyToAStoriedMercifulBearer()
+    {
+        // Resolved but never merciful (no laying-down banked): two answers only,
+        // and pressing the third digit is a plain step-back.
+        var unmerciful = EnterHollow(Resolved(Crossed(1), Resolution.Kept));
+        Assert.False(unmerciful.CanRestoreSevered);
+        var keeper = Keeper(unmerciful);
+        BumpKeeper(unmerciful);
+        unmerciful.ApplyKey('3');
+        Assert.True(keeper.Alive);
+        Assert.Equal(0, unmerciful.Player.SeveredRestored);
+
+        // Unresolved: never, whatever mercy is banked.
+        var unresolved = Crossed(1);
+        unresolved.Player.SeveredUnbound = 1;
+        Assert.False(unresolved.CanRestoreSevered);
+
+        // Resolved and merciful: the mending opens.
+        Assert.True(MendReady(Resolution.Kept).CanRestoreSevered);
+    }
+
+    [Fact]
+    public void TheMending_CatchesTheKeeper_SetsItInTheSongs_PaysNothing()
+    {
+        var game = MendReady(Resolution.Kept);
+        var keeper = Keeper(game);
+        int essence = game.Player.Essence;
+
+        BumpKeeper(game);
+        game.ApplyKey('3');
+
+        Assert.False(keeper.Alive);
+        Assert.True(game.CurrentSite!.Cleared);
+        Assert.Equal(essence, game.Player.Essence);          // grace is not bought
+        Assert.Equal(1, game.Player.SeveredRestored);
+        Assert.Equal(game.Cycle, game.Player.SeveredRestoredCycle);
+        Assert.True(game.World.Facts.Exists("deed", "severed_restored"));
+        Assert.False(game.World.Facts.Exists("deed", "severed_laid"));
+        Assert.Contains(game.Log.Entries, e => e.Text.Contains("not lost. Sung."));
+        Assert.Contains(game.Log.Entries, e => e.Text.Contains("a better one"));
+    }
+
+    [Fact]
+    public void TheMending_IsSpentOnce()
+    {
+        var game = MendReady(Resolution.Kept);
+        BumpKeeper(game);
+        game.ApplyKey('3');
+        Assert.Equal(1, game.Player.SeveredRestored);
+        Assert.False(game.CanRestoreSevered);
+
+        // A later world's keeper is offered only the two older answers; the third
+        // digit is a step-back again.
+        Cross(game);
+        var next = EnterHollow(game);
+        Assert.False(next.CanRestoreSevered);
+        var keeper = Keeper(next);
+        BumpKeeper(next);
+        next.ApplyKey('3');
+        Assert.True(keeper.Alive);
+        Assert.Equal(1, next.Player.SeveredRestored);
+    }
+
+    [Fact]
+    public void TheMending_ReachesBothAnswers_AtTheSamePrice()
+    {
+        // The arc sec 8 guardrail on the new verb: keeper and refuser reach the
+        // mending by the same gate, at the same price, to the same state. Only the
+        // Aegis's register differs.
+        foreach (var answer in new[] { Resolution.Kept, Resolution.Refused })
+        {
+            var game = MendReady(answer);
+            int essence = game.Player.Essence;
+            BumpKeeper(game);
+            game.ApplyKey('3');
+
+            Assert.Equal(1, game.Player.SeveredRestored);
+            Assert.Equal(essence, game.Player.Essence);
+            Assert.True(game.CurrentSite!.Cleared);
+            Assert.True(game.World.Facts.Exists("deed", "severed_restored"));
+            Assert.Contains(game.Log.Entries,
+                e => e.Text.Contains(answer == Resolution.Kept ? "a better one" : "Woven in"));
+        }
+    }
+
+    [Fact]
+    public void TheMendingShared_IsSpokenWithTheMender_Once()
+    {
+        var game = MendReady(Resolution.Kept);
+        BumpKeeper(game);
+        game.ApplyKey('3');
+        Cross(game);
+
+        // Priority 30, like the trade shared: the mending lands before the argument.
+        TalkTo(game, game.World.Unbinder.Pos);
+        Assert.Contains(game.Log.Entries, e => e.Text.Contains("found the seam"));
+        Assert.Equal(0, game.Player.ArgumentStage);
+        game.ApplyKey('x');
+
+        // Once ever: a complete beat, not a standing greeting.
+        Cross(game);
+        TalkTo(game, game.World.Unbinder.Pos);
+        Assert.Single(game.Log.Entries, e => e.Text.Contains("found the seam"));
+    }
+
+    [Fact]
+    public void TheOneWovenIn_PrecedesTheBearer_IntoALaterWorld()
+    {
+        var game = MendReady(Resolution.Kept);
+        BumpKeeper(game);
+        game.ApplyKey('3');
+
+        // Not in the world where the mending happened.
+        Assert.DoesNotContain(game.Log.Entries, e => e.Text.Contains("downstream of our own mending"));
+
+        // The songs run ahead: the next world already carries the restored face.
+        Cross(game);
+        Assert.Contains(game.Log.Entries, e => e.Text.Contains("downstream of our own mending"));
+
+        // Once ever, however many worlds follow.
+        Cross(game);
+        Assert.Single(game.Log.Entries, e => e.Text.Contains("downstream of our own mending"));
+    }
+
+    [Fact]
+    public void Presenter_DrawsTheMending_OnlyForAStoriedMercifulBearer()
+    {
+        var mend = MendReady(Resolution.Kept);
+        BumpKeeper(mend);
+        Assert.True(mend.InLayingMenu);
+        var menu = Presenter.Render(mend).ToTextLines();
+        Assert.Contains(menu, line => line.Contains("1) The old way"));
+        Assert.Contains(menu, line => line.Contains("2) Lay it down gently"));
+        Assert.Contains(menu, line => line.Contains("3) Mend it, and set it in the songs"));
+        Assert.Contains(menu, line => line.Contains("1-3 choose"));
+
+        // A merely resolved bearer, no mercy banked, is offered only two answers.
+        var plain = EnterHollow(Resolved(Crossed(1), Resolution.Kept));
+        BumpKeeper(plain);
+        var plainMenu = Presenter.Render(plain).ToTextLines();
+        Assert.DoesNotContain(plainMenu, line => line.Contains("3) Mend it"));
+        Assert.Contains(plainMenu, line => line.Contains("1-2 choose"));
+    }
+
+    [Fact]
+    public void TheMending_FiresInAFullPlaythrough_ResolvedByPlay()
+    {
+        // The ladder walked for real to the threshold, answered by play, then the
+        // mercy road and the mending itself: no flag set by hand anywhere.
+        var game = ResolvedByPlay(Resolution.Refused);
+
+        EnterHollow(game);
+        BumpKeeper(game);
+        game.ApplyKey('2');                       // lay one down for real
+        Assert.Equal(1, game.Player.SeveredUnbound);
+
+        Cross(game);                              // a fresh world, a fresh keeper
+        var mend = EnterHollow(game);
+        Assert.True(mend.CanRestoreSevered);
+        BumpKeeper(mend);
+        mend.ApplyKey('3');
+        Assert.Equal(1, mend.Player.SeveredRestored);
+        Assert.True(mend.World.Facts.Exists("deed", "severed_restored"));
+        Assert.Contains(mend.Log.Entries, e => e.Text.Contains("Woven in"));   // refused register
+
+        Cross(mend);                              // the songs run ahead of us
+        Assert.Contains(mend.Log.Entries, e => e.Text.Contains("downstream of our own mending"));
+
+        TalkTo(mend, mend.World.Unbinder.Pos);    // and the mender marks it
+        Assert.Contains(mend.Log.Entries, e => e.Text.Contains("found the seam"));
+    }
+
     // ---- helpers, in the house pattern.
 
     private static Game Crossed(int crossings)
@@ -226,6 +399,59 @@ public class SteadyStateTests
         game.Player.Resolution = answer;
         game.Player.ResolutionCycle = game.Cycle;
         return game;
+    }
+
+    /// <summary>
+    /// A bearer past the threshold who has already shown one keeper the gentle
+    /// laying-down: the gate the mending opens behind (D-060), stood at a hollow.
+    /// </summary>
+    private static Game MendReady(Resolution answer)
+    {
+        var game = Resolved(Crossed(1), answer);
+        game.Player.SeveredUnbound = 1;
+        return EnterHollow(game);
+    }
+
+    /// <summary>
+    /// The whole reveal ladder walked for real (master 42) and the threshold
+    /// answered by play, not by flag: the legitimate ground the flag-setting
+    /// Resolved() helper stands in for. Mirrors ThresholdTests.CommissionedGame.
+    /// </summary>
+    private static Game ResolvedByPlay(Resolution answer)
+    {
+        var game = new Game(42);
+        Cross(game);                                                       // world 2
+        KillKeeper(game);                                                  // truth
+        Cross(game);                                                       // guilt, world 3
+        game.ApplyKey('r'); game.ApplyKey(' ');                           // vision
+        Cross(game);                                                       // ledger, world 4
+        NpcTests.BumpNpc(game, game.World.SeveredNpc!); game.ApplyKey(' ');    // peace
+        StepOnto(game, game.World.HollowSite!.OverworldPos);              // cost
+        NpcTests.BumpNpc(game, game.World.Unbinder); game.ApplyKey(' ');       // tier 1
+        NpcTests.BumpNpc(game, game.World.Unbinder); game.ApplyKey(' ');       // tier 2
+        Cross(game);                                                       // commission, world 5
+        Assert.True(game.Player.CommissionHeard);
+
+        game.Debug_SetMode(MapMode.Overworld);
+        game.Debug_SetPlayerPos(game.World.ThresholdSite!.OverworldPos);
+        game.Apply(Command.Enter);
+        for (int i = 0; i < 40 && !game.InThresholdMenu; i++) game.ApplyKey('l');
+        Assert.True(game.InThresholdMenu, "the walk down the corridor never reached the Hearth");
+        game.ApplyKey(answer == Resolution.Kept ? '1' : '2');
+        Assert.Equal(answer, game.Player.Resolution);
+        game.Debug_SetMode(MapMode.Overworld);
+        return game;
+    }
+
+    /// <summary>Weakens the keeper to a sliver and lands the last blow for real.</summary>
+    private static void KillKeeper(Game game)
+    {
+        EnterHollow(game);
+        var keeper = Keeper(game);
+        keeper.Hp = 1;
+        game.Debug_SetPlayerPos(AdjacentOpen(game, keeper.Pos));
+        StepInto(game, keeper.Pos);
+        Assert.False(keeper.Alive);
     }
 
     private static Game EnterHollow(Game game)

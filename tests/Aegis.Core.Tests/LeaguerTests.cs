@@ -60,7 +60,7 @@ public class LeaguerTests
         var east = new Pos(WorldGen.LeaguerW - 4, 6);
         Assert.True(map.Walkable(west));
         Assert.True(map.Walkable(east));
-        Assert.True(Enumerable.Range(4, WorldGen.LeaguerW - 8).Any(x => map[new Pos(x, 6)] == Terrain.Water));
+        Assert.Contains(Enumerable.Range(4, WorldGen.LeaguerW - 8), x => map[new Pos(x, 6)] == Terrain.Water);
         Assert.True(map.LineOfSight(west, east));
         Assert.False(map.Walkable(new Pos(10, 6)));
 

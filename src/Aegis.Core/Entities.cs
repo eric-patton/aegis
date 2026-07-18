@@ -212,6 +212,12 @@ public sealed class Player
     /// <summary>Severed laid down gently rather than fought: the post-resolution verb.</summary>
     public int SeveredUnbound { get; set; }
 
+    /// <summary>Severed caught whole and set into the songs rather than fought or laid down: the rarest grace (D-060), spent once ever.</summary>
+    public int SeveredRestored { get; set; }
+
+    /// <summary>The cycle a severed one was mended in, so the songs can run ahead of the bearer (0 = never).</summary>
+    public int SeveredRestoredCycle { get; set; }
+
     /// <summary>The one permitted long thread, advanced a beat at a time (0 = not begun).</summary>
     public int ArgumentStage { get; set; }
 

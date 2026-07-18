@@ -684,6 +684,29 @@ public static class StoryletCatalog
             ],
         },
 
+        // The deeper grace, shared (D-060): the mender who spent an age teaching
+        // that all things must be let to end meets a bearer who found the seam in
+        // that law. Countered, never conceded (arc sec 7): the Unbinder does not
+        // soften, but grants the cost of their own long certainty. Priority 31,
+        // just above the trade shared, so if a bearer somehow banks both unspoken
+        // the deeper act leads and the trade keeps for the next visit; either way
+        // the sharing lands before the argument (priority 20) resumes.
+        new Storylet
+        {
+            Id = "the-mending-shared",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.Character,
+            Priority = 31,
+            When = g => g.TalkNpc?.Kind == NpcKind.Unbinder && g.Player.SeveredRestored >= 1,
+            Lines =
+            [
+                ("They know before you speak, the way menders always know. But this time their courtesy has gone very still, and it stays still.", LogTone.Info),
+                ("\"You did not close one. You carried it whole.\" A long quiet. \"I have spent an age teaching the single lesson: that a thing must be let to end. And you have gone and found the seam in it. Not everything that cannot end wants stopping. Some were only ever waiting to be held.\"", LogTone.Info),
+                ("\"I do not concede it. I will not. An ending is still what makes a life mean anything.\" They shoulder the pack. \"But I have cut a great many loose who might, in a steadier hand than mine, have been kept whole instead. I will carry that the rest of the road. It is only fair. You carry heavier.\"", LogTone.Info),
+                ("\"That is nearer a blessing than the Unbinder has come in all our meeting, bearer. Mark it in no ledger. Some counts are truer left unwritten.\"", LogTone.Aegis),
+            ],
+        },
+
         // The argument, resumed (beat one, per answer): the promise from the
         // threshold kept, one exchange, one point marked, complete in itself.
         new Storylet
@@ -806,6 +829,26 @@ public static class StoryletCatalog
             [
                 ("By the well a chain of children are singing a walking-song too long for its tune, a verse for every world, hands slapping the rhythm on the trough. \"{r0.detail}\"", LogTone.Info),
                 ("\"They have the order wrong, and one world too many: I was there, and you never wept in any world of glass. Songs are ledgers kept by love instead of weight, bearer. I no longer mind that they balance differently.\"", LogTone.Aegis),
+            ],
+        },
+
+        // The one woven in (D-060): the mythology pipe (D-013) run the one way it
+        // was never aimed. The bearer mended a severed one in an earlier world;
+        // now the songs of that mending run ahead down the chain, and a world the
+        // bearer has never walked already carries the restored one's face. Fires
+        // once, in a world later than the mending: runtime text, no worldgen read.
+        new Storylet
+        {
+            Id = "the-one-woven-in",
+            Trigger = StoryletTrigger.Arrival,
+            Scope = StoryletScope.Character,
+            Priority = 10,
+            When = g => g.Player.SeveredRestored >= 1 && g.Cycle > g.Player.SeveredRestoredCycle,
+            Lines =
+            [
+                ("You wake in the new world to a story you did not plant here: somewhere past the shrine a voice is half-singing about a bearer who was lost and then was not, who walks the deep roads now with their whole count carried and not one page of it torn out.", LogTone.Info),
+                ("\"Hear that? We are downstream of our own mending, for once. The one you caught went into the songs, and the songs run on ahead of us, and a world we have never walked already knows a face we set right.\"", LogTone.Aegis),
+                ("\"That is the whole machinery of this place turned the one way it was never aimed, bearer: a lost thing remembered forward, instead of ground under to kindle the next cruelty. Come. Let us be strangers to a world that already sings one of ours.\"", LogTone.Aegis),
             ],
         },
 

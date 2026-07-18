@@ -1517,6 +1517,11 @@ public sealed class Game
             LayDownSevered(keeper);
             AdvanceTurn();
         }
+        else if (key == '3' && CanRestoreSevered)
+        {
+            RestoreSevered(keeper);
+            AdvanceTurn();
+        }
         else
         {
             Log.Add(Turn, "You step back from the moment. It holds its half of the silence, and does not follow it.", LogTone.Info);
@@ -1545,6 +1550,47 @@ public sealed class Game
             site.Cleared = true;
             World.Facts.Add("deed", "severed_laid", World.SettlementName,
                 "The keeper of the stone ring was laid down gently, and the fire in the ring went out with no one left to need it.");
+            _storylets.TryFire(this, StoryletTrigger.DeedWritten);
+        }
+    }
+
+    /// <summary>
+    /// The rarest grace (D-060): offered only to a bearer who has resolved the
+    /// threshold and already shown a keeper the gentle laying-down. Restoring is
+    /// the harder thing, and it is spent once ever: a bearer walks the mercy road
+    /// before they are trusted with the deeper mending.
+    /// </summary>
+    public bool CanRestoreSevered =>
+        Player.Resolution != Resolution.None
+        && Player.SeveredUnbound >= 1
+        && Player.SeveredRestored == 0;
+
+    /// <summary>
+    /// The third answer (D-060): not the sword, not the gentle stop, but the thing
+    /// the ward was forged for and never once turned on a severed one. The count is
+    /// not closed; it is caught the way the ward catches its own bearer, and the
+    /// mended one passes whole into the songs to walk the deep roads ahead. No
+    /// essence changes hands: the grace, like the mercy, is not bought, and both
+    /// resolutions reach it at the same price (arc sec 8 guardrail).
+    /// </summary>
+    private void RestoreSevered(Monster keeper)
+    {
+        keeper.Hp = 0;
+        keeper.Intent = null;
+        Player.SeveredRestored++;
+        Player.SeveredRestoredCycle = Cycle;
+
+        Log.Add(Turn, "You take its hands, and this time you do not close the count. You read it back whole, every world and every deed still owed and owing, and then you do the thing the shield was forged for and never once turned this way: you hold the far end of it, and you do not let go.", LogTone.Info);
+        Log.Add(Turn, "It does not come apart. For the first time in an age something holds it, and the worn shape stops repeating. What was ground smooth stands up, and looks at you, and is gone the way a name is gone when it passes into a song: not lost. Sung.", LogTone.Reward);
+        Log.Add(Turn, Player.Resolution == Resolution.Kept
+            ? "\"Caught, keeper. I have it the way I have you: not to spend, to carry. It goes into the kindling with all that we finish, and the worlds below us will wake already knowing its face. That is not a mercy I was forged for. It is a better one.\""
+            : "\"Caught, walker, on no fire's account but the songs' own. We will carry it the way we carry each other: by choosing to, each day, out loud. Not kept. Not laid down. Woven in.\"", LogTone.Aegis);
+
+        if (CurrentSite is { Cleared: false } site && !Monsters.Any(m => m.Alive && m.SiteId == site.Id))
+        {
+            site.Cleared = true;
+            World.Facts.Add("deed", "severed_restored", World.SettlementName,
+                "The keeper of the stone ring was not laid down but mended: caught whole, and set into the songs to walk the deep roads ahead of the bearer who would not let it fall.");
             _storylets.TryFire(this, StoryletTrigger.DeedWritten);
         }
     }

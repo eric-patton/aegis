@@ -108,6 +108,40 @@ public sealed class Player
     /// <summary>The Aegis speaks once at the first lesson shown; never again.</summary>
     public bool LessonLineHeard { get; set; }
 
+    /// <summary>
+    /// The bestiary (D-059, paying D-004's oldest clause: telegraph clarity
+    /// scales with what the bearer knows). How many of a kind's wind-ups the
+    /// bearer has watched resolve, hit or miss, capped once the tell is read
+    /// cold. Bearer-knowledge like the skills and the lessons: death never
+    /// touches it and it crosses waygates whole (vision secs 8, 10), and it is
+    /// rebuilt by replay, never serialized.
+    /// </summary>
+    public Dictionary<MonsterKind, int> Reads { get; } = new();
+
+    /// <summary>One witnessed wind-up (or Wits 6) names a kind's tell; three (or Wits 8) reads its weight too.</summary>
+    public const int ReadNamed = 1;
+    public const int ReadKeen = 3;
+
+    /// <summary>A wind-up watched to its end teaches the tell, hit or miss. Capped: a tell read cold is read cold.</summary>
+    public void WitnessTell(MonsterKind kind)
+    {
+        int seen = Reads.GetValueOrDefault(kind);
+        if (seen < ReadKeen) Reads[kind] = seen + 1;
+    }
+
+    /// <summary>
+    /// How clearly the bearer reads a kind's telegraph (D-059). Witnessed
+    /// wind-ups bank toward the read; Wits above the baseline is a head start,
+    /// so a keen-eyed bearer reads a stranger on sight. This is clarity, never
+    /// the dodge: the marked cell is always dodgeable by feet, but a stranger's
+    /// wind-up shows only where it falls, not the shape of it or its weight.
+    /// </summary>
+    public ReadTier ReadOf(MonsterKind kind)
+    {
+        int read = Reads.GetValueOrDefault(kind) + Math.Max(0, Attributes[Attr.Wits] - AttributeSet.Baseline);
+        return read >= ReadKeen ? ReadTier.Keen : read >= ReadNamed ? ReadTier.Read : ReadTier.Blur;
+    }
+
     /// <summary>The Aegis speaks once at the first standing rise (D-048); never again.</summary>
     public bool StandingLineHeard { get; set; }
 
@@ -262,6 +296,13 @@ public sealed class Intent
 }
 
 public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut, HurledStone, GravenFist, ThroatLunge, SeaxStab, BoarCharge, LoftedStone }
+
+/// <summary>
+/// How clearly the bearer reads a kind's wind-up (D-059): a stranger's is a
+/// Blur (danger, but not its shape or name), a Read shows where and what, a Keen
+/// read knows its weight too. Familiarity and Wits sharpen the blur toward keen.
+/// </summary>
+public enum ReadTier { Blur, Read, Keen }
 
 /// <summary>
 /// Villagers live beside their houses; the Unbinder (D-034) is the wandering

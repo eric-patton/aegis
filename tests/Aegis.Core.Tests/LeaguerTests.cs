@@ -363,13 +363,24 @@ public class LeaguerTests
         game.Debug_SetPlayerPos(center!.Value.Plus(2, 0));
         warder.Intent = new Intent { Kind = IntentKind.LoftedStone, TargetCell = center.Value, TurnsUntilResolve = 2 };
 
-        var frame = Presenter.Render(game);
-        int marked = 0;
-        for (int y = 0; y < Presenter.DefaultHeight; y++)
-            for (int x = 0; x < Presenter.DefaultWidth; x++)
-                if (frame[x, y] is { Ch: '!', Bg: Hue.DarkRed or Hue.Red })
-                    marked++;
-        Assert.True(marked >= 9, $"only {marked} of the nine mark cells drawn");
+        int MarkCells()
+        {
+            var frame = Presenter.Render(game);
+            int marked = 0;
+            for (int y = 0; y < Presenter.DefaultHeight; y++)
+                for (int x = 0; x < Presenter.DefaultWidth; x++)
+                    if (frame[x, y] is { Ch: '!', Bg: Hue.DarkRed or Hue.Red })
+                        marked++;
+            return marked;
+        }
+
+        // A stranger's loft (D-059) shows only the cell it is aimed at, not the
+        // graze ring: the spread is a read the bearer has not earned yet.
+        Assert.True(MarkCells() < 9, "the whole mark was drawn for a warder never read");
+
+        // Read the warder once, and the drawing promises the graze ring too.
+        game.Player.WitnessTell(MonsterKind.Warder);
+        Assert.True(MarkCells() >= 9, $"the read warder's mark was not drawn whole");
     }
 
     [Fact]

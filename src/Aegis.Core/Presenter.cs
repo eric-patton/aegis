@@ -363,7 +363,16 @@ public static class Presenter
         foreach (var monster in game.LiveMonstersHere)
             if (monster.Intent is { } intent)
             {
-                if (intent.Kind == IntentKind.BoarCharge)
+                // Familiarity-sharpened telegraphs (D-059): a stranger's wind-up
+                // shows only where it is aimed. The shape of it (a boar's whole
+                // lane, a warder's nine-cell burst) is drawn for a bearer who has
+                // read the kind before. The aimed cell is always shown, so the
+                // dodge is always there; the shape is what the read reveals.
+                if (game.Player.ReadOf(monster.Kind) == ReadTier.Blur)
+                {
+                    PutWorld(intent.TargetCell, '!', Hue.White, Hue.DarkRed);
+                }
+                else if (intent.Kind == IntentKind.BoarCharge)
                 {
                     int dx = Math.Sign(intent.TargetCell.X - monster.Pos.X);
                     int dy = Math.Sign(intent.TargetCell.Y - monster.Pos.Y);
@@ -522,8 +531,22 @@ public static class Presenter
             if (game.InThrust) Line("Spear leveled: choose a line", Hue.Cyan);
             if (game.InHeave) Line("Feet set: choose a line", Hue.DarkYellow);
             if (game.Player.HeaveTarget is not null) Line("! heave wound up: act to loose", Hue.DarkYellow);
+            // The read, in words (D-059). A stranger's wind-up reads as danger
+            // without a name; a read tell is named; a keen read knows its weight.
+            static string Weight(IntentKind k) => k switch
+            {
+                IntentKind.HurledStone or IntentKind.CrushingBlow => " (light)",
+                _ => " (heavy)",
+            };
             foreach (var monster in game.LiveMonstersHere.Where(m => m.Intent is not null))
-                Line(monster.Intent!.Kind switch
+            {
+                var tier = game.Player.ReadOf(monster.Kind);
+                if (tier == ReadTier.Blur)
+                {
+                    Line($"! {monster.Name} coils, unread", Hue.DarkRed);
+                    continue;
+                }
+                string named = monster.Intent!.Kind switch
                 {
                     IntentKind.BarrowBlade => "! barrow blade poised",
                     IntentKind.SunderingCut => "! sundering cut poised",
@@ -532,7 +555,10 @@ public static class Presenter
                     IntentKind.ThroatLunge => "! throat-lunge gathering",
                     IntentKind.LoftedStone => "! sling-stone falling",
                     _ => "! crushing blow poised",
-                }, Hue.Red);
+                };
+                if (tier == ReadTier.Keen) named += Weight(monster.Intent!.Kind);
+                Line(named, Hue.Red);
+            }
         }
         else
         {

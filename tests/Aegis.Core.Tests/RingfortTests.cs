@@ -284,15 +284,25 @@ public class RingfortTests
         game.Debug_SetPlayerPos(stand);
         boar.Intent = new Intent { Kind = IntentKind.BoarCharge, TargetCell = stand };
 
-        // Every cell of the run is marked, not only where the bearer stood:
-        // sideways is the only honest dodge, and the drawing must say so.
-        var frame = Presenter.Render(game);
-        int marked = 0;
-        for (int y = 0; y < Presenter.DefaultHeight; y++)
-            for (int x = 0; x < Presenter.DefaultWidth; x++)
-                if (frame[x, y] is { Ch: '!', Bg: Hue.DarkRed })
-                    marked++;
-        Assert.True(marked >= 5, $"only {marked} lane cells marked; the run is longer than that");
+        int LaneCells()
+        {
+            var frame = Presenter.Render(game);
+            int marked = 0;
+            for (int y = 0; y < Presenter.DefaultHeight; y++)
+                for (int x = 0; x < Presenter.DefaultWidth; x++)
+                    if (frame[x, y] is { Ch: '!', Bg: Hue.DarkRed })
+                        marked++;
+            return marked;
+        }
+
+        // A stranger's charge (D-059) shows only where it is aimed, never the
+        // whole run: the shape of the lane is a read the bearer has not earned.
+        Assert.True(LaneCells() < 5, "the whole lane was drawn for a boar never read");
+
+        // Read the boar once, and the drawing keeps its old promise: every cell
+        // of the run is marked, because sideways is the only honest dodge.
+        game.Player.WitnessTell(MonsterKind.Boar);
+        Assert.True(LaneCells() >= 5, "the read boar's lane was not drawn whole");
     }
 
     [Fact]

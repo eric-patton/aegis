@@ -2643,6 +2643,11 @@ public sealed class Game
             if (intent.TurnsUntilResolve <= 0)
             {
                 monster.Intent = null;
+                // The bestiary (D-059): a wind-up watched to its end teaches the
+                // tell, hit or miss, and the knowledge banks with the bearer
+                // across the crossing. This is the one clause of D-004 still
+                // owed since the first combat decision: the read is earned.
+                Player.WitnessTell(monster.Kind);
                 bool landed = Player.Pos == intent.TargetCell;
                 if (intent.Kind == IntentKind.BoarCharge)
                 {
@@ -3452,6 +3457,8 @@ public sealed class Game
         Perks: string.Join(",", Player.Perks.Select(PerkCatalog.IdOf)),
         PendingKnack: PendingKnack is { } knack ? $"{SkillSet.NameOf(knack.Skill).ToLowerInvariant()} {knack.Level}" : "",
         Lessons: string.Join(",", Player.Lessons.Select(LessonCatalog.IdOf)),
+        Reads: string.Join(",", Player.Reads.OrderBy(kv => (int)kv.Key)
+            .Select(kv => $"{kv.Key.ToString().ToLowerInvariant()}:{kv.Value}")),
         Gleanings: World.Gleanings.Count,
         Might: Player.Attributes[Attr.Might],
         Grace: Player.Attributes[Attr.Grace],
@@ -3565,6 +3572,7 @@ public sealed record Snapshot(
     string Perks,
     string PendingKnack,
     string Lessons,
+    string Reads,
     int Gleanings,
     int Might,
     int Grace,

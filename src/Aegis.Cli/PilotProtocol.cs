@@ -33,6 +33,7 @@ internal partial class PilotJson : JsonSerializerContext;
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase, WriteIndented = true)]
 [JsonSerializable(typeof(Snapshot))]
 [JsonSerializable(typeof(SimResult))]
+[JsonSerializable(typeof(JourneyReport))] // the journey's machine-readable report (D-083)
 internal partial class PilotJsonPretty : JsonSerializerContext;
 
 public sealed class SimResult

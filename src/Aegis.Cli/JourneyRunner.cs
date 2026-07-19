@@ -39,6 +39,7 @@ public static class JourneyRunner
         int siteKeyBudget = 3000;   // in-site keys spent on one site before writing it off.
         int siteDeathBudget = 8;    // deaths at one site before writing it off.
         bool emitKeys = false;
+        bool json = false;
 
         for (int i = 0; i < args.Length; i++)
         {
@@ -51,6 +52,7 @@ public static class JourneyRunner
                 case "--site-keys": siteKeyBudget = int.Parse(args[++i]); break;
                 case "--site-deaths": siteDeathBudget = int.Parse(args[++i]); break;
                 case "--emit-keys": emitKeys = true; break;
+                case "--json": json = true; break;
                 default:
                     Console.Error.WriteLine($"aegis journey: unexpected argument '{args[i]}'");
                     return 1;
@@ -294,6 +296,68 @@ public static class JourneyRunner
             }
         }
 
+        if (json)
+        {
+            // The machine-readable report (D-083): the same facts the prose tells,
+            // as one JSON object, so a sweep or CI consumes crossings as data.
+            var report = new JourneyReport(
+                Seed: seed,
+                TargetCrossings: cycles,
+                CycleReached: game.Cycle,
+                Tier: game.World.Tier,
+                CrossingsMade: crossings.Count,
+                Stop: stop,
+                KeysPressed: totalKeys,
+                Turns: game.Turn,
+                Deaths: game.Player.Deaths,
+                RemnantsReclaimed: remnantsReclaimed,
+                CoinReclaimed: coinReclaimed,
+                EssenceReclaimed: essenceReclaimed,
+                ChestsLooted: chestsLooted,
+                ChestCoin: chestCoin,
+                GearTaken: gearTaken,
+                KnacksTaken: knacksTaken,
+                Knacks: KnackList(game),
+                ArcReach: ArcReach(game),
+                ResolvedAs: resolvedAs.ToString().ToLowerInvariant(),
+                ResolvedCycle: resolvedCycle,
+                LaidCycle: laidCycle,
+                MendedCycle: mendedCycle,
+                Legend: game.Player.Legend,
+                LegendFromBurden: legendFromBurden,
+                HidesTaken: hidesTaken,
+                HidesSold: hidesSold,
+                CoinFromHides: coinFromHides,
+                MeatCooked: meatCooked,
+                RationsCooked: rationsCooked,
+                HerbsForaged: herbsForaged,
+                HerbsSold: herbsSold,
+                CoinFromHerbs: coinFromHerbs,
+                MaxRegard: maxRegard,
+                RegardTitle: SteadRegard.TitleOf(maxRegard),
+                MaxWrath: maxWrath,
+                WrathTitle: RaiderWrath.TitleOf(maxWrath),
+                RaidsSuffered: raidsSuffered,
+                Keys: emitKeys ? keys.ToString() : null,
+                Crossings: crossings.Select(c => new JourneyCrossingDto(
+                    FromCycle: c.FromCycle,
+                    FromWorld: c.FromWorld,
+                    ToCycle: c.ToCycle,
+                    ToWorld: c.ToWorld,
+                    Turn: c.Turn,
+                    DeathsInWorld: c.DeathsInWorld,
+                    Arms: c.Arms,
+                    Sworn: c.Sworn.Select(o => OathCatalog.Def(o).Name).ToList(),
+                    Burden: c.Burden,
+                    Sites: c.Sites.Select(s => new JourneySiteDto(s.Name, s.Cleared, s.Skipped)).ToList(),
+                    BestiaryBefore: c.Before.Select(r => new JourneyReadDto(
+                        r.Kind.ToString().ToLowerInvariant(), r.Bank, r.Tier.ToString())).ToList(),
+                    BestiaryAfter: c.After.Select(r => new JourneyReadDto(
+                        r.Kind.ToString().ToLowerInvariant(), r.Bank, r.Tier.ToString())).ToList())).ToList());
+            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(report, PilotJsonPretty.Default.JourneyReport));
+            return 0;
+        }
+
         Report(seed, cycles, crossings, stop, game, totalKeys, keys, emitKeys,
             remnantsReclaimed, coinReclaimed, essenceReclaimed,
             chestsLooted, chestCoin, gearTaken, knacksTaken,
@@ -466,3 +530,29 @@ public static class JourneyRunner
         }
     }
 }
+
+// ---- the machine-readable report (D-083): the prose report's facts as data ----
+
+internal sealed record JourneyReadDto(string Kind, int Bank, string Read);
+
+internal sealed record JourneySiteDto(string Name, bool Cleared, bool Skipped);
+
+internal sealed record JourneyCrossingDto(
+    int FromCycle, string FromWorld, int ToCycle, string ToWorld, int Turn,
+    int DeathsInWorld, string Arms, List<string> Sworn, int Burden,
+    List<JourneySiteDto> Sites, List<JourneyReadDto> BestiaryBefore, List<JourneyReadDto> BestiaryAfter);
+
+internal sealed record JourneyReport(
+    ulong Seed, int TargetCrossings, int CycleReached, int Tier, int CrossingsMade, string Stop,
+    int KeysPressed, int Turns, int Deaths,
+    int RemnantsReclaimed, int CoinReclaimed, int EssenceReclaimed,
+    int ChestsLooted, int ChestCoin, int GearTaken,
+    int KnacksTaken, string Knacks,
+    string ArcReach, string ResolvedAs, int ResolvedCycle, int LaidCycle, int MendedCycle,
+    int Legend, int LegendFromBurden,
+    int HidesTaken, int HidesSold, int CoinFromHides,
+    int MeatCooked, int RationsCooked,
+    int HerbsForaged, int HerbsSold, int CoinFromHerbs,
+    int MaxRegard, string RegardTitle, int MaxWrath, string WrathTitle, int RaidsSuffered,
+    string? Keys,
+    List<JourneyCrossingDto> Crossings);

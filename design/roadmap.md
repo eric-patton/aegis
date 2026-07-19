@@ -35,7 +35,9 @@ asking at the first wake, five original folk, seven pasts, shapings, the preciou
 thing, and stage 2's burdens, vows, remembered face, and keepsake thread. The
 **companions pillar opened with guests whole (D-097)**: the ally engine plus the
 huntsman's-debt arc, loyalty beats, full death weight, and the paid ending, run live by
-every journey. The remaining **breadth holes**: the Death's-Toll/scar layer, the summon
+every journey. The **Death's-Toll layer opened (D-098 stage 1)**: the deterministic
+ledger, three scars matched to their deaths, and their live weight; the cure roads are
+the gated stage 2. The remaining **breadth holes**: the scar cure roads, the summon
 slot and pack animal, and two of the four activity families (crime, town-life). Rough
 fill levels:
 
@@ -59,9 +61,10 @@ fill levels:
   stores + boldness on the tick: raids embolden and take double, culls cow the dens, bared
   lofts end the raids, cleared worlds recover); the stead's own tick moves and a third
   faction remain
-- Major vision pillars still unbuilt: Toll/scars (magic opened D-091; the craft family
+- Major vision pillars: all broken ground (magic opened D-091; the craft family
   opened D-073/D-090; character creation shipped both stages, D-092/D-093; companions
-  opened with guests whole, D-097: the summon slot and pack animal remain)
+  opened with guests whole, D-097: the summon slot and pack animal remain; the
+  Death's Toll opened D-098: the cure roads are its gated stage 2)
 
 ---
 
@@ -271,8 +274,15 @@ fill levels:
 
 - [x] Death loop: banked vs at-risk, corpse run, remnant forfeit (D-008)
 - [x] Wounded state (reduced max HP, timed recovery) (D-008)
-- [ ] Death's Toll meter: fills on death, drains over time (D-009)
-- [ ] Scars: permanent consequences from clustered/boss deaths, costly cures (D-009)
+- [x] Death's Toll meter: deterministic ledger, fills on death (boss hands fill more, Will
+  shaves it), drains a turn at a time, converts above the line with no roll, sidebar rail,
+  wiped at the waygate (D-098 stage 1)
+- [~] Scars: three land matched to the death that made them (the taken eye dulls the read a
+  tier, the crushed hand asks a breath more wind a swing, the haunted look cools regard and
+  dears bread), carried across worlds; the costly cure roads are stage 2 (D-098)
+- [ ] Scar cure roads (stage 2, gated): the surgeon's knife for the eye, the smith's brace
+  for the hand (D-009's superior-prosthetic hook), a pilgrimage rite for the look; scar
+  talk hooks; the dragging step and further catalog; tier-scaled fill (D-011) (D-098)
 
 ### Narrative & dialogue
 
@@ -291,7 +301,7 @@ fill levels:
 - [~] Oaths: 7 (grow with new systems: weather, factions, companions) (D-047, D-051)
 - [~] Legend: 5 rungs, 3 hospitality boons; rungs past 5 open (D-048)
 - [~] Hostility-tier bands: 2-6 distinct + tier-7 recombination; tier 7+ approach open (D-033..D-058)
-- [ ] Scar list (part of the unbuilt Toll system) (D-009)
+- [~] Scar list: three shipped (eye, hand, look); the dragging step and more open (D-098)
 - [ ] Weather / seasons (referenced only in flavor today) (vision §1, D-051)
 - [ ] Region entities, biome names, culture-flavored name pools, world epithets (D-049)
 
@@ -321,6 +331,7 @@ fill levels:
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-19: **D-098 stage 1: the Death's Toll, and the scars matched to their deaths.** The last untouched pillar (D-009) opens as a deterministic ledger: deaths fill the count (100; a thegn's or hart's hand 160; Will above baseline shaves a tenth per point, floored 40), it drains 1 a turn, and a death at the line (20) or above converts, no roll: the judgment reads the count as it stood, THEN this death's fill lands, so a first death always warns and never scars, and two deaths within the Wounded span (80 turns) is what clustering means. The scar matches the death (uncanny kinds -> the haunted look; thrown/lofted -> the taken eye; iron close in -> the crushed hand; shapeless -> fixed order), replay-clean, zero new rng. Weights on surfaces the game already reads: the eye steps ReadOf down a whole tier, the hand adds 1 stamina per swing, the look docks every regard gain by 1 and dears bread by a coin. TOLL on the sidebar (red at the line), scars named under it, the drain's crossing spoken, one Aegis scar line on the motif. Waygate wipes the count; scars cross until cured (cure roads = gated stage 2). Save v47 -> v48. 462 tests green (9 new TollTests); twins identical + sim replay exact on master AND scarred seed 1; sweep: seeds 1/88888 land the haunted look live and still finish, seed 99's eight spaced deaths land nothing, every v47 baseline held to the digit. Journey report grew a scars stat.
 - 2026-07-19: **D-097 stage 2: the huntsman's debt, the bond's ledger, and the full weight.** The woodward, once the stead has bled, sets down the hide-scales off a talk and walks as a 16-HP huntsman until the camp breaks (world scope, once per world; their NPC steps off the map). Loyalty beats bank from all four Q&A sources (shared blood within 3, each tending, each fireside rest: mends whole + one line of who they are, every raider felled). A fallen guest writes guest-fell, guest-beloved at 3+ beats, costs the stead a point of shame, and the bench stands empty ALL WORLD (the woodward never comes home); the memorial storylet cashes the beloved fact in any villager's mouth, once. The paid arc: farewell at the cold fire-pits, portfolio fact, NPC home, +1 regard. Save v46 -> v47. The dividend: the pilot already works the woodward's bench, so EVERY journey now casts the huntsman live: new master baseline 10313 turns/2 deaths/10705 keys, sweep deaths 5/4/8/6 (the huntsman pulls their weight). 453 tests green (4 new GuestArcTests); twins identical; sim replay exact.
 - 2026-07-19: **D-097 the one who walks with you: the guest engine (companions stage 1).** The D-024 pillar breaks ground, guests first (Q&A-settled: they build the ally engine the summon and mule reuse). Guest entity with role-derived competence (a huntsman's blow 2-5, a crofter's 1-2: who they are, not a slider), one at a time, world-bound. They follow at the shoulder, hold ground on order, fight the adjacent foe to their measure (kills route through HarvestRemains: wrath and site-clearing stay honest; never a severed one, a hart, or the dormant), and take real blows: a raider the guest stands nearer turns on them, and a guest on any intent's resolved cell takes the roll whole (no stance, no iron, no Aegis). One key 'o', contextual: tend a hurt guest from the satchel (draught 8 / sprig 4 / bread 2, always a turn) or hold-here/with-me (free off the fight, a turn under live steel, D-094's grammar). Place-trading steps; doors, exits, and the death-wake shared; a living guest never crosses. Stage-1 death is a stark line + one Aegis line; the full weight is stage 2. NO save bump (fourth no-bump): no journaled path casts a guest, dice roll only when a body is struck: master baseline and sweep held to the digit. 449 tests green (11 new GuestTests). Stage 2 next: the huntsman's-debt arc, loyalty beats, death weight, farewell/portfolio.
 - 2026-07-19: **D-096 the kinds' second moves: cry, chill, feint, and the drag.** Combat depth's third rung closes the Q&A set. Goblin: the rallying cry (marked a turn; on resolve the whole camp takes an extra stride at the bearer; kill the crier or be gone). Wight: the grave-chill (marked cell; kept ground = 4 turns of blows landing 2 softer; stepping off is the whole answer). Thegn: the measured cut, its first declared blow, whose mark LIES to any read short of keen (FeintCell carries the truth: the read tiers finally pay differently at the top). Hound: the landed lunge hauls the bearer a stride toward the pack. Sidebar tells + keen weight notes for all three new intents. Save v45 -> v46. 438 tests green (5 new; the thegn's never-telegraphs test superseded by design). Twins identical; sim replay exact; new master baseline 10404 turns/4 deaths/10801 keys; sweep all finish, honestly deadlier (6/5/12/11). New tracked: stance-reading monsters, more second moves, cry waking dormant bands.

@@ -735,6 +735,15 @@ public static class Presenter
         if (p.Bow is { } bow) Line($"Bow {bow.Name}{(bow.Worn ? "!" : "")}", bow.Worn ? Hue.Red : Hue.Gray);
         if (p.Armor is { } arm) Line($"Arm {arm.Name}{(arm.Worn ? "!" : "")}", arm.Worn ? Hue.Red : Hue.Gray);
         if (p.WoundedTurns > 0) Line($"WOUNDED ({p.WoundedTurns})", Hue.Red);
+        // The Death's Toll (D-098): the count on the rail whenever it stands,
+        // red the moment a fall would convert. The fairness lives right here.
+        if (p.Toll > 0)
+            Line($"TOLL {p.Toll}{(p.Toll >= DeathsToll.Line ? " (above the line)" : "")}",
+                p.Toll >= DeathsToll.Line ? Hue.Red : Hue.DarkYellow);
+        // The marks the count has kept: carried in plain sight, like the wounds
+        // they are.
+        foreach (var scar in p.Scars)
+            Line($" {DeathsToll.NameOf(scar)}", Hue.DarkGray);
         // The one who walks with you (D-097): their blood on the rail beside
         // yours, because it is yours to keep.
         if (game.Guest is { Alive: true } guest)

@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-097); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-098); the research behind it lives in `../research/`.
 
 ---
 
@@ -117,7 +117,7 @@ When you fall:
 - **Banked, untouchable**: stats, skills, owned gear, quests, relationships, recipes, bestiary knowledge.
 - **Dropped where you fell**: unspent coin, unbanked expedition loot, unspent Essence. One recovery attempt; a second death forfeits it. Carrying too much value is a choice, and greed is what kills you.
 - **Wounded**: a temporary, visible, debt-framed debuff. Never a power loss; time and money, not spirals.
-- **Death's Toll**: a visible meter that fills on death and drains over time. Routine deaths never scar. Clustered or boss-tier deaths risk a scar: a lost eye, a crushed hand, a haunted look. A handful per playthrough at most, each with a costly path back to parity, each a dialogue hook. NPCs who watch you fall remember.
+- **Death's Toll**: a visible meter that fills on death and drains over time. Routine deaths never scar. Clustered or boss-tier deaths risk a scar: a lost eye, a crushed hand, a haunted look. A handful per playthrough at most, each with a costly path back to parity, each a dialogue hook. NPCs who watch you fall remember. *Stage 1 shipped (D-098): the deterministic ledger and the three scars matched to their deaths, live on the sidebar; the cure roads, talk hooks, and the rest of the catalog are stage 2.*
 
 Saves are part of the design: autosave fires at the instant of death, before the penalty screen, carrying all consequence state. Manual saves exist for life reasons; an optional Ironman toggle enforces the stakes architecturally.
 

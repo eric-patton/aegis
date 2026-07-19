@@ -313,6 +313,7 @@ public static class JourneyRunner
                 KeysPressed: totalKeys,
                 Turns: game.Turn,
                 Deaths: game.Player.Deaths,
+                Scars: string.Join(",", game.Player.Scars.Select(s => DeathsToll.NameOf(s))),
                 RemnantsReclaimed: remnantsReclaimed,
                 CoinReclaimed: coinReclaimed,
                 EssenceReclaimed: essenceReclaimed,
@@ -486,6 +487,8 @@ public static class JourneyRunner
         w.WriteLine($"OUTCOME: reached cycle {game.Cycle} (tier {game.World.Tier}), {crossings.Count} crossing(s) made.");
         w.WriteLine($"         {stop}.");
         w.WriteLine($"         {totalKeys} keys pressed, {game.Turn} turns, {game.Player.Deaths} death(s) total.");
+        if (game.Player.Scars.Count > 0)
+            w.WriteLine($"         the toll kept: {string.Join(", ", game.Player.Scars.Select(DeathsToll.NameOf))} (D-098).");
         w.WriteLine($"         reclaimed {remnantsReclaimed} remnant(s) from where it fell: "
                     + $"{coinReclaimed} coin, {essenceReclaimed} essence kept back from the dark (D-065).");
         w.WriteLine($"         looted {chestsLooted} chest(s) from the sites it cleared: "
@@ -548,7 +551,7 @@ internal sealed record JourneyCrossingDto(
 
 internal sealed record JourneyReport(
     ulong Seed, int TargetCrossings, bool WitsDemo, int CycleReached, int Tier, int CrossingsMade, string Stop,
-    int KeysPressed, int Turns, int Deaths,
+    int KeysPressed, int Turns, int Deaths, string Scars,
     int RemnantsReclaimed, int CoinReclaimed, int EssenceReclaimed,
     int ChestsLooted, int ChestCoin, int GearTaken,
     int KnacksTaken, string Knacks,

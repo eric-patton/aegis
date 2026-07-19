@@ -41,6 +41,9 @@ public static class AegisVoice
 
     public const string ReclaimLine = "Reclaimed. Nothing is wasted that returns.";
 
+    /// <summary>Spoken when the Death's Toll converts (D-098): the motif's cost made literal.</summary>
+    public const string ScarLine = "I caught you. I did not catch all of you. All is counted, and this is what the counting costs.";
+
     public static string DeathLine(int deathCount, int register = 1)
     {
         if (deathCount <= 1) return FirstDeathLine;

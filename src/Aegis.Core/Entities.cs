@@ -303,8 +303,29 @@ public sealed class Player
         // Wits head start, the bearer's own, never dulled.
         int read = dulled + Math.Max(0, Attributes[Attr.Wits] - AttributeSet.Baseline)
             + (Folk == FolkId.Cairnborn ? 1 : 0);
-        return read >= ReadKeen ? ReadTier.Keen : read >= ReadNamed ? ReadTier.Read : ReadTier.Blur;
+        var clarity = read >= ReadKeen ? ReadTier.Keen : read >= ReadNamed ? ReadTier.Read : ReadTier.Blur;
+        // The taken eye (D-098): a body change, not a dulling, so it steps the
+        // final clarity down one whole tier and no restamping mends it. Only
+        // its own costly road back (stage 2) will.
+        if (clarity > ReadTier.Blur && HasScar(ScarId.TakenEye)) clarity--;
+        return clarity;
     }
+
+    /// <summary>
+    /// The Death's Toll (D-098): fills on each death, drains a point a turn,
+    /// and converts a death above the line into a scar. Wiped clean at the
+    /// waygate; rebuilt by replay, never serialized.
+    /// </summary>
+    public int Toll { get; set; }
+
+    /// <summary>
+    /// The marks the count has kept (D-098): permanent-ish, mechanically real,
+    /// and carried across waygates with the body, until each one's own costly
+    /// road back is walked (stage 2). Rebuilt by replay, never serialized.
+    /// </summary>
+    public List<ScarId> Scars { get; } = [];
+
+    public bool HasScar(ScarId id) => Scars.Contains(id);
 
     /// <summary>The Aegis speaks once at the first standing rise (D-048); never again.</summary>
     public bool StandingLineHeard { get; set; }

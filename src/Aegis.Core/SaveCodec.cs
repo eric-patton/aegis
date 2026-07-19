@@ -166,10 +166,14 @@ namespace Aegis.Core;
 /// woodward as a walking companion off a talk that used to be plain, and two
 /// new Talk storylets enter the eligible draws, so a v46 journal that spoke
 /// to the woodward after the stead had bled replays into a different road.
+/// v48 when D-098 opened the Death's Toll: clustered deaths now land scars
+/// whose weight reaches combat (a crushed hand's dearer swings), the stead's
+/// ledgers, and the bread price, so a v47 journal with two close deaths
+/// replays into a different bearer from the scar onward.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 47;
+    public const int Version = 48;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

@@ -255,7 +255,10 @@ public sealed class Game
         - (Standing >= 2 && !World.Oaths.Contains(OathId.HushedName) ? 1 : 0)
         // The friend's price (D-080): deed-earned like the welcome (D-077), so
         // the hushed name never touches it where it silences the hearth-price.
-        - (FriendsPrice ? 1 : 0))
+        - (FriendsPrice ? 1 : 0)
+        // The haunted look (D-098): bread is sold dearer to the one the stead
+        // cannot quite meet the eyes of.
+        + (Player.HasScar(ScarId.HauntedLook) ? 1 : 0))
         * (World.Oaths.Contains(OathId.HungryRoad) ? 2 : 1);
 
     /// <summary>
@@ -1271,6 +1274,10 @@ public sealed class Game
         Mode = MapMode.Overworld;
         Player.Pos = World.ShrinePos;
         Player.WoundedTurns = 0;
+        // The crossing wipes the count clean (D-098): a fresh world, a rested
+        // soul. The scars are the body's and cross with it, until each one's
+        // own road back is walked.
+        Player.Toll = 0;
         Player.Hp = Player.MaxHp;
         Player.Stamina = Player.MaxStamina;
 
@@ -3045,7 +3052,10 @@ public sealed class Game
         int staminaCost = 3
             - (family == SkillId.Blades && Player.HasPerk(PerkId.SpareMotion) ? 1 : 0)
             - (weapon is null && Player.HasPerk(PerkId.ShortPath) ? 1 : 0)
-            + (weapon is not null && !weapon.MeetsReq(Player.Attributes) ? 1 : 0);
+            + (weapon is not null && !weapon.MeetsReq(Player.Attributes) ? 1 : 0)
+            // The crushed hand (D-098): knuckles that never set right pay a
+            // breath more wind on every swing, whatever it holds.
+            + (Player.HasScar(ScarId.CrushedHand) ? 1 : 0);
         int damage;
         SkillId? trained = null;
         if (Player.Stamina >= staminaCost)
@@ -4123,6 +4133,10 @@ public sealed class Game
     private void RaiseRegard(int amount, string line)
     {
         if (amount <= 0) return;
+        // The haunted look (D-098): the stead's warmth comes harder to a face
+        // something looks out of. Every gain of regard loses one, never below
+        // one: the deeds still count, they just count colder.
+        if (Player.HasScar(ScarId.HauntedLook)) amount = Math.Max(1, amount - 1);
         int rungBefore = SteadRegard.RungFor(Regard);
         _factionRegard[FactionId.Stead] = Regard + amount;
         int rungAfter = SteadRegard.RungFor(Regard);
@@ -4454,7 +4468,16 @@ public sealed class Game
 
         if (Mode == MapMode.Site)
             foreach (var monster in Monsters.Where(m => m.Alive && m.SiteId == CurrentSite!.Id))
+            {
+                // The death remembers its shape (D-098): the wind-up is caught
+                // before the act consumes it, and only the hand that actually
+                // dropped the bearer is written, so the scar can match the death.
+                var windup = monster.Intent?.Kind;
+                int hpBefore = Player.Hp;
                 ActMonster(monster);
+                if (hpBefore > 0 && Player.Hp <= 0)
+                    _deathShape = (monster.Kind, windup);
+            }
 
         // The one who walks with you (D-097) takes their own step after the
         // field has moved, so what they answer is what actually stands.
@@ -4476,6 +4499,12 @@ public sealed class Game
                 Player.Hp = Math.Min(Player.Hp, Player.EffectiveMaxHp);
             }
         }
+
+        // The Death's Toll (D-098) drains a point a turn: time is the only
+        // mercy in the count, and the crossing back under the line is spoken,
+        // so the bearer always knows which side of it they stand on.
+        if (Player.Toll > 0 && --Player.Toll == DeathsToll.Line - 1)
+            Log.Add(Turn, "The toll's count settles below the line. A fall now would leave no mark.", LogTone.Info);
 
         // The grave-cold (D-096) works its way out a turn at a time.
         if (Player.ChilledTurns > 0 && --Player.ChilledTurns == 0)
@@ -5342,6 +5371,9 @@ public sealed class Game
             Player.HeaveTarget = null;
             int damage = Absorb(_combatRng.Range(5, 9));
             Player.Hp -= damage;
+            // The counter kills on the bearer's own turn, outside the monster
+            // loop, so the death's shape (D-098) is written here.
+            if (Player.Hp <= 0) _deathShape = (monster.Kind, null);
             monster.ExposedTurns = 1;
             Log.Add(Turn, $"The sword-thegn was waiting for exactly this. It steps inside the winding blow: your heave dies half-drawn as the point comes back and finds you for {damage}.", LogTone.Danger);
             Log.Add(Turn, "Its counter spent, the sword-thegn stands a breath out of its guard.", LogTone.Combat);
@@ -5456,6 +5488,32 @@ public sealed class Game
         monster.Pos = best;
     }
 
+    /// <summary>The hand and wind-up that dropped the bearer this turn (D-098), so the scar can match the death. Replay-derived, never serialized.</summary>
+    private (MonsterKind Kind, IntentKind? Windup)? _deathShape;
+
+    /// <summary>
+    /// A death above the line converts (D-098): the scar the death's shape asks
+    /// for where it can, then the fixed order among the marks not yet carried,
+    /// so the landing is replay-clean without a die. A bearer already carrying
+    /// all three has nothing left the count can keep.
+    /// </summary>
+    private void LandScar()
+    {
+        var matched = DeathsToll.Match(_deathShape?.Kind, _deathShape?.Windup);
+        ScarId[] order = matched is { } m
+            ? [m, ScarId.TakenEye, ScarId.CrushedHand, ScarId.HauntedLook]
+            : [ScarId.TakenEye, ScarId.CrushedHand, ScarId.HauntedLook];
+        foreach (var scar in order)
+        {
+            if (Player.HasScar(scar)) continue;
+            Player.Scars.Add(scar);
+            Log.Add(Turn, $"Something does not come all the way back with you: {DeathsToll.NameOf(scar)}.", LogTone.Danger);
+            Log.Add(Turn, DeathsToll.CostOf(scar), LogTone.Danger);
+            Log.Add(Turn, $"\"{AegisVoice.ScarLine}\"", LogTone.Aegis);
+            return;
+        }
+    }
+
     private void HandleDeath()
     {
         Player.Deaths++;
@@ -5518,6 +5576,17 @@ public sealed class Game
         Log.Add(Turn, $"You wake at the shrine, wounded. The Aegis is spent; it will recover in time.", LogTone.Info);
         if (Remnant is not null)
             Log.Add(Turn, $"What you carried lies where you fell. One chance to reclaim it.", LogTone.Danger);
+
+        // The Death's Toll (D-098, paying D-009): the judgment reads the count
+        // as it stood when the bearer fell, and this death's fill lands after,
+        // so the first death of a cluster warns and the next one collects. No
+        // roll anywhere: the fairness was on the rail before the fall.
+        bool scarring = Player.Toll >= DeathsToll.Line;
+        bool heavy = _deathShape?.Kind is MonsterKind.Thegn or MonsterKind.Hart;
+        Player.Toll += DeathsToll.FillFor(heavy, Player.Attributes[Attr.Will]);
+        if (scarring) LandScar();
+        _deathShape = null;
+        Log.Add(Turn, $"The toll stands at {Player.Toll}. Fall again before it drains under {DeathsToll.Line} and the count will keep something.", LogTone.Danger);
     }
 
     // Test hooks: deterministic surgery for unit tests, never used by frontends.
@@ -5697,6 +5766,8 @@ public sealed class Game
         TalkNpc: TalkNpc?.Name ?? "",
         WoundedTurns: Player.WoundedTurns,
         Deaths: Player.Deaths,
+        Toll: Player.Toll,
+        Scars: string.Join(",", Player.Scars.Select(s => s.ToString().ToLowerInvariant())),
         MonstersAlive: Monsters.Count(m => m.Alive),
         StoryletsFired: StoryletsFired,
         CampCleared: CampCleared,
@@ -5844,6 +5915,8 @@ public sealed record Snapshot(
     string TalkNpc,
     int WoundedTurns,
     int Deaths,
+    int Toll,
+    string Scars,
     int MonstersAlive,
     int StoryletsFired,
     bool CampCleared,

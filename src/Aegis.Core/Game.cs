@@ -2,8 +2,13 @@ namespace Aegis.Core;
 
 public enum MapMode { Overworld, Site }
 
-/// <summary>What the stead sells (D-036): goods and services coin can become.</summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge }
+/// <summary>
+/// What the stead sells (D-036): goods and services coin can become. <see cref="Trade"/>
+/// is not itself a good but a shopfront: it opens a vendor's own menu (D-071), so a
+/// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
+/// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
+/// </summary>
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide }
 
 /// <summary>
 /// The deterministic game engine. No console, no I/O, no wall clock: state advances
@@ -35,6 +40,10 @@ public sealed class Game
     public bool InShrineMenu { get; private set; }
     public bool InTalkMenu { get; private set; }
     public bool InUnbindMenu { get; private set; }
+
+    /// <summary>A vendor's own trade menu (D-071), reached from one digit of the talk
+    /// menu, with its own nine digits for what does not fit the shared topics.</summary>
+    public bool InTradeMenu { get; private set; }
 
     /// <summary>The keeping's choice menu (D-039), open only at the Hearth itself.</summary>
     public bool InThresholdMenu { get; private set; }
@@ -107,6 +116,11 @@ public sealed class Game
     public IReadOnlyList<(TradeGood Good, string Arg, string Label)> Offers => _offers;
     private readonly List<(TradeGood Good, string Arg, string Label)> _offers = [];
 
+    /// <summary>The open vendor's trade-menu entries (D-071): its own nine digits,
+    /// stable in order so a buyer's fingers never land on a shifted line.</summary>
+    public IReadOnlyList<(TradeGood Good, string Arg, string Label)> TradeOffers => _tradeOffers;
+    private readonly List<(TradeGood Good, string Arg, string Label)> _tradeOffers = [];
+
     /// <summary>Most rations a person can carry: the sink recurs instead of stockpiling.</summary>
     public const int RationCap = 5;
 
@@ -138,6 +152,14 @@ public sealed class Game
     /// so wealth in iron taxes itself.
     /// </summary>
     public int RepairPrice => Player.AllGear.Sum(g => g.RepairPrice);
+
+    /// <summary>
+    /// What a cured hide fetches at the wood's edge (D-071): a flat few coin apiece for
+    /// now, the hunt's coin payoff to sit beside its meat and its skill (D-070). A good
+    /// hunt buys a lesson or a modest piece of iron; it does not make the market. Left a
+    /// property so a world that prizes fur, or an oath, can lean on it later.
+    /// </summary>
+    public int HidePrice => 3;
 
     /// <summary>
     /// Fired for every key that reached the engine while running (including menu keys
@@ -248,6 +270,13 @@ public sealed class Game
         if (InUnbindMenu)
         {
             HandleUnbindMenuKey(key);
+            KeyApplied?.Invoke(key);
+            return;
+        }
+
+        if (InTradeMenu)
+        {
+            HandleTradeMenuKey(key);
             KeyApplied?.Invoke(key);
             return;
         }
@@ -646,6 +675,7 @@ public sealed class Game
         InShrineMenu = false;
         InTalkMenu = false;
         InUnbindMenu = false;
+        InTradeMenu = false;
         InThresholdMenu = false;
         InLayingMenu = false;
         InGearMenu = false;
@@ -1108,12 +1138,12 @@ public sealed class Game
             offers.Add((TradeGood.Ration, "", $"Buy a ration ({RationPrice} coin)"));
         if (npc.Id == "npc_herbwife" && Player.WoundedTurns > 0)
             offers.Add((TradeGood.Mending, "", $"Have the wound dressed ({MendPrice} coin)"));
-        // The woodward's teaching entry (D-052). The villagers' nine digits hold:
-        // the fullest topic list is eight, and the woodward sells nothing else.
-        // (The hunt's hide-trade, D-070, waits on a vendor menu with room to grow:
-        // this one is already at its nine.)
+        // The woodward keeps a bench at the wood's edge (D-071): one talk digit that
+        // opens a trade menu of its own, so the teaching (D-052) and the hunt's
+        // hide-trade (D-070) share a counter with room to grow, and the villagers'
+        // shared nine digits are never crowded by it.
         if (npc.Id == "npc_woodward")
-            offers.Add((TradeGood.Lesson, LessonCatalog.IdOf(LessonId.Gleaning), LessonLabel(LessonId.Gleaning)));
+            offers.Add((TradeGood.Trade, "", "Trade at the wood's edge"));
         if (npc.Kind == NpcKind.Smith)
         {
             // Sold pieces stay listed as owned rather than vanishing: menu digits
@@ -1256,6 +1286,82 @@ public sealed class Game
         Log.Add(Turn, "\"Counts, choices, songs, and now what another's hands put into yours. None of it my doing. I begin to suspect I am the smallest part of my own work.\"", LogTone.Aegis);
     }
 
+    /// <summary>
+    /// The woodward's bench (D-071): the talk digit's trade menu, its own nine slots.
+    /// The teaching that used to sit in the talk menu (D-052) moves here to make room
+    /// for the hide-trade (D-070), and both are always listed so their digits hold.
+    /// </summary>
+    private List<(TradeGood, string, string)> BuildTradeOffers(Npc npc)
+    {
+        var offers = new List<(TradeGood, string, string)>();
+        if (npc.Id == "npc_woodward")
+        {
+            offers.Add((TradeGood.Hide, "", HideSaleLabel()));
+            offers.Add((TradeGood.Lesson, LessonCatalog.IdOf(LessonId.Gleaning), LessonLabel(LessonId.Gleaning)));
+        }
+        return offers;
+    }
+
+    /// <summary>The hide-sale entry (D-071): what the bench will weigh, and for how much.</summary>
+    private string HideSaleLabel() => Player.Hide > 0
+        ? $"Sell your hides ({Player.Hide} at {HidePrice}c, {Player.Hide * HidePrice} coin)"
+        : "Sell hides (none cured yet)";
+
+    private void OpenTradeMenu()
+    {
+        InTalkMenu = false;
+        InTradeMenu = true;
+        _tradeOffers.Clear();
+        _tradeOffers.AddRange(BuildTradeOffers(TalkNpc!));
+        Log.Add(Turn, $"{TalkNpc!.Name} leads you to the bench at the wood's edge, where the hides hang to cure and the wood's own lessons are kept.");
+    }
+
+    private void HandleTradeMenuKey(char key)
+    {
+        if (key >= '1' && key <= '0' + _tradeOffers.Count)
+        {
+            var (good, arg, _) = _tradeOffers[key - '1'];
+            switch (good)
+            {
+                case TradeGood.Hide: TrySellHides(); break;
+                case TradeGood.Lesson: TryLearnLesson(arg); break;
+            }
+            // The labels move with the state (hides sold, lesson taken); rebuild so the
+            // bench reads true, and the digits keep their order under the buyer's hand.
+            _tradeOffers.Clear();
+            _tradeOffers.AddRange(BuildTradeOffers(TalkNpc!));
+            return;
+        }
+
+        InTradeMenu = false;
+        Log.Add(Turn, $"You leave the bench. {TalkNpc!.Name} turns back to the day's hides.");
+        TalkNpc = null;
+    }
+
+    /// <summary>
+    /// The hunt's sell path (D-071, paying off D-070): cured hides become coin the
+    /// bearer's own hand earned, told apart from looted purse and from the dark's
+    /// essence. Sold in a lot, since the bench weighs the whole bundle at once.
+    /// </summary>
+    private void TrySellHides()
+    {
+        if (Player.Hide == 0)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Bring me hides and I will weigh them fair. You carry none the wood would thank you for.\"");
+            return;
+        }
+        int hides = Player.Hide;
+        int paid = hides * HidePrice;
+        Player.Hide = 0;
+        Player.Coin += paid;
+        Log.Add(Turn, $"You lay {hides} hide{(hides == 1 ? "" : "s")} across the bench. {TalkNpc!.Name} runs a thumb over each, counts, and pays {paid} coin. ({Player.Coin} now)", LogTone.Reward);
+        if (!Player.HideLineHeard)
+        {
+            Player.HideLineHeard = true;
+            Log.Add(Turn, "\"Coin off the wilds, and none of it mine to give or take. A fifth ledger, then, and the first you filled with your own two hands and no leave from anyone. Keep at it.\"", LogTone.Aegis);
+        }
+    }
+
     private void TryBuyRation()
     {
         int price = RationPrice;
@@ -1379,6 +1485,7 @@ public sealed class Game
                 case TradeGood.Repair: TryRepairGear(); break;
                 case TradeGood.Lesson: TryLearnLesson(arg); break;
                 case TradeGood.Pledge: TryPledgeDeed(arg); break;
+                case TradeGood.Trade: OpenTradeMenu(); break;
             }
             return;
         }
@@ -3429,6 +3536,7 @@ public sealed class Game
         InShrineMenu = false;
         InTalkMenu = false;
         InUnbindMenu = false;
+        InTradeMenu = false;
         InThresholdMenu = false;
         InLayingMenu = false;
         InCrossingMenu = false;
@@ -3604,6 +3712,7 @@ public sealed class Game
         InShrineMenu: InShrineMenu,
         InTalkMenu: InTalkMenu,
         InUnbindMenu: InUnbindMenu,
+        InTradeMenu: InTradeMenu,
         InThresholdMenu: InThresholdMenu,
         InLayingMenu: InLayingMenu,
         InGearMenu: InGearMenu,
@@ -3723,6 +3832,7 @@ public sealed record Snapshot(
     bool InShrineMenu,
     bool InTalkMenu,
     bool InUnbindMenu,
+    bool InTradeMenu,
     bool InThresholdMenu,
     bool InLayingMenu,
     bool InGearMenu,

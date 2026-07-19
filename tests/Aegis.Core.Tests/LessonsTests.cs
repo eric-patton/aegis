@@ -12,14 +12,20 @@ namespace Aegis.Core.Tests;
 public class LessonsTests
 {
     [Fact]
-    public void TheWoodward_SellsTheGleaning_OnceAndForCoin()
+    public void TheWoodward_SellsTheGleaning_AtTheBench_OnceAndForCoin()
     {
         var game = new Game(42);
         NpcTests.BumpNpc(game, Npc(game, "npc_woodward"));
 
-        Assert.Contains(game.Offers, o => o.Good == TradeGood.Lesson
+        // The woodward's one talk digit is the bench, not the lesson itself (D-071):
+        // the teaching now lives at the wood's edge, a keypress deeper.
+        Assert.Contains(game.Offers, o => o.Good == TradeGood.Trade);
+        Assert.DoesNotContain(game.Offers, o => o.Good == TradeGood.Lesson);
+        game.ApplyKey(OfferKey(game, TradeGood.Trade));
+        Assert.True(game.InTradeMenu);
+        Assert.Contains(game.TradeOffers, o => o.Good == TradeGood.Lesson
             && o.Label.Contains("Be shown the gleaning (10 coin)"));
-        char learn = OfferKey(game, TradeGood.Lesson);
+        char learn = TradeKey(game, TradeGood.Lesson);
 
         // Broke: the showing waits, and no coin moves.
         game.Player.Coin = 5;
@@ -34,7 +40,7 @@ public class LessonsTests
         game.ApplyKey(learn);
         Assert.True(game.Player.HasLesson(LessonId.Gleaning));
         Assert.Equal(2, game.Player.Coin);
-        Assert.Contains(game.Offers, o => o.Good == TradeGood.Lesson && o.Label.Contains("yours already"));
+        Assert.Contains(game.TradeOffers, o => o.Good == TradeGood.Lesson && o.Label.Contains("yours already"));
         Assert.Contains(game.Log.Recent(4), e => e.Text.Contains("smallest part of my own work"));
 
         // Shown once is shown: no second charge, no second lesson.
@@ -42,15 +48,51 @@ public class LessonsTests
         Assert.Equal(2, game.Player.Coin);
         Assert.Single(game.Player.Lessons);
         Assert.Contains(game.Log.Recent(2), e => e.Text.Contains("Shown once is shown"));
-        game.ApplyKey(' ');
+        game.ApplyKey(' '); // step back from the bench
+        Assert.False(game.InTradeMenu);
 
-        // A second lesson from the smith: taught, paid, and the Aegis stays quiet.
+        // A second lesson from the smith is still a plain talk offer: taught, paid,
+        // and the Aegis stays quiet, the fourth ledger being already marked.
         game.Player.Coin = 20;
         NpcTests.BumpNpc(game, game.World.Smith);
         game.ApplyKey(OfferKey(game, TradeGood.Lesson));
         Assert.True(game.Player.HasLesson(LessonId.TendedIron));
         Assert.Equal(5, game.Player.Coin);
         Assert.DoesNotContain(game.Log.Recent(3), e => e.Text.Contains("smallest part of my own work"));
+    }
+
+    [Fact]
+    public void TheBench_WeighsHidesForCoin_TheFifthLedger_OncePerLot()
+    {
+        var game = new Game(42);
+        game.Player.Hide = 5;
+        game.Player.Coin = 0;
+        NpcTests.BumpNpc(game, Npc(game, "npc_woodward"));
+        game.ApplyKey(OfferKey(game, TradeGood.Trade));
+
+        Assert.Contains(game.TradeOffers, o => o.Good == TradeGood.Hide
+            && o.Label.Contains("5 at 3c, 15 coin"));
+        char sell = TradeKey(game, TradeGood.Hide);
+
+        // The lot is weighed at once: five hides become fifteen coin, and the Aegis
+        // marks the fifth ledger, the first the bearer filled by their own hand, once.
+        game.ApplyKey(sell);
+        Assert.Equal(0, game.Player.Hide);
+        Assert.Equal(15, game.Player.Coin);
+        Assert.Contains(game.TradeOffers, o => o.Good == TradeGood.Hide && o.Label.Contains("none cured yet"));
+        Assert.Contains(game.Log.Recent(3), e => e.Text.Contains("fifth ledger"));
+
+        // An empty bundle sells nothing, takes nothing, and does not sound the Aegis twice.
+        game.ApplyKey(sell);
+        Assert.Equal(0, game.Player.Hide);
+        Assert.Equal(15, game.Player.Coin);
+        Assert.Contains(game.Log.Recent(2), e => e.Text.Contains("Bring me hides"));
+
+        // A fresh lot pays again, and across the whole night the reflection sounded once.
+        game.Player.Hide = 2;
+        game.ApplyKey(sell);
+        Assert.Equal(21, game.Player.Coin);
+        Assert.Single(game.Log.Entries, e => e.Text.Contains("fifth ledger"));
     }
 
     [Fact]
@@ -219,6 +261,14 @@ public class LessonsTests
             NpcTests.BumpNpc(game, Npc(game, id));
             Assert.True(game.Topics.Count + game.Offers.Count <= 9,
                 $"{id} holds {game.Topics.Count} topics + {game.Offers.Count} offers");
+            // The bench keeps its own nine (D-071): the vendor menu behind the woodward's
+            // trade digit must fit too, or the sell path has simply moved the wall.
+            if (id == "npc_woodward")
+            {
+                game.ApplyKey(OfferKey(game, TradeGood.Trade));
+                Assert.True(game.TradeOffers.Count <= 9,
+                    $"the bench holds {game.TradeOffers.Count} entries");
+            }
             game.ApplyKey(' ');
         }
     }
@@ -243,8 +293,9 @@ public class LessonsTests
         }
         Assert.True(live.InTalkMenu, "bot never reached the woodward");
 
-        live.ApplyKey(OfferKey(live, TradeGood.Lesson));
-        live.ApplyKey(' ');
+        live.ApplyKey(OfferKey(live, TradeGood.Trade));   // open the bench (D-071)
+        live.ApplyKey(TradeKey(live, TradeGood.Lesson));  // buy the gleaning there
+        live.ApplyKey(' ');                               // step back
         Assert.True(live.Player.HasLesson(LessonId.Gleaning));
 
         var replayed = new Game(seed);
@@ -268,6 +319,15 @@ public class LessonsTests
             if (game.Offers[i].Good == good)
                 return (char)('1' + game.Topics.Count + i);
         throw new InvalidOperationException($"no {good} offer in this menu");
+    }
+
+    /// <summary>The digit that selects an entry at an open vendor's trade bench (D-071).</summary>
+    private static char TradeKey(Game game, TradeGood good)
+    {
+        for (int i = 0; i < game.TradeOffers.Count; i++)
+            if (game.TradeOffers[i].Good == good)
+                return (char)('1' + i);
+        throw new InvalidOperationException($"no {good} entry at the bench");
     }
 
     /// <summary>Places the bearer beside a cell and walks the one legal step onto it.</summary>

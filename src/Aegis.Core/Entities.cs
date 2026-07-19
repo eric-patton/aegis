@@ -115,6 +115,9 @@ public sealed class Player
     /// <summary>The Aegis speaks once at the first lesson shown; never again.</summary>
     public bool LessonLineHeard { get; set; }
 
+    /// <summary>The Aegis marks the first hide sold at the bench (D-071); once only.</summary>
+    public bool HideLineHeard { get; set; }
+
     /// <summary>
     /// The bestiary (D-059, paying D-004's oldest clause: telegraph clarity
     /// scales with what the bearer knows). How many of a kind's wind-ups the

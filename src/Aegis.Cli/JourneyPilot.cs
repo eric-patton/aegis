@@ -856,9 +856,9 @@ public static class JourneyPilot
 
     private static bool StuckInMenu(Game g) =>
         // A reveal talk is opened for its rung then closed here next tick; the respec is
-        // never wanted. The shrine, smith, aim, pack, sheet, keeping, and laying menus are
-        // all driven above, not escaped.
-        g.InTalkMenu || g.InUnbindMenu;
+        // never wanted, and the bench (D-071) the bot has no errand at. The shrine, smith,
+        // aim, pack, sheet, keeping, and laying menus are all driven above, not escaped.
+        g.InTalkMenu || g.InUnbindMenu || g.InTradeMenu;
 
     /// <summary>
     /// Which attribute to raise. Bare-handed, keep Vigor and Might level (staying alive,

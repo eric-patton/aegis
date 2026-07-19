@@ -46,6 +46,7 @@ public static class Presenter
         if (game.InShrineMenu) DrawShrineMenu(frame, game, layout);
         if (game.InTalkMenu) DrawTalkMenu(frame, game, layout);
         if (game.InUnbindMenu) DrawUnbindMenu(frame, game, layout);
+        if (game.InTradeMenu) DrawTradeMenu(frame, game, layout);
         if (game.InThresholdMenu) DrawThresholdMenu(frame, layout);
         if (game.InLayingMenu) DrawLayingMenu(frame, game, layout);
         if (game.InGearMenu) DrawGearMenu(frame, game, layout);
@@ -143,6 +144,32 @@ public static class Presenter
         }
 
         frame.Write(x0 + 2, y0 + boxH - 2, "1-7 loosen; any other key to part ways", Hue.DarkGray);
+    }
+
+    /// <summary>
+    /// A vendor's bench (D-071): the trade menu behind one talk digit, its own nine
+    /// slots for what the shared topics have no room to hold.
+    /// </summary>
+    private static void DrawTradeMenu(Frame frame, Game game, Layout layout)
+    {
+        var npc = game.TalkNpc;
+        if (npc is null) return;
+
+        const int boxW = 46;
+        int boxH = 5 + game.TradeOffers.Count;
+        int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
+        int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
+
+        DrawBox(frame, x0, y0, boxW, boxH);
+        frame.Write(x0 + 2, y0 + 1, $"The wood's edge | {npc.Name} the {npc.Role}", Hue.White);
+        frame.Write(x0 + 2, y0 + 2, $"You hold {game.Player.Coin} coin", Hue.Cyan);
+
+        for (int i = 0; i < game.TradeOffers.Count; i++)
+            frame.Write(x0 + 2, y0 + 4 + i,
+                $"{i + 1}) {game.TradeOffers[i].Label}", Hue.Yellow);
+
+        frame.Write(x0 + 2, y0 + boxH - 2,
+            $"1-{game.TradeOffers.Count} choose; any other key to step back", Hue.DarkGray);
     }
 
     /// <summary>

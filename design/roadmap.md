@@ -35,7 +35,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 - Attributes: **4 of 7** mechanically active (Mind, Will, Presence are inert)
 - Skills: **6 of ~18** (five combat, plus Hunting from D-070)
-- Activity families: **hunting shipped** (D-070, its sell path deferred); the four families still largely unbuilt (a v0 shop economy aside)
+- Activity families: **hunting shipped** (D-070) with its sell path now closed (D-071); the four families still largely unbuilt (a v0 shop economy aside)
 - Launch story templates: **2** built (of 3 named, 4-5 planned)
 - Major vision pillars unbuilt: magic, factions, companions, crafting, character creation, Toll/scars
 
@@ -46,11 +46,13 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 - **Phase 0: Foundation & tooling.** `[x]` DONE. Engine, combat, martial progression,
   death/NG+ spine, the Aegis arc, and the journey-bot verification harness all ship.
 - **Phase 1: First breadth increment (current).** **Hunting v1 shipped (D-070):** the
-  wilds site, the fleeing hart, the Hunting skill, and a yield of meat + hide. It
-  established the activity -> skill -> yield pattern the other families reuse. Still open
-  in this phase: the **hide-sell path** (deferred at the 9-digit menu cap, needs a
-  dedicated hide-buyer menu) and, later, the rest of the wilderness family. Deferred
-  alternative for a next lane: **character creation** (races + backgrounds).
+  wilds site, the fleeing hart, the Hunting skill, and a yield of meat + hide, with its
+  **sell path now closed (D-071):** the woodward's trade sub-menu turns cured hides to
+  coin, and sets the reusable vendor-menu pattern the rest of the economy will use. It
+  established the activity -> skill -> yield -> coin loop the other families reuse. Still
+  open in this phase: the rest of the wilderness family, and growing the wood's-edge bench
+  (cooking, foraged-goods sale). Deferred alternative for a next lane: **character
+  creation** (races + backgrounds).
 - **Phase 2: A keystone pillar.** **Factions** (unblocks the two unwritten story templates
   and the reputation layer) or **magic** (activates Mind/Will and the caster build).
 - **Phase 3: Remaining pillars & stakes.** Companions, the Death's-Toll/scar layer, the
@@ -107,14 +109,16 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 ### The Life: activities & economy (0 of 4 families)
 
-- [~] Economy v0: shop, rations, repair, herbwife mend, fact-derived prices (D-036, D-025)
+- [~] Economy v0: shop, rations, repair, herbwife mend, hide-sale, fact-derived prices (D-036, D-025, D-071)
+- [x] Vendor sub-menu pattern: one talk digit opens a bench with its own nine slots (D-071)
 - [x] Patronage deeds at the crossing (3: raised stone, endowed hearth, true verse) (D-054)
 - [ ] Crafting trades: smithing, alchemy, cooking as player lanes (D-006, D-025)
-- [~] Wilderness living: hunting shipped (D-070, sell path deferred); tracking, foraging, fishing, camping pending (D-006)
+- [~] Wilderness living: hunting shipped with its sell path (D-070, D-071); tracking, foraging, fishing, camping pending (D-006)
+- [x] A hide-buyer with room to grow: the woodward's trade sub-menu, hides to coin (D-071)
 - [ ] Crime: lockpicking, pickpocketing, burglary, fencing (D-006)
 - [ ] Town life: gambling, carousing, tournaments, property, caravan/arbitrage (D-006)
 - [ ] Aspirational sink ladder: property, retinue, master training, commissions (D-025, D-036)
-- [ ] A hide-buyer vendor menu (the hunt's sell path, deferred at the 9-digit villager cap, D-070)
+- [ ] Grow the wood's-edge bench: cooking, foraged-goods sale, hunting gear/lessons (D-071)
 
 ### Magic
 
@@ -170,7 +174,8 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 ### Tooling & verification, built
 
 - [x] Dev harness: headless pilot pipe, `sim` scripted JSON runs (D-027)
-- [x] Journey-bot autopilot: clears sites, arms, raises, reclaims, loots, answers the sheet, walks the arc, swears oaths (D-062..D-069)
+- [x] Journey-bot autopilot: clears sites, arms, raises, reclaims, loots, answers the sheet, walks the arc, swears oaths, hunts the wilds (D-062..D-070)
+- [ ] Journey-bot sells its hides at the bench (close the economy loop in the autopilot, D-071)
 - [ ] `--wits` demo mode for the perception build (deferred D-063)
 - [ ] Machine-readable journey report for a sweep / CI (deferred D-063)
 
@@ -191,5 +196,6 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-18: **D-071 hide-sell path shipped.** The woodward's "wood's edge" trade sub-menu (a reusable vendor-menu pattern behind one talk digit) turns cured hides to coin and now holds the Gleaning lesson too; hunting feeds three payoffs (skill, food, coin). Checked off the hide-buyer, the vendor sub-menu pattern, and folded the sale into economy v0. New tracked item: teach the journey-bot to sell (close the loop in the autopilot). No save-format change.
 - 2026-07-18: **D-070 hunting v1 shipped.** New: the wilds site, the hart, the Hunting skill (6th), meat + hide yield; journey-bot hunts live. Checked off Hunting skill and partial wilderness/Life family. New tracked item: a hide-buyer vendor menu (sell path deferred at the 9-digit menu cap). Save v26 -> v27.
 - 2026-07-18: Tracker created. Snapshot of Phase 0 complete (spine + journey-bot through D-069).

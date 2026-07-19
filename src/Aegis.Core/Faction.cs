@@ -1,6 +1,16 @@
 namespace Aegis.Core;
 
 /// <summary>
+/// The ledgers kept on the bearer, keyed (D-078): D-023's per-faction dual
+/// reputation begins here. Two factions so far, and one relationship between
+/// them, the oldest one: the stead and the raiders that prey on it are standing
+/// enemies, so a blow to one is a favor to the other (the camp emptied raises
+/// the stead's regard and the raiders' wrath in the same stroke). A formal
+/// relation matrix waits until a third faction gives it two edges to hold.
+/// </summary>
+public enum FactionId { Stead, Raiders }
+
+/// <summary>
 /// The home stead's regard for the bearer (D-076): the first rung of the faction
 /// pillar (D-023), a local Fame earned only by deeds the stead can perceive and
 /// reset at every crossing, because the folk are this world's and no other. It is
@@ -36,4 +46,50 @@ public static class SteadRegard
         3 => "the stead's own",
         _ => "",
     };
+}
+
+/// <summary>
+/// The raiders' side of the ledger (D-078): the enemy faction's weighing of the
+/// bearer, the Infamy-shaped half of D-023's dual reputation, kept by the folk
+/// who have most cause to count. Wrath rises one notch for every raider slain,
+/// rung by rung faster than the stead's regard (thresholds 1, 2, 4: hate
+/// compounds where gratitude steps), and like the regard it is this world's
+/// alone: the next world's dens have not met the bearer yet. At the dread rung
+/// the ledger grows teeth the bearer can feel: raiders' blows come feared, and
+/// land the weaker for it.
+/// </summary>
+public static class RaiderWrath
+{
+    public const int MaxRung = 3;
+
+    /// <summary>The rung at which the raiders' blows start to falter (D-078): fear entering the work.</summary>
+    public const int DreadRung = 2;
+
+    /// <summary>Wrath required for a rung: 1, 2, 4. Hate compounds where gratitude steps.</summary>
+    public static int Threshold(int rung) => rung <= 1 ? 1 : 2 * (rung - 1);
+
+    public static int RungFor(int wrath)
+    {
+        int rung = 0;
+        while (rung < MaxRung && wrath >= Threshold(rung + 1)) rung++;
+        return rung;
+    }
+
+    /// <summary>What the dens call the bearer, in whatever tongue the dens keep.</summary>
+    public static string TitleOf(int wrath) => RungFor(wrath) switch
+    {
+        1 => "a name the raiders curse",
+        2 => "a dread on the raiders",
+        3 => "the bane of the dens",
+        _ => "",
+    };
+
+    /// <summary>
+    /// A raider's damage roll under the dread (D-078): past the dread rung the
+    /// blow is feared before it is thrown, and lands one point the weaker, never
+    /// below one. Applied to the raw roll, before armor has its say, so the same
+    /// draw leaves the dice either way and determinism holds.
+    /// </summary>
+    public static int Steadied(int wrath, int roll) =>
+        RungFor(wrath) >= DreadRung ? Math.Max(1, roll - 1) : roll;
 }

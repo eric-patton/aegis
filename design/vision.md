@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-025); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-078); the research behind it lives in `../research/`.
 
 ---
 
@@ -36,7 +36,7 @@ At world creation, a causal-grammar history generator (the Caves of Qud model) p
 Hierarchical seeds (master seed hashed per subsystem/region/site) keep every world reproducible; saves are seed + delta.
 
 ### The living world: event-driven factions
-Factions are small state vectors with causal transition rules on a coarse tick. Every faction move (seize a pass, raise tithes, erupt into feud) writes a fact into the graph AND ships with a narration hook: a rumor, a notice, refugees on the road, a price spike. If the player could not perceive it, it does not fire. Conflicts carry designed exit conditions; no eternal stalemates. Named leaders and lieutenants form a bounded Nemesis-style roster with memory. Reputation is Fame/Infamy per faction, tracked separately. The first rung landed in D-076: the home stead keeps a per-world **regard** for the bearer (local Fame), earned only by deeds it can perceive (the raids ended, the mound gone quiet) and reset at each crossing, set beside Legend's cross-world standing rather than merged into it. D-077 gave that regard its first boon, the **friend's welcome**: when a stead first holds the bearer a friend, its folk gift a coin purse, deed-earned so (unlike the Legend welcome) the hushed name never silences it. The Infamy half, a keyed multi-faction ledger, richer regard-bought boons, and the coarse tick are still to come.
+Factions are small state vectors with causal transition rules on a coarse tick. Every faction move (seize a pass, raise tithes, erupt into feud) writes a fact into the graph AND ships with a narration hook: a rumor, a notice, refugees on the road, a price spike. If the player could not perceive it, it does not fire. Conflicts carry designed exit conditions; no eternal stalemates. Named leaders and lieutenants form a bounded Nemesis-style roster with memory. Reputation is Fame/Infamy per faction, tracked separately. The first rung landed in D-076: the home stead keeps a per-world **regard** for the bearer (local Fame), earned only by deeds it can perceive (the raids ended, the mound gone quiet) and reset at each crossing, set beside Legend's cross-world standing rather than merged into it. D-077 gave that regard its first boon, the **friend's welcome**: when a stead first holds the bearer a friend, its folk gift a coin purse, deed-earned so (unlike the Legend welcome) the hushed name never silences it. D-078 made the ledger keyed and gave it a second faction: the raiders keep a **wrath** on the bearer, one notch per raider slain on its own faster ladder, and past the dread rung their blows come feared and land the weaker; emptying the camp raises the stead's regard and the raiders' wrath in the same strokes, the first faction relationship live. The true stead-Infamy half (a transgression the folk could count against the bearer), richer regard-bought boons, and the coarse tick are still to come.
 
 ---
 

@@ -95,14 +95,18 @@ namespace Aegis.Core;
 /// gained a herb-sale entry, so a v28 journal that walked the wood or drove the
 /// bench replays to different state.
 /// v30 when D-077 gave regard its first boon: the first time a stead holds the
-/// bearer a friend (rung 2, reached by clearing the camp), its folk gift coin and
-/// bread, so a v29 journal that ended a stead's raids replays with a fuller purse
-/// and larder from that turn on. (D-076's regard itself was cosmetic and bumped
-/// nothing; this is the first faction change to touch replayed state.)
+/// bearer a friend (rung 2, reached by clearing the camp), its folk gift a coin
+/// purse, so a v29 journal that ended a stead's raids replays with a fuller purse
+/// from that turn on. (D-076's regard itself was cosmetic and bumped nothing;
+/// this was the first faction change to touch replayed state.)
+/// v31 when D-078 gave the raiders their wrath: past the dread rung (two raiders
+/// slain in a world) their blows land one point the weaker, so a v30 journal
+/// that fought deep into a camp replays those late blows softer and every
+/// downstream state with them.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 30;
+    public const int Version = 31;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

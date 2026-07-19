@@ -96,13 +96,26 @@ public sealed class Game
     public int Standing => LegendStanding.StandingFor(Player.Legend);
 
     /// <summary>
-    /// The home stead's regard for the bearer (D-076): local Fame, the first rung
-    /// of the faction pillar (D-023). Earned only by deeds the folk can perceive
-    /// and reset at every crossing (the folk are this world's), it is the deliberate
-    /// opposite number to <see cref="Standing"/>, which carries between worlds.
-    /// Like everything on the bearer it is rebuilt by replay, never serialized.
+    /// The keyed faction ledger (D-078, generalizing D-076's single scalar): each
+    /// faction's weighing of the bearer, earned only by deeds that faction can
+    /// perceive and reset at every crossing (the folk and the dens are this
+    /// world's alone). Like everything on the bearer it is rebuilt by replay,
+    /// never serialized.
     /// </summary>
-    public int Regard { get; private set; }
+    private readonly Dictionary<FactionId, int> _factionRegard = [];
+
+    /// <summary>A faction's count on the bearer: zero until a perceivable deed moves it.</summary>
+    public int RegardOf(FactionId faction) => _factionRegard.GetValueOrDefault(faction);
+
+    /// <summary>
+    /// The home stead's regard for the bearer (D-076): local Fame, the first rung
+    /// of the faction pillar (D-023). The deliberate opposite number to
+    /// <see cref="Standing"/>, which carries between worlds.
+    /// </summary>
+    public int Regard => RegardOf(FactionId.Stead);
+
+    /// <summary>The raiders' wrath at the bearer (D-078): the enemy ledger, one notch per raider slain.</summary>
+    public int Wrath => RegardOf(FactionId.Raiders);
 
     public Npc? TalkNpc { get; private set; }
 
@@ -721,9 +734,10 @@ public sealed class Game
         UnbindingsLeft = UnbindingsPerWorld + (Standing >= 4 && !hushed ? 1 : 0);
         _layingTarget = null;
         _layingDeclined = false;
-        // The regard is these folk's alone (D-076): the far gate leaves it behind
-        // with them, and the next stead starts the bearer at a stranger again.
-        Regard = 0;
+        // The ledgers are this world's alone (D-076, D-078): the far gate leaves
+        // regard and wrath behind with the folk and the dens that kept them, and
+        // the next world starts the bearer at a stranger to both.
+        _factionRegard.Clear();
 
         Mode = MapMode.Overworld;
         Player.Pos = World.ShrinePos;
@@ -2326,6 +2340,9 @@ public sealed class Game
             MonsterKind.Hart => $"The hart drops at the end of its run. You take the hide{(hides > 1 ? $", {hides} good pieces," : "")} and the raw meat, to cook at a fire. ({Player.Hide} hides, {Player.RawMeat} raw meat)",
             _ => $"The {target.Name} falls. You take {coin} coin and {essence} essence.",
         }, LogTone.Reward);
+        // The dens count their dead (D-078): every raider felled deepens the
+        // raiders' wrath, the enemy half of the ledger the stead's regard opened.
+        if (target.Kind == MonsterKind.Goblin) RaiseWrath(1);
         CheckSiteCleared(CurrentSite!);
     }
 
@@ -2862,7 +2879,7 @@ public sealed class Game
     {
         if (amount <= 0) return;
         int rungBefore = SteadRegard.RungFor(Regard);
-        Regard += amount;
+        _factionRegard[FactionId.Stead] = Regard + amount;
         int rungAfter = SteadRegard.RungFor(Regard);
         Log.Add(Turn, line, LogTone.Reward);
         if (rungAfter > rungBefore)
@@ -2896,6 +2913,36 @@ public sealed class Game
         const int giftCoin = 5;
         Player.Coin += giftCoin;
         Log.Add(Turn, $"The folk of {World.SettlementName} gather what coin they can spare for the one who has stood for them: a purse of {giftCoin}, pressed on you with both hands.", LogTone.Reward);
+    }
+
+    /// <summary>
+    /// The raiders mark a raider felled (D-078): the enemy ledger, the wrath of
+    /// the dens, rising one notch per slaying. The kill itself is the perceived
+    /// change (D-023's rule: the bearer watched it land); the ledger speaks only
+    /// when a rung crosses, so hate deepens in three audible steps rather than a
+    /// drumbeat of book-keeping. At the dread rung the wrath grows teeth the
+    /// bearer can feel in every blow that follows: see RaiderWrath.Steadied.
+    /// </summary>
+    private void RaiseWrath(int amount)
+    {
+        if (amount <= 0) return;
+        int rungBefore = RaiderWrath.RungFor(Wrath);
+        _factionRegard[FactionId.Raiders] = Wrath + amount;
+        int rungAfter = RaiderWrath.RungFor(Wrath);
+        if (rungAfter > rungBefore)
+        {
+            Log.Add(Turn, rungAfter switch
+            {
+                1 => "The raiders have a name for you now. It is short, and it is not kind.",
+                2 => "Dread has entered the raiders' work: their blows come feared now, and land the weaker for it.",
+                _ => "You are past hate with the raiders now. To the dens you are weather: a thing to be survived, not fought.",
+            }, LogTone.Danger);
+        }
+        if (!Player.WrathLineHeard)
+        {
+            Player.WrathLineHeard = true;
+            Log.Add(Turn, "\"The stead is not the only ledger kept on you, bearer. The dens keep one too, and hate is also a kind of regard.\"", LogTone.Aegis);
+        }
     }
 
     private void CheckSiteCleared(Site site)
@@ -3017,7 +3064,7 @@ public sealed class Game
                 }
                 else if (landed)
                 {
-                    int damage = Absorb(intent.Kind switch
+                    int roll = intent.Kind switch
                     {
                         IntentKind.BarrowBlade => _combatRng.Range(5, 9),
                         IntentKind.SunderingCut => _combatRng.Range(7, 11),
@@ -3026,7 +3073,11 @@ public sealed class Game
                         IntentKind.ThroatLunge => _combatRng.Range(6, 10),
                         IntentKind.SeaxStab => _combatRng.Range(6, 10),
                         _ => _combatRng.Range(4, 7),
-                    }, telegraphed: true);
+                    };
+                    // The dread stays the raider's hand (D-078): applied to the
+                    // raw roll, after the dice, so the draw count never changes.
+                    if (monster.Kind == MonsterKind.Goblin) roll = RaiderWrath.Steadied(Wrath, roll);
+                    int damage = Absorb(roll, telegraphed: true);
                     Player.Hp -= damage;
                     Log.Add(Turn, intent.Kind switch
                     {
@@ -3118,7 +3169,9 @@ public sealed class Game
                 }
                 else
                 {
-                    int damage = Absorb(_combatRng.Range(1, 3));
+                    // Only the raiders walk this generic path, so the dread
+                    // (D-078) weighs on the bite as it does on the club.
+                    int damage = Absorb(RaiderWrath.Steadied(Wrath, _combatRng.Range(1, 3)));
                     Player.Hp -= damage;
                     Log.Add(Turn, $"The {monster.Name} bites you for {damage}.", LogTone.Combat);
                 }
@@ -3842,6 +3895,8 @@ public sealed class Game
         Title: LegendStanding.TitleOf(Standing),
         Regard: Regard,
         RegardTitle: SteadRegard.TitleOf(Regard),
+        Wrath: Wrath,
+        WrathTitle: RaiderWrath.TitleOf(Wrath),
         Rations: Player.Rations,
         Hide: Player.Hide,
         RawMeat: Player.RawMeat,
@@ -3969,6 +4024,8 @@ public sealed record Snapshot(
     string Title,
     int Regard,
     string RegardTitle,
+    int Wrath,
+    string WrathTitle,
     int Rations,
     int Hide,
     int RawMeat,

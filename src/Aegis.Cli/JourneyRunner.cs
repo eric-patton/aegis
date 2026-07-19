@@ -125,6 +125,7 @@ public static class JourneyRunner
         // crossing, so the run's peak is the warmest any one stead came to hold the
         // bearer, watched by the counter's high-water mark on every key.
         int maxRegard = 0;
+        int maxWrath = 0;
         string stop;
 
         while (true)
@@ -254,6 +255,8 @@ public static class JourneyRunner
             // The stead's regard, at its high-water mark (D-076): it resets at each
             // crossing, so the peak is the warmest one stead ever came to hold the bearer.
             maxRegard = Math.Max(maxRegard, game.Regard);
+            // The raiders' wrath, same high-water treatment (D-078).
+            maxWrath = Math.Max(maxWrath, game.Wrath);
 
             if (game.Player.Deaths > prevDeaths)
             {
@@ -290,7 +293,7 @@ public static class JourneyRunner
             chestsLooted, chestCoin, gearTaken, knacksTaken,
             resolvedAs, resolvedCycle, laidCycle, mendedCycle, legendFromBurden,
             hidesTaken, hidesSold, coinFromHides, meatCooked, rationsCooked,
-            herbsForaged, herbsSold, coinFromHerbs, maxRegard);
+            herbsForaged, herbsSold, coinFromHerbs, maxRegard, maxWrath);
         return 0;
     }
 
@@ -360,7 +363,7 @@ public static class JourneyRunner
         Resolution resolvedAs, int resolvedCycle, int laidCycle, int mendedCycle,
         int legendFromBurden, int hidesTaken, int hidesSold, int coinFromHides,
         int meatCooked, int rationsCooked, int herbsForaged, int herbsSold, int coinFromHerbs,
-        int maxRegard)
+        int maxRegard, int maxWrath)
     {
         var w = Console.Out;
         w.WriteLine($"AEGIS JOURNEY   seed {seed}   target {cycles} crossing(s)");
@@ -434,6 +437,8 @@ public static class JourneyRunner
             w.WriteLine($"         the forage: picked {herbsForaged} sprig(s) of herb; sold {herbsSold} for {coinFromHerbs} coin (D-074/D-075).");
         w.WriteLine($"         the stead: came to hold the bearer as {(maxRegard > 0 ? SteadRegard.TitleOf(maxRegard) : "a stranger")} at its warmest "
                     + $"(peak regard {maxRegard}, reset at every crossing) (D-076).");
+        w.WriteLine($"         the dens: came to hold the bearer as {(maxWrath > 0 ? RaiderWrath.TitleOf(maxWrath) : "no one at all")} at their most fearful "
+                    + $"(peak wrath {maxWrath}, reset at every crossing) (D-078).");
         int sworn = crossings.Count(c => c.Sworn.Count > 0);
         if (sworn > 0)
         {

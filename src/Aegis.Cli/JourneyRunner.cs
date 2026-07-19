@@ -102,6 +102,10 @@ public static class JourneyRunner
         // out of it (10 per weight). Summed by reading the leaving world's burden as each
         // crossing fires, which is exactly the count the engine turns into Legend right then.
         int legendFromBurden = 0;
+        // What the hunt brought in (D-070): hides taken off the wilds, watched the same
+        // deterministic way as the loot and the knacks, by the counter's rise on the key
+        // that lands a hart. Meat folds into rations, so the hides are the clean signal.
+        int hidesTaken = 0;
         string stop;
 
         while (true)
@@ -160,6 +164,7 @@ public static class JourneyRunner
             // engine honors 10 per weight of it in Legend right now. Read it before the key,
             // because crossing replaces the world and clears the burden with it.
             int burdenLeftBehind = game.World.Burden;
+            int hideBefore = game.Player.Hide;
             game.ApplyKey(key.Value);
             keys.Append(key.Value);
             totalKeys++;
@@ -199,6 +204,7 @@ public static class JourneyRunner
             }
             if (game.Player.SeveredUnbound > unboundBefore && laidCycle == 0) laidCycle = game.Cycle;
             if (game.Player.SeveredRestored > restoredBefore) mendedCycle = game.Cycle;
+            if (game.Player.Hide > hideBefore) hidesTaken += game.Player.Hide - hideBefore;
 
             if (game.Player.Deaths > prevDeaths)
             {
@@ -233,7 +239,7 @@ public static class JourneyRunner
         Report(seed, cycles, crossings, stop, game, totalKeys, keys, emitKeys,
             remnantsReclaimed, coinReclaimed, essenceReclaimed,
             chestsLooted, chestCoin, gearTaken, knacksTaken,
-            resolvedAs, resolvedCycle, laidCycle, mendedCycle, legendFromBurden);
+            resolvedAs, resolvedCycle, laidCycle, mendedCycle, legendFromBurden, hidesTaken);
         return 0;
     }
 
@@ -301,7 +307,7 @@ public static class JourneyRunner
         int remnantsReclaimed, int coinReclaimed, int essenceReclaimed,
         int chestsLooted, int chestCoin, int gearTaken, int knacksTaken,
         Resolution resolvedAs, int resolvedCycle, int laidCycle, int mendedCycle,
-        int legendFromBurden)
+        int legendFromBurden, int hidesTaken)
     {
         var w = Console.Out;
         w.WriteLine($"AEGIS JOURNEY   seed {seed}   target {cycles} crossing(s)");
@@ -365,6 +371,8 @@ public static class JourneyRunner
             w.WriteLine($"           mended a keeper in cycle {mendedCycle}: D-060's restore path driven live, end to end.");
         else if (resolvedCycle > 0)
             w.WriteLine($"           (no mending this run: {cycles} crossing(s) reached no second post-resolution hollow.)");
+        w.WriteLine($"         the hunt: took {hidesTaken} hide(s) off the wilds (D-070)"
+                    + (hidesTaken == 0 ? " (no game bagged this run)." : ", plus meat for the road."));
         int sworn = crossings.Count(c => c.Sworn.Count > 0);
         if (sworn > 0)
         {

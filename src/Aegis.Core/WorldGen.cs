@@ -1,6 +1,6 @@
 namespace Aegis.Core;
 
-public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort, Songhall, Leaguer }
+public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort, Songhall, Leaguer, Wilds }
 
 /// <summary>A monster placed at generation time: kind, cell, and generated stats (D-011).</summary>
 public readonly record struct MonsterSpawn(MonsterKind Kind, Pos Pos, int Hp);
@@ -80,6 +80,9 @@ public sealed class World
     /// <summary>The tier-5+ band's site (D-053): the old watch, and the bow's answer.</summary>
     public Site? RingfortSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Ringfort);
     public Site? LeaguerSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Leaguer);
+
+    /// <summary>The wilds (D-070): tier 2+, where the game runs. The hunt's ground, not a fight; optional depth like the barrow.</summary>
+    public Site? WildsSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Wilds);
 
     /// <summary>The stead's smith (D-041): every world, every tier. Sells the plain three, mends what use has dulled.</summary>
     public Npc Smith => Npcs.First(n => n.Kind == NpcKind.Smith);
@@ -586,6 +589,40 @@ public static class WorldGen
                 "A broad black mere ringed with old siege-works. The watch on the banks has never lifted its leaguer, and stones still fall on the causeway.");
         }
 
+        // The wilds (D-070): tier 2+ worlds hold a game-trail where the deer run.
+        // Own stream, placed after every existing draw, so pinned worlds keep their
+        // layouts and only gain a glade to hunt. Nothing in it fights, so it needs no
+        // distance from the deep sites, only from the stead and the two nearest mouths;
+        // the terrain check excludes every stamped entrance for free.
+        if (tier >= 2)
+        {
+            var wildsRng = new Rng(SeedTree.Derive(worldSeed, "wilds"));
+            var wildsPos = FindDistantSpot(overworld, ref wildsRng, settlement, minDistance: 12);
+            while (overworld[wildsPos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills)
+                   || wildsPos.Manhattan(camp) < 6 || wildsPos.Manhattan(gate) < 6
+                   || npcs.Any(n => n.Pos == wildsPos))
+                wildsPos = FindDistantSpot(overworld, ref wildsRng, settlement, minDistance: 12);
+            overworld[wildsPos] = Terrain.WildsEntrance;
+            CarvePathIfDisconnected(overworld, shrine, wildsPos);
+
+            int hartCount = Math.Min(3 + (tier - 2) / 2, 6);
+            const int hartHp = 6;
+            var (wildsMap, wildsEntry, hartSpawns) = GenerateWilds(worldSeed, hartCount);
+            sites.Add(new Site
+            {
+                Id = "wilds",
+                Kind = SiteKind.Wilds,
+                Map = wildsMap,
+                OverworldPos = wildsPos,
+                EntryPos = wildsEntry,
+                Spawns = [.. hartSpawns.Select(p => new MonsterSpawn(MonsterKind.Hart, p, hartHp))],
+                ChestPos = wildsEntry,   // no chest in the wilds: the yield is the game itself.
+                ChestLooted = true,
+            });
+            facts.Add("site", "wilds", $"{wildsPos.X},{wildsPos.Y}",
+                "A break in the tree-line where the deer come down to graze. The stead calls it good hunting, and dangerous walking after dark.");
+        }
+
         // The gleanings (D-052): what the wood sets out for taught eyes. Placed in
         // every world on their own stream, after every other draw, so pinned worlds
         // keep their layouts; only the gleaning lesson makes them visible, so
@@ -1069,6 +1106,92 @@ public static class WorldGen
 
         map[entry] = Terrain.ExitLadder;
         return (map, entry, graven, chest);
+    }
+
+    public const int WildsW = 30;
+    public const int WildsH = 16;
+
+    /// <summary>
+    /// The wilds (D-070): an open glade walled by treeline, unlike every other site
+    /// because nothing in it fights. A few thicket-clumps give cover to corner a hart
+    /// against (the quarry's all-eight-neighbours-open rule, so cover never seals the
+    /// glade or a run off), and a handful of gaps cut in the far treeline are the runs
+    /// the game bolts through: a hart that reaches a gap is gone. The bearer enters at
+    /// the near edge; the game grazes deep, so the hunt is a stalk to bow-range and a
+    /// shot, or a herding into a corner, never a footrace (a hart runs at the bearer's
+    /// own speed, so feet alone never close on one).
+    /// </summary>
+    private static (GameMap Map, Pos Entry, List<Pos> Harts) GenerateWilds(ulong worldSeed, int hartCount)
+    {
+        var rng = new Rng(SeedTree.Derive(worldSeed, "site-wilds"));
+        var map = new GameMap("wilds", WildsW, WildsH, Terrain.Floor);
+        for (int x = 0; x < WildsW; x++)
+        {
+            map[new Pos(x, 0)] = Terrain.Wall;
+            map[new Pos(x, WildsH - 1)] = Terrain.Wall;
+        }
+        for (int y = 0; y < WildsH; y++)
+        {
+            map[new Pos(0, y)] = Terrain.Wall;
+            map[new Pos(WildsW - 1, y)] = Terrain.Wall;
+        }
+
+        var entry = new Pos(2, WildsH / 2);
+
+        // The runs: gaps cut in the far treeline the game bolts through. Kept to the
+        // far half and off the entry wall, so a hart cannot break out beside the bearer
+        // the moment it wakes. A hart on any walkable border cell is one that ran.
+        int gaps = 0;
+        for (int attempt = 0; attempt < 200 && gaps < 4; attempt++)
+        {
+            int side = rng.Range(0, 2);
+            var g = side switch
+            {
+                0 => new Pos(rng.Range(WildsW / 2, WildsW - 2), 0),
+                1 => new Pos(rng.Range(WildsW / 2, WildsW - 2), WildsH - 1),
+                _ => new Pos(WildsW - 1, rng.Range(2, WildsH - 3)),
+            };
+            if (map[g] != Terrain.Wall) continue;
+            map[g] = Terrain.Floor;
+            gaps++;
+        }
+
+        // Thickets: cover to corner a hart against, under the quarry's placement rule
+        // (all eight neighbours open floor), so a clump can never seal the glade off.
+        int thickets = 0;
+        for (int attempt = 0; attempt < 200 && thickets < 8; attempt++)
+        {
+            var p = new Pos(rng.Range(4, WildsW - 3), rng.Range(2, WildsH - 2));
+            bool clear = p.Manhattan(entry) > 3;
+            for (int dy = -1; dy <= 1 && clear; dy++)
+                for (int dx = -1; dx <= 1 && clear; dx++)
+                    if (map[p.Plus(dx, dy)] != Terrain.Floor) clear = false;
+            if (!clear) continue;
+            map[p] = Terrain.Wall;
+            thickets++;
+        }
+
+        // The game grazes deep, well off the near edge and spaced from each other, and
+        // never on a border cell (that would be a hart already gone before turn one).
+        var open = new List<Pos>();
+        for (int y = 2; y < WildsH - 2; y++)
+            for (int x = 2; x < WildsW - 2; x++)
+            {
+                var p = new Pos(x, y);
+                if (map[p] == Terrain.Floor && p.Manhattan(entry) > 8) open.Add(p);
+            }
+
+        var harts = new List<Pos>();
+        int guard = 4000;
+        while (harts.Count < hartCount && open.Count > 0)
+        {
+            var p = rng.Pick(open);
+            bool spaced = guard-- <= 0 || harts.All(q => q.Manhattan(p) >= 3);
+            if (!harts.Contains(p) && spaced) harts.Add(p);
+        }
+
+        map[entry] = Terrain.ExitLadder;
+        return (map, entry, harts);
     }
 
     public const int HallW = 34;

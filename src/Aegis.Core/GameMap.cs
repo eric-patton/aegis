@@ -30,6 +30,7 @@ public enum Terrain : byte
     SonghallEntrance,
     Plinth,
     LeaguerEntrance,
+    WildsEntrance,
 }
 
 public static class TerrainInfo

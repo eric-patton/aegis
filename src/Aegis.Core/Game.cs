@@ -125,6 +125,7 @@ public sealed class Game
     /// <summary>How far one wear event moves the ledger: the spent edge (D-047) doubles it.</summary>
     private int WearStep => World.Oaths.Contains(OathId.SpentEdge) ? 2 : 1;
 
+
     /// <summary>
     /// What the herbwife asks to dress the wound: priced by how much convalescence
     /// it buys off, so waiting it out is always the poor bearer's option.
@@ -438,6 +439,10 @@ public sealed class Game
                 Log.Add(Turn, World.LeaguerSite!.Cleared
                     ? "The leaguer stands empty around its mere. Wind riffles the black water, and the causeway is only a road now."
                     : "Earth-banks ring a broad black mere, dug by an army and never filled in. On the banks stand figures with boards up and slings hanging ready, and every one of them faces the bare holm at the water's middle. Press > to walk the works.", LogTone.Danger);
+            else if (t == Terrain.WildsEntrance)
+                Log.Add(Turn, World.WildsSite!.Cleared
+                    ? "The game-trail, hunted out for now: cropped grass and old slots, and nothing moving in the glade."
+                    : "A break in the trees where the deer come down to graze. Slots pressed in the mud, a run worn through the treeline, and the light going gold. Press > to hunt.", LogTone.Info);
             else if (t == Terrain.SonghallEntrance)
                 Log.Add(Turn, "The stead's songhall: turf roof, smoke at the roof-hole, and low singing sometimes when the wind sits right. Press > to step in.", LogTone.Info);
             else if (t == Terrain.ThresholdEntrance)
@@ -553,6 +558,7 @@ public sealed class Game
                     SiteKind.Quarry => "You climb down into the old quarry. Half-cut figures stand about the pit in no order, and the silence has a mineral patience to it.",
                     SiteKind.Hall => "You pass under the fallen gate. Grass in the floor-cracks, sky where the roof was, and from the far end of the hall, the click of claws on stone.",
                     SiteKind.Leaguer => "You come up onto the works. Black water on your right hand the whole way round, a bare holm at its middle, and on the banks ahead, boards standing at their mounds like teeth in an old jaw.",
+                    SiteKind.Wilds => "You come up onto the game-trail. Cropped grass, deer-slots pressed in the mud, and the whole glade holding still the way a wood holds still when it has already heard you.",
                     _ => "You descend into the goblin cave. The dark smells of smoke and old meat.",
                 }, LogTone.Danger);
             if (site.Kind == SiteKind.Hollow && !site.Cleared)
@@ -1104,6 +1110,8 @@ public sealed class Game
             offers.Add((TradeGood.Mending, "", $"Have the wound dressed ({MendPrice} coin)"));
         // The woodward's teaching entry (D-052). The villagers' nine digits hold:
         // the fullest topic list is eight, and the woodward sells nothing else.
+        // (The hunt's hide-trade, D-070, waits on a vendor menu with room to grow:
+        // this one is already at its nine.)
         if (npc.Id == "npc_woodward")
             offers.Add((TradeGood.Lesson, LessonCatalog.IdOf(LessonId.Gleaning), LessonLabel(LessonId.Gleaning)));
         if (npc.Kind == NpcKind.Smith)
@@ -2039,6 +2047,7 @@ public sealed class Game
             MonsterKind.Boar => 0,
             MonsterKind.Warder => _combatRng.Range(2, 6),
             MonsterKind.Thegn => _combatRng.Range(3, 7),
+            MonsterKind.Hart => 0,
             _ => _combatRng.Range(2, 7),
         };
         int essence = target.Kind switch
@@ -2051,6 +2060,7 @@ public sealed class Game
             MonsterKind.Boar => 6,
             MonsterKind.Warder => 9,
             MonsterKind.Thegn => 12,
+            MonsterKind.Hart => 0,
             _ => 5,
         };
         // The lean dark (D-051): the dark yields half its essence, rounded
@@ -2058,10 +2068,22 @@ public sealed class Game
         if (World.Oaths.Contains(OathId.LeanDark)) essence /= 2;
         Player.Coin += coin;
         Player.Essence += essence;
+        // The hunt's own yield (D-070): a hart carries no essence and no purse, only
+        // a hide for the woodward and meat for the pot, and the woodcraft of having
+        // taken it. The Hunting skill fattens the take, a hide or two more the higher
+        // it climbs. The skill-use is granted here, the one place every kill-path meets.
+        bool game = target.Kind == MonsterKind.Hart;
+        int hides = 0;
+        if (game)
+        {
+            hides = 1 + Player.Skills.Bonus(SkillId.Hunting);
+            Player.Hide += hides;
+            GainSkill(SkillId.Hunting);
+        }
         // A beast carries no purse, but it carries meat (D-053): the knife
         // takes a ration if a walking body can hold one. The first foe that
-        // pays in bread's own coin.
-        bool meat = target.Kind == MonsterKind.Boar && Player.Rations < RationCap;
+        // pays in bread's own coin, and now the hart pays the same way (D-070).
+        bool meat = (target.Kind == MonsterKind.Boar || game) && Player.Rations < RationCap;
         if (meat) Player.Rations++;
         Log.Add(Turn, target.Kind switch
         {
@@ -2075,6 +2097,9 @@ public sealed class Game
                 : $"The war-boar goes down heavy enough to feel through your boots. No purse on a beast: you take {essence} essence, and leave more meat than a walking body can carry.",
             MonsterKind.Warder => $"The sling-warder sits down against the bank like a man at the end of a long watch, and does not get up. You take {coin} coin and {essence} essence.",
             MonsterKind.Thegn => $"The sword-thegn lowers its point and folds down without a sound, the way it did everything: unhurried, and at last relieved of a watch no one remembered setting. You take {coin} coin and {essence} essence.",
+            MonsterKind.Hart => meat
+                ? $"The hart drops at the end of its run. You take the hide{(hides > 1 ? $", {hides} good pieces," : "")} and meat for the pot. ({Player.Hide} hides, {Player.Rations} carried)"
+                : $"The hart drops at the end of its run. You take the hide{(hides > 1 ? $", {hides} good pieces," : "")}; the meat is more than a walking body can carry. ({Player.Hide} hides)",
             _ => $"The {target.Name} falls. You take {coin} coin and {essence} essence.",
         }, LogTone.Reward);
         CheckSiteCleared(CurrentSite!);
@@ -2539,6 +2564,7 @@ public sealed class Game
             SkillId.Hafted => $"The haft has stopped arguing with your grip. (Hafted rises to {after})",
             SkillId.Brawling => $"Your fists have learned where the bones are not. (Brawling rises to {after})",
             SkillId.Ranged => $"The shaft goes where the eye went, not where the hand hoped. (Ranged rises to {after})",
+            SkillId.Hunting => $"You read the ground now, the bent grass and the changed wind. (Hunting rises to {after})",
             _ => $"You take the blow where the iron is thickest. (Warding rises to {after})",
         }, LogTone.Reward);
 
@@ -2645,6 +2671,14 @@ public sealed class Game
                 "The leaguer around the black mere is lifted. Nothing watches the holm now but herons.");
             Log.Add(Turn, "The works are still. The mere settles glass-flat, and for the first time in an age nothing on its banks is counting.", LogTone.Reward);
             Log.Add(Turn, "\"Sit until the holm yields, they were told. It never yielded, bearer; it only emptied, and no one thought to tell them that either. It is counted.\"", LogTone.Aegis);
+        }
+        else if (site.Kind == SiteKind.Wilds)
+        {
+            // No deed and no essence (D-070): the hunt is a smaller ledger than the
+            // deep sites keep, meat and hide, not a wrong set right. Cleared here only
+            // means the glade is hunted out for now; the far gate fills it again.
+            Log.Add(Turn, "The glade goes still. Nothing left in it but tracks, crushed bracken, and the smell of the hunt.", LogTone.Reward);
+            Log.Add(Turn, "\"A smaller counting, this one. Not a deed. But the body keeps that ledger too, and it is heavier than it looks.\"", LogTone.Aegis);
         }
         else
         {
@@ -2787,6 +2821,7 @@ public sealed class Game
         if (monster.Kind == MonsterKind.Hound) { ActHound(monster); return; }
         if (monster.Kind == MonsterKind.Carl) { ActCarl(monster); return; }
         if (monster.Kind == MonsterKind.Boar) { ActBoar(monster); return; }
+        if (monster.Kind == MonsterKind.Hart) { ActHart(monster); return; }
         if (monster.Kind == MonsterKind.Warder) { ActWarder(monster); return; }
         if (monster.Kind == MonsterKind.Thegn) { ActThegn(monster); return; }
 
@@ -3048,6 +3083,52 @@ public sealed class Game
         }
 
         if (dist <= 12) StepBfsToward(monster);
+    }
+
+    /// <summary>How near the bearer must come before a grazing hart bolts (D-070): a stalk closes to here, then the hunt is on.</summary>
+    private const int HartFleeRange = 5;
+
+    /// <summary>
+    /// The wilds' game (D-070): a hart grazes until the bearer is within a few cells,
+    /// then flees, keeping its distance at the bearer's own speed, so it is never run
+    /// down on foot. It is taken by the bow while it grazes or mid-flight, or herded
+    /// into a corner where no step gains it distance and a bump ends it. A hart that
+    /// reaches a run in the treeline (any walkable border cell) is gone into the deep
+    /// wood and leaves nothing, because HarvestRemains is never called for it. Nothing
+    /// the hart does damages the bearer: the whole of the challenge is the catch.
+    /// </summary>
+    private void ActHart(Monster monster)
+    {
+        if (monster.Pos.Chebyshev(Player.Pos) > HartFleeRange) return; // grazing: the stalk is the bearer's to close.
+
+        StepAwayFrom(monster);
+
+        var map = CurrentSite!.Map;
+        var p = monster.Pos;
+        if (p.X == 0 || p.X == map.Width - 1 || p.Y == 0 || p.Y == map.Height - 1)
+        {
+            monster.Hp = 0; // through the treeline and gone: no HarvestRemains, so no yield.
+            Log.Add(Turn, "The hart finds a run in the treeline and takes it, and the wood closes behind it. Lost.", LogTone.Info);
+            CheckSiteCleared(CurrentSite!);
+        }
+    }
+
+    /// <summary>The flee (D-070): a greedy step keeping the most distance from the bearer, the mirror of <see cref="StepToward"/>. No open step that gains distance means cornered: the hart holds, and a bump ends it.</summary>
+    private void StepAwayFrom(Monster monster)
+    {
+        var map = CurrentSite!.Map;
+        var best = monster.Pos;
+        int bestDist = monster.Pos.Manhattan(Player.Pos);
+        foreach (var (dx, dy) in Directions.All8)
+        {
+            var next = monster.Pos.Plus(dx, dy);
+            if (!map.Walkable(next)) continue;
+            if (next == Player.Pos) continue;
+            if (Monsters.Any(m => m.Alive && m != monster && m.SiteId == monster.SiteId && m.Pos == next)) continue;
+            int d = next.Manhattan(Player.Pos);
+            if (d > bestDist) { bestDist = d; best = next; }
+        }
+        monster.Pos = best;
     }
 
     /// <summary>A straight lane (one of the eight lines) from boar to bearer, every cell open: charge country.</summary>
@@ -3446,6 +3527,9 @@ public sealed class Game
         RingfortX: World.RingfortSite?.OverworldPos.X ?? -1,
         RingfortY: World.RingfortSite?.OverworldPos.Y ?? -1,
         RingfortCleared: World.RingfortSite?.Cleared ?? false,
+        WildsX: World.WildsSite?.OverworldPos.X ?? -1,
+        WildsY: World.WildsSite?.OverworldPos.Y ?? -1,
+        WildsCleared: World.WildsSite?.Cleared ?? false,
         ArcProgress: string.Join(",", new[]
         {
             Player.SeveredTruthHeard ? "truth" : null,
@@ -3480,6 +3564,7 @@ public sealed class Game
         Standing: Standing,
         Title: LegendStanding.TitleOf(Standing),
         Rations: Player.Rations,
+        Hide: Player.Hide,
         RationPrice: RationPrice,
         MendPrice: Player.WoundedTurns > 0 ? MendPrice : 0,
         WeaponId: Player.Weapon?.Id ?? "",
@@ -3580,6 +3665,9 @@ public sealed record Snapshot(
     int RingfortX,
     int RingfortY,
     bool RingfortCleared,
+    int WildsX,
+    int WildsY,
+    bool WildsCleared,
     string ArcProgress,
     string CurrentSite,
     int UnbinderX,
@@ -3598,6 +3686,7 @@ public sealed record Snapshot(
     int Standing,
     string Title,
     int Rations,
+    int Hide,
     int RationPrice,
     int MendPrice,
     string WeaponId,

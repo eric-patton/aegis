@@ -17,7 +17,8 @@ public class DeepKnackTests
     {
         var wave = PerkCatalog.Choices.Where(c => c.Level == 4).ToList();
         Assert.Equal(5, wave.Count);
-        Assert.Equal(Enum.GetValues<SkillId>(), wave.Select(c => c.Skill));
+        // One deep question per combat skill; Hunting (D-070) carries no knacks yet.
+        Assert.Equal(Enum.GetValues<SkillId>().Where(s => s != SkillId.Hunting), wave.Select(c => c.Skill));
         Assert.All(wave, c => Assert.Equal(2, c.Options.Length));
 
         // The older wave is put first: every level-2 question precedes every

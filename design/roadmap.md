@@ -34,8 +34,8 @@ crafting, character creation, and the Death's-Toll/scar layer are design-only, a
 of the four activity families (crime, town-life, most wilderness). Rough fill levels:
 
 - Attributes: **4 of 7** mechanically active (Mind, Will, Presence are inert)
-- Skills: **5 of ~18** (all combat)
-- Activity families: **0 of 4** built as player lanes (a v0 shop economy aside)
+- Skills: **6 of ~18** (five combat, plus Hunting from D-070)
+- Activity families: **hunting shipped** (D-070, its sell path deferred); the four families still largely unbuilt (a v0 shop economy aside)
 - Launch story templates: **2** built (of 3 named, 4-5 planned)
 - Major vision pillars unbuilt: magic, factions, companions, crafting, character creation, Toll/scars
 
@@ -45,12 +45,12 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 - **Phase 0: Foundation & tooling.** `[x]` DONE. Engine, combat, martial progression,
   death/NG+ spine, the Aegis arc, and the journey-bot verification harness all ship.
-- **Phase 1: First breadth increment (current).** Focus: _undecided, awaiting direction._
-  Recommended candidates, both approachable and high-impact:
-  - an **activity lane** (one crafting or wilderness activity end to end; the pattern and
-    its skill then generalize to the rest), or
-  - **character creation** (races + backgrounds; self-contained, makes every run differ
-    from turn one).
+- **Phase 1: First breadth increment (current).** **Hunting v1 shipped (D-070):** the
+  wilds site, the fleeing hart, the Hunting skill, and a yield of meat + hide. It
+  established the activity -> skill -> yield pattern the other families reuse. Still open
+  in this phase: the **hide-sell path** (deferred at the 9-digit menu cap, needs a
+  dedicated hide-buyer menu) and, later, the rest of the wilderness family. Deferred
+  alternative for a next lane: **character creation** (races + backgrounds).
 - **Phase 2: A keystone pillar.** **Factions** (unblocks the two unwritten story templates
   and the reputation layer) or **magic** (activates Mind/Will and the caster build).
 - **Phase 3: Remaining pillars & stakes.** Companions, the Death's-Toll/scar layer, the
@@ -77,7 +77,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 - [x] Player ranged: the hunting bow (D-050) and the ash-spear reach thrust (D-056)
 - [x] Knowledge-sharpened telegraphs: bestiary read tiers, dulling across NG+ (D-061)
 - [x] Wits given combat meaning (read clarity) (D-059)
-- [~] Enemy variety: 9 monster families across tier bands 2-7 (D-033, D-040, D-044, D-053, D-057, D-058)
+- [~] Enemy variety: 9 monster families across tier bands 2-7, plus the hart (fleeing game, D-070) (D-033, D-040, D-044, D-053, D-057, D-058)
 - [ ] Posture / second bar, break-and-riposte (vision §4)
 - [ ] Parry as a distinct verb (vision §4)
 - [ ] Weapon movesets: family-specific verbs, not just numbers (vision §4; deferred D-041)
@@ -92,12 +92,13 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 - [ ] Backgrounds: seed starting skills; some starts illiterate (D-005)
 - [ ] Literacy skill + books gating recipes/techniques/lore (D-005, vision §3)
 
-### Skills (5 of ~18)
+### Skills (6 of ~18)
 
 - [x] Blades, Hafted, Brawling, Warding, Ranged (use-grown, cost-gated) (D-042, D-050)
-- [x] Knacks/perks at level 2 and 4 for all five (20 options / 10 questions) (D-046, D-055)
+- [x] Hunting: use-grown, fed by game brought down in the wilds; fattens the hide yield (D-070)
+- [x] Knacks/perks at level 2 and 4 for the five combat skills (20 options / 10 questions) (D-046, D-055)
 - [ ] Craft skills: Smithing, Alchemy, Cooking (need crafting lanes) (vision §3)
-- [ ] Wilderness skills: Hunting, Survival, Athletics (vision §3)
+- [~] Wilderness skills: Hunting done (D-070); Survival, Athletics pending (vision §3)
 - [ ] Subterfuge skills: Stealth, Larceny (vision §3)
 - [ ] Social skills: Persuasion, Commerce (vision §3)
 - [ ] Mind skills: Lore, magic skills (vision §3)
@@ -109,10 +110,11 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 - [~] Economy v0: shop, rations, repair, herbwife mend, fact-derived prices (D-036, D-025)
 - [x] Patronage deeds at the crossing (3: raised stone, endowed hearth, true verse) (D-054)
 - [ ] Crafting trades: smithing, alchemy, cooking as player lanes (D-006, D-025)
-- [ ] Wilderness living: hunting, tracking, foraging, fishing, camping (D-006)
+- [~] Wilderness living: hunting shipped (D-070, sell path deferred); tracking, foraging, fishing, camping pending (D-006)
 - [ ] Crime: lockpicking, pickpocketing, burglary, fencing (D-006)
 - [ ] Town life: gambling, carousing, tournaments, property, caravan/arbitrage (D-006)
 - [ ] Aspirational sink ladder: property, retinue, master training, commissions (D-025, D-036)
+- [ ] A hide-buyer vendor menu (the hunt's sell path, deferred at the 9-digit villager cap, D-070)
 
 ### Magic
 
@@ -189,4 +191,5 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-18: **D-070 hunting v1 shipped.** New: the wilds site, the hart, the Hunting skill (6th), meat + hide yield; journey-bot hunts live. Checked off Hunting skill and partial wilderness/Life family. New tracked item: a hide-buyer vendor menu (sell path deferred at the 9-digit menu cap). Save v26 -> v27.
 - 2026-07-18: Tracker created. Snapshot of Phase 0 complete (spine + journey-bot through D-069).

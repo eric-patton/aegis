@@ -103,9 +103,12 @@ public static class JourneyPilot
             // the site loop, so the resolve-goal below is the only thing that comes here.
             if (site.Kind == SiteKind.Threshold)
                 return ThresholdSiteMove(g, site);
-            // Still work to do here: clear it. Otherwise climb back to daylight.
+            // Still work to do here: clear it. The wilds is hunted, not fought (D-070):
+            // game flees, so the generic close-and-bump never catches it; the hunt loosens
+            // a shaft at a hart on a clear line, or herds it into a corner. Otherwise climb
+            // back to daylight.
             if (!site.Cleared && !skip.Contains(site.Id))
-                return FightOrApproach(g);
+                return site.Kind == SiteKind.Wilds ? HuntMove(g) : FightOrApproach(g);
             // Held, foes down: open the site's own chest before leaving (D-066). It
             // holds coin and, in the deep sites, a piece of iron better than any the
             // smith draws, and it costs only the walk back over ground already won.
@@ -220,6 +223,33 @@ public static class JourneyPilot
     }
 
     // ---- combat: the read, the dodge, the answer ----
+
+    /// <summary>
+    /// The hunt (D-070): the wilds hold fleeing game, not foes, so it is worked with the
+    /// bow, not the fist. With a bow and a hart on a clear line within range, loose (the
+    /// aim resolves to the hart next tick, the world frozen between the two keys). Else
+    /// close on the nearest hart to bring it into range or push it into a corner where no
+    /// step gains it distance and a bump ends it. Bowless, the chase still resolves: a hart
+    /// is either cornered or driven out a run, so the glade always empties in the end.
+    /// </summary>
+    private static char? HuntMove(Game g)
+    {
+        var p = g.Player;
+        var harts = g.LiveMonstersHere.Where(m => m.Kind == MonsterKind.Hart).ToList();
+        if (harts.Count == 0) return '<';   // all taken or fled: climb out.
+
+        if (p.Bow is not null)
+        {
+            var (damaging, _, _) = ScanRays(g);   // a hart on a clear line reads as a mark to loose at.
+            if (damaging is not null && p.Stamina >= LooseCost(p)) return 'f';
+        }
+
+        var nearest = harts.OrderBy(m => Chebyshev(p.Pos, m.Pos)).First();
+        if (Chebyshev(p.Pos, nearest.Pos) == 1)
+            return KeyFor(Math.Sign(nearest.Pos.X - p.Pos.X), Math.Sign(nearest.Pos.Y - p.Pos.Y)); // cornered: a bump takes it.
+        return NavKey(g, g.CurrentMap, p.Pos, nearest.Pos, LiveFoeCells(g))
+            ?? NavKey(g, g.CurrentMap, p.Pos, nearest.Pos, Empty);
+    }
 
     private static char? FightOrApproach(Game g)
     {

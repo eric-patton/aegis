@@ -36,6 +36,13 @@ public sealed class Player
     /// </summary>
     public int Rations { get; set; }
 
+    /// <summary>
+    /// Hides taken from game in the wilds (D-070): the hunt's trade-goods. On your
+    /// person like rations, so they survive death and cross the waygate. The sell
+    /// path (a vendor to buy them) waits on a menu with room; for now they bank.
+    /// </summary>
+    public int Hide { get; set; }
+
     // Gear (D-041): the other half of the build. Banked like attributes: the
     // remnant never takes it, and it crosses waygates untouched (vision secs 8, 10).
 
@@ -274,7 +281,7 @@ public sealed class Player
 /// <summary>How the threshold resolved (D-039): unresolved, the keeping taken up, or laid down.</summary>
 public enum Resolution { None, Kept, Refused }
 
-public enum MonsterKind { Goblin, Wight, Severed, Graven, Hound, Carl, Boar, Warder, Thegn }
+public enum MonsterKind { Goblin, Wight, Severed, Graven, Hound, Carl, Boar, Warder, Thegn, Hart }
 
 public sealed class Monster
 {
@@ -314,6 +321,7 @@ public sealed class Monster
         MonsterKind.Boar => "war-boar",
         MonsterKind.Warder => "sling-warder",
         MonsterKind.Thegn => "sword-thegn",
+        MonsterKind.Hart => "hart",
         _ => "creature",
     };
 }

@@ -490,6 +490,7 @@ public static class Presenter
         Terrain.Plinth => ('T', Hue.White, Hue.Black),
         Terrain.RingfortEntrance => ('0', Hue.Yellow, Hue.Black),
         Terrain.LeaguerEntrance => ('U', Hue.Blue, Hue.Black),
+        Terrain.WildsEntrance => ('"', Hue.Green, Hue.Black),
         _ => ('?', Hue.Magenta, Hue.Black),
     };
 
@@ -579,6 +580,7 @@ public static class Presenter
             if (here == Terrain.HallEntrance) Line("Fallen gate: > enters", Hue.DarkCyan);
             if (here == Terrain.RingfortEntrance) Line("Fort gate: > enters", Hue.Yellow);
             if (here == Terrain.LeaguerEntrance) Line("Leaguer banks: > enters", Hue.Blue);
+            if (here == Terrain.WildsEntrance) Line("Game-trail: > enters", Hue.Green);
             if (here == Terrain.SonghallEntrance) Line("Songhall door: > enters", Hue.Cyan);
             if (here == Terrain.ThresholdEntrance)
                 Line(game.Player.CommissionHeard ? "Deep stair: > descends" : "Deep stair: shut", Hue.Magenta);

@@ -81,10 +81,14 @@ namespace Aegis.Core;
 /// stray 'w' was ignored and now sets the feet), the heave lands blows no v25
 /// journal recorded, and tier-7+ forts post a sword-thegn where a v25 walk
 /// that deep met only carls.
+/// v27 when D-070 opened the wilds in tier-2+ worlds: a game-trail stands on
+/// ground a v26 walk that deep crossed plain, holding fleeing harts a v26
+/// journal never met, and a felled hart pays in meat, hide, and the new
+/// Hunting skill.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 26;
+    public const int Version = 27;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

@@ -159,11 +159,12 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
   surfacing) and the keyed per-faction ledger shipped with the raiders' wrath (D-078, the
   Infamy-shaped enemy ledger); the true stead-Infamy half (deeds that cost regard, a stead
   that turns cold) needs a transgression verb the game does not yet have (◇ user steer)
-- [~] Regard-gated boons and access (D-076, D-077, D-080): the friend's welcome shipped (D-077,
-  v30, a one-time coin purse at the friend rung) and the friend's price (D-080, v33: a standing
-  coin off bread beside the hearth-price, deed-earned so the hushed name silences one and not
-  the other; the raids topic also counts D-079's raids back in talk). Remaining: a rumor the
-  folk keep from strangers (needs menu-cap headroom or a non-topic channel), rung-3 boons
+- [~] Regard-gated boons and access (D-076, D-077, D-080, D-085): the friend's welcome (D-077,
+  v30, a one-time coin purse), the friend's price (D-080, v33, a standing coin off bread that
+  the hushed name never silences), and the rumor kept from strangers (D-085, v35: regard rungs
+  now write facts, and a friend-gated Talk storylet tells the stead's own story once per world,
+  the seam for all authored reputation-gated content). Remaining: rung-3 boons (the stead's own),
+  content consuming the rumor fact
 - [x] A second faction with a relationship to the stead (the raiders as its standing enemy, so a
   blow to one is a favor to the other) (D-078: wrath per raider slain on its own faster ladder,
   the dread softening raiders' blows past rung 2, reset at every crossing, save v31)
@@ -235,6 +236,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-19: **D-085 regard rungs become facts + the friend's hearthtale.** Every rung crossed writes a `regard` fact (known/friend/own) into the world graph, making reputation queryable by storylets, topics, and template casting with one declarative pattern: the structural seam for all reputation-gated content. First passenger: a friend-gated Talk storylet (priority 8, once per world) where a villager tells the stead's own story to a friend and never to a stranger, writing a `rumor` fact for later content. Narrative-only by design (D-077's currency-collision lesson). Closes the last D-077-named boon via the storylet channel D-080 pointed at. Save v34 -> v35 (new Talk storylet shifts the weighted draw). 368 tests green (3 new); byte-identical + emit->sim exact (keys read off the new JSON field) + sweep via --json. Advanced the boons item.
 - 2026-07-19: **D-084 --wits: the keen-eyed walk.** The pilot raises Wits to baseline+2 first (D-061's perception-build identity: innate acuity clears the dulling floor), then resumes the survivability rotation. Seed 42 x6 crossings: every mastered kind holds Keen at every arch (baseline softens all to Read), at the honest price of 8 deaths vs 5. Header names the mode; JSON carries witsDemo. Default path proven untouched by hash. Cli-only, 365 tests unchanged. Checked off the last D-062/D-063 tooling deferral: that ledger is clear.
 - 2026-07-19: **D-083 journey --json: the report as data.** The whole journey report as one JSON object (headline, every economy counter, arc reach/cycles, Legend + burden share, regard/wrath peaks with titles, raids, and full per-crossing sites + sworn terms + two-sided bestiary), via plain DTO records through the existing source-generated camelCase context (AOT-safe); --emit-keys folds the key string in as a nullable field. Prose path proven untouched by hash. Two JSON runs byte-identical; parsed numbers match prose exactly (10425 turns/4 deaths/12 crossings/380 herb coin). Cli-only, 365 tests unchanged. Checked off the machine-readable-report item; --wits demo is the last tooling deferral standing.
 - 2026-07-19: **D-082 the bot takes the stillroom walk.** The autopilot sells its herbs at the herbwife's bench (5c) instead of the wood's edge (4c), proving the D-081 price spread live: master seed sells 76 sprigs for 380 coin, and the run SHORTENS (11101 -> 10425 turns, deaths held 4) because the stillroom sits on the smith road the bot already walks. Woodward's bench errand drops herbs; TradeOpenDigit generalized from WoodEdgeDigit; runner reads sale coin off the key (honest with two prices) and names the stillroom in the report. Cli-only, no engine/save touch, 365 tests unchanged; byte-identical + emit->sim exact + sweep uniform (44 sprigs, 220 coin every seed). Checked off the bot-stillroom item.

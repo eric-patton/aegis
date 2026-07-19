@@ -134,6 +134,28 @@ public static class StoryletCatalog
             ],
         },
 
+        // The rumor kept from strangers (D-085): the last of D-077's named
+        // friend-rung boons, carried by the storylet channel since the villagers'
+        // talk menu has no digit to spare (D-080). Gated on the regard fact the
+        // rung crossing writes, so this is the first authored content that
+        // reputation opens: a friend hears the story the stead keeps inside its
+        // own fence, once per world, and no stranger ever does.
+        new Storylet
+        {
+            Id = "the-friends-hearthtale",
+            Trigger = StoryletTrigger.Talk,
+            Priority = 8,
+            Requires = [new FactPattern("regard", "friend")],
+            When = g => g.TalkNpc?.Kind == NpcKind.Villager,
+            Lines =
+            [
+                ("They glance down the lane before they speak, which is how you know it is no stranger's story. Then they tell you the part the stead keeps inside its own fence: the winter it nearly broke, the name not said at the well, why the door-posts are tarred and the third field lies fallow.", LogTone.Info),
+                ("\"No song bought that telling, bearer. You stood for these folk, and they have let you inside the fence of it. I keep many ledgers; there is none that buys this.\"", LogTone.Aegis),
+            ],
+            Effect = g => g.World.Facts.Add("rumor", "stead_hearthtale", g.World.SettlementName,
+                "The stead's own story, told to a friend: the hard winter, the unsaid name, the tarred door-posts."),
+        },
+
         // First conversation with anyone, once per character: the Aegis notices people.
         new Storylet
         {

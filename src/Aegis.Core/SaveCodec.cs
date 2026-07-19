@@ -114,10 +114,13 @@ namespace Aegis.Core;
 /// trade digit where the wound-dressing digit sat (the dressing moved onto the
 /// bench inside), so a v33 journal's digit at her menu lands differently, and
 /// herbs sold to her pay five a sprig where the wood's edge paid four.
+/// v35 when D-085 taught the graph the regard rungs and gated the friend's
+/// hearthtale on them: a new Talk storylet enters the weighted draw, so a v34
+/// journal's talk events can resolve to different winners from that world on.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 34;
+    public const int Version = 35;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

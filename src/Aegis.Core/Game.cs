@@ -2958,7 +2958,16 @@ public sealed class Game
         int rungAfter = SteadRegard.RungFor(Regard);
         Log.Add(Turn, line, LogTone.Reward);
         if (rungAfter > rungBefore)
+        {
             Log.Add(Turn, $"In {World.SettlementName} you are {SteadRegard.TitleOf(Regard)} now.", LogTone.Reward);
+            // Every rung crossed is written to the graph (D-085): reputation
+            // becomes a fact other content can require, the seam the rumor and
+            // every richer boon gate through. World facts die with the world,
+            // so the locality holds by construction.
+            for (int rung = rungBefore + 1; rung <= rungAfter; rung++)
+                World.Facts.Add("regard", rung switch { 1 => "known", 2 => "friend", _ => "own" },
+                    World.SettlementName, $"In {World.SettlementName} the bearer is {SteadRegard.TitleOf(SteadRegard.Threshold(rung))}.");
+        }
         // The friend's welcome (D-077): the first time a stead comes to hold the
         // bearer a friend, its folk press what they can spare on the one who has
         // stood for them. Regard only rises in a world, so this crosses exactly

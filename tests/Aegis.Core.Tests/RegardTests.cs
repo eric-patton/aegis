@@ -287,6 +287,57 @@ public class RegardTests
         Assert.Single(game.Log.Entries, e => e.Text.Contains("does not forget whose hand"));
     }
 
+    // ---- D-085: the rungs written to the graph, and the rumor they open ----
+
+    [Fact]
+    public void TheRungs_AreWrittenToTheGraph_AndDieWithTheWorld()
+    {
+        var game = new Game(42);
+        Assert.False(game.World.Facts.Exists("regard", "known"));
+
+        game.Debug_ClearCamp(); // 0 -> 3: crosses two rungs in one stroke
+
+        Assert.True(game.World.Facts.Exists("regard", "known"));  // every rung passed is written
+        Assert.True(game.World.Facts.Exists("regard", "friend"));
+        Assert.False(game.World.Facts.Exists("regard", "own"));
+
+        game.Debug_SetPlayerPos(game.World.GatePos);
+        game.Apply(Command.Enter);
+        game.Apply(Command.Enter);
+
+        // World facts die with the world: the next stead has heard nothing.
+        Assert.False(game.World.Facts.Exists("regard", "known"));
+        Assert.False(game.World.Facts.Exists("regard", "friend"));
+    }
+
+    [Fact]
+    public void TheHearthtale_IsToldToAFriend_OncePerWorld()
+    {
+        var game = new Game(42);
+        game.Debug_ClearCamp(); // the friend rung: the regard fact stands
+
+        var villagers = game.World.Npcs.Where(n => n.Kind == NpcKind.Villager).Take(2).ToList();
+        NpcTests.BumpNpc(game, villagers[0]);
+        Assert.Contains(game.Log.Recent(10), e => e.Text.Contains("inside its own fence"));
+        Assert.True(game.World.Facts.Exists("rumor", "stead_hearthtale"));
+
+        // Told once per world: a second villager does not tell it again.
+        game.ApplyKey(' ');
+        NpcTests.BumpNpc(game, villagers[1]);
+        Assert.Single(game.Log.Entries, e => e.Text.Contains("inside its own fence"));
+    }
+
+    [Fact]
+    public void TheHearthtale_IsKeptFromStrangers()
+    {
+        var game = new Game(42); // camp uncleared: no regard, no fact, no telling
+        var villager = game.World.Npcs.First(n => n.Kind == NpcKind.Villager);
+        NpcTests.BumpNpc(game, villager);
+
+        Assert.DoesNotContain(game.Log.Entries, e => e.Text.Contains("inside its own fence"));
+        Assert.False(game.World.Facts.Exists("rumor", "stead_hearthtale"));
+    }
+
     /// <summary>Crosses from a fresh seed to the given cycle, clearing each world's camp to open the gate.</summary>
     private static Game CrossTo(ulong seed, int targetCycle)
     {

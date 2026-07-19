@@ -5,9 +5,10 @@ namespace Aegis.Core;
 /// the skills today's verbs can actually feed. Weapon families split by what
 /// is truly in hand; Warding is armor-craft, fed only by blows the worn iron
 /// turns; Ranged (D-050) is the bow's craft, fed only by shafts that find a body;
-/// Hunting (D-070) is woodcraft, fed only by game brought down in the wilds.
+/// Hunting (D-070) is woodcraft, fed only by game brought down in the wilds;
+/// Cooking (D-073) is the first craft, fed by raw meat turned to rations at a fire.
 /// </summary>
-public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting }
+public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting, Cooking }
 
 /// <summary>
 /// Counted uses are the only state; levels are derived, never granted. A skill
@@ -17,7 +18,7 @@ public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting }
 /// </summary>
 public sealed class SkillSet
 {
-    public const int Count = 6;
+    public const int Count = 7;
 
     private readonly int[] _uses = new int[Count];
 
@@ -52,6 +53,7 @@ public sealed class SkillSet
         SkillId.Warding => "Warding",
         SkillId.Ranged => "Ranged",
         SkillId.Hunting => "Hunting",
+        SkillId.Cooking => "Cooking",
         _ => id.ToString(),
     };
 }

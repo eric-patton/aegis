@@ -85,10 +85,15 @@ namespace Aegis.Core;
 /// ground a v26 walk that deep crossed plain, holding fleeing harts a v26
 /// journal never met, and a felled hart pays in meat, hide, and the new
 /// Hunting skill.
+/// v28 when D-071 moved the woodward's teaching behind a trade bench (a v27
+/// digit that bought the gleaning now opens the bench instead, and the bench's
+/// own digits sell hides), and D-073 gave the hart raw meat in place of a
+/// ration and added a cook entry to that bench (a v27 journal that felled a
+/// hart or drove the bench replays to different state).
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 27;
+    public const int Version = 28;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

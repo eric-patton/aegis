@@ -66,6 +66,7 @@ public class HuntingTests
         hart.Hp = 1;
         game.Player.Hide = 0;
         game.Player.Rations = 0;
+        game.Player.RawMeat = 0;
         int essenceBefore = game.Player.Essence;
         int coinBefore = game.Player.Coin;
         int huntingBefore = game.Player.Skills.Uses(SkillId.Hunting);
@@ -76,7 +77,8 @@ public class HuntingTests
 
         Assert.False(hart.Alive);
         Assert.Equal(1, game.Player.Hide);                 // one hide at Hunting 0
-        Assert.Equal(1, game.Player.Rations);              // and meat for the pot
+        Assert.Equal(1, game.Player.RawMeat);              // raw meat for the pot (D-073), not a ready ration
+        Assert.Equal(0, game.Player.Rations);              // the hunt no longer hands over cooked food
         Assert.Equal(essenceBefore, game.Player.Essence);  // game carries no essence
         Assert.Equal(coinBefore, game.Player.Coin);        // and no purse
         Assert.True(game.Player.Skills.Uses(SkillId.Hunting) > huntingBefore, "the hunt taught nothing");

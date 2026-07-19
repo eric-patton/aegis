@@ -34,8 +34,8 @@ crafting, character creation, and the Death's-Toll/scar layer are design-only, a
 of the four activity families (crime, town-life, most wilderness). Rough fill levels:
 
 - Attributes: **4 of 7** mechanically active (Mind, Will, Presence are inert)
-- Skills: **6 of ~18** (five combat, plus Hunting from D-070)
-- Activity families: **hunting shipped** (D-070) with its sell path now closed (D-071); the four families still largely unbuilt (a v0 shop economy aside)
+- Skills: **7 of ~18** (five combat, Hunting from D-070, Cooking from D-073)
+- Activity families: **hunting + cooking shipped** (D-070/D-071/D-073), opening the wilderness and craft families; crime and town life unbuilt, and the two opened families are one lane each so far
 - Launch story templates: **2** built (of 3 named, 4-5 planned)
 - Major vision pillars unbuilt: magic, factions, companions, crafting, character creation, Toll/scars
 
@@ -68,7 +68,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 - [x] Deterministic engine: hierarchical seed tree, fact graph, worldgen (D-002, D-013, D-018)
 - [x] Layered-map presentation, TUI render layer (Frame/Presenter) (D-001)
-- [x] Save system: seed + input journal, replay-on-load, currently v26 (D-012, D-028)
+- [x] Save system: seed + input journal, replay-on-load, currently v28 (D-012, D-028)
 - [x] NG+ crossing: waygate, coin -> Legend, tier-deepening worldgen (D-011, D-029)
 - [x] The Aegis as diegetic companion voice (D-010, D-019)
 - [x] The full trans-world Aegis story arc: reveal ladder -> the keeping -> the mending -> steady state (D-020, D-026, D-037, D-038, D-039, D-045, D-060)
@@ -98,8 +98,9 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 - [x] Blades, Hafted, Brawling, Warding, Ranged (use-grown, cost-gated) (D-042, D-050)
 - [x] Hunting: use-grown, fed by game brought down in the wilds; fattens the hide yield (D-070)
+- [x] Cooking: use-grown, raw meat to rations at the wood's-edge fire; fattens the yield (D-073)
 - [x] Knacks/perks at level 2 and 4 for the five combat skills (20 options / 10 questions) (D-046, D-055)
-- [ ] Craft skills: Smithing, Alchemy, Cooking (need crafting lanes) (vision §3)
+- [~] Craft skills: Cooking shipped (D-073); Smithing, Alchemy pending (vision §3)
 - [~] Wilderness skills: Hunting done (D-070); Survival, Athletics pending (vision §3)
 - [ ] Subterfuge skills: Stealth, Larceny (vision §3)
 - [ ] Social skills: Persuasion, Commerce (vision §3)
@@ -107,18 +108,18 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 - [ ] Proficiencies beyond the 3 lessons; book/mentor/quest-taught (D-052)
 - [ ] Knacks: level-6+ questions, 3-option questions, knacks for new skills (D-055)
 
-### The Life: activities & economy (0 of 4 families)
+### The Life: activities & economy (2 of 4 families opened: wilderness, craft)
 
 - [~] Economy v0: shop, rations, repair, herbwife mend, hide-sale, fact-derived prices (D-036, D-025, D-071)
 - [x] Vendor sub-menu pattern: one talk digit opens a bench with its own nine slots (D-071)
 - [x] Patronage deeds at the crossing (3: raised stone, endowed hearth, true verse) (D-054)
-- [ ] Crafting trades: smithing, alchemy, cooking as player lanes (D-006, D-025)
-- [~] Wilderness living: hunting shipped with its sell path (D-070, D-071); tracking, foraging, fishing, camping pending (D-006)
+- [~] Crafting trades: cooking shipped (D-073); smithing, alchemy as player lanes pending (D-006, D-025)
+- [~] Wilderness living: hunting + its sell path + cooking the meat shipped (D-070, D-071, D-073); tracking, foraging, fishing, camping pending (D-006)
 - [x] A hide-buyer with room to grow: the woodward's trade sub-menu, hides to coin (D-071)
 - [ ] Crime: lockpicking, pickpocketing, burglary, fencing (D-006)
 - [ ] Town life: gambling, carousing, tournaments, property, caravan/arbitrage (D-006)
 - [ ] Aspirational sink ladder: property, retinue, master training, commissions (D-025, D-036)
-- [ ] Grow the wood's-edge bench: cooking, foraged-goods sale, hunting gear/lessons (D-071)
+- [~] Grow the wood's-edge bench: cooking shipped (D-073); foraged-goods sale, hunting gear/lessons pending (D-071)
 
 ### Magic
 
@@ -174,7 +175,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 ### Tooling & verification, built
 
 - [x] Dev harness: headless pilot pipe, `sim` scripted JSON runs (D-027)
-- [x] Journey-bot autopilot: clears sites, arms, raises, reclaims, loots, answers the sheet, walks the arc, swears oaths, hunts the wilds, sells its hides (D-062..D-072)
+- [x] Journey-bot autopilot: clears sites, arms, raises, reclaims, loots, answers the sheet, walks the arc, swears oaths, hunts the wilds, sells its hides, cooks its meat (D-062..D-073)
 - [ ] `--wits` demo mode for the perception build (deferred D-063)
 - [ ] Machine-readable journey report for a sweep / CI (deferred D-063)
 
@@ -195,6 +196,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-18: **D-073 cooking shipped, the first craft.** A 7th skill (Cooking); the hart now yields raw meat, cooked into rations at the woodward's bench (D-071), skill-scaled, capped at what a body can carry. Opens the Craft family. Bot cooks live. Checked off Cooking skill, partial Craft family, partial crafting-trades/wilderness/bench. Save v27 -> v28 (also covers D-071's un-bumped bench).
 - 2026-07-18: **D-072 journey-bot sells its hides.** The autopilot now cashes the hunt out at the wood's edge (one overworld errand + driving the D-071 bench), so the whole catch-cure-sell-coin loop is exercised live and reproducibly. Master seed sells all 34 hides for 102 coin; sweep all sell their take and reach the mending. Cli-only, no engine/save touch. Checked off the bot-sells item.
 - 2026-07-18: **D-071 hide-sell path shipped.** The woodward's "wood's edge" trade sub-menu (a reusable vendor-menu pattern behind one talk digit) turns cured hides to coin and now holds the Gleaning lesson too; hunting feeds three payoffs (skill, food, coin). Checked off the hide-buyer, the vendor sub-menu pattern, and folded the sale into economy v0. New tracked item: teach the journey-bot to sell (close the loop in the autopilot). No save-format change.
 - 2026-07-18: **D-070 hunting v1 shipped.** New: the wilds site, the hart, the Hunting skill (6th), meat + hide yield; journey-bot hunts live. Checked off Hunting skill and partial wilderness/Life family. New tracked item: a hide-buyer vendor menu (sell path deferred at the 9-digit menu cap). Save v26 -> v27.

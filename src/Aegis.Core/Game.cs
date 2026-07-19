@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook }
 
 /// <summary>
 /// The deterministic game engine. No console, no I/O, no wall clock: state advances
@@ -1297,6 +1297,7 @@ public sealed class Game
         if (npc.Id == "npc_woodward")
         {
             offers.Add((TradeGood.Hide, "", HideSaleLabel()));
+            offers.Add((TradeGood.Cook, "", CookLabel()));
             offers.Add((TradeGood.Lesson, LessonCatalog.IdOf(LessonId.Gleaning), LessonLabel(LessonId.Gleaning)));
         }
         return offers;
@@ -1324,6 +1325,7 @@ public sealed class Game
             switch (good)
             {
                 case TradeGood.Hide: TrySellHides(); break;
+                case TradeGood.Cook: TryCook(); break;
                 case TradeGood.Lesson: TryLearnLesson(arg); break;
             }
             // The labels move with the state (hides sold, lesson taken); rebuild so the
@@ -1360,6 +1362,53 @@ public sealed class Game
             Player.HideLineHeard = true;
             Log.Add(Turn, "\"Coin off the wilds, and none of it mine to give or take. A fifth ledger, then, and the first you filled with your own two hands and no leave from anyone. Keep at it.\"", LogTone.Aegis);
         }
+    }
+
+    /// <summary>
+    /// What a batch of raw meat cooks down to now (D-073): a ration a cut, and the
+    /// Cooking skill squeezes extra meals from the same carcass, all bounded by what
+    /// a walking body can carry, so a full larder cooks nothing and wastes no meat.
+    /// </summary>
+    private (int Meat, int Rations) CookPlan()
+    {
+        int room = Math.Max(0, RationCap - Player.Rations);
+        int fromMeat = Math.Min(Player.RawMeat, room);
+        int made = Math.Min(fromMeat + Player.Skills.Bonus(SkillId.Cooking), room);
+        return (fromMeat, made);
+    }
+
+    /// <summary>The cook entry's label (D-073): what the fire will make of the meat in hand.</summary>
+    private string CookLabel()
+    {
+        if (Player.RawMeat == 0) return "Cook raw meat (none to cook)";
+        var (_, made) = CookPlan();
+        return made == 0
+            ? $"Cook raw meat ({Player.RawMeat} raw, larder full)"
+            : $"Cook your raw meat ({Player.RawMeat} raw into {made} ration{(made == 1 ? "" : "s")})";
+    }
+
+    /// <summary>
+    /// The first craft (D-073): raw meat off the hunt becomes carried rations at the
+    /// woodward's fire, the Cooking skill fattening the yield, the way Hunting fattens
+    /// the hide. Feeds two of the vision's payoffs, a skill and the larder (D-006).
+    /// </summary>
+    private void TryCook()
+    {
+        if (Player.RawMeat == 0)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Bring me something off the wilds and we will put it to the fire. You carry no raw meat.\"");
+            return;
+        }
+        var (meat, made) = CookPlan();
+        if (made == 0)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Your larder is full; cook it when you have room to carry it. Raw, it keeps a while yet.\"");
+            return;
+        }
+        Player.RawMeat -= meat;
+        Player.Rations += made;
+        GainSkill(SkillId.Cooking);
+        Log.Add(Turn, $"You spit {meat} cut{(meat == 1 ? "" : "s")} over the woodward's fire and come away with {made} ration{(made == 1 ? "" : "s")}. ({Player.Rations} carried, {Player.RawMeat} raw left)", LogTone.Reward);
     }
 
     private void TryBuyRation()
@@ -2186,11 +2235,15 @@ public sealed class Game
             hides = 1 + Player.Skills.Bonus(SkillId.Hunting);
             Player.Hide += hides;
             GainSkill(SkillId.Hunting);
+            // The hunt yields raw cuts, not a road-ration (D-073): they cook into
+            // rations at a fire, the hunting lane feeding the cooking lane. Uncapped
+            // like the hide, since the cooking (bounded by the ration cap) is the sink.
+            Player.RawMeat++;
         }
-        // A beast carries no purse, but it carries meat (D-053): the knife
-        // takes a ration if a walking body can hold one. The first foe that
-        // pays in bread's own coin, and now the hart pays the same way (D-070).
-        bool meat = (target.Kind == MonsterKind.Boar || game) && Player.Rations < RationCap;
+        // The war-boar still pays its field-ration (D-053), the meat taken in the
+        // thick of a fight: only the dedicated hunt, the hart, yields raw cuts to
+        // carry to a fire. The knife takes a ration if a walking body can hold one.
+        bool meat = target.Kind == MonsterKind.Boar && Player.Rations < RationCap;
         if (meat) Player.Rations++;
         Log.Add(Turn, target.Kind switch
         {
@@ -2204,9 +2257,7 @@ public sealed class Game
                 : $"The war-boar goes down heavy enough to feel through your boots. No purse on a beast: you take {essence} essence, and leave more meat than a walking body can carry.",
             MonsterKind.Warder => $"The sling-warder sits down against the bank like a man at the end of a long watch, and does not get up. You take {coin} coin and {essence} essence.",
             MonsterKind.Thegn => $"The sword-thegn lowers its point and folds down without a sound, the way it did everything: unhurried, and at last relieved of a watch no one remembered setting. You take {coin} coin and {essence} essence.",
-            MonsterKind.Hart => meat
-                ? $"The hart drops at the end of its run. You take the hide{(hides > 1 ? $", {hides} good pieces," : "")} and meat for the pot. ({Player.Hide} hides, {Player.Rations} carried)"
-                : $"The hart drops at the end of its run. You take the hide{(hides > 1 ? $", {hides} good pieces," : "")}; the meat is more than a walking body can carry. ({Player.Hide} hides)",
+            MonsterKind.Hart => $"The hart drops at the end of its run. You take the hide{(hides > 1 ? $", {hides} good pieces," : "")} and the raw meat, to cook at a fire. ({Player.Hide} hides, {Player.RawMeat} raw meat)",
             _ => $"The {target.Name} falls. You take {coin} coin and {essence} essence.",
         }, LogTone.Reward);
         CheckSiteCleared(CurrentSite!);
@@ -2672,7 +2723,9 @@ public sealed class Game
             SkillId.Brawling => $"Your fists have learned where the bones are not. (Brawling rises to {after})",
             SkillId.Ranged => $"The shaft goes where the eye went, not where the hand hoped. (Ranged rises to {after})",
             SkillId.Hunting => $"You read the ground now, the bent grass and the changed wind. (Hunting rises to {after})",
-            _ => $"You take the blow where the iron is thickest. (Warding rises to {after})",
+            SkillId.Cooking => $"The fire and the meat have stopped surprising you; more comes off the same carcass. (Cooking rises to {after})",
+            SkillId.Warding => $"You take the blow where the iron is thickest. (Warding rises to {after})",
+            _ => $"Your craft deepens. ({SkillSet.NameOf(id)} rises to {after})",
         }, LogTone.Reward);
 
         if (!Player.SkillLineHeard)
@@ -3673,6 +3726,7 @@ public sealed class Game
         Title: LegendStanding.TitleOf(Standing),
         Rations: Player.Rations,
         Hide: Player.Hide,
+        RawMeat: Player.RawMeat,
         RationPrice: RationPrice,
         MendPrice: Player.WoundedTurns > 0 ? MendPrice : 0,
         WeaponId: Player.Weapon?.Id ?? "",
@@ -3796,6 +3850,7 @@ public sealed record Snapshot(
     string Title,
     int Rations,
     int Hide,
+    int RawMeat,
     int RationPrice,
     int MendPrice,
     string WeaponId,

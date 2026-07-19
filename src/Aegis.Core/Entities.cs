@@ -37,11 +37,18 @@ public sealed class Player
     public int Rations { get; set; }
 
     /// <summary>
-    /// Hides taken from game in the wilds (D-070): the hunt's trade-goods. On your
-    /// person like rations, so they survive death and cross the waygate. The sell
-    /// path (a vendor to buy them) waits on a menu with room; for now they bank.
+    /// Hides taken from game in the wilds (D-070): the hunt's trade-goods, sold for
+    /// coin at the woodward's bench (D-071). On your person like rations, so they
+    /// survive death and cross the waygate.
     /// </summary>
     public int Hide { get; set; }
+
+    /// <summary>
+    /// Raw meat taken from a hart (D-073): the hunt's yield before a fire. Inedible
+    /// as it is; cooked into rations at the wood's edge, the Cooking skill fattening
+    /// the take. On your person like hides, so it survives death and crossings.
+    /// </summary>
+    public int RawMeat { get; set; }
 
     // Gear (D-041): the other half of the build. Banked like attributes: the
     // remnant never takes it, and it crosses waygates untouched (vision secs 8, 10).

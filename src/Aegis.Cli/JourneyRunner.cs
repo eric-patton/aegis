@@ -111,6 +111,11 @@ public static class JourneyRunner
         // report the way arming and looting already do.
         int hidesSold = 0;
         int coinFromHides = 0;
+        // What the fire made of the hunt (D-073): raw meat only ever falls at the bench, as
+        // it cooks down to rations, so the drop and the rations that answered it are the
+        // clean signal, watched the same deterministic way.
+        int meatCooked = 0;
+        int rationsCooked = 0;
         string stop;
 
         while (true)
@@ -170,6 +175,8 @@ public static class JourneyRunner
             // because crossing replaces the world and clears the burden with it.
             int burdenLeftBehind = game.World.Burden;
             int hideBefore = game.Player.Hide;
+            int rawBefore = game.Player.RawMeat;
+            int rationsBefore = game.Player.Rations;
             game.ApplyKey(key.Value);
             keys.Append(key.Value);
             totalKeys++;
@@ -218,6 +225,13 @@ public static class JourneyRunner
                 hidesSold += sold;
                 coinFromHides += sold * game.HidePrice;
             }
+            // Raw meat falls only at the fire (D-073): the drop is cuts cooked, and the
+            // rations that rose on the same key are the meals they became.
+            if (game.Player.RawMeat < rawBefore)
+            {
+                meatCooked += rawBefore - game.Player.RawMeat;
+                rationsCooked += Math.Max(0, game.Player.Rations - rationsBefore);
+            }
 
             if (game.Player.Deaths > prevDeaths)
             {
@@ -253,7 +267,7 @@ public static class JourneyRunner
             remnantsReclaimed, coinReclaimed, essenceReclaimed,
             chestsLooted, chestCoin, gearTaken, knacksTaken,
             resolvedAs, resolvedCycle, laidCycle, mendedCycle, legendFromBurden,
-            hidesTaken, hidesSold, coinFromHides);
+            hidesTaken, hidesSold, coinFromHides, meatCooked, rationsCooked);
         return 0;
     }
 
@@ -321,7 +335,8 @@ public static class JourneyRunner
         int remnantsReclaimed, int coinReclaimed, int essenceReclaimed,
         int chestsLooted, int chestCoin, int gearTaken, int knacksTaken,
         Resolution resolvedAs, int resolvedCycle, int laidCycle, int mendedCycle,
-        int legendFromBurden, int hidesTaken, int hidesSold, int coinFromHides)
+        int legendFromBurden, int hidesTaken, int hidesSold, int coinFromHides,
+        int meatCooked, int rationsCooked)
     {
         var w = Console.Out;
         w.WriteLine($"AEGIS JOURNEY   seed {seed}   target {cycles} crossing(s)");
@@ -386,9 +401,11 @@ public static class JourneyRunner
         else if (resolvedCycle > 0)
             w.WriteLine($"           (no mending this run: {cycles} crossing(s) reached no second post-resolution hollow.)");
         w.WriteLine($"         the hunt: took {hidesTaken} hide(s) off the wilds (D-070)"
-                    + (hidesTaken == 0 ? " (no game bagged this run)." : ", plus meat for the road."));
+                    + (hidesTaken == 0 ? " (no game bagged this run)." : ", plus raw meat for the fire."));
         if (hidesSold > 0)
             w.WriteLine($"         the trade: sold {hidesSold} hide(s) at the wood's edge for {coinFromHides} coin (D-072).");
+        if (meatCooked > 0)
+            w.WriteLine($"         the fire: cooked {meatCooked} cut(s) of raw meat into {rationsCooked} ration(s) (D-073).");
         int sworn = crossings.Count(c => c.Sworn.Count > 0);
         if (sworn > 0)
         {

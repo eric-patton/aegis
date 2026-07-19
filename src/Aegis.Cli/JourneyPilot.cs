@@ -63,11 +63,12 @@ public static class JourneyPilot
         // (D-050), sent along whatever line bears a target.
         if (g.InTalkMenu && g.TalkNpc?.Kind == NpcKind.Smith)
             return SmithBuyDigit(g) ?? 'z';
-        // The woodward's bench is a talk menu we drive on purpose too (D-072): with hides
-        // cured, open the wood's edge and sell the lot, then step back. The trade menu
-        // sits behind one talk digit (D-071), so it is opened, driven, and left in turn.
-        if (g.InTradeMenu) return HideSellDigit(g);
-        if (g.InTalkMenu && g.TalkNpc?.Id == "npc_woodward" && p.Hide > 0)
+        // The woodward's bench is a talk menu we drive on purpose too (D-072, D-073): with
+        // hides cured or raw meat in hand, open the wood's edge, sell the lot and cook the
+        // meat down to rations, then step back. The trade menu sits behind one talk digit
+        // (D-071), so it is opened, driven, and left in turn.
+        if (g.InTradeMenu) return BenchDigit(g);
+        if (g.InTalkMenu && g.TalkNpc?.Id == "npc_woodward" && BenchErrand(g))
             return WoodEdgeDigit(g) ?? 'z';
         if (g.InAim) return AimDirection(g) ?? 'z';
         // The pack is a menu we drive on purpose too (D-066): wear the best piece
@@ -182,11 +183,12 @@ public static class JourneyPilot
             if (toStair is not null) return toStair;
         }
 
-        // Cash out the hunt before arming or crossing (D-072): with hides cured and this
-        // world holding a woodward, walk to the bench and sell the lot. The coin funds the
-        // smith just below, or rides to the arch to be weighed. It fires only with hides in
-        // hand, and a sale empties them, so it makes one trip per world's hunt, no more.
-        if (p.Hide > 0 && Woodward(g) is { } ward)
+        // Work the hunt's yield before arming or crossing (D-072, D-073): with hides cured
+        // or raw meat to cook and this world holding a woodward, walk to the bench. There
+        // the hides sell (the coin funds the smith just below, or rides to the arch) and the
+        // meat cooks down to rations. One trip does both, and a trip empties the bag, so it
+        // fires once per world's hunt, no more.
+        if (BenchErrand(g) && Woodward(g) is { } ward)
         {
             var toWard = NavKey(g, g.World.Overworld, p.Pos, ward.Pos, OverworldBlocked(g));
             if (toWard is not null) return toWard;
@@ -574,17 +576,27 @@ public static class JourneyPilot
         return null;
     }
 
+    /// <summary>Whether the bearer has business at the woodward's bench (D-072, D-073):
+    /// hides to sell, or raw meat to cook while the larder still has room to carry it.</summary>
+    private static bool BenchErrand(Game g) =>
+        g.Player.Hide > 0 || (g.Player.RawMeat > 0 && g.Player.Rations < Game.RationCap);
+
     /// <summary>
-    /// At the open bench, the digit that sells the hide-lot, or 'z' to step back once it is
-    /// empty (D-072). A single sale weighs the whole lot (D-071), so the next look finds no
-    /// hides and leaves, and the overworld errand will not send the bearer back until the
-    /// next world's hunt fills the bundle again.
+    /// At the open bench, the digit for the next piece of business (D-072, D-073): sell the
+    /// hide-lot first, then cook the raw meat down to rations, then 'z' to step back. A sale
+    /// weighs the whole lot and a cook fills what the larder can hold, one press each
+    /// (D-071/D-073), so the bench empties in a few keys and never oscillates, and the
+    /// errand only sends the bearer here once per world's hunt.
     /// </summary>
-    private static char HideSellDigit(Game g)
+    private static char BenchDigit(Game g)
     {
         if (g.Player.Hide > 0)
             for (int i = 0; i < g.TradeOffers.Count; i++)
                 if (g.TradeOffers[i].Good == TradeGood.Hide)
+                    return (char)('1' + i);
+        if (g.Player.RawMeat > 0 && g.Player.Rations < Game.RationCap)
+            for (int i = 0; i < g.TradeOffers.Count; i++)
+                if (g.TradeOffers[i].Good == TradeGood.Cook)
                     return (char)('1' + i);
         return 'z';
     }

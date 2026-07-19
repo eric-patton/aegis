@@ -153,10 +153,14 @@ namespace Aegis.Core;
 /// v44 when D-094 gave the feet their say: 'x' gained meaning (a v43 journal's
 /// stray 'x' was ignored and now shifts the footing, spending a turn under
 /// live steel), and the footing moves every exchanged blow by 2 both ways.
+/// v45 when D-095 gave the families their verbs: a hafted heave now sunders a
+/// linden board for good and staggers a wind-up, a paid cut can carry the
+/// bearer's feet off marked ground, and a bare-knuckle blow shoves the body a
+/// stride back, so a v44 journal's fights replay onto different cells.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 44;
+    public const int Version = 45;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

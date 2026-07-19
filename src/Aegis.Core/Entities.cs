@@ -429,6 +429,12 @@ public sealed class Monster
     public bool Dormant { get; set; }
 
     /// <summary>
+    /// The board sundered (D-095): a hafted heave splits the linden for good,
+    /// and what is left on that arm turns neither point nor shaft again.
+    /// </summary>
+    public bool BoardBroken { get; set; }
+
+    /// <summary>
     /// Standing open (D-053): a carl whose blow is spent holds its board wide,
     /// and a boar that missed its charge stands blown. While it runs, the
     /// monster neither steps nor strikes, and shafts find it.

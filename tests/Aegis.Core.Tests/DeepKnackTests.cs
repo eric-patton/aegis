@@ -124,6 +124,9 @@ public class DeepKnackTests
         for (int i = 0; i < 4; i++)
         {
             game.Player.Stamina = game.Player.MaxStamina;
+            // The answered step (D-095) may have carried the feet off a marked
+            // cell between swings: re-aim the cut at wherever the goblin stands.
+            key = KeyFor(Math.Sign(goblin.Pos.X - game.Player.Pos.X), Math.Sign(goblin.Pos.Y - game.Player.Pos.Y));
             game.ApplyKey(key);
         }
         Assert.Equal(4, game.Player.Skills.Uses(SkillId.Blades));

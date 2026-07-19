@@ -2997,6 +2997,31 @@ public sealed class Game
                 target.Intent = null;
                 Log.Add(Turn, $"The weight staggers the {target.Name}; the blow it was raising dies unthrown.", LogTone.Combat);
             }
+            // The answered step (D-095): the blade's whole craft is the counter.
+            // A paid cut into a body whose wind-up marks your own ground carries
+            // the feet with it: a half-step aside, off the marked cell.
+            if (trained == SkillId.Blades && target.Intent is { } aimed && aimed.TargetCell == Player.Pos
+                && SlipCell(target) is { } slip)
+            {
+                Player.Pos = slip;
+                Log.Add(Turn, "Your cut answers the wind-up, and your feet answer with it: a half-step off the marked ground.", LogTone.Combat);
+            }
+            // The shove (D-095): bare knuckles are the grappler's craft. A paid
+            // blow carries the body one full stride back when the ground gives;
+            // against a wall it simply does not.
+            if (trained == SkillId.Brawling && weapon is null)
+            {
+                int sx = Math.Sign(target.Pos.X - Player.Pos.X), sy = Math.Sign(target.Pos.Y - Player.Pos.Y);
+                var back = target.Pos.Plus(sx, sy);
+                if (CurrentMap.Walkable(back)
+                    && !Monsters.Any(m => m.Alive && m.SiteId == target.SiteId && m.Pos == back))
+                {
+                    target.Pos = back;
+                    Log.Add(Turn, $"The blow carries the {target.Name} a full stride back.", LogTone.Combat);
+                }
+                else
+                    Log.Add(Turn, $"The {target.Name} is driven against what will not give, and held there a breath.", LogTone.Combat);
+            }
         }
         else
         {
@@ -3039,6 +3064,25 @@ public sealed class Game
 
         if (trained is { } skill) GainSkill(skill);
         return true;
+    }
+
+    /// <summary>
+    /// The answered step's ground (D-095): a cell beside the bearer to slip to,
+    /// preferring one that keeps the blade at the foe's reach, off the marked
+    /// cell (the bearer's own), walkable and unclaimed. Deterministic order.
+    /// </summary>
+    private Pos? SlipCell(Monster target)
+    {
+        Pos? fallback = null;
+        foreach (var (dx, dy) in Directions.All8)
+        {
+            var p = Player.Pos.Plus(dx, dy);
+            if (!CurrentMap.Walkable(p)) continue;
+            if (Monsters.Any(m => m.Alive && m.SiteId == target.SiteId && m.Pos == p)) continue;
+            if (p.Chebyshev(target.Pos) == 1) return p;
+            fallback ??= p;
+        }
+        return fallback;
     }
 
     /// <summary>
@@ -3282,7 +3326,7 @@ public sealed class Game
             // (D-057). The wind and the edge are spent; nothing is bought or
             // taught. A point taken on a dormant warder's board is a sighting.
             if (target.Kind is MonsterKind.Carl or MonsterKind.Warder
-                && target.Intent is null && target.ExposedTurns == 0)
+                && target.Intent is null && target.ExposedTurns == 0 && !target.BoardBroken)
             {
                 Log.Add(Turn, "The point drives into the linden board and is turned along the grain.", LogTone.Combat);
                 if (target.Dormant) RouseLeaguer(target);
@@ -3455,6 +3499,22 @@ public sealed class Game
             {
                 target.Intent = null;
                 Log.Add(Turn, $"The weight staggers the {target.Name}; the blow it was raising dies unthrown.", LogTone.Combat);
+            }
+            // The sunder (D-095): a hafted heave is the board's one martial
+            // answer. The linden splits for good, and the weight of the blow
+            // staggers any wind-up it lands on, knack or no knack.
+            if (family == SkillId.Hafted)
+            {
+                if (target.Kind is MonsterKind.Carl or MonsterKind.Warder && !target.BoardBroken)
+                {
+                    target.BoardBroken = true;
+                    Log.Add(Turn, "The heave splits the linden board down its grain: what hangs on that arm will turn nothing again.", LogTone.Combat);
+                }
+                if (target.Intent is not null)
+                {
+                    target.Intent = null;
+                    Log.Add(Turn, $"The sheer weight of it staggers the {target.Name} clean out of its wind-up.", LogTone.Combat);
+                }
             }
         }
         else
@@ -3794,7 +3854,7 @@ public sealed class Game
             // is about its work, and in the blown turns after. A shaft taken
             // on a dormant warder's board is a sighting.
             if (target.Kind is MonsterKind.Carl or MonsterKind.Warder
-                && target.Intent is null && target.ExposedTurns == 0)
+                && target.Intent is null && target.ExposedTurns == 0 && !target.BoardBroken)
             {
                 Log.Add(Turn, "The shaft thuds into the linden board and stands there, quivering.", LogTone.Combat);
                 if (target.Dormant) RouseLeaguer(target);

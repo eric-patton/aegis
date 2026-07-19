@@ -121,6 +121,10 @@ public static class JourneyRunner
         int herbsForaged = 0;
         int herbsSold = 0;
         int coinFromHerbs = 0;
+        // The stead's regard at its height (D-076): a per-world Fame, reset at every
+        // crossing, so the run's peak is the warmest any one stead came to hold the
+        // bearer, watched by the counter's high-water mark on every key.
+        int maxRegard = 0;
         string stop;
 
         while (true)
@@ -247,6 +251,9 @@ public static class JourneyRunner
                 herbsSold += sold;
                 coinFromHerbs += sold * game.HerbPrice;
             }
+            // The stead's regard, at its high-water mark (D-076): it resets at each
+            // crossing, so the peak is the warmest one stead ever came to hold the bearer.
+            maxRegard = Math.Max(maxRegard, game.Regard);
 
             if (game.Player.Deaths > prevDeaths)
             {
@@ -283,7 +290,7 @@ public static class JourneyRunner
             chestsLooted, chestCoin, gearTaken, knacksTaken,
             resolvedAs, resolvedCycle, laidCycle, mendedCycle, legendFromBurden,
             hidesTaken, hidesSold, coinFromHides, meatCooked, rationsCooked,
-            herbsForaged, herbsSold, coinFromHerbs);
+            herbsForaged, herbsSold, coinFromHerbs, maxRegard);
         return 0;
     }
 
@@ -352,7 +359,8 @@ public static class JourneyRunner
         int chestsLooted, int chestCoin, int gearTaken, int knacksTaken,
         Resolution resolvedAs, int resolvedCycle, int laidCycle, int mendedCycle,
         int legendFromBurden, int hidesTaken, int hidesSold, int coinFromHides,
-        int meatCooked, int rationsCooked, int herbsForaged, int herbsSold, int coinFromHerbs)
+        int meatCooked, int rationsCooked, int herbsForaged, int herbsSold, int coinFromHerbs,
+        int maxRegard)
     {
         var w = Console.Out;
         w.WriteLine($"AEGIS JOURNEY   seed {seed}   target {cycles} crossing(s)");
@@ -424,6 +432,8 @@ public static class JourneyRunner
             w.WriteLine($"         the fire: cooked {meatCooked} cut(s) of raw meat into {rationsCooked} ration(s) (D-073).");
         if (herbsForaged > 0)
             w.WriteLine($"         the forage: picked {herbsForaged} sprig(s) of herb; sold {herbsSold} for {coinFromHerbs} coin (D-074/D-075).");
+        w.WriteLine($"         the stead: came to hold the bearer as {(maxRegard > 0 ? SteadRegard.TitleOf(maxRegard) : "a stranger")} at its warmest "
+                    + $"(peak regard {maxRegard}, reset at every crossing) (D-076).");
         int sworn = crossings.Count(c => c.Sworn.Count > 0);
         if (sworn > 0)
         {

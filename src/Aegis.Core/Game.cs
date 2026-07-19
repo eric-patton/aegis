@@ -94,6 +94,16 @@ public sealed class Game
 
     /// <summary>The songs' weighing of the bearer (D-048): derived from Legend, never stored.</summary>
     public int Standing => LegendStanding.StandingFor(Player.Legend);
+
+    /// <summary>
+    /// The home stead's regard for the bearer (D-076): local Fame, the first rung
+    /// of the faction pillar (D-023). Earned only by deeds the folk can perceive
+    /// and reset at every crossing (the folk are this world's), it is the deliberate
+    /// opposite number to <see cref="Standing"/>, which carries between worlds.
+    /// Like everything on the bearer it is rebuilt by replay, never serialized.
+    /// </summary>
+    public int Regard { get; private set; }
+
     public Npc? TalkNpc { get; private set; }
 
     /// <summary>Unbindings per world (D-016: a handful, refreshed at each crossing).</summary>
@@ -711,6 +721,9 @@ public sealed class Game
         UnbindingsLeft = UnbindingsPerWorld + (Standing >= 4 && !hushed ? 1 : 0);
         _layingTarget = null;
         _layingDeclined = false;
+        // The regard is these folk's alone (D-076): the far gate leaves it behind
+        // with them, and the next stead starts the bearer at a stranger again.
+        Regard = 0;
 
         Mode = MapMode.Overworld;
         Player.Pos = World.ShrinePos;
@@ -988,7 +1001,14 @@ public sealed class Game
             {
                 World.Facts.Add("met", npc.Id, World.SettlementName,
                     $"{npc.Name}, {npc.Role} of {World.SettlementName}, has spoken with the bearer.");
-                Log.Add(Turn, $"\"A stranger, then. Word travels slower than trouble here.\"");
+                // The stead's regard reaches ahead of the bearer (D-076): once the
+                // folk hold you a friend, even the ones you have not met greet you as one.
+                int rung = SteadRegard.RungFor(Regard);
+                Log.Add(Turn, rung >= 2
+                    ? "\"No stranger to this stead, whatever your name. Word of you came in ahead of your feet.\""
+                    : rung >= 1
+                        ? "\"I know your face, or the stead's talk of it. Well met.\""
+                        : "\"A stranger, then. Word travels slower than trouble here.\"");
             }
         }
         _storylets.TryFire(this, StoryletTrigger.Talk);
@@ -2831,6 +2851,28 @@ public sealed class Game
         return reduced;
     }
 
+    /// <summary>
+    /// The stead marks a deed it can see (D-076). Every rise is perceived at the
+    /// moment it lands (D-023's rule: a change the player cannot feel does not fire),
+    /// so the line names it, a crossed rung names the new standing, and the first
+    /// regard ever earned draws the one line the Aegis keeps for it. Remote deep-site
+    /// deeds pass no regard: the stead cannot perceive a quarry hushed leagues off.
+    /// </summary>
+    private void RaiseRegard(int amount, string line)
+    {
+        if (amount <= 0) return;
+        int rungBefore = SteadRegard.RungFor(Regard);
+        Regard += amount;
+        Log.Add(Turn, line, LogTone.Reward);
+        if (SteadRegard.RungFor(Regard) > rungBefore)
+            Log.Add(Turn, $"In {World.SettlementName} you are {SteadRegard.TitleOf(Regard)} now.", LogTone.Reward);
+        if (!Player.RegardLineHeard)
+        {
+            Player.RegardLineHeard = true;
+            Log.Add(Turn, "\"A nearer weighing than mine, bearer. The songs carry your name between worlds; this is only these folk, this valley, this while. It does not cross the arch with you. It is the warmer of the two all the same.\"", LogTone.Aegis);
+        }
+    }
+
     private void CheckSiteCleared(Site site)
     {
         if (site.Cleared || Monsters.Any(m => m.Alive && m.SiteId == site.Id)) return;
@@ -2843,6 +2885,7 @@ public sealed class Game
             Log.Add(Turn, "The camp falls silent. The raids on " + World.SettlementName + " are ended.", LogTone.Reward);
             Log.Add(Turn, "\"A deed with weight. It is counted.\"", LogTone.Aegis);
             Log.Add(Turn, $"\"And far to the {Compass(World.CampPos, World.GatePos)} of this cave, something old has unlocked. I feel it the way you feel a door open in a dark house.\"", LogTone.Aegis);
+            RaiseRegard(3, $"Word of the ended raids will reach {World.SettlementName} before you do. The stead knows whose hand it was.");
         }
         else if (site.Kind == SiteKind.Barrow)
         {
@@ -2850,6 +2893,7 @@ public sealed class Game
                 $"The barrow's dead were put to rest. The lights on the mound above {World.SettlementName} have gone out.");
             Log.Add(Turn, "The passage is still. Whatever the dead here were set to hold, no one is holding it now.", LogTone.Reward);
             Log.Add(Turn, "\"They were given a task and no release. I remember the shape of that arrangement. It is counted, bearer, twice over.\"", LogTone.Aegis);
+            RaiseRegard(2, $"The lights on the mound above {World.SettlementName} are out tonight. The stead will sleep the easier, and know why.");
         }
         else if (site.Kind == SiteKind.Quarry)
         {
@@ -3771,6 +3815,8 @@ public sealed class Game
         Legend: Player.Legend,
         Standing: Standing,
         Title: LegendStanding.TitleOf(Standing),
+        Regard: Regard,
+        RegardTitle: SteadRegard.TitleOf(Regard),
         Rations: Player.Rations,
         Hide: Player.Hide,
         RawMeat: Player.RawMeat,
@@ -3896,6 +3942,8 @@ public sealed record Snapshot(
     int Legend,
     int Standing,
     string Title,
+    int Regard,
+    string RegardTitle,
     int Rations,
     int Hide,
     int RawMeat,

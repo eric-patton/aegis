@@ -132,6 +132,9 @@ public sealed class Player
     /// <summary>The Aegis marks the first hide sold at the bench (D-071); once only.</summary>
     public bool HideLineHeard { get; set; }
 
+    /// <summary>The Aegis marks the first regard a stead ever holds for the bearer (D-076); once only.</summary>
+    public bool RegardLineHeard { get; set; }
+
     /// <summary>
     /// The bestiary (D-059, paying D-004's oldest clause: telegraph clarity
     /// scales with what the bearer knows). How many of a kind's wind-ups the

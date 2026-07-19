@@ -545,6 +545,9 @@ public static class Presenter
         if (p.Rations > 0) Line($"Rations {p.Rations}", Hue.Green);
         if (p.Legend > 0) Line($"Legend  {p.Legend}", Hue.Magenta);
         if (game.Standing > 0) Line($" {LegendStanding.TitleOf(game.Standing)}", Hue.DarkGray);
+        // The stead's regard (D-076): per-world and transient, so it lives on the
+        // live rail, not the permanent sheet, right under the songs' own standing.
+        if (game.Regard > 0) Line($" {SteadRegard.TitleOf(game.Regard)}", Hue.Green);
         if (p.Weapon is { } wpn) Line($"Wpn {wpn.Name}{(wpn.Worn ? "!" : "")}", wpn.Worn ? Hue.Red : Hue.Gray);
         if (p.Bow is { } bow) Line($"Bow {bow.Name}{(bow.Worn ? "!" : "")}", bow.Worn ? Hue.Red : Hue.Gray);
         if (p.Armor is { } arm) Line($"Arm {arm.Name}{(arm.Worn ? "!" : "")}", arm.Worn ? Hue.Red : Hue.Gray);

@@ -177,9 +177,11 @@ public class BarrowTests
     {
         for (ulong seed = 1; seed <= 20; seed++)
         {
-            var game = new Game(seed);
+            // The parity proof runs through the real wake (D-092): fate answers the asking.
+            var game = new Game(seed, firstWake: true);
             var journal = new List<char>();
             game.KeyApplied += journal.Add;
+            game.ApplyKey('0');
 
             for (int i = 0; i < 4000 && game.Running; i++)
             {

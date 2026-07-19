@@ -142,10 +142,14 @@ namespace Aegis.Core;
 /// graven stone takes a word into the bearer, and a death mid-wind-up now
 /// drops the held heave, so the rare v40 journal that died with a blow wound
 /// up replays without loosing it at the shrine.
+/// v42 when D-092 put the asking at the first wake: every new journal begins
+/// with the creation answers (folk, past, shapings, thing, name), so a v41
+/// journal's first key, meant as a game action, would instead answer who the
+/// bearer is and every key after would land one scene out of joint.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 41;
+    public const int Version = 42;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";
@@ -174,7 +178,7 @@ public static class SaveCodec
     /// <summary>Rebuilds a game by replaying the journal. Deterministic: this IS loading.</summary>
     public static Game Replay(ulong seed, string keys)
     {
-        var game = new Game(seed);
+        var game = new Game(seed, firstWake: true);
         foreach (char key in keys)
         {
             if (!game.Running) break;

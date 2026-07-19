@@ -231,6 +231,73 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-092: The asking: character creation as the first wake's own scene (2026-07-19)
+Fork 4's first lane, settled with the user in Q&A (four rounds plus build confirmation)
+and shipped as stage 1 of two. Full spec in `design/creation.md`; stage 2 (burdens, vows,
+the remembered face, the keepsake's keyed storylet thread) is specced there in outline
+and comes next, with its own decision.
+
+**The scene.** No menu screen: at the first wake, before the first step, the Aegis asks
+who it has caught. Five questions in the standing dialog grammar (folk, past, shapings,
+precious thing, name), every answer a journaled key through ApplyKey, so a save replays
+the whole becoming; turn-free; cycle 1 only, never at crossings. At the folk question,
+`0` is the fate door: the whole bearer rolled from `SeedTree.Derive(World.Seed, "bearer")`.
+The journey pilot always takes it, so journeys stay seed-deterministic and exercise the
+roll path every run. The greeting, the rumor, and the Arrival storylet wait for the
+answers, so the opening reads as one scene.
+
+**The folk (five, original, world-grown).** Supersedes D-017's example roster (dwarf/elf/
+orc-ish) at the user's direction; D-017's structure (fixed anchors, per-world recultured,
+tilt plus one trait, humble starts) is kept. Steadfolk (no tilt; a third shaping and 10
+coin), Emberwrought (+1 Mind/-1 Vigor; +1 MaxFocus always), Cairnborn (+1 Will/-1 Grace;
+reads one tier keener, innate like the Wits head start, never dulled), Heathborn
+(+1 Grace/-1 Might; harvests yield one more, hide and sprig alike), Wrightkin
+(+1 Might/-1 Wits; carried gear wears half as fast, on a WearTick parity clock like
+Looses, through a NextWear() helper all five wear sites now share).
+
+**The pasts (seven).** Each banks level 1 of a skill as counted uses (growth continues
+on the same ledger), carries one concrete extra, and writes a `past` fact: Soldier
+(Blades; half-worn quilted jack), Poacher (Ranged; hunting bow), Hedge-healer (Survival;
+3 sprigs), Smith's-hand (Warding; one mending free, once ever), Scribe's-ward
+(Spellcraft; a graven-stone rumor at wake), Wayfarer (Hunting; 2 rations), Oathbreaker
+(Blades and Hunting both, but Shame starts at 1).
+
+**The shaping.** Up to two paired swaps (+1/-1; Steadfolk three), floor 3 and ceiling 7,
+applied after the folk tilt: creation never leaves the humble band (D-005).
+
+**The precious thing (one, soul-bound).** A known word (the spark, Focus shown from turn
+one, the Aegis's word-warning moved here), fine arms (grave_iron), a craft kit (the
+Stillcraft lesson and 6 sprigs), a heavy purse (25 coin), or the unassuming thing: carried,
+described once, written as a `keepsake` fact, and deliberately inert until stage 2 keys
+its storylet thread (and its NG+ placement when unpicked). Gear never drops at death, so
+keepsakes need no special casing; identity, words, and lessons already cross whole.
+
+**The name.** Letters and spaces, cap 14, `-` erases, `.` seals (plain printable keys
+only, protecting the journal's line format); empty draws from the folk's stream via
+NameGen.Person. The sidebar and sheet carry it; the world's mouths still say "bearer."
+
+**Save v42.** Every new journal begins with the creation answers, so a v41 journal's
+first key would answer the wrong question; standing no-migration policy holds. The plain
+`new Game(seed)` keeps the instant unmade wake (Folk null) for the 400-test suite's fixed
+scripts; the TUI, save replay, sim, and journey all construct with `firstWake: true`. Six
+replay-parity tests now run their live games through the real wake (subscribe, then `0`).
+
+**Verified.** 421 tests green (12 new CreationTests; the suite's one honest catch was the
+test itself walking Might past the ceiling). Twin journeys seed 2024 x12 hash-identical:
+cycle 13, turns 10521, deaths 5, regard 5, wrath 6, raids 31, keys 10925; sim replay of
+the emitted keys exact (seed 2024's fated bearer: Dunelmund, Steadfolk hedge-healer).
+Sweep 1/7/99/88888 x8: all finish, turns 6651/6845/7418/6590, deaths 6/6/12/6, raids
+11/21/16/17 (seed 99's frailer rolled bearer dies more and still completes). Baselines
+re-recorded by design: the asking prefixes every journal.
+
+**Set aside.** A classic creation screen and a hybrid (in-fiction chosen); familiar
+fantasy races and all-human kindreds (original folk chosen); a fixed baseline quick-start
+(fate door chosen instead); point-pool and background-only attribute shaping (paired
+swaps chosen). Deferred to stage 2: burdens (one buys a second thing), vows, the
+remembered face, the keepsake thread. Deferred beyond: NPC line banks adopting the name,
+folk-aware cultures in worldgen (D-017's "recultured per world" is fiction-only so far),
+folk/past-keyed storylet texture.
+
 ### D-091: The remnant craft: graven stones, the four workings, Focus, and Spellcraft (2026-07-19)
 Magic v1, the pillar D-022 reserved the architecture for, shaped in a Q&A design session with the player and built to their picks: a small pool over wind-riding or essence-fueled casting, spells split by weight (small ones instant, big ones wound up), magic FOUND in the deep places rather than taught or shopped, a rare-and-old register, Mind as power and Will as pool-and-grip, slow regen with a full pool at rest, wound-threatened wind-ups that Will can hold, a use-grown Spellcraft skill from day one, one stone per fighting deep site, and a single cast key with a digit menu. The pieces. GRAVEN STONES: every fighting site whose fabric predates the stead (camp, barrow, quarry, hall, ringfort, leaguer) holds one standing stone at its deepest reach, placed on its own worldgen stream after every existing draw so pinned worlds keep their layouts and only gain a stone; 'g' on it reads the word into the bearer for good. Each kind of fabric leans toward its own word and gives the first of its leaning the bearer lacks, decided at the reading and never at generation, so worldgen stays blind to the character; stones regenerate with the world, so later worlds offer what is still unfound, and a bearer who carries all four finds only company. THE FOUR WORKINGS: the spark (1 focus, instant, flies its short line like a shaft but is fire, so a linden board is no answer to it: the caster's own lane past the shield-carls); the levin (2 focus, the caster's own WIND-UP and the heave's said mirror: ground marked now, one turn visible for the field to answer, said by the next act hit or miss, and a wound taken while it is held can knock it crooked, Will and Spellcraft keeping the grip at 50 to 95 percent); the ward (2 focus, six turns of thickened air turning every landing blow further, teaching only when it actually turned one, the Warding skill's own gate); and the veilsight (2 focus, the floor gives up its living: every kind named and read on the spot through D-059's bestiary and restamped at this tier per D-061, and the pretenders, dormant graven men and warders, drawn for what they are from then on). The veilsight is the design session's one adaptation: the pick was "unveils the floor's layout and what moves on it," but the engine has no fog of war (floors already render whole), so the spell unveils what the floor HIDES instead: the kinds, the reads, and the feigners. FOCUS: Will's pool (3 at baseline, +1 per point above), spent by the words, a point gathered back every eight turns on the road, whole at a shrine rest, at a death-wake, and at the crossing; the bar stays off the HUD until the first word is carried, so the whole system unveils as a discovery, and the Aegis marks the first word once. Mind drives the weight (the levin at double). SPELLCRAFT: the ninth skill, fed only by workings that did work (a spark or levin that found a body, a ward that turned a blow, a veilsight that truly sharpened a read: D-014's cost gate held to the letter), feeding power and the levin's grip; no knacks yet, the young craft has not settled into questions. Words are knowledge like lessons: death never takes them, they cross the arch whole; the said state does not cross (no ward through an arch, no held levin, and death now drops a held heave too, a D-058 edge made consistent). Character creation (fork 4) gains a recorded hook: a known word as one possible precious starting thing. Along the way the sheet's old overwrite bug was mended (the Taught and Legend rows had been drawn over the newest three skills since D-070). Save v40 to v41: 'z' gained meaning, and the mid-wind-up death edge changed. Verified the established ways: 409 tests green (nine new in MagicTests, all passing on the first run: the stone read once and only once, the leaning giving the first word lacked, the spark's line and its teaching, the levin held then falling on the mark, the ward running out with the turns, the veilsight naming and sharpening, the pool gathering on the road and filling at the rest, the words crossing whole with the stones standing again, and the open sky refusing; one knock-on: the deep-knack catalog test learns Spellcraft carries no questions); two journeys byte-identical; the emit-keys replay exact; the four-seed sweep identical to the D-089/D-090 baseline to the last digit, because the pilot never reads a stone: magic waits in the world without moving it. Options set aside, each discussed with the player: a mana-free wind-riding cost (blurs the martial identity), essence-fueled casting (tangles magic into the death economy before it has its own shape), risk-priced free casting (hard to read, hard to tune), instant-only spells (magic as a better sword, sidestepping D-004), spells as taught lessons or loot drops (shopping and floor-loot both undercut rare-and-old), one stone per world or tier-gated stones (most descents would hold nothing), and a spell-per-key binding (four keys claimed now and every future word another). Deferred: more words as the deep bands grow (a word against the dark, a mender's word when an effect niche opens); Spellcraft knacks once the craft has a curve worth questioning; enemy casters, and Will's resist role against them; the mouth-read flavor of veilsight at a site's door; the pilot learning to read stones and say words (a policy increment in the D-072/D-082 line); and the character-creation starting-word hook when fork 4 lands.
 

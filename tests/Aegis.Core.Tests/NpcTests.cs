@@ -108,9 +108,11 @@ public class NpcTests
     [Fact]
     public void TalkSession_ReplaysIdenticallyFromJournal()
     {
-        var game = new Game(42);
+        // The parity proof runs through the real wake (D-092): fate answers the asking.
+        var game = new Game(42, firstWake: true);
         var journal = new List<char>();
         game.KeyApplied += journal.Add;
+        game.ApplyKey('0');
 
         // Walk (journaled) rather than teleport: replays must not need debug hooks.
         var npc = game.World.Npcs[0];

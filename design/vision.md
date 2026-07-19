@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-091); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-092); the research behind it lives in `../research/`.
 
 ---
 
@@ -43,7 +43,9 @@ Factions are small state vectors with causal transition rules on a coarse tick. 
 ## 3. Your Character
 
 ### Creation: choosing your flavor of nothing
-Pick a **race** (familiar anchors: human, dwarf, elf, orc-ish, plus originals TBD; each world regenerates their cultures, clans, and social standing, so a dwarf means something different in every world) and a **background** (seeds starting skills: the hunter reads trails, the apprentice reads books). Every origin starts near the bottom. Some starts are illiterate; literacy is a learnable skill, and books gate recipes, techniques, and history.
+Pick a **folk** and a **background** (seeds starting skills: the hunter reads trails, the apprentice reads books). Every origin starts near the bottom. Some starts are illiterate; literacy is a learnable skill, and books gate recipes, techniques, and history.
+
+Stage 1 shipped at D-092 as **the asking**: no creation screen, the Aegis takes the bearer's measure at the first wake, one journaled question at a time. The folk went original and world-grown at the user's direction, superseding this section's earlier familiar-anchors sketch (dwarf/elf/orc-ish) while keeping its structure: five fixed anchors (Steadfolk, Emberwrought, Cairnborn, Heathborn, Wrightkin), each one attribute tilt plus one qualitative trait, cultures still to be regenerated per world. Seven pasts bank a skill's first level and one concrete extra each; up to two paired attribute swaps keep the start humble; one precious thing is soul-bound (a known word, fine arms, a craft kit, a heavy purse, or an unassuming thing whose story waits for stage 2); the name is typed in-fiction or drawn from the folk's stream, and the fate door rolls the whole bearer from the seed. Stage 2 (burdens, vows, the remembered face, the keepsake's keyed thread) comes next; full spec in `creation.md`.
 
 ### Attributes: seven, bought with deeds
 Might, Grace, Vigor, Wits, Mind, Will, Presence. Raised by spending **Essence** at rest points; Essence is earned from meaningful accomplishment (kills, quests, discoveries, feats). The Aegis gathers the essence of your deeds and reshapes you where it anchors. Soft caps everywhere: diminishing, never zero, returns. Mental (Mind/Will) and physical power sit on independent axes so hybrid builds compose freely.

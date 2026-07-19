@@ -133,9 +133,12 @@ public class StoryletTests
     [Fact]
     public void StoryletFirings_ReplayIdentically_FromJournal()
     {
-        var game = new Game(42);
+        // The parity proof runs through the real wake (D-092): the asking is
+        // answered with the fate door, journaled like every other key.
+        var game = new Game(42, firstWake: true);
         var journal = new List<char>();
         game.KeyApplied += journal.Add;
+        game.ApplyKey('0');
 
         // Meet the villager, rest, wander a while: a mix of gated and ambient firings.
         game.ApplyKey('k');

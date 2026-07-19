@@ -29,9 +29,11 @@ single place to answer "where are we and what is next." Keep it current.
 ## Status at a glance
 
 The **spine is deep for a martial (melee + ranged) build** and the full trans-world story
-arc ships, and the **magic pillar opened (D-091)**: four workings found on graven stones,
-Focus, and Spellcraft. The remaining **breadth holes**: companions, character creation, and
-the Death's-Toll/scar layer are design-only, as are two of the four activity families
+arc ships, the **magic pillar opened (D-091)**: four workings found on graven stones,
+Focus, and Spellcraft, and **character creation shipped its first stage (D-092)**: the
+asking at the first wake, five original folk, seven pasts, shapings, and the precious
+thing. The remaining **breadth holes**: companions, creation's stage 2 (burdens, vows, the
+keepsake thread), and the Death's-Toll/scar layer, plus two of the four activity families
 (crime, town-life). Rough fill levels:
 
 - Attributes: **6 of 7** mechanically active (D-091 wakes Mind and Will; Presence is the last inert one)
@@ -54,8 +56,8 @@ the Death's-Toll/scar layer are design-only, as are two of the four activity fam
   stores + boldness on the tick: raids embolden and take double, culls cow the dens, bared
   lofts end the raids, cleared worlds recover); the stead's own tick moves and a third
   faction remain
-- Major vision pillars still unbuilt: companions, character creation, Toll/scars (magic opened
-  D-091; the craft family opened D-073/D-090)
+- Major vision pillars still unbuilt: companions, Toll/scars (magic opened D-091; the
+  craft family opened D-073/D-090; character creation opened D-092, stage 2 pending)
 
 ---
 
@@ -69,8 +71,8 @@ the Death's-Toll/scar layer are design-only, as are two of the four activity fam
   coin, and sets the reusable vendor-menu pattern the rest of the economy will use. It
   established the activity -> skill -> yield -> coin loop the other families reuse. Still
   open in this phase: the rest of the wilderness family, and growing the wood's-edge bench
-  (cooking, foraged-goods sale). Deferred alternative for a next lane: **character
-  creation** (races + backgrounds).
+  (cooking, foraged-goods sale). The deferred alternative lane landed: **character
+  creation stage 1 (D-092)**, folk + pasts + shapings + things at the first wake.
 - **Phase 2: A keystone pillar (current).** **Factions started (D-076..D-078):** the
   local-reputation foundation shipped (the stead's regard, perceivable-deed earning, per-world
   reset), its first boon (D-077, the friend's welcome), and the second faction on a keyed
@@ -122,9 +124,14 @@ the Death's-Toll/scar layer are design-only, as are two of the four activity fam
 
 - [~] Attributes: 7 defined, **6 active** (Might, Grace, Vigor, Wits; D-091 wakes Mind as
   working-power and Will as the Focus pool and the wind-up's grip); Presence inert (D-015)
-- [ ] Character creation flow (pick at start) (vision §3)
-- [ ] Races: familiar anchors + originals, per-world regenerated cultures/standing (D-017)
-- [ ] Backgrounds: seed starting skills; some starts illiterate (D-005)
+- [x] Character creation flow: the asking at the first wake, in-fiction, journaled keys,
+  fate door for the rolled bearer (D-092)
+- [~] Folk: five original anchors shipped, tilt + trait each (D-092 supersedes D-017's
+  example roster, keeps its structure); per-world regenerated cultures/standing still pending
+- [~] Backgrounds: seven pasts seed starting skills, extras, and a `past` fact (D-092);
+  illiterate starts / literacy interplay pending (D-005)
+- [ ] Creation stage 2: burdens (one buys a second thing), vows, the remembered face, the
+  keepsake's keyed storylet thread + NG+ placement when unpicked (D-092, next)
 - [ ] Literacy skill + books gating recipes/techniques/lore (D-005, vision §3)
 
 ### Skills (9 of ~18)
@@ -185,7 +192,7 @@ the Death's-Toll/scar layer are design-only, as are two of the four activity fam
 - [ ] Enemy casters, and Will's resist role against them (D-091)
 - [ ] Spellcraft knacks once the craft has a curve worth questioning (D-091)
 - [ ] The pilot learning to read stones and say words (policy increment, D-072/D-082 line) (D-091)
-- [ ] Character creation hook: a known word as one possible precious starting thing (D-091, fork 4)
+- [x] Character creation hook: a known word as one possible precious starting thing (D-091 -> D-092)
 - [ ] Spell list / school content design (◇ parking lot)
 
 ### Factions & the living world
@@ -277,7 +284,7 @@ the Death's-Toll/scar layer are design-only, as are two of the four activity fam
 
 ## Open design questions (mirror of the `decisions.md` parking lot)
 
-- ◇ Final race list: which 1-2 originals join the anchors (D-017)
+- ◇ Folk cultures: how worldgen recultures the five folk per world, and whether factions read folk (D-017, D-092)
 - ◇ Spell list growth past the first four workings / school-shaped content, if any (D-022, D-091)
 - ◇ Storylet external data-file format + condition/effect vocabulary (D-030)
 - ◇ Catalogs to grow: more oaths, the scar list, Legend rungs past 5, patron deeds past 3, hostility bands past the fen-leaguer (D-047, D-009, D-048, D-054, D-033+)
@@ -290,6 +297,7 @@ the Death's-Toll/scar layer are design-only, as are two of the four activity fam
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-19: **D-092 the asking: character creation as the first wake's own scene.** Fork 4's first lane, Q&A-settled, stage 1 of 2. No menu screen: the Aegis asks who it caught, five journaled questions before the first step (cycle 1 only). Five ORIGINAL world-grown folk (supersedes D-017's example roster, keeps its structure), each a tilt + one trait: Steadfolk (third shaping + 10 coin), Emberwrought (+1 MaxFocus), Cairnborn (reads one tier keener, innate), Heathborn (harvests +1, hide and sprig), Wrightkin (gear wears half as fast, parity clock). Seven pasts, each banking a skill's level 1 as counted uses + one extra + a `past` fact: Soldier/Poacher/Hedge-healer/Smith's-hand (a free mending, once ever)/Scribe's-ward (stone rumor)/Wayfarer/Oathbreaker (twice-skilled, Shame 1). Paired swaps (2, Steadfolk 3; band 3..7). One precious thing, soul-bound: the known word (D-091's hook paid), grave-iron arms, the craft kit (stillcraft + 6 sprigs), the heavy purse, or the UNASSUMING THING (inert until stage 2's keyed storylet thread; NG+ placement when unpicked). Name typed in-fiction ('.' seals, '-' erases; empty draws from the folk's stream); sidebar + sheet carry it. The fate door ('0') rolls the whole bearer from the world's stream; the pilot always takes it, so journeys exercise creation every run. Save v41 -> v42 (journals now open with the asking; plain new Game(seed) keeps the unmade wake for the test suite). 421 tests green (12 new CreationTests); twins hash-identical; emit->sim exact (seed 2024's fated bearer: Dunelmund, Steadfolk hedge-healer); baselines re-recorded by design (2024 x12: cycle 13, 10521 turns, 5 deaths, 31 raids, 10925 keys; sweep all finish). New tracked: stage 2 (burdens/vows/face/keepsake thread), folk cultures in worldgen, NPC line banks adopting the name.
 - 2026-07-19: **D-091 the remnant craft: graven stones, the four workings, Focus, and Spellcraft.** Magic v1, designed in a Q&A session with the player and built to their picks (found not taught, rare-and-old, small pool over stamina/essence/risk pricing, weight-split casting, Mind=power / Will=pool+grip, Spellcraft from day one). Graven stones stand at the deepest reach of every fighting deep site (camp/barrow/quarry/hall/ringfort/leaguer, own worldgen streams, pinned layouts hold); 'g' reads the word in for good; each fabric leans toward its own word and gives the first the bearer lacks, decided at the reading so worldgen stays character-blind; stones regenerate per world. Four workings on 'z' + digits: the spark (1 focus, instant line, boards no answer: the caster's lane past shield-carls), the levin (2, the caster's OWN wind-up: marked ground, one visible turn, dodged by feet both ways, a mid-hold wound threatens it and Will+Spellcraft hold the grip), the ward (2, six turns of thickened air, teaches only when it turns a blow), the veilsight (2, names the floor's living, sharpens the D-059 reads at this tier, shows the feigning graven men and warders: adapted from "unveils the layout" because the engine has no fog of war). Focus: Will's pool (3+), regen every 8 turns, full at rest/death-wake/crossing, HIDDEN until the first word so the system unveils as a discovery. Spellcraft: 9th skill, D-014 cost-gated (only workings that did work). Words are knowledge: cross whole, survive death. Sheet overwrite bug fixed (Taught/Legend rows had hidden the newest 3 skills since D-070). Save v40 -> v41 ('z' gains meaning; a death now drops a held heave). 409 tests green (9 new MagicTests, first-run pass; 1 knock-on in the knack catalog test); twins byte-identical; emit->sim exact; sweep identical to baseline to the digit (the pilot never reads a stone). New tracked: more workings, enemy casters + Will resists, Spellcraft knacks, caster social texture, pilot stone policy, the fork-4 starting-word hook.
 - 2026-07-19: **D-090 the stillroom's craft: the hale-draught, 'd', and the stillcraft.** Alchemy v1 on the lane D-074/D-081 built: three sprigs steep into a hale-draught at the herbwife's bench (satchel cap 2, priced in sprigs NEVER coin: the herb lane's first sink, forage becoming a choice instead of pure income); 'd' gains meaning (v26 'w' precedent) and drinks it anywhere: +12 blood, -24 wound-weight, a turn for the swallow: the first remedy that walks into a deep site (the niche: shrine rest heals free at home, nothing helped in the dark). The STILLCRAFT lesson (4th lesson, 12c at her bench, D-052 pattern, free to the stead's own via D-087's gate untouched: pays D-087's deferred fourth-lesson slot with the herbwife as honest teacher): a taught shrine rest steeps a draught from carried sprigs, any world (TendedIron rider pattern). Bench entries appended so digits hold (D-041); vials on the HUD rail; Draughts in Snapshot. Save v39 -> v40. 400 tests green (5 new AlchemyTests; 2 knock-ons: the drink's turn ticks the wound one further, and the D-087 taking-stock test must now buy the fourth lesson: the teaching gate absorbed the new lesson unmodified); twins byte-identical; emit->sim exact; sweep identical (the pilot never brews). New tracked: recipes as effects arrive, the pilot learning to brew, the skill question if the lane outgrows know-how.
 - 2026-07-19: **D-089 the factions get their state: stores, boldness, and the tick that gives back.** Vision §2's keystone clause lands: two causal axes on the coarse tick. The stead's STORES (Max 6, stored, reset each world): raids drain it, RationPrice rides it via PriceBump (replacing the frozen + Raids term), bared lofts END the raids as their own dark exit (fact lofts_bare, replacing the flat cap of 3), and once the camp falls the stead recovers +1/tick to full (each easing narrated, fact lofts_full): deliberately amends D-079's grain-stays-taken, since the exit now has an aftermath. The dens' BOLDNESS (DERIVED, not stored: Base 3 + Raids - Wrath): below 2 a tick raids nothing (fact dens_cowed, once: wrath's first faction-scale consequence, the cull buying the stead quiet), at 4+ the raid comes greedy and takes double, so an untouched camp bares the lofts in 4 raids. Snapshot carries Stores + Boldness. Save v38 -> v39. 395 tests green (5 new/rewritten RaidsTests; WrathTests camp helpers promoted internal); twins byte-identical; emit->sim exact (final stores 6/boldness 3: a recovered world); sweep turns/deaths IDENTICAL to baseline with raids now varying by seed (the culls showing through). Checked off the state-vectors item; new tracked lines: the stead acting on the tick, a third faction.

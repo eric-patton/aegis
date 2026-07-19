@@ -26,10 +26,12 @@ public class SaveTests
         const ulong seed = 777;
         const string played = "llllkkkk..jjhh....llllbbbnnn";
 
-        // Live game, recording its own journal through the event.
+        // Live game, recording its own journal through the event; the real wake
+        // (D-092) asks first, and fate's one key answers on the record.
         var journal = new StringBuilder();
-        var live = new Game(seed);
+        var live = new Game(seed, firstWake: true);
         live.KeyApplied += k => journal.Append(k);
+        live.ApplyKey('0');
         foreach (char key in played) live.ApplyKey(key);
 
         var replayed = SaveCodec.Replay(seed, journal.ToString());
@@ -56,8 +58,9 @@ public class SaveTests
         script.Append('.', 80);    // stand still until something kills us
 
         var journal = new StringBuilder();
-        var live = new Game(seed);
+        var live = new Game(seed, firstWake: true);
         live.KeyApplied += k => journal.Append(k);
+        live.ApplyKey('0');
         foreach (char key in script.ToString()) live.ApplyKey(key);
 
         Assert.True(live.Player.Deaths >= 1, "script did not produce a death; combat balance changed?");

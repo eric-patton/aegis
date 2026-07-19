@@ -4,6 +4,25 @@ public sealed class Player
 {
     public Pos Pos { get; set; }
     public AttributeSet Attributes { get; } = new();
+
+    /// <summary>
+    /// Who the bearer is (D-092): folk, past, and name, answered once at the
+    /// first wake and never again. Null folk is the unmade bearer of the test
+    /// harness's instant wake; real play always answers. Identity is knowledge:
+    /// death never touches it and it crosses the waygate whole.
+    /// </summary>
+    public FolkId? Folk { get; set; }
+    public PastId? Past { get; set; }
+    public string Name { get; set; } = "";
+
+    /// <summary>The unassuming thing (D-092): carried, unexplained, waiting for the one who knows it.</summary>
+    public bool Keepsake { get; set; }
+
+    /// <summary>A smith's-hand is owed one mending free (D-092); spent once, any world.</summary>
+    public bool SmithsFavorSpent { get; set; }
+
+    /// <summary>The wrightkin wear-parity clock (D-092), counted like Looses so replay agrees.</summary>
+    public int WearTick { get; set; }
     public int Hp { get; set; } = 20;
     public int Stamina { get; set; } = 10;
     public int Coin { get; set; }
@@ -31,8 +50,9 @@ public sealed class Player
     /// </summary>
     public int Focus { get; set; }
 
-    /// <summary>The pool's brim, from Will (D-091): the humble baseline of 5 gives 3.</summary>
-    public int MaxFocus => 3 + Math.Max(0, Attributes[Attr.Will] - AttributeSet.Baseline);
+    /// <summary>The pool's brim, from Will (D-091): the humble baseline of 5 gives 3. The emberwrought carry one more (D-092).</summary>
+    public int MaxFocus => 3 + Math.Max(0, Attributes[Attr.Will] - AttributeSet.Baseline)
+        + (Folk == FolkId.Emberwrought ? 1 : 0);
 
     /// <summary>Flat working bonus from Mind above baseline (D-091): the learned mind drives the word harder.</summary>
     public int SpellBonus => Math.Max(0, Attributes[Attr.Mind] - AttributeSet.Baseline);
@@ -242,7 +262,10 @@ public sealed class Player
             dulled -= Math.Max(0, tier - ReadTierStamp.GetValueOrDefault(kind, tier));
             if (dulled < ReadNamed) dulled = ReadNamed;   // a named kind never dulls back to a blur
         }
-        int read = dulled + Math.Max(0, Attributes[Attr.Wits] - AttributeSet.Baseline);
+        // The cairnborn grew up among old dead things (D-092): innate like the
+        // Wits head start, the bearer's own, never dulled.
+        int read = dulled + Math.Max(0, Attributes[Attr.Wits] - AttributeSet.Baseline)
+            + (Folk == FolkId.Cairnborn ? 1 : 0);
         return read >= ReadKeen ? ReadTier.Keen : read >= ReadNamed ? ReadTier.Read : ReadTier.Blur;
     }
 

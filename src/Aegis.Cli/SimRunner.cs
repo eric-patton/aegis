@@ -29,7 +29,7 @@ public static class SimRunner
             }
         }
 
-        var game = new Game(seed);
+        var game = new Game(seed, firstWake: true);
         int applied = 0;
         foreach (char key in keys)
         {

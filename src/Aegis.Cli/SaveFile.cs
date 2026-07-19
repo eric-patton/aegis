@@ -44,7 +44,7 @@ public sealed class SaveFile : IDisposable
         }
         else
         {
-            var game = new Game(seedIfNew);
+            var game = new Game(seedIfNew, firstWake: true);
             var appender = new StreamWriter(path, append: true, PilotWire.Utf8NoBom) { AutoFlush = true };
             appender.WriteLine(SaveCodec.EncodeHeader(seedIfNew));
             return new SaveFile(game, path, loaded: false, appender, keysOnLine: 0);

@@ -53,7 +53,91 @@ public static class Presenter
         if (game.InCastMenu) DrawCastMenu(frame, game, layout);
         if (game.InSheetMenu) DrawSheet(frame, game, layout);
         if (game.InCrossingMenu) DrawCrossingMenu(frame, game, layout);
+        if (game.InCreation) DrawCreation(frame, game, layout);
         return frame;
+    }
+
+    /// <summary>
+    /// The asking (D-092): the first-wake creation scene, one question at a
+    /// time in the standing dialog grammar. Options are a bright name row over
+    /// a dim blurb row; the folk rows carry their gift on the name line.
+    /// </summary>
+    private static void DrawCreation(Frame frame, Game game, Layout layout)
+    {
+        var p = game.Player;
+        const int boxW = 70;
+        string title;
+        var rows = new List<(string Text, Hue Hue)>();
+        string hint;
+
+        switch (game.CreationStage)
+        {
+            case CreationStage.Folk:
+                title = "\"What folk bore you?\"";
+                for (int i = 0; i < CreationCatalog.Folk.Count; i++)
+                {
+                    var def = CreationCatalog.Folk[i];
+                    rows.Add(($"{i + 1}) {def.Name,-13} {def.Trait}", Hue.White));
+                    rows.Add(($"   {def.Blurb}", Hue.DarkGray));
+                }
+                rows.Add(("0) Let the shrine decide: the whole of you, rolled at once", Hue.Cyan));
+                hint = "1-5 answer; 0 leaves it to fate";
+                break;
+
+            case CreationStage.Past:
+                title = "\"And what were your hands, before?\"";
+                for (int i = 0; i < CreationCatalog.Pasts.Count; i++)
+                {
+                    var def = CreationCatalog.Pasts[i];
+                    rows.Add(($"{i + 1}) {def.Name,-16} ({SkillSet.NameOf(def.Skill)})", Hue.White));
+                    rows.Add(($"   {def.Blurb}", Hue.DarkGray));
+                }
+                hint = "1-7 answer";
+                break;
+
+            case CreationStage.ShapeRaise:
+            case CreationStage.ShapePay:
+                title = game.CreationStage == CreationStage.ShapeRaise
+                    ? $"\"The years lean on a body. Where did yours rise?\" ({game.ShapingsLeft} left)"
+                    : $"\"And what paid for the {AttributeSet.NameOf(game.ShapeRaise!.Value)}?\"";
+                for (int i = 0; i < AttributeSet.Count; i++)
+                {
+                    var attr = (Attr)i;
+                    rows.Add(($"{i + 1}) {AttributeSet.NameOf(attr),-9} {p.Attributes[attr]}",
+                        attr == game.ShapeRaise ? Hue.Cyan : Hue.White));
+                }
+                hint = game.CreationStage == CreationStage.ShapeRaise
+                    ? "1-7 rise; 0 stands as you are"
+                    : "1-7 pays the rise";
+                break;
+
+            case CreationStage.Thing:
+                title = "\"One thing came through the dark with you. What is it?\"";
+                for (int i = 0; i < CreationCatalog.Things.Count; i++)
+                {
+                    var def = CreationCatalog.Things[i];
+                    rows.Add(($"{i + 1}) {def.Name}", Hue.White));
+                    rows.Add(($"   {def.Blurb}", Hue.DarkGray));
+                }
+                hint = "1-5 answer";
+                break;
+
+            default:
+                title = "\"Last: what are you called?\"";
+                rows.Add(($"> {game.NameEntry}_", Hue.White));
+                hint = "letters shape it; - takes one back; . seals it; empty takes the folk's own";
+                break;
+        }
+
+        int boxH = 6 + rows.Count;
+        int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
+        int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
+        DrawBox(frame, x0, y0, boxW, boxH);
+        frame.Write(x0 + 2, y0 + 1, "The asking", Hue.Cyan);
+        frame.Write(x0 + 2, y0 + 2, title, Hue.Gray);
+        for (int i = 0; i < rows.Count; i++)
+            frame.Write(x0 + 2, y0 + 4 + i, rows[i].Text, rows[i].Hue);
+        frame.Write(x0 + 2, y0 + boxH - 2, hint, Hue.DarkGray);
     }
 
     /// <summary>
@@ -298,7 +382,11 @@ public static class Presenter
         int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
 
         DrawBox(frame, x0, y0, boxW, boxH);
-        frame.Write(x0 + 2, y0 + 1, "The bearer", Hue.White);
+        string who = p.Name.Length > 0 && p.Folk is { } folk && p.Past is { } past
+            ? $"{p.Name}, {CreationCatalog.FolkOf(folk).Name}, once {CreationCatalog.PastOf(past).Name}"
+            : "The bearer";
+        if (who.Length > boxW - 4) who = who[..(boxW - 4)];
+        frame.Write(x0 + 2, y0 + 1, who, Hue.White);
 
         for (int i = 0; i < AttributeSet.Count; i++)
         {
@@ -580,7 +668,7 @@ public static class Presenter
             y++;
         }
 
-        Line("The Bearer", Hue.White);
+        Line(p.Name.Length > 0 ? p.Name : "The Bearer", Hue.White);
         Line(new string('-', 22), Hue.DarkGray);
         Line($"HP  {Bar(p.Hp, p.EffectiveMaxHp, 10)} {p.Hp}/{p.EffectiveMaxHp}", p.Hp * 3 <= p.EffectiveMaxHp ? Hue.Red : Hue.Gray);
         Line($"ST  {Bar(p.Stamina, p.MaxStamina, 10)} {p.Stamina}/{p.MaxStamina}", Hue.Gray);

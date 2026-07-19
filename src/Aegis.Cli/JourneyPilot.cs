@@ -55,6 +55,11 @@ public static class JourneyPilot
     {
         var p = g.Player;
 
+        // The asking (D-092) is answered with the fate door: one key rolls the
+        // whole bearer from the world's own stream, so journeys stay perfectly
+        // seed-deterministic and still exercise the creation path every run.
+        if (g.InCreation) return '0';
+
         // Two menus the bot drives on purpose: the shrine's raising (spend essence on
         // Vigor and Might, the survivability the deep sites demand) and the arch's terms
         // (handled below). Any other menu that trapped it gets stepped back out of.

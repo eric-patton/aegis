@@ -247,6 +247,13 @@ public sealed class Game
     /// <summary>How far one wear event moves the ledger: the spent edge (D-047) doubles it.</summary>
     private int WearStep => World.Oaths.Contains(OathId.SpentEdge) ? 2 : 1;
 
+    /// <summary>
+    /// One tick of the wear clock (D-092): wrightkin iron frays every other
+    /// time, counted like Looses so the ledger and replay agree. Stacks with
+    /// the parity knacks the way the knacks stack with each other: rarely.
+    /// </summary>
+    private int NextWear() => Player.Folk == FolkId.Wrightkin && Player.WearTick++ % 2 == 1 ? 0 : WearStep;
+
 
     /// <summary>
     /// What the herbwife asks to dress the wound: priced by how much convalescence
@@ -295,7 +302,15 @@ public sealed class Game
     /// <summary>Total storylets fired this character, all worlds (observability).</summary>
     public int StoryletsFired => _storylets.TotalFired;
 
-    public Game(ulong seed)
+    public Game(ulong seed) : this(seed, firstWake: false) { }
+
+    /// <summary>
+    /// The real game always wakes with the asking (D-092): the TUI, the save
+    /// replay, and the sim/journey harnesses all pass firstWake true, so every
+    /// journal begins with the creation answers. The plain constructor keeps
+    /// the instant, unmade wake for the test suite's fixed key scripts.
+    /// </summary>
+    public Game(ulong seed, bool firstWake)
     {
         MasterSeed = seed;
         // Cycle 1 uses the master seed directly, so pre-crossing saves stay replayable.
@@ -306,9 +321,20 @@ public sealed class Game
         SpawnMonsters();
 
         Log.Add(0, $"You wake at the shrine of {World.SettlementName}, in the world called {World.Name}.");
-        Log.Add(0, "A voice, close as your own pulse: \"Walk. I hold this place. I will catch you.\"", LogTone.Aegis);
-        Log.Add(0, $"Rumor: goblins from a cave to the {Compass(World.ShrinePos, World.CampPos)} raid {World.SettlementName}'s stores by night.");
-        _storylets.TryFire(this, StoryletTrigger.Arrival);
+        if (firstWake)
+        {
+            // The asking (D-092): before the first step, the Aegis takes the
+            // bearer's measure. The greeting, the rumor, and the arrival draw
+            // all wait for the answers, so the opening reads as one scene.
+            Log.Add(0, "A voice, close as your own pulse: \"Be still a breath. I have caught you, and I do not yet know you.\"", LogTone.Aegis);
+            InCreation = true;
+        }
+        else
+        {
+            Log.Add(0, "A voice, close as your own pulse: \"Walk. I hold this place. I will catch you.\"", LogTone.Aegis);
+            Log.Add(0, $"Rumor: goblins from a cave to the {Compass(World.ShrinePos, World.CampPos)} raid {World.SettlementName}'s stores by night.");
+            _storylets.TryFire(this, StoryletTrigger.Arrival);
+        }
     }
 
     /// <summary>Global authored content plus this world's compiled story (D-032).</summary>
@@ -338,6 +364,229 @@ public sealed class Game
         return dir.Length == 0 ? "near" : dir;
     }
 
+    // The asking (D-092): the creation scene at the first wake. One question at
+    // a time in the standing dialog grammar, every answer a journaled key, so a
+    // save replays the whole becoming. Turn-free: the world holds its breath.
+
+    /// <summary>Whether the first-wake asking still stands open (D-092). Real play begins only after it closes.</summary>
+    public bool InCreation { get; private set; }
+
+    /// <summary>Which question is on the table (D-092).</summary>
+    public CreationStage CreationStage { get; private set; }
+
+    /// <summary>The name so far, while the last question stands (D-092).</summary>
+    public string NameEntry { get; private set; } = "";
+
+    /// <summary>Shapings still owed at the shaping question (D-092): two, or three for steadfolk.</summary>
+    public int ShapingsLeft { get; private set; }
+
+    /// <summary>The attribute chosen to rise, while the paying half stands open (D-092).</summary>
+    public Attr? ShapeRaise { get; private set; }
+
+    private void HandleCreationKey(char key)
+    {
+        switch (CreationStage)
+        {
+            case CreationStage.Folk:
+                if (key == '0') { RollBearer(); return; }
+                if (key >= '1' && key <= '0' + CreationCatalog.Folk.Count)
+                {
+                    ApplyFolk((FolkId)(key - '1'));
+                    CreationStage = CreationStage.Past;
+                }
+                return;
+
+            case CreationStage.Past:
+                if (key >= '1' && key <= '0' + CreationCatalog.Pasts.Count)
+                {
+                    ApplyPast((PastId)(key - '1'));
+                    ShapingsLeft = Player.Folk == FolkId.Steadfolk ? 3 : 2;
+                    CreationStage = CreationStage.ShapeRaise;
+                }
+                return;
+
+            case CreationStage.ShapeRaise:
+                if (key == '0') { CreationStage = CreationStage.Thing; return; }
+                if (key >= '1' && key <= '7')
+                {
+                    var attr = (Attr)(key - '1');
+                    if (Player.Attributes[attr] >= CreationCatalog.ShapeCeiling)
+                    {
+                        Log.Add(Turn, $"{AttributeSet.NameOf(attr)} already stands as high as a starting body holds.");
+                        return;
+                    }
+                    ShapeRaise = attr;
+                    CreationStage = CreationStage.ShapePay;
+                }
+                return;
+
+            case CreationStage.ShapePay:
+                if (key >= '1' && key <= '7')
+                {
+                    var pay = (Attr)(key - '1');
+                    if (pay == ShapeRaise) return;
+                    if (Player.Attributes[pay] <= CreationCatalog.ShapeFloor)
+                    {
+                        Log.Add(Turn, $"{AttributeSet.NameOf(pay)} has no more to give.");
+                        return;
+                    }
+                    Player.Attributes[ShapeRaise!.Value] += 1;
+                    Player.Attributes[pay] -= 1;
+                    Log.Add(Turn, $"\"{AttributeSet.NameOf(ShapeRaise.Value)} over {AttributeSet.NameOf(pay)}. The years agree.\"", LogTone.Aegis);
+                    ShapeRaise = null;
+                    ShapingsLeft--;
+                    CreationStage = ShapingsLeft > 0 ? CreationStage.ShapeRaise : CreationStage.Thing;
+                }
+                return;
+
+            case CreationStage.Thing:
+                if (key >= '1' && key <= '0' + CreationCatalog.Things.Count)
+                {
+                    ApplyThing((ThingId)(key - '1'));
+                    CreationStage = CreationStage.Name;
+                }
+                return;
+
+            case CreationStage.Name:
+                // The seal is '.', the erase '-': both plain printable keys, so
+                // the journal's line format never meets a control character.
+                if (key == '.') { FinishCreation(NameEntry.Trim()); return; }
+                if (key == '-' && NameEntry.Length > 0) { NameEntry = NameEntry[..^1]; return; }
+                if ((char.IsAsciiLetter(key) || key == ' ') && NameEntry.Length < 14)
+                    NameEntry += NameEntry.Length == 0 ? char.ToUpperInvariant(key) : key;
+                return;
+        }
+    }
+
+    private void ApplyFolk(FolkId id)
+    {
+        var def = CreationCatalog.FolkOf(id);
+        Player.Folk = id;
+        if (def.TiltUp is { } up) Player.Attributes[up] += 1;
+        if (def.TiltDown is { } down) Player.Attributes[down] -= 1;
+        if (id == FolkId.Steadfolk) Player.Coin += 10;
+        Log.Add(Turn, $"\"{def.Name}, then: {def.Blurb}.\"", LogTone.Aegis);
+    }
+
+    private void ApplyPast(PastId id)
+    {
+        var def = CreationCatalog.PastOf(id);
+        Player.Past = id;
+        BankSkill(def.Skill);
+        switch (id)
+        {
+            case PastId.Soldier:
+                var jack = GearCatalog.Create("quilted_jack");
+                jack.Wear = jack.MaxWear / 2;
+                Player.Armor = jack;
+                Player.GearLineHeard = true;
+                break;
+            case PastId.Poacher:
+                Player.Bow = GearCatalog.Create("hunting_bow");
+                Player.GearLineHeard = true;
+                break;
+            case PastId.HedgeHealer:
+                Player.Herb += 3;
+                break;
+            case PastId.Wayfarer:
+                Player.Rations += 2;
+                break;
+            case PastId.Oathbreaker:
+                // Twice-skilled, once-stained: the second craft is paid for in
+                // a name the stead already half-knows (D-086's ledger).
+                BankSkill(SkillId.Hunting);
+                _factionInfamy[FactionId.Stead] = Shame + 1;
+                break;
+        }
+        World.Facts.Add("past", id.ToString().ToLowerInvariant(), World.SettlementName, def.Blurb);
+        Log.Add(Turn, $"\"Once {def.Name}: {def.Blurb}.\"", LogTone.Aegis);
+    }
+
+    /// <summary>Level one, banked as counted uses (D-092): growth continues on the same honest ledger.</summary>
+    private void BankSkill(SkillId skill)
+    {
+        int owed = SkillSet.UsesForLevel(1);
+        for (int i = 0; i < owed; i++) Player.Skills.AddUse(skill);
+    }
+
+    private void ApplyThing(ThingId id)
+    {
+        switch (id)
+        {
+            case ThingId.Word:
+                if (!Player.HasSpell(SpellId.Spark)) Player.Spells.Add(SpellId.Spark);
+                Player.Focus = Player.MaxFocus;
+                Player.SpellLineHeard = true;
+                Log.Add(Turn, "The spark has been yours since before the catching: a word older than any stead, carried quiet. (z speaks what you carry)", LogTone.Info);
+                Log.Add(Turn, "\"So that is what you kept warm through the dark. Say it carefully.\"", LogTone.Aegis);
+                break;
+            case ThingId.FineArms:
+                Player.Weapon = GearCatalog.Create("grave_iron");
+                Player.GearLineHeard = true;
+                Log.Add(Turn, "The grave-iron blade rides your hip like it grew there.", LogTone.Info);
+                break;
+            case ThingId.CraftKit:
+                if (!Player.HasLesson(LessonId.Stillcraft)) Player.Lessons.Add(LessonId.Stillcraft);
+                Player.LessonLineHeard = true;
+                Player.Herb += 6;
+                Log.Add(Turn, $"The brewing satchel settles on your shoulder: simples, stoppered vials, and the craft in your hands. ({Player.Herb} sprigs carried)", LogTone.Info);
+                break;
+            case ThingId.Purse:
+                Player.Coin += 25;
+                Log.Add(Turn, $"The purse is heavy, and asks no questions. ({Player.Coin} coin)", LogTone.Info);
+                break;
+            case ThingId.Keepsake:
+                Player.Keepsake = true;
+                World.Facts.Add("keepsake", "unassuming-thing", World.SettlementName, "small, worn smooth, and it will not say what it is");
+                Log.Add(Turn, "A small thing, worn smooth by older hands than yours. It is not worth a coin, and you would not sell it for a hundred.", LogTone.Info);
+                break;
+        }
+    }
+
+    /// <summary>The rolled bearer (D-092): one key, the whole becoming, from the world's own stream.</summary>
+    private void RollBearer()
+    {
+        var rng = new Rng(SeedTree.Derive(World.Seed, "bearer"));
+        Log.Add(Turn, "\"As you like. The shrine has seen bearers enough to guess a shape.\"", LogTone.Aegis);
+        ApplyFolk((FolkId)rng.Next(CreationCatalog.Folk.Count));
+        ApplyPast((PastId)rng.Next(CreationCatalog.Pasts.Count));
+        int shapings = rng.Next((Player.Folk == FolkId.Steadfolk ? 3 : 2) + 1);
+        for (int i = 0; i < shapings; i++)
+        {
+            var up = (Attr)rng.Next(AttributeSet.Count);
+            var pay = (Attr)rng.Next(AttributeSet.Count);
+            if (up == pay
+                || Player.Attributes[up] >= CreationCatalog.ShapeCeiling
+                || Player.Attributes[pay] <= CreationCatalog.ShapeFloor) continue;
+            Player.Attributes[up] += 1;
+            Player.Attributes[pay] -= 1;
+        }
+        ApplyThing((ThingId)rng.Next(CreationCatalog.Things.Count));
+        FinishCreation(NameGen.Person(ref rng));
+    }
+
+    private void FinishCreation(string name)
+    {
+        if (name.Length == 0)
+        {
+            var nameRng = new Rng(SeedTree.Derive(World.Seed, "bearer-name"));
+            name = NameGen.Person(ref nameRng);
+        }
+        Player.Name = name;
+        InCreation = false;
+        NameEntry = "";
+        var folk = CreationCatalog.FolkOf(Player.Folk!.Value);
+        var past = CreationCatalog.PastOf(Player.Past!.Value);
+        Log.Add(Turn, $"So it goes into the count: {Player.Name}, {folk.Name} by blood, once {past.Name}.", LogTone.Info);
+        Log.Add(Turn, "\"Enough. I know you now, as far as knowing goes. Walk. I hold this place. I will catch you.\"", LogTone.Aegis);
+        Log.Add(Turn, $"Rumor: goblins from a cave to the {Compass(World.ShrinePos, World.CampPos)} raid {World.SettlementName}'s stores by night.");
+        // The scribe's-ward extra (D-092): the old writings say where old writing waits.
+        if (Player.Past == PastId.ScribesWard
+            && World.Sites.FirstOrDefault(s => s.StonePos is not null && s.Kind != SiteKind.GoblinCamp) is { } lettered)
+            Log.Add(Turn, $"You know from the old writings: something graven waits {Compass(World.ShrinePos, lettered.OverworldPos)} of here, cut deep in standing stone.");
+        _storylets.TryFire(this, StoryletTrigger.Arrival);
+    }
+
     public GameMap CurrentMap => Mode == MapMode.Overworld ? World.Overworld : CurrentSite!.Map;
 
     private string CurrentMapId => CurrentMap.Id;
@@ -352,6 +601,13 @@ public sealed class Game
     public void ApplyKey(char key)
     {
         if (!Running) return;
+
+        if (InCreation)
+        {
+            HandleCreationKey(key);
+            KeyApplied?.Invoke(key);
+            return;
+        }
 
         if (InGearMenu)
         {
@@ -571,7 +827,7 @@ public sealed class Game
         if (Mode == MapMode.Overworld && World.Herbs.Contains(target))
         {
             World.Herbs.Remove(target);
-            int taken = 1 + Player.Skills.Bonus(SkillId.Survival);
+            int taken = 1 + Player.Skills.Bonus(SkillId.Survival) + (Player.Folk == FolkId.Heathborn ? 1 : 0);
             Player.Herb += taken;
             GainSkill(SkillId.Survival);
             Log.Add(Turn, $"Wortcunning growth under the eaves: you pick {taken} good sprig{(taken == 1 ? "" : "s")} for the wood's-edge bench. ({Player.Herb} in the satchel)", LogTone.Reward);
@@ -1920,6 +2176,17 @@ public sealed class Game
             Log.Add(Turn, $"{TalkNpc!.Name}: \"Nothing here wants my wheel. Use it harder.\"");
             return;
         }
+        // Smiths know their own (D-092): a smith's-hand is owed one mending
+        // free, spent once ever, any world's forge.
+        if (Player.Past == PastId.SmithsHand && !Player.SmithsFavorSpent)
+        {
+            Player.SmithsFavorSpent = true;
+            foreach (var item in Player.AllGear) item.Wear = 0;
+            Log.Add(Turn, $"{TalkNpc!.Name} looks at your hands, then at the work, and waves the coin away: \"Bellows-scars. This one's for the trade.\" What you carry is put right for nothing.", LogTone.Reward);
+            _offers.Clear();
+            _offers.AddRange(BuildOffers(TalkNpc));
+            return;
+        }
         if (Player.Coin < price)
         {
             Log.Add(Turn, $"{TalkNpc!.Name}: \"The mending is {price} coin, and you hold {Player.Coin}. Wear is honest debt; it will wait.\"");
@@ -2585,7 +2852,7 @@ public sealed class Game
                 && Player.Skills.Uses(family) % 2 == 1;
             if (weapon is not null && !weapon.Worn && !edgeSpared)
             {
-                weapon.Wear = Math.Min(weapon.MaxWear, weapon.Wear + WearStep);
+                weapon.Wear = Math.Min(weapon.MaxWear, weapon.Wear + NextWear());
                 if (weapon.Worn)
                     Log.Add(Turn, $"The {weapon.Name}'s edge is gone: it lands like a bar of dull iron now. The smith's wheel would right it.", LogTone.Combat);
             }
@@ -2708,7 +2975,8 @@ public sealed class Game
         int hides = 0;
         if (game)
         {
-            hides = 1 + Player.Skills.Bonus(SkillId.Hunting);
+            // The heathborn take one more from every kill worth skinning (D-092).
+            hides = 1 + Player.Skills.Bonus(SkillId.Hunting) + (Player.Folk == FolkId.Heathborn ? 1 : 0);
             Player.Hide += hides;
             GainSkill(SkillId.Hunting);
             // The hunt yields raw cuts, not a road-ration (D-073): they cook into
@@ -2869,7 +3137,7 @@ public sealed class Game
         bool edgeSpared = Player.HasPerk(PerkId.KindGrip) && Player.Skills.Uses(SkillId.Hafted) % 2 == 1;
         if (!spear.Worn && !edgeSpared)
         {
-            spear.Wear = Math.Min(spear.MaxWear, spear.Wear + WearStep);
+            spear.Wear = Math.Min(spear.MaxWear, spear.Wear + NextWear());
             if (spear.Worn)
                 Log.Add(Turn, $"The {spear.Name}'s point is rolled and dull: it pushes where it used to bite. The smith's wheel would right it.", LogTone.Combat);
         }
@@ -3037,7 +3305,7 @@ public sealed class Game
             && Player.Skills.Uses(family) % 2 == 1;
         if (!weapon.Worn && !edgeSpared)
         {
-            weapon.Wear = Math.Min(weapon.MaxWear, weapon.Wear + WearStep);
+            weapon.Wear = Math.Min(weapon.MaxWear, weapon.Wear + NextWear());
             if (weapon.Worn)
                 Log.Add(Turn, $"The {weapon.Name}'s edge is gone: it lands like a bar of dull iron now. The smith's wheel would right it.", LogTone.Combat);
         }
@@ -3378,7 +3646,7 @@ public sealed class Game
         Player.Looses++;
         if (!bow.Worn && !stringSpared)
         {
-            bow.Wear = Math.Min(bow.MaxWear, bow.Wear + WearStep);
+            bow.Wear = Math.Min(bow.MaxWear, bow.Wear + NextWear());
             if (bow.Worn)
                 Log.Add(Turn, $"The {bow.Name}'s string is frayed past trusting: it throws soft until the smith sees it.", LogTone.Combat);
         }
@@ -3540,7 +3808,7 @@ public sealed class Game
                 && Player.Skills.Uses(SkillId.Warding) % 2 == 1;
             if (!armor.Worn && !strapSpared)
             {
-                armor.Wear = Math.Min(armor.MaxWear, armor.Wear + WearStep);
+                armor.Wear = Math.Min(armor.MaxWear, armor.Wear + NextWear());
                 if (armor.Worn)
                     Log.Add(Turn, $"The {armor.Name} hangs in cut batting now; it turns nothing more until it is mended.", LogTone.Combat);
             }
@@ -4788,6 +5056,10 @@ public sealed class Game
         MaxFocus: Player.MaxFocus,
         Spells: string.Join(",", Player.Spells.Select(SpellCatalog.IdOf)),
         WardTurns: Player.WardTurns,
+        Folk: Player.Folk?.ToString().ToLowerInvariant() ?? "",
+        Past: Player.Past?.ToString().ToLowerInvariant() ?? "",
+        BearerName: Player.Name,
+        Keepsake: Player.Keepsake,
         RationPrice: RationPrice,
         MendPrice: Player.WoundedTurns > 0 ? MendPrice : 0,
         WeaponId: Player.Weapon?.Id ?? "",
@@ -4838,6 +5110,7 @@ public sealed class Game
         InHeave: InHeave,
         InCastMenu: InCastMenu,
         InCastLine: InCastLine,
+        InCreation: InCreation,
         HeaveLoaded: Player.HeaveTarget is not null,
         LevinLoaded: Player.LevinTarget is not null,
         TalkNpc: TalkNpc?.Name ?? "",
@@ -4930,6 +5203,10 @@ public sealed record Snapshot(
     int MaxFocus,
     string Spells,
     int WardTurns,
+    string Folk,
+    string Past,
+    string BearerName,
+    bool Keepsake,
     int RationPrice,
     int MendPrice,
     string WeaponId,
@@ -4977,6 +5254,7 @@ public sealed record Snapshot(
     bool InHeave,
     bool InCastMenu,
     bool InCastLine,
+    bool InCreation,
     bool HeaveLoaded,
     bool LevinLoaded,
     string TalkNpc,

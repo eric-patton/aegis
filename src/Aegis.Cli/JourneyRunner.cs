@@ -61,7 +61,7 @@ public static class JourneyRunner
             }
         }
 
-        var game = new Game(seed);
+        var game = new Game(seed, firstWake: true);
         int targetCycle = game.Cycle + cycles;
         var keys = new StringBuilder();
         var crossings = new List<Crossing>();

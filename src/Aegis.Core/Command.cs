@@ -18,6 +18,7 @@ public enum Command
     Heave,
     Cast,
     Stance,
+    Order,
     Quit,
 }
 
@@ -48,6 +49,7 @@ public static class CommandMap
         'w' => Command.Heave,
         'z' => Command.Cast,
         'x' => Command.Stance,
+        'o' => Command.Order,
         'q' => Command.Quit,
         _ => Command.None,
     };

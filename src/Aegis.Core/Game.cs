@@ -28,6 +28,13 @@ public sealed class Game
     public MessageLog Log { get; } = new();
     public List<Monster> Monsters { get; } = [];
     public Remnant? Remnant { get; private set; }
+
+    /// <summary>
+    /// The one who walks with the bearer (D-097): at most one, world-bound,
+    /// mortal. Null is the usual state of the road; stage 1 casts guests only
+    /// through the test hooks, and the storylet doors open in stage 2.
+    /// </summary>
+    public Guest? Guest { get; private set; }
     public MapMode Mode { get; private set; } = MapMode.Overworld;
     public int Turn { get; private set; }
     public bool Running { get; private set; } = true;
@@ -845,6 +852,7 @@ public sealed class Game
             Command.Heave => DoHeave(),
             Command.Cast => DoCast(),
             Command.Stance => DoStance(),
+            Command.Order => DoOrder(),
             _ => CommandMap.Delta(cmd) is { } d && DoMove(d.dx, d.dy),
         };
 
@@ -870,6 +878,16 @@ public sealed class Game
         {
             var npc = World.Npcs.FirstOrDefault(n => n.Pos == target);
             if (npc is not null) return StartTalk(npc);
+        }
+
+        // Stepping into the one who walks with you (D-097) trades places: a
+        // doorway is never a standoff between friends.
+        if (Guest is { Alive: true } fellow && fellow.Pos == target)
+        {
+            (fellow.Pos, Player.Pos) = (Player.Pos, target);
+            Player.Stamina = Math.Min(Player.MaxStamina, Player.Stamina + 1);
+            Log.Add(Turn, $"You and {fellow.Name} trade places in a step.");
+            return true;
         }
 
         if (!map.Walkable(target))
@@ -1074,6 +1092,8 @@ public sealed class Game
             Mode = MapMode.Site;
             CurrentSite = site;
             Player.Pos = site.EntryPos;
+            // The guest comes through the same door (D-097), at the shoulder.
+            PlaceGuestBeside(site.EntryPos);
             if (site.Kind == SiteKind.Threshold)
                 Log.Add(Turn, Player.Resolution == Resolution.None
                     ? "You go down. The door of shrine-stone stands open, and the warmth beyond it is a kitchen's, not a forge's. Somewhere ahead, a fire is burning that has never once gone out."
@@ -1173,6 +1193,9 @@ public sealed class Game
         _storylets.OnCrossing(World.Seed, FullCatalog());
         Monsters.Clear();
         SpawnMonsters();
+        // World-bound (D-097): a living guest never crosses; their world keeps
+        // them. The farewell and the portfolio fact are stage 2's work.
+        Guest = null;
         InShrineMenu = false;
         InTalkMenu = false;
         InUnbindMenu = false;
@@ -1354,6 +1377,9 @@ public sealed class Game
             Player.Pos = CurrentSite.OverworldPos;
             CurrentSite = null;
             Log.Add(Turn, "You climb back into daylight.");
+            // The guest climbs out behind you (D-097), held ground or no: no
+            // one is left standing alone in the dark.
+            PlaceGuestBeside(Player.Pos);
             return true;
         }
         Log.Add(Turn, "There is no way out here.");
@@ -2849,6 +2875,43 @@ public sealed class Game
         return LiveMonstersHere.Any();
     }
 
+    /// <summary>
+    /// The one word to the one who walks with you (D-097): a single key whose
+    /// meaning reads from the moment. Beside a hurt guest with the satchel to
+    /// spare, it tends them; otherwise it sets or lifts their ground. Like the
+    /// footing (D-094), the word itself is free off the fight and costs the
+    /// turn under live steel; the tending is handwork and always costs it.
+    /// </summary>
+    private bool DoOrder()
+    {
+        if (Guest is not { Alive: true } guest)
+        {
+            Log.Add(Turn, "No one walks with you.");
+            return false;
+        }
+
+        if (guest.Pos.Chebyshev(Player.Pos) == 1 && guest.Hp < guest.MaxHp
+            && (Player.Draughts > 0 || Player.Herb > 0 || Player.Rations > 0))
+        {
+            // The best of the satchel goes first: the stillroom's vial, the
+            // wood's simples, then plain bread. Care costs you something real.
+            int mended;
+            string spent;
+            if (Player.Draughts > 0) { Player.Draughts--; mended = 8; spent = "You tip a hale-draught between their teeth"; }
+            else if (Player.Herb > 0) { Player.Herb--; mended = 4; spent = "You bind the worst of it with a good sprig from the satchel"; }
+            else { Player.Rations--; mended = 2; spent = "You put bread in their hands and make them sit until it is eaten"; }
+            guest.Hp = Math.Min(guest.MaxHp, guest.Hp + mended);
+            Log.Add(Turn, $"{spent}: {guest.Name} is mended {mended}. ({guest.Hp}/{guest.MaxHp})", LogTone.Reward);
+            return true;
+        }
+
+        guest.Holding = !guest.Holding;
+        Log.Add(Turn, guest.Holding
+            ? $"\"Hold here.\" {guest.Name} plants their feet where they stand."
+            : $"\"With me.\" {guest.Name} falls in at your shoulder.", LogTone.Info);
+        return LiveMonstersHere.Any();
+    }
+
     private bool DoRest()
     {
         if (!(Mode == MapMode.Overworld && CurrentMap[Player.Pos] == Terrain.Shrine))
@@ -3015,6 +3078,7 @@ public sealed class Game
                 int sx = Math.Sign(target.Pos.X - Player.Pos.X), sy = Math.Sign(target.Pos.Y - Player.Pos.Y);
                 var back = target.Pos.Plus(sx, sy);
                 if (CurrentMap.Walkable(back)
+                    && !(Guest is { Alive: true } g && g.Pos == back)
                     && !Monsters.Any(m => m.Alive && m.SiteId == target.SiteId && m.Pos == back))
                 {
                     target.Pos = back;
@@ -3079,6 +3143,7 @@ public sealed class Game
         {
             var p = Player.Pos.Plus(dx, dy);
             if (!CurrentMap.Walkable(p)) continue;
+            if (Guest is { Alive: true } g && g.Pos == p) continue;
             if (Monsters.Any(m => m.Alive && m.SiteId == target.SiteId && m.Pos == p)) continue;
             if (p.Chebyshev(target.Pos) == 1) return p;
             fallback ??= p;
@@ -4324,6 +4389,10 @@ public sealed class Game
             foreach (var monster in Monsters.Where(m => m.Alive && m.SiteId == CurrentSite!.Id))
                 ActMonster(monster);
 
+        // The one who walks with you (D-097) takes their own step after the
+        // field has moved, so what they answer is what actually stands.
+        if (Player.Hp > 0) ActGuest();
+
         // The ward-word runs out with the turns (D-091), and the pool gathers
         // itself back a point at a time on the road, once any word is carried.
         if (Player.WardTurns > 0 && --Player.WardTurns == 0)
@@ -4367,7 +4436,22 @@ public sealed class Game
                 Player.WitnessTell(monster.Kind, Cycle);
                 // The feint (D-096): the blow falls where it was always going,
                 // which is not always where the mark said.
-                bool landed = Player.Pos == (intent.FeintCell ?? intent.TargetCell);
+                var struckCell = intent.FeintCell ?? intent.TargetCell;
+                bool landed = Player.Pos == struckCell;
+
+                // The dice are rolled only when a body is actually struck, so a
+                // world without a guest draws exactly what it always drew.
+                int RollFor(IntentKind kind) => kind switch
+                {
+                    IntentKind.BarrowBlade => _combatRng.Range(5, 9),
+                    IntentKind.SunderingCut => _combatRng.Range(7, 11),
+                    IntentKind.HurledStone => _combatRng.Range(4, 8),
+                    IntentKind.GravenFist => _combatRng.Range(6, 10),
+                    IntentKind.ThroatLunge => _combatRng.Range(6, 10),
+                    IntentKind.SeaxStab => _combatRng.Range(6, 10),
+                    IntentKind.MeasuredCut => _combatRng.Range(5, 9),
+                    _ => _combatRng.Range(4, 7),
+                };
                 if (intent.Kind == IntentKind.BoarCharge)
                 {
                     // The charge (D-053) resolves along its lane, not on one cell.
@@ -4395,17 +4479,7 @@ public sealed class Game
                 }
                 else if (landed)
                 {
-                    int roll = intent.Kind switch
-                    {
-                        IntentKind.BarrowBlade => _combatRng.Range(5, 9),
-                        IntentKind.SunderingCut => _combatRng.Range(7, 11),
-                        IntentKind.HurledStone => _combatRng.Range(4, 8),
-                        IntentKind.GravenFist => _combatRng.Range(6, 10),
-                        IntentKind.ThroatLunge => _combatRng.Range(6, 10),
-                        IntentKind.SeaxStab => _combatRng.Range(6, 10),
-                        IntentKind.MeasuredCut => _combatRng.Range(5, 9),
-                        _ => _combatRng.Range(4, 7),
-                    };
+                    int roll = RollFor(intent.Kind);
                     // The dread stays the raider's hand (D-078): applied to the
                     // raw roll, after the dice, so the draw count never changes.
                     if (monster.Kind == MonsterKind.Goblin) roll = RaiderWrath.Steadied(Wrath, roll);
@@ -4433,12 +4507,26 @@ public sealed class Game
                     {
                         var pull = Player.Pos.Plus(Math.Sign(pack.Pos.X - Player.Pos.X), Math.Sign(pack.Pos.Y - Player.Pos.Y));
                         if (pull != Player.Pos && CurrentMap.Walkable(pull)
+                            && !(Guest is { Alive: true } gg && gg.Pos == pull)
                             && !Monsters.Any(m => m.Alive && m.SiteId == monster.SiteId && m.Pos == pull))
                         {
                             Player.Pos = pull;
                             Log.Add(Turn, "The jaws do not let go: you are hauled a full stride toward the rest of the pack before you tear free.", LogTone.Danger);
                         }
                     }
+                }
+                else if (Guest is { Alive: true } struck && struck.Pos == struckCell)
+                {
+                    // The second body (D-097): a guest standing on the marked
+                    // ground takes the blow meant for it, whole. No stance, no
+                    // iron, no Aegis: what guards the bearer never guarded them.
+                    int roll = RollFor(intent.Kind);
+                    if (monster.Kind == MonsterKind.Goblin) roll = RaiderWrath.Steadied(Wrath, roll);
+                    struck.Hp -= roll;
+                    Log.Add(Turn, struck.Alive
+                        ? $"The blow finds {struck.Name} on the marked ground: they are opened for {roll}!"
+                        : $"The blow comes down on {struck.Name}, full weight.", LogTone.Danger);
+                    if (!struck.Alive) GuestFalls(struck);
                 }
                 else
                 {
@@ -4505,6 +4593,16 @@ public sealed class Game
         if (monster.Kind == MonsterKind.Warder) { ActWarder(monster); return; }
         if (monster.Kind == MonsterKind.Thegn) { ActThegn(monster); return; }
 
+        // The second body (D-097): a raider the guest stands nearer than the
+        // bearer turns on the guest. The old kinds keep their old eyes for
+        // now; blood is blood to a den.
+        if (Guest is { Alive: true } quarry
+            && monster.Pos.Chebyshev(quarry.Pos) < monster.Pos.Chebyshev(Player.Pos))
+        {
+            ActAgainstGuest(monster, quarry);
+            return;
+        }
+
         int dist = monster.Pos.Chebyshev(Player.Pos);
 
         if (dist == 1)
@@ -4547,6 +4645,27 @@ public sealed class Game
         if (dist <= 8) StepToward(monster);
     }
 
+    /// <summary>
+    /// A raider on the guest's blood (D-097): no telegraph, a plain cut at
+    /// arm's reach, a stride otherwise. Guests take blows the way the field
+    /// deals them, and the field is not gentle.
+    /// </summary>
+    private void ActAgainstGuest(Monster monster, Guest guest)
+    {
+        int dist = monster.Pos.Chebyshev(guest.Pos);
+        if (dist == 1)
+        {
+            int damage = RaiderWrath.Steadied(Wrath, _combatRng.Range(2, 5));
+            guest.Hp -= damage;
+            Log.Add(Turn, guest.Alive
+                ? $"The {monster.Name} turns its iron on {guest.Name}: a cut for {damage}."
+                : $"The {monster.Name}'s iron goes into {guest.Name}, and stays a heartbeat too long.", LogTone.Danger);
+            if (!guest.Alive) GuestFalls(guest);
+            return;
+        }
+        if (dist <= 8) StepTowardPos(monster, guest.Pos);
+    }
+
     /// <summary>The cry answered (D-096): every campmate still standing comes a stride at once.</summary>
     private void ResolveCry(Monster crier)
     {
@@ -4554,6 +4673,100 @@ public sealed class Game
         foreach (var packmate in Monsters.Where(m => m.Alive && m != crier
             && m.Kind == MonsterKind.Goblin && m.SiteId == crier.SiteId && m.Intent is null).ToList())
             StepToward(packmate);
+    }
+
+    /// <summary>
+    /// The guest's turn (D-097): held ground is held; otherwise a foe in reach
+    /// is fought, and then the road back to the bearer's shoulder. They fight
+    /// to their own measure, never the bearer's: a huntsman's blow is worth
+    /// having, a crofter's is a gesture with a knife in it. They never raise a
+    /// hand to a severed one (not fightable, D-038), a hart (not a foe), or
+    /// anything still dormant (waking the stone is the bearer's own mistake to
+    /// make).
+    /// </summary>
+    private void ActGuest()
+    {
+        if (Guest is not { Alive: true } guest) return;
+
+        if (Mode == MapMode.Site)
+        {
+            var foe = Monsters.Where(m => m.Alive && !m.Dormant && m.SiteId == CurrentSite!.Id
+                    && m.Kind is not MonsterKind.Severed and not MonsterKind.Hart
+                    && m.Pos.Chebyshev(guest.Pos) == 1)
+                .OrderBy(m => m.Hp).ThenBy(m => m.Pos.X).ThenBy(m => m.Pos.Y).FirstOrDefault();
+            if (foe is not null)
+            {
+                var (lo, hi) = guest.Blow;
+                int blow = _combatRng.Range(lo, hi);
+                foe.Hp -= blow;
+                if (foe.Alive)
+                    Log.Add(Turn, guest.Fighter
+                        ? $"{guest.Name} cuts at the {foe.Name}, workmanlike, for {blow}."
+                        : $"{guest.Name} jabs at the {foe.Name} for {blow}, holding the knife the way a knife is not held.", LogTone.Combat);
+                else
+                {
+                    Log.Add(Turn, $"{guest.Name} drops the {foe.Name} where it stands.", LogTone.Combat);
+                    // The spoils and the counts run through the one place every
+                    // kill-path meets: the dens still tally their dead, and a
+                    // site a guest's hand finishes still clears.
+                    HarvestRemains(foe);
+                }
+                return;
+            }
+        }
+
+        if (guest.Holding || guest.Pos.Chebyshev(Player.Pos) <= 1) return;
+        GuestStepToward(guest);
+    }
+
+    /// <summary>One greedy stride back toward the bearer, around bodies and stone.</summary>
+    private void GuestStepToward(Guest guest)
+    {
+        var map = CurrentMap;
+        var best = guest.Pos;
+        int bestDist = guest.Pos.Manhattan(Player.Pos);
+        foreach (var (dx, dy) in Directions.All8)
+        {
+            var next = guest.Pos.Plus(dx, dy);
+            if (!map.Walkable(next)) continue;
+            if (next == Player.Pos) continue;
+            if (LiveMonstersHere.Any(m => m.Pos == next)) continue;
+            int d = next.Manhattan(Player.Pos);
+            if (d < bestDist) { bestDist = d; best = next; }
+        }
+        guest.Pos = best;
+    }
+
+    /// <summary>
+    /// The guest set down beside an anchor (D-097): the first open cell in the
+    /// fixed compass order, so doorways, exits, and wakings at the shrine put
+    /// them deterministically at the bearer's shoulder.
+    /// </summary>
+    private void PlaceGuestBeside(Pos anchor)
+    {
+        if (Guest is not { Alive: true } guest) return;
+        guest.Holding = false;
+        var map = CurrentMap;
+        foreach (var (dx, dy) in Directions.All8)
+        {
+            var cell = anchor.Plus(dx, dy);
+            if (!map.Walkable(cell) || cell == Player.Pos) continue;
+            if (LiveMonstersHere.Any(m => m.Pos == cell)) continue;
+            guest.Pos = cell;
+            return;
+        }
+        guest.Pos = anchor;
+    }
+
+    /// <summary>
+    /// A guest falls (D-097 stage 1): the fact of it, marked plainly. The full
+    /// weight (the grave fact, the stead's grief, the memorial thread) is
+    /// stage 2's work; nothing here forecloses it.
+    /// </summary>
+    private void GuestFalls(Guest guest)
+    {
+        Log.Add(Turn, $"{guest.Name} goes down, and does not move again.", LogTone.Danger);
+        Log.Add(Turn, "\"I could not reach them, bearer. I was never made to hold but one.\"", LogTone.Aegis);
     }
 
     /// <summary>
@@ -5128,6 +5341,7 @@ public sealed class Game
                 var next = p.Plus(dx, dy);
                 bool open = next == Player.Pos
                     || (map.Walkable(next)
+                        && !(Guest is { Alive: true } g && g.Pos == next)
                         && !Monsters.Any(m => m.Alive && m != monster && m.SiteId == monster.SiteId && m.Pos == next));
                 if (open && !cameFrom.ContainsKey(next))
                 {
@@ -5143,18 +5357,21 @@ public sealed class Game
         if (step != Player.Pos) monster.Pos = step;
     }
 
-    private void StepToward(Monster monster)
+    private void StepToward(Monster monster) => StepTowardPos(monster, Player.Pos);
+
+    private void StepTowardPos(Monster monster, Pos goal)
     {
         var map = CurrentSite!.Map;
         var best = monster.Pos;
-        int bestDist = monster.Pos.Manhattan(Player.Pos);
+        int bestDist = monster.Pos.Manhattan(goal);
         foreach (var (dx, dy) in Directions.All8)
         {
             var next = monster.Pos.Plus(dx, dy);
             if (!map.Walkable(next)) continue;
             if (next == Player.Pos) continue;
+            if (Guest is { Alive: true } g && g.Pos == next) continue;
             if (Monsters.Any(m => m.Alive && m != monster && m.Pos == next)) continue;
-            int d = next.Manhattan(Player.Pos);
+            int d = next.Manhattan(goal);
             if (d < bestDist) { bestDist = d; best = next; }
         }
         monster.Pos = best;
@@ -5209,6 +5426,9 @@ public sealed class Game
         Mode = MapMode.Overworld;
         CurrentSite = null;
         Player.Pos = World.ShrinePos;
+        // Whoever still walked with you kept the road home (D-097): the guest
+        // is at the shrine when you wake, and says nothing about the carrying.
+        PlaceGuestBeside(World.ShrinePos);
         // The slow mending (D-047): the death consequence scales in magnitude,
         // never in shape (D-011): the same wound, held twice as long.
         Player.WoundedTurns = World.Oaths.Contains(OathId.SlowMending) ? 160 : 80;
@@ -5223,6 +5443,7 @@ public sealed class Game
 
     // Test hooks: deterministic surgery for unit tests, never used by frontends.
     internal void Debug_SetPlayerPos(Pos p) => Player.Pos = p;
+    internal void Debug_SetGuest(Guest? guest) => Guest = guest;
     internal void Debug_SetMode(MapMode mode)
     {
         Mode = mode;

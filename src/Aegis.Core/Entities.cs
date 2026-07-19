@@ -510,6 +510,48 @@ public sealed class Npc
     public NpcKind Kind { get; init; } = NpcKind.Villager;
 }
 
+/// <summary>
+/// A guest's calling (D-097): what they were before the road put them beside
+/// you. Competence is read from it, never from a slider: a huntsman's hands
+/// know the work of killing, a crofter's do not, and the game does not
+/// pretend otherwise.
+/// </summary>
+public enum GuestRole { Huntsman, Crofter }
+
+/// <summary>
+/// A guest companion (D-097, the mortal heart of D-024): a world NPC who has
+/// stepped out of their life to walk with the bearer for a while. One at a
+/// time, story-scoped, world-bound, and they can permanently die: the guest
+/// carries the mortal stakes the bearer cannot. Not a Monster and not an Npc:
+/// they move, fight to their own measure, and take real blows.
+/// </summary>
+public sealed class Guest
+{
+    public required string Id { get; init; }
+    public required string Name { get; init; }
+    public required GuestRole Role { get; init; }
+    public required Pos Pos { get; set; }
+    public int MaxHp { get; init; } = 12;
+    public int Hp { get; set; } = 12;
+
+    /// <summary>Told to hold their ground ('o'): they keep the cell until called back.</summary>
+    public bool Holding { get; set; }
+
+    public bool Alive => Hp > 0;
+
+    /// <summary>Whether these hands were raised to a killing trade.</summary>
+    public bool Fighter => Role is GuestRole.Huntsman;
+
+    /// <summary>The measure of their blow: a fighter's is worth fearing, anyone else's is not.</summary>
+    public (int Lo, int HiExclusive) Blow => Fighter ? (2, 6) : (1, 3);
+
+    public string RoleName => Role switch
+    {
+        GuestRole.Huntsman => "huntsman",
+        _ => "crofter",
+    };
+}
+
 /// <summary>What death leaves behind: unspent coin and Essence, one reclaim attempt (D-008).</summary>
 public sealed class Remnant
 {

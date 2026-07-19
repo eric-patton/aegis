@@ -661,6 +661,11 @@ public static class Presenter
                 monster.Intent is null ? Hue.Black : Hue.DarkRed);
         }
 
+        // The one who walks with you (D-097): drawn in the living green, last
+        // before the bearer, so a crowd never swallows them.
+        if (game.Guest is { Alive: true } guest)
+            PutWorld(guest.Pos, 'a', Hue.Green);
+
         PutWorld(game.Player.Pos, '@', Hue.White);
     }
 
@@ -730,6 +735,11 @@ public static class Presenter
         if (p.Bow is { } bow) Line($"Bow {bow.Name}{(bow.Worn ? "!" : "")}", bow.Worn ? Hue.Red : Hue.Gray);
         if (p.Armor is { } arm) Line($"Arm {arm.Name}{(arm.Worn ? "!" : "")}", arm.Worn ? Hue.Red : Hue.Gray);
         if (p.WoundedTurns > 0) Line($"WOUNDED ({p.WoundedTurns})", Hue.Red);
+        // The one who walks with you (D-097): their blood on the rail beside
+        // yours, because it is yours to keep.
+        if (game.Guest is { Alive: true } guest)
+            Line($"{guest.Name} {guest.Hp}/{guest.MaxHp}{(guest.Holding ? " (holds)" : "")}",
+                guest.Hp * 3 <= guest.MaxHp ? Hue.Red : Hue.Green);
         y++;
 
         if (game.Mode == MapMode.Site)
@@ -827,7 +837,8 @@ public static class Presenter
         Line("g grab  >/< enter/exit", Hue.DarkGray);
         Line("f loose  e eat  d drink", Hue.DarkGray);
         Line("z cast  i gear  c you", Hue.DarkGray);
-        Line("x stance  q quit", Hue.DarkGray);
+        Line("x stance  o order", Hue.DarkGray);
+        Line("q quit", Hue.DarkGray);
     }
 
     private static string Bar(int value, int max, int slots)

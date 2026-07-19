@@ -26,6 +26,11 @@ namespace Aegis.Cli;
 /// learns sharpens the very play that earned the lesson. A site it still cannot bring to
 /// ground the runner budgets and writes off, handing the pilot a skip-set of the ones to
 /// leave standing, so it engages, learns the tell, and moves on rather than spinning.
+/// And it walks the arc's own ladder now (D-068): it seeks out the mender and the hermit
+/// for the words that turn the reveal, rests for the vision, goes down the last stair to
+/// answer the keeping, and then, face to face with a ward-dropped keeper, lays one down
+/// gently and mends the next, so D-060's rarest grace is driven live by real keys instead
+/// of stood in for by a hand-set flag.
 ///
 /// It is a pure function of game state (and the runner's skip-set, which is itself
 /// derived deterministically), so a seeded run is perfectly reproducible: the same seed
@@ -64,6 +69,12 @@ public static class JourneyPilot
         // and let the next question (if any) be put, then close. A standing question
         // always resolves to a real answer, never a close, so opening it can't loop.
         if (g.InSheetMenu) return KnackDigit(g) ?? 'z';
+        // The keeping and the laying are menus we drive on purpose too (D-068). At the
+        // Hearth the keeping question is answered for good (and the mercy road opens
+        // behind it); face to face with a ward-dropped keeper the laying menu is where
+        // the bearer lays it down, and later mends the one it is finally trusted to mend.
+        if (g.InThresholdMenu) return ThresholdAnswer;
+        if (g.InLayingMenu) return LayingDigit(g);
         if (StuckInMenu(g)) return 'z';
 
         // Wear the best iron in hand before anything else (D-066). A stronger piece
@@ -82,6 +93,12 @@ public static class JourneyPilot
         if (g.Mode == MapMode.Site)
         {
             var site = g.CurrentSite!;
+            // The last stair holds no foes (D-068): walk down to the Hearth to put the
+            // keeping question (the step onto it opens the menu, answered above), then
+            // climb back out once the answer is taken. It is never cleared and never in
+            // the site loop, so the resolve-goal below is the only thing that comes here.
+            if (site.Kind == SiteKind.Threshold)
+                return ThresholdSiteMove(g, site);
             // Still work to do here: clear it. Otherwise climb back to daylight.
             if (!site.Cleared && !skip.Contains(site.Id))
                 return FightOrApproach(g);
@@ -103,21 +120,49 @@ public static class JourneyPilot
         // Overworld.
         if (g.InCrossingMenu) return '>';   // already at the arch: cross plain, no terms.
 
+        // The vision is a rung of the ladder taken by resting (D-068): once the guilt has
+        // been spoken at a crossing, the next rest at the shrine pulls the bearer under
+        // into the forging-memory. So rest even with nothing to raise or mend when that
+        // rung still waits, and seek the shrine out for it below.
+        bool needVision = NeedVision(p);
+
         // Standing on the shrine with essence to spend or wounds to mend: rest and raise
         // before setting out (this also catches the shrine you wake on after a death).
         if (p.Pos == g.World.ShrinePos
-            && (p.Essence >= g.NextRaiseCost || p.Hp < p.EffectiveMaxHp))
+            && (needVision || p.Essence >= g.NextRaiseCost || p.Hp < p.EffectiveMaxHp))
             return 'r';
 
         // Walk back to the shrine to spend essence on attributes whenever a raise is in
-        // hand. Arming thinned the deaths that used to wake us on the shrine for free, so
-        // the raising has to be sought out now, or the bearer crosses under-grown and the
-        // deep sites (the leaguer above all) ask more than it can give. Returning between
-        // sites means it meets each in better skin than the last.
-        if (p.Essence >= g.NextRaiseCost)
+        // hand (or to rest for the vision). Arming thinned the deaths that used to wake us
+        // on the shrine for free, so the raising has to be sought out now, or the bearer
+        // crosses under-grown and the deep sites (the leaguer above all) ask more than it
+        // can give. Returning between sites means it meets each in better skin than the last.
+        if (needVision || p.Essence >= g.NextRaiseCost)
         {
             var toShrine = NavKey(g, g.World.Overworld, p.Pos, g.World.ShrinePos, OverworldBlocked(g));
             if (toShrine is not null) return toShrine;
+        }
+
+        // ---- the reveal ladder, walked by real feet (D-068) ----
+        // Seek out the mender and the hermit when a rung waits on a word with them (the
+        // vision named to the mender for tier 1; the two witnesses, the one at peace and
+        // the one at cost, borne before tier 2). A bump opens the talk and the rung fires
+        // on it, so the menu closes itself next tick. The target's own cell is the goal,
+        // so the walk reaches it though every other person on the road stays blocked.
+        if (ArcTalkTarget(g) is { } npc)
+        {
+            var toNpc = NavKey(g, g.World.Overworld, p.Pos, npc.Pos, OverworldBlocked(g));
+            if (toNpc is not null) return toNpc;
+        }
+
+        // Once the commission is heard and the last stair stands in this world (tier 5+),
+        // go down and answer the keeping before grinding the world out, so the keeper the
+        // next hollow holds meets a resolved bearer and can be laid down, not only killed.
+        if (p.CommissionHeard && p.Resolution == Resolution.None && g.World.ThresholdSite is { } stair)
+        {
+            if (p.Pos == stair.OverworldPos) return '>';
+            var toStair = NavKey(g, g.World.Overworld, p.Pos, stair.OverworldPos, OverworldBlocked(g));
+            if (toStair is not null) return toStair;
         }
 
         // Arm at the smith before taking the next site, whenever a slot of ours is bare
@@ -613,6 +658,79 @@ public static class JourneyPilot
         return '1'; // unreached: answer rather than close, so the opener cannot loop.
     }
 
+    // ---- the arc: the reveal ladder, the keeping, the mending (D-068) ----
+
+    /// <summary>Refuse the keeping (arc sec 8): the answer the full-playthrough test walks, and the mending reaches it and the keeping alike at one price (D-060).</summary>
+    private const char ThresholdAnswer = '2';
+
+    /// <summary>
+    /// The vision rung is taken by resting once the guilt has been spoken at a crossing
+    /// (D-068): the shrine pulls the bearer under into the forging-memory. True until the
+    /// vision is seen, which is what makes the bot rest and seek the shrine out even with
+    /// nothing to raise or mend.
+    /// </summary>
+    private static bool NeedVision(Player p) => p.CrossingGuiltHeard && !p.VisionSeen;
+
+    /// <summary>
+    /// The one on the road the arc wants a word with next, or null when no talking rung
+    /// waits. Each gate is exactly the storylet's own (D-038, D-039), so a single bump
+    /// turns the rung and clears the goal, and the bot never walks up to a face with
+    /// nothing to say. Tier 2 is checked first, but it can only be ready once tier 1 has
+    /// already fired, so the order only settles which of tier 1 and the hermit leads when
+    /// both wait.
+    /// </summary>
+    private static Npc? ArcTalkTarget(Game g)
+    {
+        var p = g.Player;
+        // The mender's second reveal: the two witnesses borne, and the first tier behind us.
+        if (p.UnbinderRevealTier >= 1 && p.SeveredPeaceHeard && p.SeveredCostSeen && p.UnbinderRevealTier < 2)
+            return g.World.Unbinder;
+        // The mender's first reveal: the vision named to their face.
+        if (p.VisionSeen && p.UnbinderRevealTier < 1)
+            return g.World.Unbinder;
+        // The one at peace: the hermit at the fire, once the ledger has been heard and one
+        // keeps a fire in this world (tier-3-and-up worlds hold a hermit; below, the rung waits).
+        if (p.LedgerHeard && !p.SeveredPeaceHeard && g.World.SeveredNpc is { } hermit)
+            return hermit;
+        return null;
+    }
+
+    /// <summary>
+    /// The digit that answers the laying menu (D-060): mend the keeper the moment the
+    /// bearer is trusted to (resolved, one already laid down, none yet mended), else lay it
+    /// down gently. Laying clears the ring as a kill would but spends no blood, so post-
+    /// resolution every keeper is met this way: the first laid down to earn the mending,
+    /// the second mended, and any after laid down again rather than fought.
+    /// </summary>
+    private static char LayingDigit(Game g) => g.CanRestoreSevered ? '3' : '2';
+
+    /// <summary>
+    /// Down the last stair (D-068): make for the Hearth to put the keeping question (the
+    /// step onto it opens the menu, answered above), then climb back to daylight once the
+    /// answer is taken. No foes stand here, so navigation is plain and the fallbacks only
+    /// ever end at the exit ladder.
+    /// </summary>
+    private static char? ThresholdSiteMove(Game g, Site site)
+    {
+        var p = g.Player;
+        if (p.Resolution == Resolution.None && HearthPos(g.CurrentMap) is { } hearth)
+        {
+            if (p.Pos == hearth) return '.'; // on the stone: the menu is open, answered above.
+            return NavKey(g, g.CurrentMap, p.Pos, hearth, Empty) ?? '<';
+        }
+        if (p.Pos == site.EntryPos) return '<';
+        return NavKey(g, g.CurrentMap, p.Pos, site.EntryPos, Empty) ?? '<';
+    }
+
+    /// <summary>The Hearth cell of the last stair: the single such tile on its authored map, found by a scan (what a player sees on the floor).</summary>
+    private static Pos? HearthPos(GameMap map)
+    {
+        for (int y = 0; y < map.Height; y++)
+            for (int x = 0; x < map.Width; x++)
+                if (map[new Pos(x, y)] == Terrain.Hearth) return new Pos(x, y);
+        return null;
+    }
+
     // ---- navigation: breadth-first, one step at a time ----
 
     /// <summary>
@@ -656,8 +774,10 @@ public static class JourneyPilot
         g.LiveMonstersHere.Select(m => m.Pos).ToHashSet();
 
     private static bool StuckInMenu(Game g) =>
-        g.InTalkMenu || g.InUnbindMenu || g.InThresholdMenu
-        || g.InLayingMenu; // the shrine, crossing, pack, and sheet menus are driven, not escaped.
+        // A reveal talk is opened for its rung then closed here next tick; the respec is
+        // never wanted. The shrine, smith, aim, pack, sheet, keeping, and laying menus are
+        // all driven above, not escaped.
+        g.InTalkMenu || g.InUnbindMenu;
 
     /// <summary>
     /// Which attribute to raise. Bare-handed, keep Vigor and Might level (staying alive,

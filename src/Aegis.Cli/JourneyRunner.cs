@@ -88,6 +88,14 @@ public static class JourneyRunner
         // the knack chosen for good. Counted by watching the perk list grow on the key
         // that lands the answer (choosing a knack is the only thing that grows it, by one).
         int knacksTaken = 0;
+        // How far the arc was walked (D-068): the reveal ladder climbed by real feet, the
+        // keeping answered at the Hearth, then a keeper laid down and the next mended,
+        // D-060's rarest grace driven live. Each is caught by watching its flag turn, on
+        // the one key that turns it, so the cycle it turns on is the cycle it happened.
+        var resolvedAs = Resolution.None;
+        int resolvedCycle = 0;
+        int laidCycle = 0;
+        int mendedCycle = 0;
         string stop;
 
         while (true)
@@ -139,6 +147,9 @@ public static class JourneyRunner
             int coinBefore = game.Player.Coin;
             int gearBefore = game.Player.AllGear.Count();
             int perksBefore = game.Player.Perks.Count;
+            var resolutionBefore = game.Player.Resolution;
+            int unboundBefore = game.Player.SeveredUnbound;
+            int restoredBefore = game.Player.SeveredRestored;
             game.ApplyKey(key.Value);
             keys.Append(key.Value);
             totalKeys++;
@@ -169,6 +180,16 @@ public static class JourneyRunner
             // the sheet's digit is the only thing that adds one, and it adds exactly one.
             if (game.Player.Perks.Count > perksBefore) knacksTaken++;
 
+            // The arc's flags, watched the same way (D-068): the keeping answered, a keeper
+            // laid down, a keeper mended. None turns twice, so the first turn dates it.
+            if (resolutionBefore == Resolution.None && game.Player.Resolution != Resolution.None)
+            {
+                resolvedAs = game.Player.Resolution;
+                resolvedCycle = game.Cycle;
+            }
+            if (game.Player.SeveredUnbound > unboundBefore && laidCycle == 0) laidCycle = game.Cycle;
+            if (game.Player.SeveredRestored > restoredBefore) mendedCycle = game.Cycle;
+
             if (game.Player.Deaths > prevDeaths)
             {
                 int d = game.Player.Deaths - prevDeaths;
@@ -197,7 +218,8 @@ public static class JourneyRunner
 
         Report(seed, cycles, crossings, stop, game, totalKeys, keys, emitKeys,
             remnantsReclaimed, coinReclaimed, essenceReclaimed,
-            chestsLooted, chestCoin, gearTaken, knacksTaken);
+            chestsLooted, chestCoin, gearTaken, knacksTaken,
+            resolvedAs, resolvedCycle, laidCycle, mendedCycle);
         return 0;
     }
 
@@ -237,6 +259,23 @@ public static class JourneyRunner
             .Where(o => game.Player.HasPerk(o.Id))
             .Select(o => o.Name));
 
+    /// <summary>The furthest rung of the arc's ladder the bearer has reached, as a terse label (D-068).</summary>
+    private static string ArcReach(Game game)
+    {
+        var p = game.Player;
+        if (p.SeveredRestored > 0) return "the mending";
+        if (p.SeveredUnbound > 0 && p.Resolution != Resolution.None) return "the laying-down";
+        if (p.Resolution != Resolution.None) return "the keeping";
+        if (p.CommissionHeard) return "the commission";
+        if (p.UnbinderRevealTier >= 2) return "reveal tier 2";
+        if (p.UnbinderRevealTier >= 1) return "reveal tier 1";
+        if (p.LedgerHeard) return "the ledger";
+        if (p.VisionSeen) return "the vision";
+        if (p.CrossingGuiltHeard) return "the guilt";
+        if (p.SeveredTruthHeard) return "the truth";
+        return "nothing yet";
+    }
+
     private static string Where(Game game) =>
         game.Mode == MapMode.Site
             ? $"underground with {game.LiveMonstersHere.Count()} foe(s) standing"
@@ -246,7 +285,8 @@ public static class JourneyRunner
         ulong seed, int cycles, List<Crossing> crossings, string stop,
         Game game, int totalKeys, StringBuilder keys, bool emitKeys,
         int remnantsReclaimed, int coinReclaimed, int essenceReclaimed,
-        int chestsLooted, int chestCoin, int gearTaken, int knacksTaken)
+        int chestsLooted, int chestCoin, int gearTaken, int knacksTaken,
+        Resolution resolvedAs, int resolvedCycle, int laidCycle, int mendedCycle)
     {
         var w = Console.Out;
         w.WriteLine($"AEGIS JOURNEY   seed {seed}   target {cycles} crossing(s)");
@@ -297,6 +337,15 @@ public static class JourneyRunner
                     + $"{chestCoin} coin, {gearTaken} piece(s) of deep iron taken up and worn (D-066).");
         w.WriteLine($"         answered {knacksTaken} threshold question(s) as they opened (D-067)"
                     + (knacksTaken == 0 ? "." : $": {KnackList(game)}."));
+        w.WriteLine($"         the arc: climbed the reveal ladder to {ArcReach(game)} (D-068).");
+        if (resolvedCycle > 0)
+            w.WriteLine($"           answered the keeping ({resolvedAs.ToString().ToLowerInvariant()}) at the Hearth in cycle {resolvedCycle}.");
+        if (laidCycle > 0)
+            w.WriteLine($"           laid a keeper down gently in cycle {laidCycle} (the mercy road walked first).");
+        if (mendedCycle > 0)
+            w.WriteLine($"           mended a keeper in cycle {mendedCycle}: D-060's restore path driven live, end to end.");
+        else if (resolvedCycle > 0)
+            w.WriteLine($"           (no mending this run: {cycles} crossing(s) reached no second post-resolution hollow.)");
         w.WriteLine("         a seeded journey replays identically: the pilot reads only game state.");
         if (emitKeys)
         {

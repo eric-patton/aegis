@@ -18,6 +18,15 @@ public enum PastId { Soldier, Poacher, HedgeHealer, SmithsHand, ScribesWard, Way
 /// <summary>The precious things (D-092): one chosen keepsake, soul-bound, never dropped.</summary>
 public enum ThingId { Word, FineArms, CraftKit, Purse, Keepsake }
 
+/// <summary>
+/// The burdens (D-093): one may be taken at the asking, and it buys a second
+/// precious thing. Each is a live weight the worlds keep collecting on.
+/// </summary>
+public enum BurdenId { OldWound, HuntedPast, MarkedFace }
+
+/// <summary>The vows (D-093): a private aim, chosen once, that the road can answer.</summary>
+public enum VowId { Vengeance, Finding, Return }
+
 /// <summary>One folk's catalog entry: tilt (may be null for the balanced stock) and the trait line.</summary>
 public sealed record FolkDef(FolkId Id, string Name, Attr? TiltUp, Attr? TiltDown, string Blurb, string Trait);
 
@@ -26,6 +35,12 @@ public sealed record PastDef(PastId Id, string Name, SkillId Skill, string Blurb
 
 /// <summary>One precious thing's catalog entry.</summary>
 public sealed record ThingDef(ThingId Id, string Name, string Blurb);
+
+/// <summary>One burden's catalog entry: the name, the scene's line, and what it costs.</summary>
+public sealed record BurdenDef(BurdenId Id, string Name, string Blurb, string Price);
+
+/// <summary>One vow's catalog entry.</summary>
+public sealed record VowDef(VowId Id, string Name, string Blurb);
 
 public static class CreationCatalog
 {
@@ -68,14 +83,33 @@ public static class CreationCatalog
         new(ThingId.Keepsake, "an unassuming thing", "small, worn smooth, and it will not say what it is"),
     ];
 
+    public static readonly IReadOnlyList<BurdenDef> Burdens =
+    [
+        new(BurdenId.OldWound, "an old wound", "a blade found you once, and found something it kept",
+            "the brim of your blood sits two lower, always"),
+        new(BurdenId.HuntedPast, "a hunted past", "something in the dens' kind knows your smell, world after world",
+            "every world's raiders wake already wrathful at you"),
+        new(BurdenId.MarkedFace, "a marked face", "steads look at you twice, and the second look is colder",
+            "every stead's suspicion wakes already upon you"),
+    ];
+
+    public static readonly IReadOnlyList<VowDef> Vows =
+    [
+        new(VowId.Vengeance, "a vow of vengeance", "the raiding kind took something that cannot be given back"),
+        new(VowId.Finding, "a vow of finding", "someone went down the road ahead of you and did not send word"),
+        new(VowId.Return, "a vow of the road's end", "to walk until the road itself gives an answer"),
+    ];
+
     public static FolkDef FolkOf(FolkId id) => Folk[(int)id];
     public static PastDef PastOf(PastId id) => Pasts[(int)id];
     public static ThingDef ThingOf(ThingId id) => Things[(int)id];
+    public static BurdenDef BurdenOf(BurdenId id) => Burdens[(int)id];
+    public static VowDef VowOf(VowId id) => Vows[(int)id];
 
     /// <summary>Attribute bounds at the shaping: creation never leaves the humble band (D-005).</summary>
     public const int ShapeFloor = 3;
     public const int ShapeCeiling = 7;
 }
 
-/// <summary>The creation scene's stages, in asking order (D-092).</summary>
-public enum CreationStage { Folk, Past, ShapeRaise, ShapePay, Thing, Name }
+/// <summary>The creation scene's stages, in asking order (D-092; Burden/Vow/Face are D-093).</summary>
+public enum CreationStage { Folk, Past, ShapeRaise, ShapePay, Thing, Burden, Vow, Face, Name }

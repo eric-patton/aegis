@@ -112,14 +112,47 @@ public static class Presenter
                 break;
 
             case CreationStage.Thing:
-                title = "\"One thing came through the dark with you. What is it?\"";
+                title = game.PickingSecondThing
+                    ? "\"And the burden's price buys a second. What else came through?\""
+                    : "\"One thing came through the dark with you. What is it?\"";
                 for (int i = 0; i < CreationCatalog.Things.Count; i++)
                 {
                     var def = CreationCatalog.Things[i];
-                    rows.Add(($"{i + 1}) {def.Name}", Hue.White));
+                    bool held = p.Things.Contains(def.Id);
+                    rows.Add(($"{i + 1}) {def.Name}{(held ? "  (carried)" : "")}", held ? Hue.DarkGray : Hue.White));
                     rows.Add(($"   {def.Blurb}", Hue.DarkGray));
                 }
                 hint = "1-5 answer";
+                break;
+
+            case CreationStage.Burden:
+                title = "\"Will you carry more, for more? A weight buys a second thing.\"";
+                for (int i = 0; i < CreationCatalog.Burdens.Count; i++)
+                {
+                    var def = CreationCatalog.Burdens[i];
+                    rows.Add(($"{i + 1}) {def.Name,-15} {def.Price}", Hue.White));
+                    rows.Add(($"   {def.Blurb}", Hue.DarkGray));
+                }
+                rows.Add(("0) Carry nothing more", Hue.Cyan));
+                hint = "1-3 take a burden; 0 declines";
+                break;
+
+            case CreationStage.Vow:
+                title = "\"And what do you walk FOR, bearer? Vows are counted too.\"";
+                for (int i = 0; i < CreationCatalog.Vows.Count; i++)
+                {
+                    var def = CreationCatalog.Vows[i];
+                    rows.Add(($"{i + 1}) {def.Name}", Hue.White));
+                    rows.Add(($"   {def.Blurb}", Hue.DarkGray));
+                }
+                rows.Add(("0) No vow but the road", Hue.Cyan));
+                hint = "1-3 swear; 0 walks unsworn";
+                break;
+
+            case CreationStage.Face:
+                title = "\"Is there a face you carry, from before the catching?\"";
+                rows.Add(($"> {game.NameEntry}_", Hue.White));
+                hint = "letters name them; - takes one back; . seals it; empty carries no one";
                 break;
 
             default:

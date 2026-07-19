@@ -1,9 +1,9 @@
-# Character creation (D-092, fork 4 lane 1)
+# Character creation (D-092 stage 1, D-093 stage 2; fork 4 lane 1)
 
-**Status: stage 1 spec.** Settled with the user in Q&A 2026-07-19. Stage 1 is the
-in-fiction creation scene (folk, background, swaps, precious thing, name, random
-bearer). Stage 2 (burdens, vows, the remembered face, the keepsake's storylet
-thread) is specced in outline at the end and built next.
+**Status: both stages shipped.** Settled with the user in Q&A 2026-07-19. Stage 1
+(D-092) is the in-fiction creation scene (folk, background, swaps, precious
+thing, name, random bearer); stage 2 (D-093) adds the burdens, the vows, the
+remembered face, and the keepsake's storylet thread.
 
 Supersession note: D-017 proposed familiar races (dwarf, elf, orc-ish). The user
 chose original world-grown folk instead; D-017's *structure* (fixed anchors,
@@ -115,13 +115,40 @@ title carry the name; the world's mouths still say "bearer" and "stranger"
   (twin runs hash-identical, sim replay exact); sweep 1/7/99/88888 x8 all
   finish (turns 6651/6845/7418/6590, deaths 6/6/12/6, raids 11/21/16/17).
 
-## 8. Stage 2 outline (next decision)
+## 8. Stage 2 (D-093, shipped)
 
-- **Burdens**: take one, choose a second precious thing; three to four
-  authored burdens, each a live fact (an old wound, a hunted past, a debt).
-- **Vow**: a chosen aim seeding a private storylet thread.
-- **The remembered face**: one named figure from the past, cast into the
-  world's factions, surfacing later.
-- **The unassuming thing's thread**: the keyed storylet (recognizing NPC,
-  quest, unique reward), and deep NG+ placement when unpicked. Full content in
-  design/story/, not in chat (spoiler rule).
+The asking grows three questions between the thing and the name, and the save
+moves to v43 (the answer keys shift; six storylets join the draws).
+
+- **Burdens** (optional, one): each buys a second precious thing (nothing is
+  taken twice; the scene refuses and re-asks). *An old wound* (MaxHp -2,
+  always), *a hunted past* (every world's raider wrath wakes at 1, reseeded at
+  each crossing), *a marked face* (every stead's suspicion wakes at 1; stacks
+  with the oathbreaker's stain).
+- **Vows** (optional, one): *vengeance* (kept at the first camp cleared, once
+  ever: +5 essence and a `vow` fact), *finding* (needs a face: an unnamed one
+  is drawn from its own stream; from cycle 2 a villager's half-memory feeds
+  the search and writes a `face` fact), *the road's end* (answered at the
+  first crossing, once ever).
+- **The remembered face** (optional): a typed name; once ever, a villager
+  wears it for a blink (texture). Real casting into factions stays tracked.
+- **The keepsake's thread**: from cycle 2 the skald recognizes the unassuming
+  thing on sight and names it (spoiler content lives in the storylet lines and
+  here only by id: `the-thing-named`); a second visit closes the wager
+  (`the-song-taken`): the story enters the songs, +3 Legend, the one reward no
+  chest holds. Unpicked, the thing waits down the chain (`the-thing-found`,
+  arrival from cycle 3, priority-tolerant: if another beat wins a world's
+  arrival draw it simply waits for the next) and joins the thread when taken.
+- **Fate rolls it all**: the fate door now also rolls burden (and its second
+  thing), vow, and face from the same stream.
+
+Verified at D-093: 427 tests green; twins hash-identical; sim replay exact
+(seed 2024's fated bearer rolls a hunted past: wrath peaks 7); sweep 1/7/99/
+88888 x8 all finish (turns 6651/6899/7228/6678, deaths 6/6/8/8).
+
+## 9. Still tracked beyond stage 2
+
+- NPC line banks adopting the bearer's name; folk-aware recultured societies
+  in worldgen (D-017's per-world cultures); folk/past-keyed storylet texture;
+  the remembered face truly cast into a faction NPC; deeper keepsake content
+  past the song (the verses hint at more chain below).

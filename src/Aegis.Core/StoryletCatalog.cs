@@ -978,5 +978,144 @@ public static class StoryletCatalog
             Weight = 5,
             Lines = [("Somewhere far off, a bell no one rings anymore is ringing.", LogTone.Info)],
         },
+
+        // ---- The asking's long shadows (D-093): vows, the face, the keepsake. ----
+
+        // The vow of vengeance, kept: the camp's fall was sworn before it was owed.
+        new Storylet
+        {
+            Id = "vow-kept-vengeance",
+            Trigger = StoryletTrigger.DeedWritten,
+            Scope = StoryletScope.Character,
+            Priority = 12,
+            Requires = [new FactPattern("deed", "camp_cleared")],
+            When = g => g.Player.Vow == VowId.Vengeance,
+            Lines =
+            [
+                ("You stand in the emptied camp a moment longer than the fight asked. Whatever the raiding kind took from you, this is the first payment back, and you find you can breathe around it now.", LogTone.Info),
+                ("\"The vow is not spent; a vow this old has more than one den in it. But it is begun, and beginnings weigh. All is counted.\"", LogTone.Aegis),
+            ],
+            Effect = g =>
+            {
+                g.Player.Essence += 5;
+                g.World.Facts.Add("vow", "vengeance_begun", g.World.SettlementName,
+                    "The first den fell to a vow older than this world.");
+            },
+        },
+
+        // The vow of the road's end: the first crossing is the road's first answer.
+        new Storylet
+        {
+            Id = "the-road-answers",
+            Trigger = StoryletTrigger.Arrival,
+            Scope = StoryletScope.Character,
+            Priority = 12,
+            When = g => g.Player.Vow == VowId.Return && g.Cycle >= 2,
+            Lines =
+            [
+                ("A second world. So the road does go on past its own horizon; you had sworn to find out, and here is the finding.", LogTone.Info),
+                ("\"You vowed to walk until the road answers. This is not the answer; it is the road clearing its throat. Keep walking. I begin to think it has one.\"", LogTone.Aegis),
+            ],
+        },
+
+        // The remembered face, half-seen in a stranger: texture, once ever.
+        new Storylet
+        {
+            Id = "the-half-known-face",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.Character,
+            Priority = 6,
+            When = g => g.Player.RememberedFace.Length > 0 && g.TalkNpc?.Kind == NpcKind.Villager,
+            Lines =
+            [
+                ("For one blink, this stranger has the wrong face: the one you carry with you, the one from before the catching. Then the blink ends and they are only themselves again, mid-sentence, unaware.", LogTone.Info),
+                ("\"You looked at that one like a door you used to live behind. I felt the name go through you. I did not catch it; you held it too tight.\"", LogTone.Aegis),
+            ],
+        },
+
+        // The vow of finding, fed: the search learns which way down the chain runs.
+        new Storylet
+        {
+            Id = "the-search-carried",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.Character,
+            Priority = 7,
+            When = g => g.Player.Vow == VowId.Finding && g.Player.RememberedFace.Length > 0
+                && g.TalkNpc?.Kind == NpcKind.Villager && g.Cycle >= 2,
+            Lines =
+            [
+                ("You say the name you carry, the way you have said it in every stead. This time the villager does not shrug: they frown, slow, at something half-remembered. \"A stranger asked our gate-ward for the deep road once. Before my time. The old ones still argue about which way they went.\"", LogTone.Info),
+                ("\"Down. They went down; the worlds only run the one way. Bearer: if the one you look for walks ahead of you on this chain, then every crossing is a step closer. I will count them so.\"", LogTone.Aegis),
+            ],
+            Effect = g => g.World.Facts.Add("face", "rumor_of_the_lost", g.World.SettlementName,
+                "A stranger once asked this stead's gate-ward for the deep road."),
+        },
+
+        // The keepsake, named: the keeper of songs knows the unassuming thing on
+        // sight, and the wager placed at the asking begins to pay.
+        new Storylet
+        {
+            Id = "the-thing-named",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.Character,
+            Priority = 12,
+            When = g => g.Player.Keepsake && !g.Player.KeepsakeKnown
+                && g.TalkNpc?.Kind == NpcKind.Skald && g.Cycle >= 2,
+            Lines =
+            [
+                ("The skald's practiced patter stops mid-word. They are looking at the small worn thing you carry, and their face has gone the color of someone meeting a story in daylight. \"Where did you get that? No: forgive me. Things like that are not gotten. They are kept.\"", LogTone.Info),
+                ("\"That is a shieldwright's touch-piece, bearer: the maker's own thumb-worn proof, carried against the palm through every forging. There is one in the songs, and only one, and the songs say it went down the chain with the first bearer of all. Bring it back to me when you have heard this; I must find the verses. I must find ALL the verses.\"", LogTone.Info),
+                ("\"...so that is what you kept warm. Bearer, I know that weight now that it is named. My makers' hands are on it. Carry it carefully; it is older than I am, and I am not young.\"", LogTone.Aegis),
+            ],
+            Effect = g =>
+            {
+                g.Player.KeepsakeKnown = true;
+                g.World.Facts.Add("keepsake", "named_by_the_skald", g.World.SettlementName,
+                    "The keeper of songs knew the unassuming thing on sight: a shieldwright's touch-piece.");
+            },
+        },
+
+        // The keepsake, sung: the second visit closes the wager. The reward is
+        // the one thing no chest holds: the songs themselves take the story in.
+        new Storylet
+        {
+            Id = "the-song-taken",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.Character,
+            Priority = 12,
+            CooldownTurns = 2,
+            When = g => g.Player.KeepsakeKnown && !g.Player.KeepsakeSung
+                && g.TalkNpc?.Kind == NpcKind.Skald,
+            Lines =
+            [
+                ("The skald has been waiting. They sing it quietly, for you alone: the forge-hall in the last age, the maker who would not let a shield go out unproven, the thumb pressed to the touch-piece at every quenching: a small worn proof that someone, once, checked their work with their own hands and meant it.", LogTone.Info),
+                ("\"The verses are yours now, and the thing was always yours: things like that choose their pockets. Every songhall on every road you walk will know this story from tonight. I have no better payment than that, and neither does anyone.\"", LogTone.Reward),
+                ("\"So the songs carry my makers now, as they carry every bearer. Good. Someone should check that work too. All is counted, and tonight I am glad of it.\"", LogTone.Aegis),
+            ],
+            Effect = g =>
+            {
+                g.Player.KeepsakeSung = true;
+                g.Player.Legend += 3;
+                g.World.Facts.Add("keepsake", "sung_into_the_halls", g.World.SettlementName,
+                    "The touch-piece's story entered the songs, and the songs travel.");
+            },
+        },
+
+        // The keepsake unpicked: the thing waits down the chain anyway (the wager's
+        // other side, promised at the asking's design). Found, it joins the thread.
+        new Storylet
+        {
+            Id = "the-thing-found",
+            Trigger = StoryletTrigger.Arrival,
+            Scope = StoryletScope.Character,
+            Priority = 8,
+            When = g => !g.Player.Keepsake && g.Cycle >= 3,
+            Lines =
+            [
+                ("At the shrine's foot, half-sunk in the dust of a world older than the last, lies a small thing worn smooth by older hands than yours. You did not choose it, once. It appears to have chosen anyway.", LogTone.Info),
+                ("\"Pick it up. Some things are owed a pocket, and this one has waited longer than most. Do not ask me how it got here; I have asked, and it is not telling.\"", LogTone.Aegis),
+            ],
+            Effect = g => g.Player.Keepsake = true,
+        },
     ];
 }

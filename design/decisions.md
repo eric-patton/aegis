@@ -231,6 +231,49 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-093: The asking's long shadows: burdens, vows, the face, and the keepsake's thread (2026-07-19)
+Creation stage 2, closing fork 4's first lane as designed in the D-092 Q&A. The asking
+grows three questions between the thing and the name; full spec in `design/creation.md`.
+
+**Burdens (one, optional, buys a second precious thing).** An old wound (MaxHp -2,
+always, on the Player property), a hunted past (every world's raider wrath wakes at 1:
+seeded at the asking and re-seeded after each crossing's ledger clear), a marked face
+(every stead's suspicion wakes at 1, stacking with the oathbreaker's stain). The second
+thing reuses the Thing stage with a refusal on duplicates (`Player.Things` records picks).
+
+**Vows (one, optional).** Vengeance: kept at the first camp cleared, once ever
+(DeedWritten storylet, +5 essence, a `vow` fact). Finding: never dangles: an empty face
+draws a name from its own stream; from cycle 2 a villager's half-memory feeds the search
+(a `face` fact) and the Aegis reads the chain's one direction into it. The road's end:
+answered at the first crossing, once ever ("the road clearing its throat").
+
+**The remembered face.** A typed name (same journal-safe entry grammar as the bearer's
+own); once ever a villager wears it for a blink. True faction casting stays tracked.
+
+**The keepsake's thread.** The wager placed at D-092 pays: from cycle 2 the skald
+recognizes the unassuming thing on sight and names it (the reveal lives in storylet
+lines, not in chat); a second visit closes the wager: the story enters the songs for +3
+Legend, the one reward no chest holds, plus permanent `KeepsakeKnown`/`KeepsakeSung`
+flags and facts. Unpicked, the thing waits down the chain: an arrival storylet from
+cycle 3 places it at the shrine's foot, deliberately priority-tolerant (losing a world's
+arrival draw just delays it), and the found thing joins the same thread.
+
+**Fate rolls it all.** The fate door's roll extends in a fixed stream order: burden
+(1-in-4 none), its second thing, vow (1-in-4 none), face (1-in-3, forced by finding).
+The pilot is unchanged: '0' still answers everything.
+
+**Save v43.** The asking's key sequence lengthened and six storylets joined the draws.
+Snapshot gains BearerBurden/BearerVow (named to dodge the existing oath-weight `Burden`).
+
+**Verified.** 427 tests green (6 new, first-run pass). Twin journeys seed 2024 x12
+hash-identical: cycle 13, turns 10427, deaths 4, regard 5, wrath 7 (the rolled hunted
+past showing honestly), raids 30, keys 10830; sim replay exact. Sweep 1/7/99/88888 x8
+all finish: turns 6651/6899/7228/6678, deaths 6/6/8/8.
+
+**Set aside / tracked.** A debt burden (no clean sink yet); the face cast into real
+faction NPCs; deeper keepsake content past the song; folk-aware worldgen cultures; NPC
+line banks adopting the name.
+
 ### D-092: The asking: character creation as the first wake's own scene (2026-07-19)
 Fork 4's first lane, settled with the user in Q&A (four rounds plus build confirmation)
 and shipped as stage 1 of two. Full spec in `design/creation.md`; stage 2 (burdens, vows,

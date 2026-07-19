@@ -18,6 +18,24 @@ public sealed class Player
     /// <summary>The unassuming thing (D-092): carried, unexplained, waiting for the one who knows it.</summary>
     public bool Keepsake { get; set; }
 
+    /// <summary>The precious things chosen at the asking (D-092/D-093), in taking order; a thing is never taken twice.</summary>
+    public List<ThingId> Things { get; } = [];
+
+    /// <summary>The burden taken at the asking (D-093), if any: a live weight every world collects on.</summary>
+    public BurdenId? Burden { get; set; }
+
+    /// <summary>The vow taken at the asking (D-093), if any: a private aim the road can answer.</summary>
+    public VowId? Vow { get; set; }
+
+    /// <summary>The remembered face (D-093): a name carried from before the catching, or empty.</summary>
+    public string RememberedFace { get; set; } = "";
+
+    /// <summary>The keepsake thread (D-093): the one who knows the thing has named it.</summary>
+    public bool KeepsakeKnown { get; set; }
+
+    /// <summary>The keepsake thread's close (D-093): its story is in the songs now, once ever.</summary>
+    public bool KeepsakeSung { get; set; }
+
     /// <summary>A smith's-hand is owed one mending free (D-092); spent once, any world.</summary>
     public bool SmithsFavorSpent { get; set; }
 
@@ -351,8 +369,8 @@ public sealed class Player
     /// <summary>The cycle the argument last advanced in: a line at a time, never binged.</summary>
     public int ArgumentCycle { get; set; }
 
-    /// <summary>Derived from Vigor (D-015): the humble baseline of 5 gives 20.</summary>
-    public int MaxHp => 10 + Attributes[Attr.Vigor] * 2;
+    /// <summary>Derived from Vigor (D-015): the humble baseline of 5 gives 20. An old wound (D-093) keeps two of it.</summary>
+    public int MaxHp => 10 + Attributes[Attr.Vigor] * 2 - (Burden == BurdenId.OldWound ? 2 : 0);
 
     /// <summary>Derived from Vigor: baseline 5 gives 10. A brawler's wind is their own (D-046).</summary>
     public int MaxStamina => 5 + Attributes[Attr.Vigor] + (HasPerk(PerkId.DeepBreath) ? 2 : 0);

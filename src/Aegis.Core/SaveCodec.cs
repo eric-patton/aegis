@@ -146,10 +146,14 @@ namespace Aegis.Core;
 /// with the creation answers (folk, past, shapings, thing, name), so a v41
 /// journal's first key, meant as a game action, would instead answer who the
 /// bearer is and every key after would land one scene out of joint.
+/// v43 when D-093 lengthened the asking (burden, the bought second thing, vow,
+/// and the remembered face now stand between the thing and the name) and put
+/// six new storylets in the draws, so a v42 journal's answers land on the
+/// wrong questions and its firings resolve to different winners.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 42;
+    public const int Version = 43;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

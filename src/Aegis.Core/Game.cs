@@ -383,6 +383,9 @@ public sealed class Game
     /// <summary>The attribute chosen to rise, while the paying half stands open (D-092).</summary>
     public Attr? ShapeRaise { get; private set; }
 
+    /// <summary>Whether the open Thing question is the burden's bought second (D-093).</summary>
+    public bool PickingSecondThing { get; private set; }
+
     private void HandleCreationKey(char key)
     {
         switch (CreationStage)
@@ -442,9 +445,42 @@ public sealed class Game
             case CreationStage.Thing:
                 if (key >= '1' && key <= '0' + CreationCatalog.Things.Count)
                 {
-                    ApplyThing((ThingId)(key - '1'));
-                    CreationStage = CreationStage.Name;
+                    if (!ApplyThing((ThingId)(key - '1'))) return;
+                    CreationStage = PickingSecondThing ? CreationStage.Vow : CreationStage.Burden;
+                    PickingSecondThing = false;
                 }
+                return;
+
+            case CreationStage.Burden:
+                if (key == '0') { CreationStage = CreationStage.Vow; return; }
+                if (key >= '1' && key <= '0' + CreationCatalog.Burdens.Count)
+                {
+                    ApplyBurden((BurdenId)(key - '1'));
+                    PickingSecondThing = true;
+                    CreationStage = CreationStage.Thing;
+                }
+                return;
+
+            case CreationStage.Vow:
+                if (key == '0') { CreationStage = CreationStage.Face; return; }
+                if (key >= '1' && key <= '0' + CreationCatalog.Vows.Count)
+                {
+                    ApplyVow((VowId)(key - '1'));
+                    CreationStage = CreationStage.Face;
+                }
+                return;
+
+            case CreationStage.Face:
+                if (key == '.')
+                {
+                    Player.RememberedFace = NameEntry.Trim();
+                    NameEntry = "";
+                    CreationStage = CreationStage.Name;
+                    return;
+                }
+                if (key == '-' && NameEntry.Length > 0) { NameEntry = NameEntry[..^1]; return; }
+                if ((char.IsAsciiLetter(key) || key == ' ') && NameEntry.Length < 14)
+                    NameEntry += NameEntry.Length == 0 ? char.ToUpperInvariant(key) : key;
                 return;
 
             case CreationStage.Name:
@@ -509,8 +545,15 @@ public sealed class Game
         for (int i = 0; i < owed; i++) Player.Skills.AddUse(skill);
     }
 
-    private void ApplyThing(ThingId id)
+    /// <summary>False when the thing is already carried: nothing is taken twice (D-093).</summary>
+    private bool ApplyThing(ThingId id)
     {
+        if (Player.Things.Contains(id))
+        {
+            Log.Add(Turn, "\"You carry that already. Choose another.\"", LogTone.Aegis);
+            return false;
+        }
+        Player.Things.Add(id);
         switch (id)
         {
             case ThingId.Word:
@@ -541,6 +584,25 @@ public sealed class Game
                 Log.Add(Turn, "A small thing, worn smooth by older hands than yours. It is not worth a coin, and you would not sell it for a hundred.", LogTone.Info);
                 break;
         }
+        return true;
+    }
+
+    private void ApplyBurden(BurdenId id)
+    {
+        var def = CreationCatalog.BurdenOf(id);
+        Player.Burden = id;
+        // The ledger burdens mark this first world now; every later world's
+        // ledgers wake marked at the crossing (D-093).
+        if (id == BurdenId.HuntedPast) _factionInfamy[FactionId.Raiders] = Math.Max(Wrath, 1);
+        if (id == BurdenId.MarkedFace) _factionInfamy[FactionId.Stead] = Shame + 1;
+        Log.Add(Turn, $"\"{Cap(def.Name)}: {def.Blurb}. So be it; {def.Price}. What else, then, came through the dark?\"", LogTone.Aegis);
+    }
+
+    private void ApplyVow(VowId id)
+    {
+        var def = CreationCatalog.VowOf(id);
+        Player.Vow = id;
+        Log.Add(Turn, $"\"{Cap(def.Name)}: {def.Blurb}. I will hold it with you. Vows are counted too.\"", LogTone.Aegis);
     }
 
     /// <summary>The rolled bearer (D-092): one key, the whole becoming, from the world's own stream.</summary>
@@ -562,6 +624,20 @@ public sealed class Game
             Player.Attributes[pay] -= 1;
         }
         ApplyThing((ThingId)rng.Next(CreationCatalog.Things.Count));
+        // Fate may take a burden too (D-093), and the burden buys its second thing.
+        int burden = rng.Next(CreationCatalog.Burdens.Count + 1);
+        if (burden > 0)
+        {
+            ApplyBurden((BurdenId)(burden - 1));
+            ThingId second;
+            do { second = (ThingId)rng.Next(CreationCatalog.Things.Count); }
+            while (Player.Things.Contains(second));
+            ApplyThing(second);
+        }
+        int vow = rng.Next(CreationCatalog.Vows.Count + 1);
+        if (vow > 0) ApplyVow((VowId)(vow - 1));
+        if (rng.Next(3) == 0 || Player.Vow == VowId.Finding)
+            Player.RememberedFace = NameGen.Person(ref rng);
         FinishCreation(NameGen.Person(ref rng));
     }
 
@@ -571,6 +647,13 @@ public sealed class Game
         {
             var nameRng = new Rng(SeedTree.Derive(World.Seed, "bearer-name"));
             name = NameGen.Person(ref nameRng);
+        }
+        // A vow of finding needs a face to look for (D-093): an unnamed one is
+        // drawn from its own stream, so the vow never dangles.
+        if (Player.Vow == VowId.Finding && Player.RememberedFace.Length == 0)
+        {
+            var faceRng = new Rng(SeedTree.Derive(World.Seed, "bearer-face"));
+            Player.RememberedFace = NameGen.Person(ref faceRng);
         }
         Player.Name = name;
         InCreation = false;
@@ -1122,6 +1205,10 @@ public sealed class Game
         // kept them, and the next world starts the bearer at a stranger to both.
         _factionRegard.Clear();
         _factionInfamy.Clear();
+        // The burdens cross with the bearer (D-093): a hunted past wakes the new
+        // dens' wrath, a marked face the new stead's suspicion, before a deed is done.
+        if (Player.Burden == BurdenId.HuntedPast) _factionInfamy[FactionId.Raiders] = 1;
+        if (Player.Burden == BurdenId.MarkedFace) _factionInfamy[FactionId.Stead] = 1;
         // A fresh world's stores stand whole (D-079, D-089), and its raiders'
         // tick counts from this arrival, not from the far side of the arch.
         Raids = 0;
@@ -5060,6 +5147,8 @@ public sealed class Game
         Past: Player.Past?.ToString().ToLowerInvariant() ?? "",
         BearerName: Player.Name,
         Keepsake: Player.Keepsake,
+        BearerBurden: Player.Burden?.ToString().ToLowerInvariant() ?? "",
+        BearerVow: Player.Vow?.ToString().ToLowerInvariant() ?? "",
         RationPrice: RationPrice,
         MendPrice: Player.WoundedTurns > 0 ? MendPrice : 0,
         WeaponId: Player.Weapon?.Id ?? "",
@@ -5207,6 +5296,8 @@ public sealed record Snapshot(
     string Past,
     string BearerName,
     bool Keepsake,
+    string BearerBurden,
+    string BearerVow,
     int RationPrice,
     int MendPrice,
     string WeaponId,

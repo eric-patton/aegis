@@ -17,6 +17,7 @@ public enum Command
     Thrust,
     Heave,
     Cast,
+    Stance,
     Quit,
 }
 
@@ -46,6 +47,7 @@ public static class CommandMap
         't' => Command.Thrust,
         'w' => Command.Heave,
         'z' => Command.Cast,
+        'x' => Command.Stance,
         'q' => Command.Quit,
         _ => Command.None,
     };

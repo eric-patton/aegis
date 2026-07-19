@@ -844,6 +844,7 @@ public sealed class Game
             Command.Thrust => DoThrust(),
             Command.Heave => DoHeave(),
             Command.Cast => DoCast(),
+            Command.Stance => DoStance(),
             _ => CommandMap.Delta(cmd) is { } d && DoMove(d.dx, d.dy),
         };
 
@@ -2825,6 +2826,28 @@ public sealed class Game
     /// <summary>Global rising cost per raise (D-014's Essence economy, Souls-style curve).</summary>
     public int NextRaiseCost => 10 + 5 * Player.Attributes.TotalRaises;
 
+    /// <summary>
+    /// The footing (D-094): 'x' cycles measured, pressing, guarded. A free
+    /// resetting of the feet on quiet ground; under live steel it is an act the
+    /// field can answer, and costs the turn (D-004's commitment, both ways).
+    /// </summary>
+    private bool DoStance()
+    {
+        Player.Stance = Player.Stance switch
+        {
+            Stance.Measured => Stance.Pressing,
+            Stance.Pressing => Stance.Guarded,
+            _ => Stance.Measured,
+        };
+        Log.Add(Turn, Player.Stance switch
+        {
+            Stance.Pressing => "You set your feet to press: blows given harder, guard held thinner.",
+            Stance.Guarded => "You set your feet to guard: blows turned further, your own given softer.",
+            _ => "You settle back to the measured footing: nothing given, nothing owed.",
+        }, LogTone.Info);
+        return LiveMonstersHere.Any();
+    }
+
     private bool DoRest()
     {
         if (!(Mode == MapMode.Overworld && CurrentMap[Player.Pos] == Terrain.Shrine))
@@ -2928,6 +2951,8 @@ public sealed class Game
                 + (family == SkillId.Hafted && Player.HasPerk(PerkId.TrueArc) ? 1 : 0)
                 + (weapon is null && Player.HasPerk(PerkId.KnuckleAndBone) ? 2 : 0)
                 + (weapon is null && Player.HasPerk(PerkId.CaughtArm) && target.Intent is not null ? 3 : 0);
+            // The footing (D-094): pressing gives the blow 2 more, guarded 2 less, never below 1.
+            damage = Math.Max(1, damage + Player.StanceBlow);
             // Only a full swing teaches (D-014's cost gating: this one was paid
             // for in wind and wear). Feeble flailing is free, and free is unfed.
             trained = family;
@@ -3267,6 +3292,7 @@ public sealed class Game
             int damage = _combatRng.Range(2, 5) + Player.MeleeBonus + spear.EffectiveBonus(Player.Attributes)
                 + Player.Skills.Bonus(SkillId.Hafted)
                 + (Player.HasPerk(PerkId.TrueArc) ? 1 : 0);
+            damage = Math.Max(1, damage + Player.StanceBlow); // the footing (D-094)
             target.Hp -= damage;
 
             if (target.Alive)
@@ -3408,6 +3434,7 @@ public sealed class Game
             + Player.Skills.Bonus(family)
             + (family == SkillId.Blades && Player.HasPerk(PerkId.DrawnCut) ? 1 : 0)
             + (family == SkillId.Hafted && Player.HasPerk(PerkId.TrueArc) ? 1 : 0);
+        damage = Math.Max(1, damage + Player.StanceBlow); // the footing (D-094)
         target.Hp -= damage;
 
         if (target.Alive)
@@ -3862,6 +3889,10 @@ public sealed class Game
         // The old blood (D-051): every tenant of the world strikes 1 deeper.
         // On the raw blow, before iron, so armor still earns its keep.
         if (World.Oaths.Contains(OathId.OldBlood)) raw += 1;
+        // The footing (D-094): guarded turns every landing blow 2 further, and
+        // pressing bleeds 2 through. On the raw blow, iron or no iron: footing
+        // is the body's own craft, and it guards the unarmored too.
+        if (Player.StanceGuard != 0) raw = Math.Max(1, raw - Player.StanceGuard);
         var armor = Player.Armor;
         if (armor is null) return raw;
         // Warding is armor-craft, not toughness: it only helps while iron is
@@ -5149,6 +5180,7 @@ public sealed class Game
         Keepsake: Player.Keepsake,
         BearerBurden: Player.Burden?.ToString().ToLowerInvariant() ?? "",
         BearerVow: Player.Vow?.ToString().ToLowerInvariant() ?? "",
+        Stance: Player.Stance.ToString().ToLowerInvariant(),
         RationPrice: RationPrice,
         MendPrice: Player.WoundedTurns > 0 ? MendPrice : 0,
         WeaponId: Player.Weapon?.Id ?? "",
@@ -5298,6 +5330,7 @@ public sealed record Snapshot(
     bool Keepsake,
     string BearerBurden,
     string BearerVow,
+    string Stance,
     int RationPrice,
     int MendPrice,
     string WeaponId,

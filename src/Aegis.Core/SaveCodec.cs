@@ -150,10 +150,13 @@ namespace Aegis.Core;
 /// and the remembered face now stand between the thing and the name) and put
 /// six new storylets in the draws, so a v42 journal's answers land on the
 /// wrong questions and its firings resolve to different winners.
+/// v44 when D-094 gave the feet their say: 'x' gained meaning (a v43 journal's
+/// stray 'x' was ignored and now shifts the footing, spending a turn under
+/// live steel), and the footing moves every exchanged blow by 2 both ways.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 43;
+    public const int Version = 44;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

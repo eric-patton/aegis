@@ -708,6 +708,9 @@ public static class Presenter
         // The pool (D-091): unveiled with the first word, and never before.
         if (p.Spells.Count > 0)
             Line($"FO  {Bar(p.Focus, p.MaxFocus, 10)} {p.Focus}/{p.MaxFocus}", Hue.Cyan);
+        // The footing (D-094): named only when it leaves the measured default.
+        if (p.Stance != Stance.Measured)
+            Line($"Stance  {(p.Stance == Stance.Pressing ? "pressing" : "guarded")}", Hue.DarkYellow);
         Line($"Coin    {p.Coin}", Hue.Yellow);
         Line($"Essence {p.Essence}", Hue.Cyan);
         if (p.Rations > 0) Line($"Rations {p.Rations}", Hue.Green);
@@ -818,7 +821,7 @@ public static class Presenter
         Line("g grab  >/< enter/exit", Hue.DarkGray);
         Line("f loose  e eat  d drink", Hue.DarkGray);
         Line("z cast  i gear  c you", Hue.DarkGray);
-        Line("q quit", Hue.DarkGray);
+        Line("x stance  q quit", Hue.DarkGray);
     }
 
     private static string Bar(int value, int max, int slots)

@@ -1,5 +1,12 @@
 namespace Aegis.Core;
 
+/// <summary>
+/// The footing (D-094): how the body is set. Measured trades nothing; pressing
+/// gives blows 2 harder and holds the guard 2 thinner; guarded is the mirror.
+/// Changing footing under live steel costs the turn (D-004's commitment).
+/// </summary>
+public enum Stance { Measured, Pressing, Guarded }
+
 public sealed class Player
 {
     public Pos Pos { get; set; }
@@ -41,6 +48,15 @@ public sealed class Player
 
     /// <summary>The wrightkin wear-parity clock (D-092), counted like Looses so replay agrees.</summary>
     public int WearTick { get; set; }
+
+    /// <summary>The footing (D-094): cycled on 'x', free off the fight, a turn inside it.</summary>
+    public Stance Stance { get; set; } = Stance.Measured;
+
+    /// <summary>What the footing adds to a struck blow (D-094): melee only, the body's own fight.</summary>
+    public int StanceBlow => Stance switch { Stance.Pressing => 2, Stance.Guarded => -2, _ => 0 };
+
+    /// <summary>What the footing turns from a landing blow (D-094): positive guards, negative bleeds.</summary>
+    public int StanceGuard => Stance switch { Stance.Guarded => 2, Stance.Pressing => -2, _ => 0 };
     public int Hp { get; set; } = 20;
     public int Stamina { get; set; } = 10;
     public int Coin { get; set; }

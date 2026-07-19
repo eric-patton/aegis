@@ -93,3 +93,22 @@ public static class RaiderWrath
     public static int Steadied(int wrath, int roll) =>
         RungFor(wrath) >= DreadRung ? Math.Max(1, roll - 1) : roll;
 }
+
+/// <summary>
+/// The raids themselves (D-079): the first coarse-tick faction event, D-023's
+/// living-world half begun. While the camp stands, the raiders act: every tick
+/// of turns they come down on the stead by night, each raid writing a fact,
+/// narrated the moment it fires (the mandatory hook: no change the player
+/// cannot perceive), and thinning the stead's stores so bread costs a coin
+/// more for the rest of the world. Clearing the camp is the designed exit
+/// condition (D-023's no-eternal-stalemates rule): the raids stop, though the
+/// grain already taken does not come back before the crossing.
+/// </summary>
+public static class SteadRaids
+{
+    /// <summary>Turns between raids while the camp stands: the coarse tick.</summary>
+    public const int TickTurns = 160;
+
+    /// <summary>The most raids a world suffers: the stead has only so much to lose.</summary>
+    public const int Cap = 3;
+}

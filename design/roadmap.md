@@ -37,11 +37,12 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 - Skills: **8 of ~18** (five combat, Hunting from D-070, Cooking from D-073, Survival from D-074)
 - Activity families: **wilderness-living core built** (hunting, selling, cooking, foraging: D-070..D-074) and the **craft family opened** (cooking); crime and town life unbuilt
 - Launch story templates: **2** built (of 3 named, 4-5 planned)
-- **Factions begun (D-076..D-078):** the local-reputation foundation is in (the home stead's
+- **Factions begun (D-076..D-079):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
-  and the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
-  raider slain, dread softening their blows past its rung); the stead-Infamy half (needs a
-  transgression verb), richer boons, and the coarse tick are the pillar's remaining spine
+  the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
+  raider slain, dread softening their blows past its rung), and the coarse tick began (D-079,
+  the raids are real: uncleared camps raid the stead every 160 turns, bread a coin dearer per
+  raid); the stead-Infamy half (needs a transgression verb) and richer boons remain
 - Major vision pillars still unbuilt: magic, companions, crafting, character creation, Toll/scars
 
 ---
@@ -62,10 +63,12 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
   local-reputation foundation shipped (the stead's regard, perceivable-deed earning, per-world
   reset), its first boon (D-077, the friend's welcome), and the second faction on a keyed
   ledger (D-078, the raiders' wrath, with the dread softening their blows: a blow to one is
-  a favor to the other, live). Next in this phase: richer regard-gated boons (a friend's
-  price, gated access, a rumor kept from strangers), the stead-Infamy half (needs a
-  transgression verb: user steer), then D-023's coarse-tick state vectors.
-  **Magic** remains the alternative keystone (activates Mind/Will and the caster build).
+  a favor to the other, live), and the coarse tick's first event (D-079, the raids are real:
+  live pressure to clear the camp, price consequence, designed exit). Next in this phase:
+  richer regard-gated boons (a friend's price, gated access, a rumor kept from strangers),
+  the stead-Infamy half (needs a transgression verb: user steer), and growing the tick
+  toward true state vectors. **Magic** remains the alternative keystone (activates
+  Mind/Will and the caster build).
 - **Phase 3: Remaining pillars & stakes.** Companions, the Death's-Toll/scar layer, the
   other activity families, and the skills those unlock.
 - **Ongoing: Breadth & depth.** Catalog growth (templates, monsters, tiers, gear, oaths),
@@ -156,7 +159,10 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 - [x] A second faction with a relationship to the stead (the raiders as its standing enemy, so a
   blow to one is a favor to the other) (D-078: wrath per raider slain on its own faster ladder,
   the dread softening raiders' blows past rung 2, reset at every crossing, save v31)
-- [ ] Faction state-vectors on a coarse tick, transitions write facts + narration hooks (D-023, vision §2)
+- [~] Faction state-vectors on a coarse tick, transitions write facts + narration hooks (D-023,
+  vision §2, D-079): the tick seam exists and its first event runs (uncleared camps raid the
+  stead every 160 turns, capped at 3/world: fact + narration + ration-price consequence, camp
+  clear as the designed exit, save v32); true multi-axis state vectors and transition rules pending
 - [ ] Bounded Nemesis-style leader/lieutenant roster with memory (D-023)
 - [ ] Designed conflict exit conditions (no eternal stalemates) (D-023)
 - [ ] (Unblocks: full-form story templates, institution/zealot/warden roles) (D-035)
@@ -219,6 +225,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-19: **D-079 the raids are real: first coarse-tick faction event.** While a camp stands, the raiders raid the stead every 160 turns (cap 3/world): each raid writes an event fact, narrates as it fires (D-023's mandatory hook), and prices bread +1 coin at the steadholder for the rest of the world (inside the hungry-road doubling). Tick counts from world arrival; skipped while the bearer is inside the camp (a den defends its own); camp clear is the designed exit but taken grain stays taken until the crossing. The Raided Stead becomes live pressure; the tick seam in AdvanceTurn is reusable machinery for every later faction event. Save v31 -> v32. 357 tests green (6 new RaidsTests); byte-identical + emit->sim exact + sweep honest (12-25 raids/run). Partial-checked the coarse-tick state-vector item.
 - 2026-07-19: **D-078 the raiders' wrath: second faction, keyed ledger.** The single regard scalar became a FactionId-keyed store, and the raiders now keep the enemy ledger: wrath +1 per raider slain (all kill paths), on its own faster ladder (1/2/4: a name the raiders curse / a dread on the raiders / the bane of the dens), reset at every crossing. Past the dread rung a raider's blow lands one point weaker (never below 1), applied after the dice so the draw count never moves. A blow to one is a favor to the other, live: emptying the camp raises stead regard and raider wrath in the same strokes. HUD (red, under the stead's green), snapshot (Wrath/WrathTitle), journey dens line. Save v30 -> v31. 351 tests green (8 new WrathTests); byte-identical + emit->sim exact + five-seed sweep (all peak at the bane of the dens). Checked off the second-faction item; stead-Infamy re-scoped: needs a transgression verb (user steer).
 - 2026-07-19: **D-077 the friend's welcome, regard's first boon.** Regard now pays: the first time a stead holds the bearer a friend (rung 2, reached by clearing the camp), its folk gift a coin purse. Coin not bread (stays clear of the arrival-welcome's larder); once per stead (rung-cross gated); NOT silenced by the hushed name (deed-earned, not name-carried). Save v29 -> v30, the first faction touch on the format. 343 tests green (4 new welcome tests + 6 honest crossing-math updates for the +5); byte-identical + emit->sim exact + sweep unchanged in shape. Partial-checked regard-gated boons.
 - 2026-07-19: **D-076 factions, first rung: the stead's regard.** The keystone pillar begins. The home stead now keeps a per-world local Fame for the bearer, earned only by deeds it can perceive (camp cleared +3, barrow stilled +2; remote deep-site deeds pass none), on a plain ladder (a known face / a friend to the stead / the stead's own), surfaced on the live HUD and in greetings, reset at every crossing, set beside Legend's cross-world Standing not merged with it. No save-format change (regard gates nothing mechanical yet, so old journals replay identically). 339 tests green (9 new RegardTests); byte-identical + emit-keys->sim exact + five-seed sweep (all peak at the stead's own). Partial-checked Fame/Infamy; new tracked items: regard-gated boons (next, first save touch), a second faction with a relationship, the Infamy half, the coarse tick.

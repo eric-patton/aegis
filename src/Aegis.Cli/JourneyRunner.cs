@@ -126,6 +126,8 @@ public static class JourneyRunner
         // bearer, watched by the counter's high-water mark on every key.
         int maxRegard = 0;
         int maxWrath = 0;
+        int raidsSuffered = 0;
+        int prevRaids = 0;
         string stop;
 
         while (true)
@@ -257,6 +259,9 @@ public static class JourneyRunner
             maxRegard = Math.Max(maxRegard, game.Regard);
             // The raiders' wrath, same high-water treatment (D-078).
             maxWrath = Math.Max(maxWrath, game.Wrath);
+            // Raids land on a tick and reset each crossing (D-079): count rises.
+            if (game.Raids > prevRaids) raidsSuffered += game.Raids - prevRaids;
+            prevRaids = game.Raids;
 
             if (game.Player.Deaths > prevDeaths)
             {
@@ -293,7 +298,7 @@ public static class JourneyRunner
             chestsLooted, chestCoin, gearTaken, knacksTaken,
             resolvedAs, resolvedCycle, laidCycle, mendedCycle, legendFromBurden,
             hidesTaken, hidesSold, coinFromHides, meatCooked, rationsCooked,
-            herbsForaged, herbsSold, coinFromHerbs, maxRegard, maxWrath);
+            herbsForaged, herbsSold, coinFromHerbs, maxRegard, maxWrath, raidsSuffered);
         return 0;
     }
 
@@ -363,7 +368,7 @@ public static class JourneyRunner
         Resolution resolvedAs, int resolvedCycle, int laidCycle, int mendedCycle,
         int legendFromBurden, int hidesTaken, int hidesSold, int coinFromHides,
         int meatCooked, int rationsCooked, int herbsForaged, int herbsSold, int coinFromHerbs,
-        int maxRegard, int maxWrath)
+        int maxRegard, int maxWrath, int raidsSuffered)
     {
         var w = Console.Out;
         w.WriteLine($"AEGIS JOURNEY   seed {seed}   target {cycles} crossing(s)");
@@ -439,6 +444,7 @@ public static class JourneyRunner
                     + $"(peak regard {maxRegard}, reset at every crossing) (D-076).");
         w.WriteLine($"         the dens: came to hold the bearer as {(maxWrath > 0 ? RaiderWrath.TitleOf(maxWrath) : "no one at all")} at their most fearful "
                     + $"(peak wrath {maxWrath}, reset at every crossing) (D-078).");
+        w.WriteLine($"         the raids: the steads suffered {raidsSuffered} raid(s) while camps stood, each pricing bread a coin dearer (D-079).");
         int sworn = crossings.Count(c => c.Sworn.Count > 0);
         if (sworn > 0)
         {

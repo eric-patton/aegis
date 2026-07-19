@@ -103,10 +103,14 @@ namespace Aegis.Core;
 /// slain in a world) their blows land one point the weaker, so a v30 journal
 /// that fought deep into a camp replays those late blows softer and every
 /// downstream state with them.
+/// v32 when D-079 made the raids real: while a camp stands the raiders raid the
+/// stead on a coarse tick, each raid pricing bread a coin dearer for the rest
+/// of the world, so a v31 journal that bought rations in a raided world now
+/// pays more for them and every coin downstream moves.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 31;
+    public const int Version = 32;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

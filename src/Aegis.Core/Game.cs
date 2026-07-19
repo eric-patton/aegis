@@ -117,6 +117,17 @@ public sealed class Game
     /// <summary>The raiders' wrath at the bearer (D-078): the enemy ledger, one notch per raider slain.</summary>
     public int Wrath => RegardOf(FactionId.Raiders);
 
+    /// <summary>
+    /// Raids the stead has suffered this world (D-079): the raiders acting on
+    /// their coarse tick while their camp stands. Each raid thins the stores
+    /// (bread a coin dearer, see RationPrice) until the crossing. Per-world,
+    /// replay-rebuilt, never serialized.
+    /// </summary>
+    public int Raids { get; private set; }
+
+    /// <summary>The turn this world began: the raid tick counts from here, not from cycle 1.</summary>
+    private int _worldStartTurn;
+
     public Npc? TalkNpc { get; private set; }
 
     /// <summary>Unbindings per world (D-016: a handful, refreshed at each crossing).</summary>
@@ -149,13 +160,15 @@ public sealed class Game
 
     /// <summary>
     /// Fact-derived pricing (D-025 v0): while a blight story stands uncompleted,
-    /// the larders are thin and bread costs half again as much. The hearth-price
-    /// (D-048) takes a coin off for the storied before the hungry road (D-047)
-    /// doubles whatever the world was asking.
+    /// the larders are thin and bread costs half again as much, and every raid
+    /// the stead has suffered (D-079) adds a coin, the grain gone until the
+    /// crossing. The hearth-price (D-048) takes a coin off for the storied
+    /// before the hungry road (D-047) doubles whatever the world was asking.
     /// </summary>
     public int RationPrice =>
         ((World.Facts.Exists("story", CreepingBlightTemplate.Id)
         && !World.Facts.Exists("story_complete", CreepingBlightTemplate.Id) ? 6 : 4)
+        + Raids
         - (Standing >= 2 && !World.Oaths.Contains(OathId.HushedName) ? 1 : 0))
         * (World.Oaths.Contains(OathId.HungryRoad) ? 2 : 1);
 
@@ -738,6 +751,10 @@ public sealed class Game
         // regard and wrath behind with the folk and the dens that kept them, and
         // the next world starts the bearer at a stranger to both.
         _factionRegard.Clear();
+        // A fresh world's stores stand whole (D-079), and its raiders' tick
+        // counts from this arrival, not from the far side of the arch.
+        Raids = 0;
+        _worldStartTurn = Turn;
 
         Mode = MapMode.Overworld;
         Player.Pos = World.ShrinePos;
@@ -2945,6 +2962,25 @@ public sealed class Game
         }
     }
 
+    /// <summary>
+    /// A raid lands on the stead (D-079): the raiders acting on their coarse
+    /// tick, the first faction event that is not the bearer's own deed. Every
+    /// firing is perceived as it lands (D-023's mandatory narration hook): the
+    /// raid is named, the cost is named, and a fact is written so the world
+    /// remembers it happened. The grain does not come back: RationPrice carries
+    /// the raids until the crossing, camp cleared or no.
+    /// </summary>
+    private void RaidTheStead()
+    {
+        Raids++;
+        World.Facts.Add("event", "raid", World.SettlementName,
+            $"Raiders came down on {World.SettlementName} by night and left with grain.");
+        Log.Add(Turn, $"By night the raiders come down on {World.SettlementName} again: grain gone, a byre-door split, no one dead but no one unshaken.", LogTone.Danger);
+        Log.Add(Turn, Raids >= SteadRaids.Cap
+            ? "Bread will be dearer for it, and there is little left worth the taking."
+            : "Bread will be dearer for it while the camp stands.", LogTone.Info);
+    }
+
     private void CheckSiteCleared(Site site)
     {
         if (site.Cleared || Monsters.Any(m => m.Alive && m.SiteId == site.Id)) return;
@@ -3016,6 +3052,15 @@ public sealed class Game
     private void AdvanceTurn()
     {
         Turn++;
+
+        // The raids are real (D-079): while the camp stands, the raiders act on
+        // their coarse tick. Not while the bearer is inside the camp itself: a
+        // den under attack defends its own. Clearing the camp is the designed
+        // exit condition, and the cap is the stead running out of things to lose.
+        if (!CampCleared && Raids < SteadRaids.Cap
+            && CurrentSite?.Kind != SiteKind.GoblinCamp
+            && Turn > _worldStartTurn && (Turn - _worldStartTurn) % SteadRaids.TickTurns == 0)
+            RaidTheStead();
 
         if (Mode == MapMode.Site)
             foreach (var monster in Monsters.Where(m => m.Alive && m.SiteId == CurrentSite!.Id))
@@ -3897,6 +3942,7 @@ public sealed class Game
         RegardTitle: SteadRegard.TitleOf(Regard),
         Wrath: Wrath,
         WrathTitle: RaiderWrath.TitleOf(Wrath),
+        Raids: Raids,
         Rations: Player.Rations,
         Hide: Player.Hide,
         RawMeat: Player.RawMeat,
@@ -4026,6 +4072,7 @@ public sealed record Snapshot(
     string RegardTitle,
     int Wrath,
     string WrathTitle,
+    int Raids,
     int Rations,
     int Hide,
     int RawMeat,

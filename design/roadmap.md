@@ -35,11 +35,10 @@ asking at the first wake, five original folk, seven pasts, shapings, the preciou
 thing, and stage 2's burdens, vows, remembered face, and keepsake thread. The
 **companions pillar opened with guests whole (D-097)**: the ally engine plus the
 huntsman's-debt arc, loyalty beats, full death weight, and the paid ending, run live by
-every journey. The **Death's-Toll layer opened (D-098 stage 1)**: the deterministic
-ledger, three scars matched to their deaths, and their live weight; the cure roads are
-the gated stage 2. The remaining **breadth holes**: the scar cure roads, the summon
-slot and pack animal, and two of the four activity families (crime, town-life). Rough
-fill levels:
+every journey. The **Death's-Toll pillar shipped whole (D-098)**: the deterministic
+ledger, three scars matched to their deaths, their live weight, and each one's costly
+cure road. The remaining **breadth holes**: the summon slot and pack animal, and two
+of the four activity families (crime, town-life). Rough fill levels:
 
 - Attributes: **6 of 7** mechanically active (D-091 wakes Mind and Will; Presence is the last inert one)
 - Skills: **9 of ~18** (five combat, Hunting from D-070, Cooking from D-073, Survival from D-074, Spellcraft from D-091)
@@ -64,7 +63,7 @@ fill levels:
 - Major vision pillars: all broken ground (magic opened D-091; the craft family
   opened D-073/D-090; character creation shipped both stages, D-092/D-093; companions
   opened with guests whole, D-097: the summon slot and pack animal remain; the
-  Death's Toll opened D-098: the cure roads are its gated stage 2)
+  Death's Toll shipped whole, D-098: ledger, scars, and cure roads)
 
 ---
 
@@ -277,12 +276,16 @@ fill levels:
 - [x] Death's Toll meter: deterministic ledger, fills on death (boss hands fill more, Will
   shaves it), drains a turn at a time, converts above the line with no roll, sidebar rail,
   wiped at the waygate (D-098 stage 1)
-- [~] Scars: three land matched to the death that made them (the taken eye dulls the read a
+- [x] Scars: three land matched to the death that made them (the taken eye dulls the read a
   tier, the crushed hand asks a breath more wind a swing, the haunted look cools regard and
-  dears bread), carried across worlds; the costly cure roads are stage 2 (D-098)
-- [ ] Scar cure roads (stage 2, gated): the surgeon's knife for the eye, the smith's brace
-  for the hand (D-009's superior-prosthetic hook), a pilgrimage rite for the look; scar
-  talk hooks; the dragging step and further catalog; tier-scaled fill (D-011) (D-098)
+  dears bread), carried across worlds until cured (D-098)
+- [x] Scar cure roads: the stillroom's longest work for the eye (30c), the smith's brace
+  for the hand (24c, D-009's prosthetic hook), the haunting sung to rest at the songhall
+  (8 essence, the walk is the pilgrimage); every mend on the Aegis's parity line; the
+  marks-they-carry talk storylet (once per world) (D-098 stage 2)
+- [ ] Toll/scar follow-ons: pilot cure policy, the brace's superior mechanical edge,
+  scar/scar-mended facts for story consumers, the dragging step and further catalog,
+  tier-scaled fill (D-011), the sheet showing marks beside burdens (D-098)
 
 ### Narrative & dialogue
 
@@ -331,6 +334,7 @@ fill levels:
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-19: **D-098 stage 2: the cure roads.** Each scar's way back, on the bench it belongs to, always listed with a state-read label (D-041's law), dear on purpose. The eye: the stillroom's longest work (30 coin; the Keen read restored whole). The hand: the smith's brace (24 coin; jointed iron built TO the crookedness; D-009's superior-prosthetic hook in fiction, mechanical edge deferred). The look: sung to rest at the songhall (8 essence, paid in what deeds weigh; the walk out is the pilgrimage; bread and regard warm the same turn). One shared Aegis parity line per mend. Plus the vision's dialogue-hook clause: the marks-they-carry Talk storylet, any villager, once per world. Save v48 -> v49 (three benches grew an entry; a scarred talk draws a new storylet). 467 tests green (5 new); twins identical; sim replay exact; every stage-1 baseline held to the digit (the pilot walks no cure road yet: new tracked follow-on). Also tracked: brace's mechanical edge, scar facts, dragging step, tier fill, sheet display.
 - 2026-07-19: **D-098 stage 1: the Death's Toll, and the scars matched to their deaths.** The last untouched pillar (D-009) opens as a deterministic ledger: deaths fill the count (100; a thegn's or hart's hand 160; Will above baseline shaves a tenth per point, floored 40), it drains 1 a turn, and a death at the line (20) or above converts, no roll: the judgment reads the count as it stood, THEN this death's fill lands, so a first death always warns and never scars, and two deaths within the Wounded span (80 turns) is what clustering means. The scar matches the death (uncanny kinds -> the haunted look; thrown/lofted -> the taken eye; iron close in -> the crushed hand; shapeless -> fixed order), replay-clean, zero new rng. Weights on surfaces the game already reads: the eye steps ReadOf down a whole tier, the hand adds 1 stamina per swing, the look docks every regard gain by 1 and dears bread by a coin. TOLL on the sidebar (red at the line), scars named under it, the drain's crossing spoken, one Aegis scar line on the motif. Waygate wipes the count; scars cross until cured (cure roads = gated stage 2). Save v47 -> v48. 462 tests green (9 new TollTests); twins identical + sim replay exact on master AND scarred seed 1; sweep: seeds 1/88888 land the haunted look live and still finish, seed 99's eight spaced deaths land nothing, every v47 baseline held to the digit. Journey report grew a scars stat.
 - 2026-07-19: **D-097 stage 2: the huntsman's debt, the bond's ledger, and the full weight.** The woodward, once the stead has bled, sets down the hide-scales off a talk and walks as a 16-HP huntsman until the camp breaks (world scope, once per world; their NPC steps off the map). Loyalty beats bank from all four Q&A sources (shared blood within 3, each tending, each fireside rest: mends whole + one line of who they are, every raider felled). A fallen guest writes guest-fell, guest-beloved at 3+ beats, costs the stead a point of shame, and the bench stands empty ALL WORLD (the woodward never comes home); the memorial storylet cashes the beloved fact in any villager's mouth, once. The paid arc: farewell at the cold fire-pits, portfolio fact, NPC home, +1 regard. Save v46 -> v47. The dividend: the pilot already works the woodward's bench, so EVERY journey now casts the huntsman live: new master baseline 10313 turns/2 deaths/10705 keys, sweep deaths 5/4/8/6 (the huntsman pulls their weight). 453 tests green (4 new GuestArcTests); twins identical; sim replay exact.
 - 2026-07-19: **D-097 the one who walks with you: the guest engine (companions stage 1).** The D-024 pillar breaks ground, guests first (Q&A-settled: they build the ally engine the summon and mule reuse). Guest entity with role-derived competence (a huntsman's blow 2-5, a crofter's 1-2: who they are, not a slider), one at a time, world-bound. They follow at the shoulder, hold ground on order, fight the adjacent foe to their measure (kills route through HarvestRemains: wrath and site-clearing stay honest; never a severed one, a hart, or the dormant), and take real blows: a raider the guest stands nearer turns on them, and a guest on any intent's resolved cell takes the roll whole (no stance, no iron, no Aegis). One key 'o', contextual: tend a hurt guest from the satchel (draught 8 / sprig 4 / bread 2, always a turn) or hold-here/with-me (free off the fight, a turn under live steel, D-094's grammar). Place-trading steps; doors, exits, and the death-wake shared; a living guest never crosses. Stage-1 death is a stark line + one Aegis line; the full weight is stage 2. NO save bump (fourth no-bump): no journaled path casts a guest, dice roll only when a body is struck: master baseline and sweep held to the digit. 449 tests green (11 new GuestTests). Stage 2 next: the huntsman's-debt arc, loyalty beats, death weight, farewell/portfolio.

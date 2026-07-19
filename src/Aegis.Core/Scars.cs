@@ -56,6 +56,17 @@ public static class DeathsToll
         return ScarId.CrushedHand;
     }
 
+    // The cure roads (D-098 stage 2, D-009's "surgeon, pilgrimage, salve"):
+    // each scar's own way back, dear enough that the mark is lived with first.
+    // The eye is the stillroom's longest work; the hand takes the smith's
+    // brace (the superior-prosthetic hook, its mechanical edge still deferred);
+    // what haunts is sung to rest at the songhall, paid in essence because it
+    // is soul-stuff, and the walk out to the hall is the pilgrimage.
+
+    public const int EyeCureCoin = 30;
+    public const int BraceCoin = 24;
+    public const int LayingEssence = 8;
+
     public static string NameOf(ScarId id) => id switch
     {
         ScarId.TakenEye => "the taken eye",

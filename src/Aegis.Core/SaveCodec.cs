@@ -170,10 +170,13 @@ namespace Aegis.Core;
 /// whose weight reaches combat (a crushed hand's dearer swings), the stead's
 /// ledgers, and the bread price, so a v47 journal with two close deaths
 /// replays into a different bearer from the scar onward.
+/// v49 when D-098 stage 2 opened the cure roads: the stillroom, the smith,
+/// and the skald each grew a bench entry, and a scarred talk draws a new
+/// storylet, so a v48 journal's digits at those counters land differently.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 48;
+    public const int Version = 49;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

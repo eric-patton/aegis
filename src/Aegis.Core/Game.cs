@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying }
 
 /// <summary>
 /// The deterministic game engine. No console, no I/O, no wall clock: state advances
@@ -1890,14 +1890,23 @@ public sealed class Game
             // The smith's teaching entry (D-052): always listed, like the stock,
             // so the repair entry's digit never shifts under a buyer's fingers.
             offers.Add((TradeGood.Lesson, LessonCatalog.IdOf(LessonId.TendedIron), LessonLabel(LessonId.TendedIron)));
+            // The crushed hand's road back (D-098 stage 2): in the always-listed
+            // block, before the conditional repair, so its digit never shifts.
+            offers.Add((TradeGood.Brace, "", BraceLabel()));
             if (RepairPrice > 0)
                 offers.Add((TradeGood.Repair, "", $"Have your gear seen to ({RepairPrice} coin)"));
         }
         // The patron's ladder (D-054): every deed always listed, in price order,
         // states and all, so the digits never shift under a patron's fingers.
         if (npc.Kind == NpcKind.Skald)
+        {
             foreach (var def in PatronCatalog.All)
                 offers.Add((TradeGood.Pledge, PatronCatalog.IdOf(def.Id), PledgeLabel(def)));
+            // The haunted look's road back (D-098 stage 2): what followed the
+            // bearer home is sung to rest where the songs live, and the walk
+            // out to the hall is the pilgrimage.
+            offers.Add((TradeGood.Laying, "", LayingLabel()));
+        }
         return offers;
     }
 
@@ -2047,6 +2056,9 @@ public sealed class Game
             // The craft itself (D-090): appended, so the older digits hold (D-041).
             offers.Add((TradeGood.Draught, "", DraughtLabel()));
             offers.Add((TradeGood.Lesson, LessonCatalog.IdOf(LessonId.Stillcraft), LessonLabel(LessonId.Stillcraft)));
+            // The taken eye's road back (D-098 stage 2): appended and always
+            // listed, so the older digits hold (D-041's law).
+            offers.Add((TradeGood.Surgery, "", SurgeryLabel()));
         }
         return offers;
     }
@@ -2078,6 +2090,82 @@ public sealed class Game
         Player.Herb -= DraughtHerbs;
         Player.Draughts++;
         Log.Add(Turn, $"{TalkNpc!.Name} strips your sprigs into the pot, steeps them slow, and pours the green of it off into a stoppered vial. \"Drink it where the road hurts. It knows its work.\" ({Player.Draughts} vial{(Player.Draughts == 1 ? "" : "s")} carried)", LogTone.Reward);
+    }
+
+    // The cure roads (D-098 stage 2, paying D-009's "surgeon, pilgrimage,
+    // salve"): each scar's own way back to parity, on the bench it belongs to,
+    // every entry always listed with a state-read label so no digit ever
+    // shifts (D-041's law). The prices are dear on purpose: a mark is lived
+    // with before it is bought off.
+
+    /// <summary>The taken eye's entry at the stillroom (D-098 stage 2).</summary>
+    private string SurgeryLabel() => Player.HasScar(ScarId.TakenEye)
+        ? $"Have the eye seen to ({DeathsToll.EyeCureCoin} coin)"
+        : "Have an eye seen to (yours are your own)";
+
+    private void TryEyeSurgery()
+    {
+        if (!Player.HasScar(ScarId.TakenEye))
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name} tilts your chin to the light, looks long, and lets it go. \"Both of those are your own. Come to me if the road ever says otherwise.\"");
+            return;
+        }
+        if (Player.Coin < DeathsToll.EyeCureCoin)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"That work is my longest, and the simples for it dear: {DeathsToll.EyeCureCoin} coin, and you hold {Player.Coin}. I will not do it halfway.\"");
+            return;
+        }
+        Player.Coin -= DeathsToll.EyeCureCoin;
+        Player.Scars.Remove(ScarId.TakenEye);
+        Log.Add(Turn, "The work takes the whole of an afternoon: her thinnest blade, three of the ranked simples steeped to a paste, and a stillness you did not know your body kept. When the cloth comes off, the world has its depth back.", LogTone.Reward);
+        Log.Add(Turn, $"\"{AegisVoice.ScarMendedLine}\"", LogTone.Aegis);
+    }
+
+    /// <summary>The crushed hand's entry at the smith (D-098 stage 2, D-009's prosthetic hook).</summary>
+    private string BraceLabel() => Player.HasScar(ScarId.CrushedHand)
+        ? $"Have a brace forged for the hand ({DeathsToll.BraceCoin} coin)"
+        : "Have a brace forged (your hands are whole)";
+
+    private void TryForgeBrace()
+    {
+        if (!Player.HasScar(ScarId.CrushedHand))
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name} turns your hands over once, like stock they will not be buying. \"Whole. Bring me a hand the road has ruined and we will talk iron.\"");
+            return;
+        }
+        if (Player.Coin < DeathsToll.BraceCoin)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Jointed work, that. Thin iron, and a lot of measuring: {DeathsToll.BraceCoin} coin, and you hold {Player.Coin}.\"");
+            return;
+        }
+        Player.Coin -= DeathsToll.BraceCoin;
+        Player.Scars.Remove(ScarId.CrushedHand);
+        Log.Add(Turn, "The smith measures the wrong-set knuckles twice and builds to the crookedness instead of against it: thin straps of worked iron, jointed where the hand forgot how, laced snug over the old break. You make a fist. It answers like a fist.", LogTone.Reward);
+        Log.Add(Turn, "\"Wear it to bed. It grips steadier than the bone ever did; do not tell the bone.\"", LogTone.Info);
+        Log.Add(Turn, $"\"{AegisVoice.ScarMendedLine}\"", LogTone.Aegis);
+    }
+
+    /// <summary>The haunted look's entry at the songhall (D-098 stage 2): the pilgrimage's end.</summary>
+    private string LayingLabel() => Player.HasScar(ScarId.HauntedLook)
+        ? $"Have what followed you sung to rest ({DeathsToll.LayingEssence} essence)"
+        : "Have a haunting sung to rest (nothing follows you)";
+
+    private void TryLayHaunting()
+    {
+        if (!Player.HasScar(ScarId.HauntedLook))
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name} studies you a moment, unhurried. \"Nothing walks behind you that the songs would want. Keep it so.\"");
+            return;
+        }
+        if (Player.Essence < DeathsToll.LayingEssence)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"A laying is paid in what deeds weigh, not in coin: {DeathsToll.LayingEssence} essence, and you carry {Player.Essence}. Go and do, then come back.\"");
+            return;
+        }
+        Player.Essence -= DeathsToll.LayingEssence;
+        Player.Scars.Remove(ScarId.HauntedLook);
+        Log.Add(Turn, "The skald hears the whole of it out, and then sings: not a song about you, a song about it, named and measured and given its own verse to live in, where the songs keep what is done. The weight behind your eyes goes with the last line.", LogTone.Reward);
+        Log.Add(Turn, $"\"{AegisVoice.ScarMendedLine}\"", LogTone.Aegis);
     }
 
     /// <summary>The wound-dressing entry (D-081): priced when there is a wound to dress.</summary>
@@ -2119,6 +2207,7 @@ public sealed class Game
                 case TradeGood.Lesson: TryLearnLesson(arg); break;
                 case TradeGood.Mending: TryBuyMending(); break; // the stillroom's table (D-081)
                 case TradeGood.Draught: TryDrawDraught(); break; // the steeping (D-090)
+                case TradeGood.Surgery: TryEyeSurgery(); break; // the eye's road back (D-098)
             }
             // The labels move with the state (hides sold, lesson taken); rebuild so the
             // bench reads true, and the digits keep their order under the buyer's hand.
@@ -2374,6 +2463,8 @@ public sealed class Game
                 case TradeGood.Lesson: TryLearnLesson(arg); break;
                 case TradeGood.Pledge: TryPledgeDeed(arg); break;
                 case TradeGood.Trade: OpenTradeMenu(); break;
+                case TradeGood.Brace: TryForgeBrace(); break;   // the hand's road back (D-098)
+                case TradeGood.Laying: TryLayHaunting(); break; // the look's road back (D-098)
             }
             return;
         }

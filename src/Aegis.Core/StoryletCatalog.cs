@@ -1157,5 +1157,22 @@ public static class StoryletCatalog
                 ("\"That is how the mortal ones hold a name, bearer: they pass it hand to hand so it stays warm. I keep a colder ledger. I find I do not prefer it.\"", LogTone.Aegis),
             ],
         },
+
+        // The marks they carry (D-098 stage 2): the vision promised every scar
+        // is a dialogue hook. Once per world, a villager notices what the road
+        // has kept of the bearer, and does not pretend otherwise.
+        new Storylet
+        {
+            Id = "the-marks-they-carry",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.World,
+            Priority = 6,
+            When = g => g.TalkNpc?.Kind == NpcKind.Villager && g.Player.Scars.Count > 0,
+            Lines =
+            [
+                ("The villager's eyes go where stead eyes always go, to what the road has kept of you, and they do not pretend otherwise. \"You have paid for standing between us and it. We see that here. We are not in the habit of forgetting it.\"", LogTone.Info),
+                ("\"They keep their own count of you, bearer. A rougher arithmetic than mine, and kinder.\"", LogTone.Aegis),
+            ],
+        },
     ];
 }

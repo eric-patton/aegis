@@ -44,6 +44,9 @@ public static class AegisVoice
     /// <summary>Spoken when the Death's Toll converts (D-098): the motif's cost made literal.</summary>
     public const string ScarLine = "I caught you. I did not catch all of you. All is counted, and this is what the counting costs.";
 
+    /// <summary>Spoken when a scar's cure road is walked to its end (D-098 stage 2).</summary>
+    public const string ScarMendedLine = "Parity. All is counted, and this once, the count gives back.";
+
     public static string DeathLine(int deathCount, int register = 1)
     {
         if (deathCount <= 1) return FirstDeathLine;

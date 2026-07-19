@@ -286,6 +286,40 @@ hook, a pilgrimage rite for the look), scar talk hooks and NPC memory of the mai
 dragging step and further catalog, hostility tiers speeding the fill (D-011's clause), and
 the sheet showing the marks beside the burdens.
 
+**Stage 2 (same date): the cure roads.** Each scar's way back landed on the bench it
+belongs to, every entry always listed with a state-read label so no digit ever shifts
+(D-041's law), and the prices dear on purpose, so a mark is lived with before it is bought
+off. The taken eye is the **stillroom's longest work** (30 coin, appended to the herbwife's
+bench): her thinnest blade and three of the ranked simples, and the world has its depth
+back, the read restored to the tier the bank and Wits earn. The crushed hand takes the
+**smith's brace** (24 coin, in the always-listed block before the conditional repair):
+jointed iron built to the crookedness instead of against it, D-009's superior-prosthetic
+hook landed in fiction ("it grips steadier than the bone ever did"), its mechanical edge
+deliberately deferred. The haunted look is **sung to rest at the songhall** (8 essence,
+after the skald's pledges): paid in what deeds weigh rather than coin, because what
+followed you back is soul-stuff, and the walk out to the hall is the pilgrimage D-009
+asked for; the laying gives the haunting its own verse to live in, and the bread price
+and the regard warm again the same turn. Every mend speaks one shared Aegis line on the
+motif ("Parity. All is counted, and this once, the count gives back."). Alongside, the
+vision's every-scar-is-a-dialogue-hook clause opens: a new Talk storylet (the marks they
+carry, priority 6, once per world) has any villager notice what the road has kept of a
+scarred bearer, with the Aegis's aside on the stead's rougher, kinder arithmetic. Save
+v48 to v49 (three benches grew an entry and a scarred talk draws a new storylet). Verified:
+467 tests green (five new: the eye's road refusing credit then restoring the Keen read
+whole, the brace, the laying warming the bread price back, the whole bearer refused every
+road with their coin intact, and the stead noticing the marks once per world through the
+memorial's own retry pattern); twin journeys byte-identical, sim replay exact, and every
+stage-1 baseline held to the digit (master 10313/2/10705; sweep unchanged, seeds 1 and
+88888 still finishing scarred) because the pilot walks no cure road yet. Options set
+aside: the laying at the Unbinder (their menu is gated on unbindings-left, which would
+lock a cure out, and the unbind digits are a fixed 1-7 surface); coin for the laying (the
+skald's other business is already coin, and a haunting is not bought); free cures at high
+regard (the stead's warmth already prices bread, and parity should cost the bearer).
+Deferred: a pilot cure policy (journeys currently carry their hauntings home, honest but
+unexercised); the brace's superior mechanical edge; scar and scar-mended facts for richer
+story consumers; the dragging step and further catalog; tier-scaled fill (D-011); the
+sheet showing the marks beside the burdens.
+
 ### D-097: The one who walks with you: guests, the huntsman's debt, and the bond's ledger (2026-07-19)
 The companions pillar (D-024) breaks ground, guests first by Q&A: the mortal, story-scoped
 ally is the pillar's heart and builds the walking/fighting/dying engine the summon slot and

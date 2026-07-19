@@ -162,6 +162,111 @@ public class TollTests
         Assert.Equal(2, game.Regard);
     }
 
+    private static char OfferKey(Game game, TradeGood good) =>
+        (char)('1' + game.Topics.Count + game.Offers.ToList().FindIndex(o => o.Good == good));
+
+    private static char BenchKey(Game game, TradeGood good) =>
+        (char)('1' + game.TradeOffers.ToList().FindIndex(o => o.Good == good));
+
+    [Fact]
+    public void TheEyesRoadBack_IsTheStillroomsLongestWork()
+    {
+        var game = new Game(42);
+        game.Player.Scars.Add(ScarId.TakenEye);
+        game.Player.WitnessTell(MonsterKind.Goblin);
+        game.Player.WitnessTell(MonsterKind.Goblin);
+        game.Player.WitnessTell(MonsterKind.Goblin);
+        Assert.Equal(ReadTier.Read, game.Player.ReadOf(MonsterKind.Goblin));
+
+        var herbwife = game.World.Npcs.First(n => n.Id == "npc_herbwife");
+        NpcTests.BumpNpc(game, herbwife);
+        game.ApplyKey(OfferKey(game, TradeGood.Trade));
+        char surgery = BenchKey(game, TradeGood.Surgery);
+
+        // She does not work on credit, and does not do it halfway.
+        game.Player.Coin = DeathsToll.EyeCureCoin - 1;
+        game.ApplyKey(surgery);
+        Assert.True(game.Player.HasScar(ScarId.TakenEye));
+
+        game.Player.Coin = DeathsToll.EyeCureCoin;
+        game.ApplyKey(surgery);
+        Assert.False(game.Player.HasScar(ScarId.TakenEye));
+        Assert.Equal(0, game.Player.Coin);
+        Assert.Equal(ReadTier.Keen, game.Player.ReadOf(MonsterKind.Goblin)); // the depth is back
+        Assert.Contains(game.Log.Recent(4), e => e.Text.Contains("the count gives back"));
+    }
+
+    [Fact]
+    public void TheHandsRoadBack_IsTheSmithsBrace()
+    {
+        var game = new Game(42);
+        game.Player.Scars.Add(ScarId.CrushedHand);
+        game.Player.Coin = DeathsToll.BraceCoin;
+        NpcTests.BumpNpc(game, game.World.Smith);
+        game.ApplyKey(OfferKey(game, TradeGood.Brace));
+
+        Assert.False(game.Player.HasScar(ScarId.CrushedHand));
+        Assert.Equal(0, game.Player.Coin);
+    }
+
+    [Fact]
+    public void TheLooksRoadBack_IsSungToRest_AtTheSonghall()
+    {
+        var game = new Game(42);
+        game.Player.Scars.Add(ScarId.HauntedLook);
+        int fairPrice = game.RationPrice - 1;
+        NpcTests.BumpNpc(game, game.World.Skald);
+        char laying = OfferKey(game, TradeGood.Laying);
+
+        // A laying is paid in what deeds weigh, and the bearer has not done enough.
+        game.Player.Essence = DeathsToll.LayingEssence - 1;
+        game.ApplyKey(laying);
+        Assert.True(game.Player.HasScar(ScarId.HauntedLook));
+
+        game.Player.Essence = DeathsToll.LayingEssence;
+        game.ApplyKey(laying);
+        Assert.False(game.Player.HasScar(ScarId.HauntedLook));
+        Assert.Equal(0, game.Player.Essence);
+        Assert.Equal(fairPrice, game.RationPrice); // the bread forgives you too
+    }
+
+    [Fact]
+    public void TheWholeBearer_IsRefusedEveryRoad_AndKeepsTheirCoin()
+    {
+        var game = new Game(42);
+        game.Player.Coin = 99;
+        game.Player.Essence = 99;
+
+        NpcTests.BumpNpc(game, game.World.Smith);
+        game.ApplyKey(OfferKey(game, TradeGood.Brace));
+        game.ApplyKey(' ');
+        NpcTests.BumpNpc(game, game.World.Skald);
+        game.ApplyKey(OfferKey(game, TradeGood.Laying));
+        game.ApplyKey(' ');
+
+        Assert.Equal(99, game.Player.Coin);
+        Assert.Equal(99, game.Player.Essence);
+    }
+
+    [Fact]
+    public void TheStead_NoticesTheMarks_OncePerWorld()
+    {
+        var game = new Game(42);
+        game.Player.Scars.Add(ScarId.CrushedHand);
+        var mourner = game.World.Npcs.First(n => n.Kind == NpcKind.Villager);
+
+        // Higher-priority one-shot talk beats may claim the first talks; they
+        // drain, and the noticing keeps (the D-097 memorial's own pattern).
+        bool noticed = false;
+        for (int i = 0; i < 5 && !noticed; i++)
+        {
+            NpcTests.BumpNpc(game, mourner);
+            noticed = game.Log.Recent(8).Any(e => e.Text.Contains("not in the habit of forgetting"));
+            game.ApplyKey(' ');
+        }
+        Assert.True(noticed);
+    }
+
     [Fact]
     public void TheCrossing_WipesTheCount_AndTheScarsCross_WithTheBody()
     {

@@ -136,8 +136,8 @@ public class SonghallTests
         game.Player.Coin = 0;
 
         Cross(game);
-        // Nothing else weighed: the pledge alone, at half again its coin.
-        Assert.Equal(30, game.Player.Legend);
+        // The pledge at half again its coin (30), plus the stead's friend's-welcome purse (5, D-077).
+        Assert.Equal(30 + 5, game.Player.Legend);
         Assert.Empty(game.Player.PledgedDeeds);
         Assert.Equal([PatronDeedId.RaisedStone], game.Player.PatronDeeds);
         Assert.Contains(game.Log.Recent(14), e => e.Text.Contains("at half again its coin"));
@@ -159,8 +159,9 @@ public class SonghallTests
         game.Player.Coin = 0;
 
         Cross(game);
-        // Legend 90 is standing 1: one loaf for the songs, one from the hall.
-        Assert.Equal(90, game.Player.Legend);
+        // Standing 1: one loaf for the songs, one from the hall. Legend is the pledge
+        // weighed at half again (90) plus the stead's friend's-welcome purse (5, D-077).
+        Assert.Equal(90 + 5, game.Player.Legend);
         Assert.Equal(2, game.Player.Rations);
         Assert.Contains(game.Log.Recent(14), e => e.Text.Contains("bread has been set out"));
     }
@@ -178,8 +179,10 @@ public class SonghallTests
         game.ApplyKey(HushedKey());
         game.ApplyKey('>');
 
-        // The deed is weighed: the true ledger does not hush. The traces do.
-        Assert.Equal(30, game.Player.Legend);
+        // The deed is weighed: the true ledger does not hush. The traces do. Nor does
+        // the hushed name silence the stead's friend's-welcome purse (5, D-077), which
+        // rides in on top of the pledge weighed at half again (30).
+        Assert.Equal(30 + 5, game.Player.Legend);
         Assert.Equal([PatronDeedId.RaisedStone], game.Player.PatronDeeds);
         Assert.False(game.World.Facts.Exists("patronage", "raised_stone"));
         Assert.Equal(0, game.Player.Rations);
@@ -207,7 +210,7 @@ public class SonghallTests
         Assert.Equal(3, game.Player.PledgedDeeds.Count);
 
         Cross(game);
-        Assert.Equal(300, game.Player.Legend);
+        Assert.Equal(300 + 5, game.Player.Legend); // three pledges weighed at half again (300) + the friend's welcome (5, D-077)
 
         EnterHall(game);
         StepOnto(game, FindTile(game.CurrentSite!.Map, Terrain.Hearth));

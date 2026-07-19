@@ -37,8 +37,9 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 - Skills: **8 of ~18** (five combat, Hunting from D-070, Cooking from D-073, Survival from D-074)
 - Activity families: **wilderness-living core built** (hunting, selling, cooking, foraging: D-070..D-074) and the **craft family opened** (cooking); crime and town life unbuilt
 - Launch story templates: **2** built (of 3 named, 4-5 planned)
-- **Factions begun (D-076):** the local-reputation foundation is in (the home stead's regard,
-  a per-world Fame earned by perceivable deeds); Infamy, a keyed multi-faction ledger, boons,
+- **Factions begun (D-076, D-077):** the local-reputation foundation is in (the home stead's
+  regard, a per-world Fame earned by perceivable deeds) and it now pays (D-077, the friend's
+  welcome: a coin gift at the friend rung); Infamy, a keyed multi-faction ledger, richer boons,
   and the coarse tick are the pillar's remaining spine
 - Major vision pillars still unbuilt: magic, companions, crafting, character creation, Toll/scars
 
@@ -56,11 +57,13 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
   open in this phase: the rest of the wilderness family, and growing the wood's-edge bench
   (cooking, foraged-goods sale). Deferred alternative for a next lane: **character
   creation** (races + backgrounds).
-- **Phase 2: A keystone pillar (current).** **Factions started (D-076):** the local-reputation
-  foundation shipped (the stead's regard, perceivable-deed earning, per-world reset). Next in
-  this phase: regard-gated boons (first save-format touch), the Infamy half, a keyed
-  multi-faction ledger, a second faction with a relationship, then D-023's coarse-tick state
-  vectors. **Magic** remains the alternative keystone (activates Mind/Will and the caster build).
+- **Phase 2: A keystone pillar (current).** **Factions started (D-076, D-077):** the
+  local-reputation foundation shipped (the stead's regard, perceivable-deed earning, per-world
+  reset) and its first boon (D-077, the friend's welcome, a coin gift at the friend rung; the
+  first faction save-format touch). Next in this phase: richer regard-gated boons (a friend's
+  price, gated access, a rumor kept from strangers), the Infamy half, a keyed multi-faction
+  ledger, a second faction with a relationship, then D-023's coarse-tick state vectors.
+  **Magic** remains the alternative keystone (activates Mind/Will and the caster build).
 - **Phase 3: Remaining pillars & stakes.** Companions, the Death's-Toll/scar layer, the
   other activity families, and the skills those unlock.
 - **Ongoing: Breadth & depth.** Catalog growth (templates, monsters, tiers, gear, oaths),
@@ -142,8 +145,10 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 - [~] Fame/Infamy dual reputation per faction (D-023, D-076): local Fame with the home stead
   built (the regard ladder, perceivable-deed earning, per-world reset, HUD + greeting surfacing);
   the Infamy half and the keyed multi-faction ledger are unbuilt
-- [ ] Regard-gated boons and access (a friend's welcome, a gift at a rung, access a stranger is
-  refused) (D-076): the next increment, and the first faction work to touch the save format
+- [~] Regard-gated boons and access (D-076, D-077): the friend's welcome shipped (D-077, the
+  first faction save-format touch, v30): the stead's folk gift a coin purse when they first
+  hold the bearer a friend, deed-earned so the hushed name never silences it. Richer boons
+  (a friend's price, a gift of goods, a topic/rumor kept from strangers, gated access) pending
 - [ ] A second faction with a relationship to the stead (the raiders as its standing enemy, so a
   blow to one is a favor to the other) (D-076)
 - [ ] Faction state-vectors on a coarse tick, transitions write facts + narration hooks (D-023, vision §2)
@@ -209,6 +214,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-19: **D-077 the friend's welcome, regard's first boon.** Regard now pays: the first time a stead holds the bearer a friend (rung 2, reached by clearing the camp), its folk gift a coin purse. Coin not bread (stays clear of the arrival-welcome's larder); once per stead (rung-cross gated); NOT silenced by the hushed name (deed-earned, not name-carried). Save v29 -> v30, the first faction touch on the format. 343 tests green (4 new welcome tests + 6 honest crossing-math updates for the +5); byte-identical + emit->sim exact + sweep unchanged in shape. Partial-checked regard-gated boons.
 - 2026-07-19: **D-076 factions, first rung: the stead's regard.** The keystone pillar begins. The home stead now keeps a per-world local Fame for the bearer, earned only by deeds it can perceive (camp cleared +3, barrow stilled +2; remote deep-site deeds pass none), on a plain ladder (a known face / a friend to the stead / the stead's own), surfaced on the live HUD and in greetings, reset at every crossing, set beside Legend's cross-world Standing not merged with it. No save-format change (regard gates nothing mechanical yet, so old journals replay identically). 339 tests green (9 new RegardTests); byte-identical + emit-keys->sim exact + five-seed sweep (all peak at the stead's own). Partial-checked Fame/Infamy; new tracked items: regard-gated boons (next, first save touch), a second faction with a relationship, the Infamy half, the coarse tick.
 - 2026-07-18: **D-075 bot forages and sells herbs.** The autopilot now deliberately gathers herb spots before crossing and sells the satchel at the bench, so the whole wilderness family (hunt, sell, cook, forage, sell) is exercised live end to end. Master seed forages 44 sprigs for 176 coin, arming it better so deaths fall 7 -> 5. Cli-only, no engine/save touch. Checked off the bot-forage item.
 - 2026-07-18: **D-074 foraging shipped.** Herbs grow in every world (own worldgen stream), picked by anyone on the step, growing a new Survival skill (8th) and sold at the woodward's bench for coin. Rounds out the wilderness-living core (hunt/sell/cook/forage). Bot forages incidentally. Checked off Survival, partial wilderness/bench. Save v28 -> v29. New tracked item: bot seeks + sells herbs.

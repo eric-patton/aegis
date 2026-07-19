@@ -2863,14 +2863,39 @@ public sealed class Game
         if (amount <= 0) return;
         int rungBefore = SteadRegard.RungFor(Regard);
         Regard += amount;
+        int rungAfter = SteadRegard.RungFor(Regard);
         Log.Add(Turn, line, LogTone.Reward);
-        if (SteadRegard.RungFor(Regard) > rungBefore)
+        if (rungAfter > rungBefore)
             Log.Add(Turn, $"In {World.SettlementName} you are {SteadRegard.TitleOf(Regard)} now.", LogTone.Reward);
+        // The friend's welcome (D-077): the first time a stead comes to hold the
+        // bearer a friend, its folk press what they can spare on the one who has
+        // stood for them. Regard only rises in a world, so this crosses exactly
+        // once per stead. It is deed-earned, not name-carried, so the hushed name
+        // (D-051) never silences it: the songs may go unsung and the gratitude still stands.
+        if (rungBefore < SteadRegard.FriendRung && rungAfter >= SteadRegard.FriendRung)
+            GiveFriendsWelcome();
         if (!Player.RegardLineHeard)
         {
             Player.RegardLineHeard = true;
             Log.Add(Turn, "\"A nearer weighing than mine, bearer. The songs carry your name between worlds; this is only these folk, this valley, this while. It does not cross the arch with you. It is the warmer of the two all the same.\"", LogTone.Aegis);
         }
+    }
+
+    /// <summary>
+    /// The stead's own thanks (D-077), regard's first boon: deliberately the
+    /// opposite number to Legend's arrival-welcome (D-048), which the songs set out
+    /// before the bearer has lifted a hand. This is earned here, by these folk, for
+    /// what was done under their own roof. A modest purse, coin the stead pooled
+    /// between them: it always lands (D-023's rule, never a change the bearer cannot
+    /// feel) and, unlike the regard that bought it, it is the bearer's to carry off,
+    /// crossing the arch as coin does. Kept to coin, not bread, so it stays clear of
+    /// the arrival-welcome's own larder rather than piling onto it.
+    /// </summary>
+    private void GiveFriendsWelcome()
+    {
+        const int giftCoin = 5;
+        Player.Coin += giftCoin;
+        Log.Add(Turn, $"The folk of {World.SettlementName} gather what coin they can spare for the one who has stood for them: a purse of {giftCoin}, pressed on you with both hands.", LogTone.Reward);
     }
 
     private void CheckSiteCleared(Site site)

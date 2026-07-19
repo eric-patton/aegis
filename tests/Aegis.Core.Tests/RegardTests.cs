@@ -148,6 +148,69 @@ public class RegardTests
         Assert.Contains(game.Log.Recent(10), e => e.Text.Contains("A stranger, then"));
     }
 
+    // ---- D-077: the friend's welcome, regard's first boon ----
+
+    [Fact]
+    public void TheFriendsWelcome_LandsWhenTheSteadFirstHoldsYouAFriend()
+    {
+        var game = new Game(42);
+        Assert.Equal(0, game.Player.Coin);
+
+        game.Debug_ClearCamp(); // regard 0 -> 3: crosses into the friend rung
+
+        Assert.Equal(5, game.Player.Coin); // the stead's pooled purse
+        Assert.Contains(game.Log.Recent(12), e => e.Text.Contains("gather what coin they can spare"));
+    }
+
+    [Fact]
+    public void TheFriendsWelcome_ComesOncePerStead()
+    {
+        // Tier 2: the barrow raises regard to rung 1 (no welcome yet), and the camp
+        // then crosses into the friend rung, so the gift lands exactly once even
+        // though two deeds moved the regard.
+        var game = CrossTo(42, 2);
+        Assert.Equal(0, game.Player.Coin); // world 1's gift converted to Legend at the crossing
+
+        game.Debug_ClearSite(SiteKind.Barrow); // +2 -> rung 1, no welcome
+        Assert.Equal(0, game.Player.Coin);
+
+        game.Debug_ClearCamp(); // +3 -> rung 3, crosses the friend rung: welcome once
+        Assert.Equal(5, game.Player.Coin); // 5, not 10: it did not fire again on the barrow's rung-1 step
+        Assert.Single(game.Log.Recent(15), e => e.Text.Contains("gather what coin they can spare")); // this world's only
+    }
+
+    [Fact]
+    public void TheFriendsWelcome_DoesNotComeBelowTheFriendRung()
+    {
+        // Rung 1 (a known face) is not yet a friend, so no purse: at tier 2 the
+        // barrow alone lifts regard to rung 1 and nothing is given.
+        var game = CrossTo(42, 2);
+        game.Debug_ClearSite(SiteKind.Barrow);
+        Assert.Equal(1, SteadRegard.RungFor(game.Regard));
+        Assert.Equal(0, game.Player.Coin);
+        Assert.DoesNotContain(game.Log.Recent(12), e => e.Text.Contains("gather what coin they can spare"));
+    }
+
+    [Fact]
+    public void TheFriendsWelcome_IsNotSilencedByTheHushedName()
+    {
+        // The hushed name silences the songs and every Legend favor (D-051), but the
+        // stead's own thanks is earned by a deed they watched, not carried by a name,
+        // so it stands where the arrival-welcome would not.
+        var game = new Game(42);
+        game.Debug_ClearCamp(); // world 1's own raids ended (its welcome fires; we cross past it)
+        game.Debug_SetPlayerPos(game.World.GatePos);
+        game.ApplyKey('>');
+        game.ApplyKey('7'); // swear the hushed name
+        game.ApplyKey('>');
+        Assert.Contains(OathId.HushedName, game.World.Oaths);
+
+        int coinBefore = game.Player.Coin; // 0: world 1's gift converted to Legend at the crossing
+        game.Debug_ClearCamp(); // this hushed world's raids ended: the friend's welcome still comes
+        Assert.Equal(coinBefore + 5, game.Player.Coin);
+        Assert.Contains(game.Log.Recent(12), e => e.Text.Contains("gather what coin they can spare"));
+    }
+
     /// <summary>Crosses from a fresh seed to the given cycle, clearing each world's camp to open the gate.</summary>
     private static Game CrossTo(ulong seed, int targetCycle)
     {

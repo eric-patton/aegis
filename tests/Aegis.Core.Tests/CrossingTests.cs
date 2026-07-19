@@ -62,7 +62,7 @@ public class CrossingTests
         Assert.Equal(7, game.Player.Attributes[Attr.Might]);
         Assert.Equal(30, game.Player.Essence);
         Assert.Equal(0, game.Player.Coin);
-        Assert.Equal(12, game.Player.Legend);
+        Assert.Equal(12 + 5, game.Player.Legend); // 12 held + the stead's 5-coin friend's welcome (D-077), both converted
         Assert.Null(game.Remnant);
 
         // Fresh arrival: full health at the new shrine, wounds lifted, world state reset.

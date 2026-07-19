@@ -94,10 +94,15 @@ namespace Aegis.Core;
 /// plain now yields a sprig on the step and grows Survival), and the bench
 /// gained a herb-sale entry, so a v28 journal that walked the wood or drove the
 /// bench replays to different state.
+/// v30 when D-077 gave regard its first boon: the first time a stead holds the
+/// bearer a friend (rung 2, reached by clearing the camp), its folk gift coin and
+/// bread, so a v29 journal that ended a stead's raids replays with a fuller purse
+/// and larder from that turn on. (D-076's regard itself was cosmetic and bumped
+/// nothing; this is the first faction change to touch replayed state.)
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 29;
+    public const int Version = 30;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

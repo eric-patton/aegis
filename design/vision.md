@@ -36,7 +36,7 @@ At world creation, a causal-grammar history generator (the Caves of Qud model) p
 Hierarchical seeds (master seed hashed per subsystem/region/site) keep every world reproducible; saves are seed + delta.
 
 ### The living world: event-driven factions
-Factions are small state vectors with causal transition rules on a coarse tick. Every faction move (seize a pass, raise tithes, erupt into feud) writes a fact into the graph AND ships with a narration hook: a rumor, a notice, refugees on the road, a price spike. If the player could not perceive it, it does not fire. Conflicts carry designed exit conditions; no eternal stalemates. Named leaders and lieutenants form a bounded Nemesis-style roster with memory. Reputation is Fame/Infamy per faction, tracked separately. The first rung landed in D-076: the home stead keeps a per-world **regard** for the bearer (local Fame), earned only by deeds it can perceive (the raids ended, the mound gone quiet) and reset at each crossing, set beside Legend's cross-world standing rather than merged into it; the Infamy half, a keyed multi-faction ledger, regard-bought boons, and the coarse tick are still to come.
+Factions are small state vectors with causal transition rules on a coarse tick. Every faction move (seize a pass, raise tithes, erupt into feud) writes a fact into the graph AND ships with a narration hook: a rumor, a notice, refugees on the road, a price spike. If the player could not perceive it, it does not fire. Conflicts carry designed exit conditions; no eternal stalemates. Named leaders and lieutenants form a bounded Nemesis-style roster with memory. Reputation is Fame/Infamy per faction, tracked separately. The first rung landed in D-076: the home stead keeps a per-world **regard** for the bearer (local Fame), earned only by deeds it can perceive (the raids ended, the mound gone quiet) and reset at each crossing, set beside Legend's cross-world standing rather than merged into it. D-077 gave that regard its first boon, the **friend's welcome**: when a stead first holds the bearer a friend, its folk gift a coin purse, deed-earned so (unlike the Legend welcome) the hushed name never silences it. The Infamy half, a keyed multi-faction ledger, richer regard-bought boons, and the coarse tick are still to come.
 
 ---
 
@@ -178,7 +178,7 @@ And the loop closes on itself: **your finished characters enter the mythology.**
 ## 13. Document Map
 
 - `roadmap.md`: the living feature tracker and roadmap (what is built, partial, left, open)
-- `decisions.md`: the decision audit trail with rationale (76 and counting)
+- `decisions.md`: the decision audit trail with rationale (77 and counting)
 - `storylets.md`: storylet format and fact-graph schema spec (D-030)
 - `story/aegis-arc.md`: the trans-world Aegis arc spec (Canon: The Ledger; D-026)
 - `story/world-story-templates.md`: the world-story template contract, iron rules, and three launch templates

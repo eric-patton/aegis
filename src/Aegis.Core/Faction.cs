@@ -15,6 +15,9 @@ public static class SteadRegard
 {
     public const int MaxRung = 3;
 
+    /// <summary>The rung at which the folk hold the bearer a friend (D-077): the welcome's threshold.</summary>
+    public const int FriendRung = 2;
+
     /// <summary>Regard required for a rung: 1, 3, 5. A plain step, not a curve; the stead counts in deeds, not songs.</summary>
     public static int Threshold(int rung) => 2 * rung - 1;
 

@@ -84,6 +84,10 @@ public static class JourneyRunner
         int chestsLooted = 0;
         int chestCoin = 0;
         int gearTaken = 0;
+        // What the sheet answered (D-067): every threshold question taken as it opened,
+        // the knack chosen for good. Counted by watching the perk list grow on the key
+        // that lands the answer (choosing a knack is the only thing that grows it, by one).
+        int knacksTaken = 0;
         string stop;
 
         while (true)
@@ -134,6 +138,7 @@ public static class JourneyRunner
             bool chestOpenBefore = chestSite?.ChestLooted ?? true;
             int coinBefore = game.Player.Coin;
             int gearBefore = game.Player.AllGear.Count();
+            int perksBefore = game.Player.Perks.Count;
             game.ApplyKey(key.Value);
             keys.Append(key.Value);
             totalKeys++;
@@ -159,6 +164,10 @@ public static class JourneyRunner
                 chestCoin += game.Player.Coin - coinBefore;
                 if (game.Player.AllGear.Count() > gearBefore) gearTaken++;
             }
+
+            // A perk that appeared this key is a threshold question answered (D-067):
+            // the sheet's digit is the only thing that adds one, and it adds exactly one.
+            if (game.Player.Perks.Count > perksBefore) knacksTaken++;
 
             if (game.Player.Deaths > prevDeaths)
             {
@@ -188,7 +197,7 @@ public static class JourneyRunner
 
         Report(seed, cycles, crossings, stop, game, totalKeys, keys, emitKeys,
             remnantsReclaimed, coinReclaimed, essenceReclaimed,
-            chestsLooted, chestCoin, gearTaken);
+            chestsLooted, chestCoin, gearTaken, knacksTaken);
         return 0;
     }
 
@@ -221,6 +230,13 @@ public static class JourneyRunner
         return $"{weapon}, {armor}, {bow}  (Vig {a[Attr.Vigor]}, Might {a[Attr.Might]}, Grace {a[Attr.Grace]})";
     }
 
+    /// <summary>The knacks the bearer chose, in the ledger's order (the level-2 wave, then the level-4).</summary>
+    private static string KnackList(Game game) =>
+        string.Join(", ", PerkCatalog.Choices
+            .SelectMany(c => c.Options)
+            .Where(o => game.Player.HasPerk(o.Id))
+            .Select(o => o.Name));
+
     private static string Where(Game game) =>
         game.Mode == MapMode.Site
             ? $"underground with {game.LiveMonstersHere.Count()} foe(s) standing"
@@ -230,7 +246,7 @@ public static class JourneyRunner
         ulong seed, int cycles, List<Crossing> crossings, string stop,
         Game game, int totalKeys, StringBuilder keys, bool emitKeys,
         int remnantsReclaimed, int coinReclaimed, int essenceReclaimed,
-        int chestsLooted, int chestCoin, int gearTaken)
+        int chestsLooted, int chestCoin, int gearTaken, int knacksTaken)
     {
         var w = Console.Out;
         w.WriteLine($"AEGIS JOURNEY   seed {seed}   target {cycles} crossing(s)");
@@ -279,6 +295,8 @@ public static class JourneyRunner
                     + $"{coinReclaimed} coin, {essenceReclaimed} essence kept back from the dark (D-065).");
         w.WriteLine($"         looted {chestsLooted} chest(s) from the sites it cleared: "
                     + $"{chestCoin} coin, {gearTaken} piece(s) of deep iron taken up and worn (D-066).");
+        w.WriteLine($"         answered {knacksTaken} threshold question(s) as they opened (D-067)"
+                    + (knacksTaken == 0 ? "." : $": {KnackList(game)}."));
         w.WriteLine("         a seeded journey replays identically: the pilot reads only game state.");
         if (emitKeys)
         {

@@ -19,10 +19,13 @@ namespace Aegis.Cli;
 /// Every site it holds it strips before climbing out (D-066): it opens the chest for its
 /// coin and the deep iron the smith never stocks (the barrow's blade, the hall's mail, the
 /// ringfort's warbow, and their like), and it puts that iron on, wearing the best piece it
-/// owns in each slot rather than leaving a stronger one dead in the pack. A site it still
-/// cannot bring to ground the runner budgets and writes off, handing the pilot a skip-set
-/// of the ones to leave standing, so it engages, learns the tell, and moves on rather than
-/// spinning.
+/// owns in each slot rather than leaving a stronger one dead in the pack. And as the
+/// training settles it answers the sheet's own questions (D-067): at each skill's
+/// threshold it takes the knack that pays for reading the fight the way it fights, the
+/// deeper cut and the bitten wind-up and the shaft that finds a body mid-move, so what it
+/// learns sharpens the very play that earned the lesson. A site it still cannot bring to
+/// ground the runner budgets and writes off, handing the pilot a skip-set of the ones to
+/// leave standing, so it engages, learns the tell, and moves on rather than spinning.
 ///
 /// It is a pure function of game state (and the runner's skip-set, which is itself
 /// derived deterministically), so a seeded run is perfectly reproducible: the same seed
@@ -56,6 +59,11 @@ public static class JourneyPilot
         // owned, one digit at a time, then close. Chest loot lands here unworn
         // whenever the slot it wants was already filled at the forge.
         if (g.InGearMenu) return GearEquipDigit(g) ?? 'z';
+        // The sheet is a menu we drive on purpose too (D-067): while a threshold
+        // question stands open its digits answer it, so we take the preferred knack
+        // and let the next question (if any) be put, then close. A standing question
+        // always resolves to a real answer, never a close, so opening it can't loop.
+        if (g.InSheetMenu) return KnackDigit(g) ?? 'z';
         if (StuckInMenu(g)) return 'z';
 
         // Wear the best iron in hand before anything else (D-066). A stronger piece
@@ -64,6 +72,12 @@ public static class JourneyPilot
         // only ever fires on cleared ground: the loot that fills the pack is taken
         // from a site already emptied of its foes, so this never pre-empts a dodge.
         if (BestPackUpgrade(g) is not null) return 'i';
+
+        // Settle a threshold question the moment the training clicks (D-067). Like the
+        // pack, the sheet costs no turn, so answering is free and the knack's edge rides
+        // the very next blow; and because it is turn-free it is safe even mid-fight, no
+        // turn passing means no stone falls while the bearer reads its own ledger.
+        if (g.PendingKnack is not null) return 'c';
 
         if (g.Mode == MapMode.Site)
         {
@@ -551,6 +565,54 @@ public static class JourneyPilot
         _ => p.Armor,
     };
 
+    // ---- the sheet's questions (D-067): the knacks that pay for reading the fight ----
+
+    /// <summary>
+    /// The knack to take from each threshold question (D-046), one rule for all ten:
+    /// take the side that pays for reading the fight and pressing the attack, because
+    /// that is the fight this pilot plays (it steps off the telegraph, strikes the body
+    /// that is spoken for, finishes the weakest, and holds a line for the wind-up that
+    /// drops a board). So at level 2 it takes the deeper blow over the spared wind or
+    /// strap, and at level 4 the read moment (the extra bite into a blow already read)
+    /// over the even hand that pays a little on every exchange (D-055). Two departures,
+    /// both forced by how this bot lives: brawling takes the deep breath (+2 wind for
+    /// good) over the harder bare fist, because it arms at the forge and never fights
+    /// bare past the first camp, so the wind aids every blow and loose while the knuckle
+    /// would die the moment it buys an axe; and the ranged pair (the hunter's eye, the
+    /// picked moment) is the archer's own, sharpening the shafts this pilot leans on
+    /// hardest against a leaguer's warders, the picked moment above all (it deepens a
+    /// shot into a body mid-move, which is exactly the warder mid-whirl it looses at).
+    /// </summary>
+    private static readonly HashSet<PerkId> Preferred =
+    [
+        PerkId.DrawnCut,       // blades 2:   the cut goes 1 deeper.
+        PerkId.FollowThrough,  // hafted 2:   a kill hands its wind back to fuel the next.
+        PerkId.DeepBreath,     // brawling 2: +2 wind for good (the armed bearer's choice).
+        PerkId.BracedShoulder, // warding 2:  turn the telegraphed blow 2 further.
+        PerkId.HuntersEye,     // ranged 2:   the shaft strikes 1 deeper.
+        PerkId.AnsweredCut,    // blades 4:   bite a wind-up already read, 2 deeper.
+        PerkId.CheckedSwing,   // hafted 4:   land on the raised blow and break it.
+        PerkId.CaughtArm,      // brawling 4: (moot, bare-handed) the read-moment side.
+        PerkId.ShieldWall,     // warding 4:  hold the line when a site swarms.
+        PerkId.PickedMoment,   // ranged 4:   +2 into a body mid-move, which is when we loose.
+    ];
+
+    /// <summary>
+    /// The digit that answers the open threshold question with the preferred knack: its
+    /// place among the two offered, one-indexed. Null only when no question stands, which
+    /// is the signal to close the sheet. Every question lists one of its two sides in
+    /// <see cref="Preferred"/>, so a standing question always yields a real answer and never
+    /// a close, which is what keeps the opener from reopening what it just shut.
+    /// </summary>
+    private static char? KnackDigit(Game g)
+    {
+        if (g.PendingKnack is not { } q) return null;
+        for (int i = 0; i < q.Options.Length; i++)
+            if (Preferred.Contains(q.Options[i].Id))
+                return (char)('1' + i);
+        return '1'; // unreached: answer rather than close, so the opener cannot loop.
+    }
+
     // ---- navigation: breadth-first, one step at a time ----
 
     /// <summary>
@@ -595,7 +657,7 @@ public static class JourneyPilot
 
     private static bool StuckInMenu(Game g) =>
         g.InTalkMenu || g.InUnbindMenu || g.InThresholdMenu
-        || g.InLayingMenu || g.InSheetMenu; // the shrine, crossing, and pack menus are driven, not escaped.
+        || g.InLayingMenu; // the shrine, crossing, pack, and sheet menus are driven, not escaped.
 
     /// <summary>
     /// Which attribute to raise. Bare-handed, keep Vigor and Might level (staying alive,

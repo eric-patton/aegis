@@ -178,7 +178,7 @@ And the loop closes on itself: **your finished characters enter the mythology.**
 ## 13. Document Map
 
 - `roadmap.md`: the living feature tracker and roadmap (what is built, partial, left, open)
-- `decisions.md`: the decision audit trail with rationale (73 and counting)
+- `decisions.md`: the decision audit trail with rationale (74 and counting)
 - `storylets.md`: storylet format and fact-graph schema spec (D-030)
 - `story/aegis-arc.md`: the trans-world Aegis arc spec (Canon: The Ledger; D-026)
 - `story/world-story-templates.md`: the world-story template contract, iron rules, and three launch templates

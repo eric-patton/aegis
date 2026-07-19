@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb }
 
 /// <summary>
 /// The deterministic game engine. No console, no I/O, no wall clock: state advances
@@ -160,6 +160,13 @@ public sealed class Game
     /// property so a world that prizes fur, or an oath, can lean on it later.
     /// </summary>
     public int HidePrice => 3;
+
+    /// <summary>
+    /// What a sprig of foraged herb fetches at the bench (D-074): a little more than a
+    /// hide apiece, since the wood's simples are wanted for the mending-work and pay
+    /// well for it (D-006). Flat for now, like the hide, a fact-flexible property.
+    /// </summary>
+    public int HerbPrice => 4;
 
     /// <summary>
     /// Fired for every key that reached the engine while running (including menu keys
@@ -416,6 +423,19 @@ public sealed class Game
             {
                 Log.Add(Turn, "Good gleaning here, but you carry all a walking body can. You mark the spot and leave it standing.", LogTone.Info);
             }
+        }
+
+        // The forage (D-074): herbs anyone can stoop and pick, no lesson needed. The
+        // Survival skill fattens what a spot gives, and grows for the taking of it, the
+        // way Hunting grows off the hide. They bank like a trade-good, uncapped, to be
+        // sold at the wood's edge, so a full larder never turns the picking away.
+        if (Mode == MapMode.Overworld && World.Herbs.Contains(target))
+        {
+            World.Herbs.Remove(target);
+            int taken = 1 + Player.Skills.Bonus(SkillId.Survival);
+            Player.Herb += taken;
+            GainSkill(SkillId.Survival);
+            Log.Add(Turn, $"Wortcunning growth under the eaves: you pick {taken} good sprig{(taken == 1 ? "" : "s")} for the wood's-edge bench. ({Player.Herb} in the satchel)", LogTone.Reward);
         }
 
         // The keeping (D-039): stepping to the Hearth itself puts the choice on the
@@ -1298,6 +1318,7 @@ public sealed class Game
         {
             offers.Add((TradeGood.Hide, "", HideSaleLabel()));
             offers.Add((TradeGood.Cook, "", CookLabel()));
+            offers.Add((TradeGood.Herb, "", HerbSaleLabel()));
             offers.Add((TradeGood.Lesson, LessonCatalog.IdOf(LessonId.Gleaning), LessonLabel(LessonId.Gleaning)));
         }
         return offers;
@@ -1307,6 +1328,11 @@ public sealed class Game
     private string HideSaleLabel() => Player.Hide > 0
         ? $"Sell your hides ({Player.Hide} at {HidePrice}c, {Player.Hide * HidePrice} coin)"
         : "Sell hides (none cured yet)";
+
+    /// <summary>The herb-sale entry (D-074): what the satchel holds, and for how much.</summary>
+    private string HerbSaleLabel() => Player.Herb > 0
+        ? $"Sell your herbs ({Player.Herb} at {HerbPrice}c, {Player.Herb * HerbPrice} coin)"
+        : "Sell herbs (satchel empty)";
 
     private void OpenTradeMenu()
     {
@@ -1326,6 +1352,7 @@ public sealed class Game
             {
                 case TradeGood.Hide: TrySellHides(); break;
                 case TradeGood.Cook: TryCook(); break;
+                case TradeGood.Herb: TrySellHerbs(); break;
                 case TradeGood.Lesson: TryLearnLesson(arg); break;
             }
             // The labels move with the state (hides sold, lesson taken); rebuild so the
@@ -1362,6 +1389,25 @@ public sealed class Game
             Player.HideLineHeard = true;
             Log.Add(Turn, "\"Coin off the wilds, and none of it mine to give or take. A fifth ledger, then, and the first you filled with your own two hands and no leave from anyone. Keep at it.\"", LogTone.Aegis);
         }
+    }
+
+    /// <summary>
+    /// The forage's sell path (D-074): foraged herbs become coin at the same bench the
+    /// hides do, sold in a lot. The woodward takes them on to the mending-folk who want
+    /// them; to the bearer it is one more of the wilds' ledgers, kept apart from the rest.
+    /// </summary>
+    private void TrySellHerbs()
+    {
+        if (Player.Herb == 0)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Bring me the wood's simples and I will pay for them. Your satchel is empty of them today.\"");
+            return;
+        }
+        int herbs = Player.Herb;
+        int paid = herbs * HerbPrice;
+        Player.Herb = 0;
+        Player.Coin += paid;
+        Log.Add(Turn, $"You empty {herbs} sprig{(herbs == 1 ? "" : "s")} onto the bench. {TalkNpc!.Name} sorts them with a herb-wife's quickness and pays {paid} coin. ({Player.Coin} now)", LogTone.Reward);
     }
 
     /// <summary>
@@ -2724,6 +2770,7 @@ public sealed class Game
             SkillId.Ranged => $"The shaft goes where the eye went, not where the hand hoped. (Ranged rises to {after})",
             SkillId.Hunting => $"You read the ground now, the bent grass and the changed wind. (Hunting rises to {after})",
             SkillId.Cooking => $"The fire and the meat have stopped surprising you; more comes off the same carcass. (Cooking rises to {after})",
+            SkillId.Survival => $"The wood keeps fewer secrets from you; your hands find the good growth without your eyes. (Survival rises to {after})",
             SkillId.Warding => $"You take the blow where the iron is thickest. (Warding rises to {after})",
             _ => $"Your craft deepens. ({SkillSet.NameOf(id)} rises to {after})",
         }, LogTone.Reward);
@@ -3727,6 +3774,7 @@ public sealed class Game
         Rations: Player.Rations,
         Hide: Player.Hide,
         RawMeat: Player.RawMeat,
+        Herb: Player.Herb,
         RationPrice: RationPrice,
         MendPrice: Player.WoundedTurns > 0 ? MendPrice : 0,
         WeaponId: Player.Weapon?.Id ?? "",
@@ -3851,6 +3899,7 @@ public sealed record Snapshot(
     int Rations,
     int Hide,
     int RawMeat,
+    int Herb,
     int RationPrice,
     int MendPrice,
     string WeaponId,

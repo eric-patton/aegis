@@ -90,10 +90,14 @@ namespace Aegis.Core;
 /// own digits sell hides), and D-073 gave the hart raw meat in place of a
 /// ration and added a cook entry to that bench (a v27 journal that felled a
 /// hart or drove the bench replays to different state).
+/// v29 when D-074 grew herbs in every world (a forest tile a v28 walk crossed
+/// plain now yields a sprig on the step and grows Survival), and the bench
+/// gained a herb-sale entry, so a v28 journal that walked the wood or drove the
+/// bench replays to different state.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 28;
+    public const int Version = 29;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

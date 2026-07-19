@@ -1,0 +1,114 @@
+using Aegis.Core;
+
+namespace Aegis.Core.Tests;
+
+/// <summary>
+/// Foraging (D-074): herbs the wood grows for the picking, gathered by anyone (no
+/// lesson, unlike the gleaning), the Survival skill fattening the take, and sold for
+/// coin at the wood's-edge bench (D-071). Placed on their own worldgen stream, so
+/// pinned worlds and the gleanings keep their layouts.
+/// </summary>
+public class ForagingTests
+{
+    [Fact]
+    public void Herbs_GrowInEveryWorld_OnForest_Deterministic_ClearOfGleanings()
+    {
+        for (ulong seed = 1; seed <= 20; seed++)
+        {
+            var a = WorldGen.Generate(seed, tier: 1);
+            var b = WorldGen.Generate(seed, tier: 1);
+            Assert.NotEmpty(a.Herbs);
+            Assert.Equal(a.Herbs, b.Herbs);                              // deterministic
+            Assert.All(a.Herbs, h => Assert.Equal(Terrain.Forest, a.Overworld[h]));
+            Assert.All(a.Herbs, h => Assert.DoesNotContain(h, a.Gleanings)); // no tile is both
+        }
+    }
+
+    [Fact]
+    public void ForagingAHerb_TakesIt_GrowsSurvival_NoLessonNeeded()
+    {
+        var game = new Game(42);
+        Assert.False(game.Player.HasLesson(LessonId.Gleaning)); // untaught, and it does not matter
+        game.Player.Herb = 0;
+        int survivalBefore = game.Player.Skills.Uses(SkillId.Survival);
+        var spot = game.World.Herbs[0];
+        int spots = game.World.Herbs.Count;
+
+        StepOnto(game, spot);
+
+        Assert.Equal(1, game.Player.Herb);                       // one sprig at Survival 0
+        Assert.Equal(spots - 1, game.World.Herbs.Count);         // the spot is spent
+        Assert.True(game.Player.Skills.Uses(SkillId.Survival) > survivalBefore, "foraging taught nothing");
+    }
+
+    [Fact]
+    public void Survival_FattensTheForage()
+    {
+        var game = new Game(42);
+        while (game.Player.Skills.Level(SkillId.Survival) < 2) game.Player.Skills.AddUse(SkillId.Survival);
+        Assert.Equal(1, game.Player.Skills.Bonus(SkillId.Survival));
+        game.Player.Herb = 0;
+
+        StepOnto(game, game.World.Herbs[0]);
+
+        Assert.Equal(2, game.Player.Herb); // 1 + the Survival bonus
+    }
+
+    [Fact]
+    public void TheBench_BuysHerbs_ForCoin()
+    {
+        var game = new Game(42);
+        game.Player.Herb = 3;
+        game.Player.Coin = 0;
+        OpenBench(game);
+
+        Assert.Contains(game.TradeOffers, o => o.Good == TradeGood.Herb && o.Label.Contains("3 at 4c, 12 coin"));
+        game.ApplyKey(TradeKey(game, TradeGood.Herb));
+
+        Assert.Equal(0, game.Player.Herb);
+        Assert.Equal(12, game.Player.Coin);
+        Assert.Contains(game.TradeOffers, o => o.Good == TradeGood.Herb && o.Label.Contains("satchel empty"));
+    }
+
+    // ---- helpers ----
+
+    /// <summary>Places the bearer beside a cell and walks the one legal step onto it.</summary>
+    private static void StepOnto(Game game, Pos cell)
+    {
+        foreach (var (dx, dy, key) in (ReadOnlySpan<(int, int, char)>)
+                 [(0, -1, 'j'), (0, 1, 'k'), (-1, 0, 'l'), (1, 0, 'h'),
+                  (-1, -1, 'n'), (1, -1, 'b'), (-1, 1, 'u'), (1, 1, 'y')])
+        {
+            var from = cell.Plus(dx, dy);
+            if (!game.World.Overworld.Walkable(from) || game.World.Npcs.Any(n => n.Pos == from)) continue;
+            game.Debug_SetPlayerPos(from);
+            game.ApplyKey(key);
+            Assert.Equal(cell, game.Player.Pos);
+            return;
+        }
+        throw new InvalidOperationException($"no open approach to {cell}");
+    }
+
+    private static void OpenBench(Game game)
+    {
+        NpcTests.BumpNpc(game, game.World.Npcs.First(n => n.Id == "npc_woodward"));
+        game.ApplyKey(OfferKey(game, TradeGood.Trade));
+        Assert.True(game.InTradeMenu);
+    }
+
+    private static char OfferKey(Game game, TradeGood good)
+    {
+        for (int i = 0; i < game.Offers.Count; i++)
+            if (game.Offers[i].Good == good)
+                return (char)('1' + game.Topics.Count + i);
+        throw new InvalidOperationException($"no {good} offer");
+    }
+
+    private static char TradeKey(Game game, TradeGood good)
+    {
+        for (int i = 0; i < game.TradeOffers.Count; i++)
+            if (game.TradeOffers[i].Good == good)
+                return (char)('1' + i);
+        throw new InvalidOperationException($"no {good} entry at the bench");
+    }
+}

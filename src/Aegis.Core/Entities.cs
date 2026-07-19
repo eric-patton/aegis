@@ -50,6 +50,13 @@ public sealed class Player
     /// </summary>
     public int RawMeat { get; set; }
 
+    /// <summary>
+    /// Herbs foraged from the wood (D-074): a trade-good sold at the wood's edge, the
+    /// Survival skill fattening what a spot gives. On your person like hides, surviving
+    /// death and the crossing.
+    /// </summary>
+    public int Herb { get; set; }
+
     // Gear (D-041): the other half of the build. Banked like attributes: the
     // remnant never takes it, and it crosses waygates untouched (vision secs 8, 10).
 

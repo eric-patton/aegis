@@ -454,6 +454,11 @@ public static class Presenter
             foreach (var spot in game.World.Gleanings)
                 PutWorld(spot, '"', Hue.Green);
 
+        // The herbs (D-074): plain to any eye, so drawn for everyone, unlike the gleanings.
+        if (game.Mode == MapMode.Overworld)
+            foreach (var spot in game.World.Herbs)
+                PutWorld(spot, '*', Hue.Green);
+
         if (game.Mode == MapMode.Overworld)
             foreach (var npc in game.World.Npcs)
                 PutWorld(npc.Pos, 'p', npc.Kind == NpcKind.Severed ? Hue.Magenta : Hue.Green);

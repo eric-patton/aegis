@@ -47,6 +47,13 @@ public sealed class World
     public required List<Pos> Gleanings { get; init; }
 
     /// <summary>
+    /// What the wood grows for the picking (D-074): forest spots holding herbs, placed
+    /// in every world on their own stream. Unlike the gleanings, no lesson is needed to
+    /// see or take them; foraging one removes the spot, and the far gate regrows them.
+    /// </summary>
+    public required List<Pos> Herbs { get; init; }
+
+    /// <summary>
     /// The terms this world was crossed into under (D-047): oaths sworn at the
     /// previous world's waygate. A generation input like the tier; they lapse at
     /// this world's far gate. Empty for a first world and for a plain crossing.
@@ -640,6 +647,22 @@ public static class WorldGen
             gleanings.Add(p);
         }
 
+        // The herbs (D-074): what the wood grows for the picking. Own stream, drawn
+        // after the gleanings (so pinned worlds and the gleanings' own layout are
+        // untouched), forest-only and spread out like them, and clear of a gleaning
+        // spot so no tile is both. No lesson gates them; anyone can stoop and pick.
+        var herbRng = new Rng(SeedTree.Derive(worldSeed, "herbs"));
+        var herbs = new List<Pos>();
+        for (int attempt = 0; attempt < 400 && herbs.Count < 4; attempt++)
+        {
+            var p = new Pos(herbRng.Range(2, OverworldW - 2), herbRng.Range(2, OverworldH - 2));
+            if (overworld[p] != Terrain.Forest || p.Manhattan(settlement) < 6
+                || npcs.Any(n => n.Pos == p) || gleanings.Contains(p)
+                || herbs.Any(h => h.Manhattan(p) < 8))
+                continue;
+            herbs.Add(p);
+        }
+
         facts.Add("world_name", worldName, "");
         facts.Add("settlement", settlementName, $"{settlement.X},{settlement.Y}", "A small stead under the Aegis-shrine.");
         facts.Add("rest_point", "shrine", $"{shrine.X},{shrine.Y}", $"The shrine at {settlementName}. The Aegis anchors here.");
@@ -673,6 +696,7 @@ public static class WorldGen
             Npcs = npcs,
             StoryStorylets = storyStorylets,
             Gleanings = gleanings,
+            Herbs = herbs,
             Oaths = oaths,
         };
     }

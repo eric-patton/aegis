@@ -5,6 +5,7 @@ public enum LessonId
     CleanDressing,
     TendedIron,
     Gleaning,
+    Stillcraft,
 }
 
 /// <summary>One lesson's catalog entry: the full name for prose, the short for the sheet.</summary>
@@ -26,6 +27,10 @@ public static class LessonCatalog
         new(LessonId.CleanDressing, "the clean dressing", "clean dressing", 0),
         new(LessonId.TendedIron, "the tended iron", "tended iron", 15),
         new(LessonId.Gleaning, "the gleaning", "gleaning", 10),
+        // The stillroom's craft (D-090): the fourth lesson, the one D-087 held
+        // out for a worthwhile effect. Its keep is independence: a taught bearer
+        // steeps their own draught at any shrine in any world, herbwife or none.
+        new(LessonId.Stillcraft, "the stillcraft", "stillcraft", 12),
     ];
 
     public static LessonDef Def(LessonId id) => All.First(l => l.Id == id);
@@ -36,6 +41,7 @@ public static class LessonCatalog
         LessonId.CleanDressing => "clean_dressing",
         LessonId.TendedIron => "tended_iron",
         LessonId.Gleaning => "gleaning",
+        LessonId.Stillcraft => "stillcraft",
         _ => id.ToString().ToLowerInvariant(),
     };
 

@@ -543,6 +543,8 @@ public static class Presenter
         Line($"Coin    {p.Coin}", Hue.Yellow);
         Line($"Essence {p.Essence}", Hue.Cyan);
         if (p.Rations > 0) Line($"Rations {p.Rations}", Hue.Green);
+        // The vials (D-090): the stillroom's craft rides the rail beside the bread.
+        if (p.Draughts > 0) Line($"Vials   {p.Draughts}", Hue.Green);
         if (p.Legend > 0) Line($"Legend  {p.Legend}", Hue.Magenta);
         if (game.Standing > 0) Line($" {LegendStanding.TitleOf(game.Standing)}", Hue.DarkGray);
         // The stead's regard (D-076): per-world and transient, so it lives on the
@@ -641,8 +643,8 @@ public static class Presenter
         y++;
         Line("hjkl/yubn move  . wait", Hue.DarkGray);
         Line("g grab  >/< enter/exit", Hue.DarkGray);
-        Line("f loose  e eat  i gear", Hue.DarkGray);
-        Line("c you  q quit", Hue.DarkGray);
+        Line("f loose  e eat  d drink", Hue.DarkGray);
+        Line("i gear  c you  q quit", Hue.DarkGray);
     }
 
     private static string Bar(int value, int max, int slots)

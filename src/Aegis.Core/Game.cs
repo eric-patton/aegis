@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught }
 
 /// <summary>
 /// The deterministic game engine. No console, no I/O, no wall clock: state advances
@@ -457,6 +457,7 @@ public sealed class Game
             Command.Grab => DoGrab(),
             Command.Rest => DoRest(),
             Command.Eat => DoEat(),
+            Command.Drink => DoDrink(),
             Command.Gear => DoGearMenu(),
             Command.Sheet => DoSheet(),
             Command.Loose => DoLoose(),
@@ -1503,6 +1504,10 @@ public sealed class Game
                 Log.Add(Turn, $"{TalkNpc!.Name} shows you the evening habit of iron: wax into the straps, a stone drawn once along the edge, the day's grit out of every rivet before it beds in. \"The wheel does the great mendings. This keeps them rare.\"");
                 Log.Add(Turn, "(The tended iron is yours: resting will hold your gear back from the worst of its wear.)", LogTone.Reward);
                 break;
+            case LessonId.Stillcraft:
+                Log.Add(Turn, $"{TalkNpc!.Name} walks you through the steeping with her hands over yours: which sprigs to bruise and which to leave whole, how slow is slow enough, when the green goes right. \"Any fire and a patient hour. The simples do the rest.\"");
+                Log.Add(Turn, "(The stillcraft is yours: resting with sprigs enough in the satchel will steep a draught of your own, any shrine, any world.)", LogTone.Reward);
+                break;
         }
         HearLessonLineOnce();
         _offers.Clear();
@@ -1538,8 +1543,40 @@ public sealed class Game
         {
             offers.Add((TradeGood.Herb, "", HerbSaleLabel()));
             offers.Add((TradeGood.Mending, "", MendLabel()));
+            // The craft itself (D-090): appended, so the older digits hold (D-041).
+            offers.Add((TradeGood.Draught, "", DraughtLabel()));
+            offers.Add((TradeGood.Lesson, LessonCatalog.IdOf(LessonId.Stillcraft), LessonLabel(LessonId.Stillcraft)));
         }
         return offers;
+    }
+
+    /// <summary>The draught entry (D-090): the simples steeped, priced in sprigs, never in coin.</summary>
+    private string DraughtLabel() =>
+        Player.Draughts >= DraughtCap ? $"Have a hale-draught drawn (your satchel holds {DraughtCap})"
+        : Player.Herb >= DraughtHerbs ? $"Have a hale-draught drawn ({DraughtHerbs} sprigs)"
+        : $"Have a hale-draught drawn ({DraughtHerbs} sprigs; you carry {Player.Herb})";
+
+    /// <summary>
+    /// The stillroom steeps a draught (D-090): the herb lane's first sink. The
+    /// craft is hers and costs nothing; the simples are the price, three sprigs
+    /// to the vial, so the satchel finally has a use besides the scales.
+    /// </summary>
+    private void TryDrawDraught()
+    {
+        if (Player.Draughts >= DraughtCap)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Two vials is what a satchel keeps whole on the road. Drink one down and come back to me.\"");
+            return;
+        }
+        if (Player.Herb < DraughtHerbs)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Bring me {DraughtHerbs} sprigs and the steeping is yours for the asking. You carry {Player.Herb}.\"");
+            return;
+        }
+
+        Player.Herb -= DraughtHerbs;
+        Player.Draughts++;
+        Log.Add(Turn, $"{TalkNpc!.Name} strips your sprigs into the pot, steeps them slow, and pours the green of it off into a stoppered vial. \"Drink it where the road hurts. It knows its work.\" ({Player.Draughts} vial{(Player.Draughts == 1 ? "" : "s")} carried)", LogTone.Reward);
     }
 
     /// <summary>The wound-dressing entry (D-081): priced when there is a wound to dress.</summary>
@@ -1580,6 +1617,7 @@ public sealed class Game
                 case TradeGood.Herb: TrySellHerbs(); break;
                 case TradeGood.Lesson: TryLearnLesson(arg); break;
                 case TradeGood.Mending: TryBuyMending(); break; // the stillroom's table (D-081)
+                case TradeGood.Draught: TryDrawDraught(); break; // the steeping (D-090)
             }
             // The labels move with the state (hides sold, lesson taken); rebuild so the
             // bench reads true, and the digits keep their order under the buyer's hand.
@@ -2130,6 +2168,48 @@ public sealed class Game
         return true;
     }
 
+    /// <summary>Most vials the satchel keeps whole on the road (D-090).</summary>
+    public const int DraughtCap = 2;
+
+    /// <summary>Sprigs one hale-draught steeps from (D-090): the herb lane's first sink.</summary>
+    public const int DraughtHerbs = 3;
+
+    /// <summary>What a draught gives back: two meals' worth of blood, and a deep cut at the wound's weight.</summary>
+    public const int DraughtHeal = 12;
+    public const int DraughtWoundCut = 24;
+
+    /// <summary>
+    /// Drinks a hale-draught (D-090): the stillroom's craft spent where it was
+    /// always meant to be spent, on the road, far from any table. Stronger than
+    /// a meal at blood and wound alike, and it asks no appetite: medicine, not
+    /// food. Costs the turn the stopper and the swallow cost.
+    /// </summary>
+    private bool DoDrink()
+    {
+        if (Player.Draughts == 0)
+        {
+            Log.Add(Turn, "You carry no draught. The stillroom steeps them, three sprigs to the vial.");
+            return false;
+        }
+        if (Player.Hp >= Player.EffectiveMaxHp && Player.WoundedTurns == 0)
+        {
+            Log.Add(Turn, "You are neither hurt nor carrying a wound's weight; the vial keeps.");
+            return false;
+        }
+
+        Player.Draughts--;
+        Player.Hp = Math.Min(Player.EffectiveMaxHp, Player.Hp + DraughtHeal);
+        Log.Add(Turn, $"You thumb the stopper and drink the draught down, bitter and green. Strength runs back along the bone. ({Player.Draughts} vial{(Player.Draughts == 1 ? "" : "s")} left)", LogTone.Info);
+        if (Player.WoundedTurns > 0)
+        {
+            Player.WoundedTurns = Math.Max(0, Player.WoundedTurns - DraughtWoundCut);
+            Log.Add(Turn, Player.WoundedTurns == 0
+                ? "The simples find the wound and sit down in it. Its weight lifts whole; you are yourself again."
+                : $"The simples find the wound and ease it deep. ({Player.WoundedTurns} turns of weight remain)", LogTone.Info);
+        }
+        return true;
+    }
+
     /// <summary>
     /// Opens the pack (D-041). Costs no turn, like every menu: the fiction is a
     /// glance down at your own hands, not a rummage.
@@ -2320,6 +2400,16 @@ public sealed class Game
                 }
             if (tended)
                 Log.Add(Turn, "Before resting you see to your iron as the smith showed you: wax, stone, patience. The worst of the wear comes off; the deep wear waits for the wheel.", LogTone.Info);
+        }
+
+        // The stillcraft (D-090): a taught bearer's rest steeps a draught of
+        // their own, any shrine, any world: the lesson's keep is independence.
+        if (Player.HasLesson(LessonId.Stillcraft)
+            && Player.Draughts < DraughtCap && Player.Herb >= DraughtHerbs)
+        {
+            Player.Herb -= DraughtHerbs;
+            Player.Draughts++;
+            Log.Add(Turn, $"While the shrine hums you steep the simples as she showed you: bruised, slow, patient. A draught of your own goes stoppered into the pack. ({Player.Draughts} vial{(Player.Draughts == 1 ? "" : "s")} carried)", LogTone.Reward);
         }
 
         InShrineMenu = true;
@@ -4290,6 +4380,7 @@ public sealed class Game
         Hide: Player.Hide,
         RawMeat: Player.RawMeat,
         Herb: Player.Herb,
+        Draughts: Player.Draughts,
         RationPrice: RationPrice,
         MendPrice: Player.WoundedTurns > 0 ? MendPrice : 0,
         WeaponId: Player.Weapon?.Id ?? "",
@@ -4424,6 +4515,7 @@ public sealed record Snapshot(
     int Hide,
     int RawMeat,
     int Herb,
+    int Draughts,
     int RationPrice,
     int MendPrice,
     string WeaponId,

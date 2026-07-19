@@ -133,10 +133,14 @@ namespace Aegis.Core;
 /// nothing), bread's price rides the stead's stores instead of a frozen raid
 /// count, and a cleared world recovers on the tick, so a v38 journal that
 /// lived past a raid or a camp-clear replays to different prices and coin.
+/// v40 when D-090 opened the stillroom's craft: 'd' gained meaning (a v39
+/// journal's stray 'd' was ignored and now drinks), the stillroom bench grew
+/// the steeping and the stillcraft entries (digits a v39 press used to close
+/// the menu), and a taught rest steeps a draught from carried sprigs.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 39;
+    public const int Version = 40;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

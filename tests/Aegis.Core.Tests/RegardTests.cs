@@ -409,7 +409,7 @@ public class RegardTests
     {
         var game = CrossTo(42, 2);
         game.Debug_ClearSite(SiteKind.Barrow);
-        game.Player.Coin = 30;
+        game.Player.Coin = 45;
         NpcTests.BumpNpc(game, game.World.Npcs.First(n => n.Id == "npc_woodward"));
         game.ApplyKey(OfferKey(game, TradeGood.Trade));
         game.ApplyKey(TradeKey(game, TradeGood.Lesson)); // the gleaning, bought
@@ -417,6 +417,12 @@ public class RegardTests
         NpcTests.BumpNpc(game, game.World.Smith);
         game.ApplyKey(OfferKey(game, TradeGood.Lesson)); // the tended iron, bought
         Assert.True(game.Player.HasLesson(LessonId.TendedIron));
+        game.ApplyKey(' ');
+        NpcTests.BumpNpc(game, game.World.Npcs.First(n => n.Id == "npc_herbwife"));
+        game.ApplyKey(OfferKey(game, TradeGood.Trade));
+        game.ApplyKey(TradeKey(game, TradeGood.Lesson)); // the stillcraft, bought (D-090)
+        Assert.True(game.Player.HasLesson(LessonId.Stillcraft));
+        game.ApplyKey(' ');
 
         game.Debug_ClearCamp(); // the own rung, with every showing already paid for
         Assert.Contains(game.Log.Recent(15), e => e.Text.Contains("little left they could show you"));

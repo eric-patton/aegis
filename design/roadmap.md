@@ -35,7 +35,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 - Attributes: **4 of 7** mechanically active (Mind, Will, Presence are inert)
 - Skills: **8 of ~18** (five combat, Hunting from D-070, Cooking from D-073, Survival from D-074)
-- Activity families: **wilderness-living core built** (hunting, selling, cooking, foraging: D-070..D-074) and the **craft family opened** (cooking); crime and town life unbuilt
+- Activity families: **wilderness-living core built** (hunting, selling, cooking, foraging: D-070..D-074) and the **craft family opened** (cooking D-073; alchemy v1 D-090, the hale-draught); crime and town life unbuilt
 - Launch story templates: **2** built (of 3 named, 4-5 planned)
 - **Factions begun (D-076..D-089):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
@@ -130,12 +130,14 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 - [x] Cooking: use-grown, raw meat to rations at the wood's-edge fire; fattens the yield (D-073)
 - [x] Survival: use-grown, fed by foraging herbs from the wood; fattens the forage (D-074)
 - [x] Knacks/perks at level 2 and 4 for the five combat skills (20 options / 10 questions) (D-046, D-055)
-- [~] Craft skills: Cooking shipped (D-073); Smithing, Alchemy pending (vision §3)
+- [~] Craft skills: Cooking shipped (D-073); alchemy opened as know-how, not yet a skill
+  (D-090: the stillcraft lesson; a use-curve waits on the lane growing recipes); Smithing pending (vision §3)
 - [~] Wilderness skills: Hunting (D-070) and Survival (D-074, foraging) done; Athletics pending (vision §3)
 - [ ] Subterfuge skills: Stealth, Larceny (vision §3)
 - [ ] Social skills: Persuasion, Commerce (vision §3)
 - [ ] Mind skills: Lore, magic skills (vision §3)
-- [ ] Proficiencies beyond the 3 lessons; book/mentor/quest-taught (D-052)
+- [~] Proficiencies: 4 lessons shipped (D-052 clean dressing/tended iron/gleaning; D-090 the
+  stillcraft, paying D-087's deferred fourth slot); book/quest-taught still pending
 - [ ] Knacks: level-6+ questions, 3-option questions, knacks for new skills (D-055)
 
 ### The Life: activities & economy (2 of 4 families opened: wilderness, craft)
@@ -148,7 +150,10 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
   apothecary's 5c vs the wood's-edge 4c, the first price-choice/arbitrage in the economy;
   the wound-dressing moved onto her bench, save v34)
 - [x] Patronage deeds at the crossing (3: raised stone, endowed hearth, true verse) (D-054)
-- [~] Crafting trades: cooking shipped (D-073); smithing, alchemy as player lanes pending (D-006, D-025)
+- [~] Crafting trades: cooking shipped (D-073); alchemy v1 shipped (D-090, v40: the hale-draught,
+  three sprigs steeped at the stillroom or, taught, at any shrine rest; 'd' drinks it on the road:
+  the herb lane's first sink and the first remedy that walks into a deep site); smithing as a
+  player lane pending (D-006, D-025)
 - [~] Wilderness living: hunting + sell path + cooking + foraging shipped (D-070, D-071, D-073, D-074); tracking, fishing, camping pending (D-006)
 - [x] A hide-buyer with room to grow: the woodward's trade sub-menu, hides to coin (D-071)
 - [ ] Crime: lockpicking, pickpocketing, burglary, fencing (D-006)
@@ -267,6 +272,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-19: **D-090 the stillroom's craft: the hale-draught, 'd', and the stillcraft.** Alchemy v1 on the lane D-074/D-081 built: three sprigs steep into a hale-draught at the herbwife's bench (satchel cap 2, priced in sprigs NEVER coin: the herb lane's first sink, forage becoming a choice instead of pure income); 'd' gains meaning (v26 'w' precedent) and drinks it anywhere: +12 blood, -24 wound-weight, a turn for the swallow: the first remedy that walks into a deep site (the niche: shrine rest heals free at home, nothing helped in the dark). The STILLCRAFT lesson (4th lesson, 12c at her bench, D-052 pattern, free to the stead's own via D-087's gate untouched: pays D-087's deferred fourth-lesson slot with the herbwife as honest teacher): a taught shrine rest steeps a draught from carried sprigs, any world (TendedIron rider pattern). Bench entries appended so digits hold (D-041); vials on the HUD rail; Draughts in Snapshot. Save v39 -> v40. 400 tests green (5 new AlchemyTests; 2 knock-ons: the drink's turn ticks the wound one further, and the D-087 taking-stock test must now buy the fourth lesson: the teaching gate absorbed the new lesson unmodified); twins byte-identical; emit->sim exact; sweep identical (the pilot never brews). New tracked: recipes as effects arrive, the pilot learning to brew, the skill question if the lane outgrows know-how.
 - 2026-07-19: **D-089 the factions get their state: stores, boldness, and the tick that gives back.** Vision §2's keystone clause lands: two causal axes on the coarse tick. The stead's STORES (Max 6, stored, reset each world): raids drain it, RationPrice rides it via PriceBump (replacing the frozen + Raids term), bared lofts END the raids as their own dark exit (fact lofts_bare, replacing the flat cap of 3), and once the camp falls the stead recovers +1/tick to full (each easing narrated, fact lofts_full): deliberately amends D-079's grain-stays-taken, since the exit now has an aftermath. The dens' BOLDNESS (DERIVED, not stored: Base 3 + Raids - Wrath): below 2 a tick raids nothing (fact dens_cowed, once: wrath's first faction-scale consequence, the cull buying the stead quiet), at 4+ the raid comes greedy and takes double, so an untouched camp bares the lofts in 4 raids. Snapshot carries Stores + Boldness. Save v38 -> v39. 395 tests green (5 new/rewritten RaidsTests; WrathTests camp helpers promoted internal); twins byte-identical; emit->sim exact (final stores 6/boldness 3: a recovered world); sweep turns/deaths IDENTICAL to baseline with raids now varying by seed (the culls showing through). Checked off the state-vectors item; new tracked lines: the stead acting on the tick, a third faction.
 - 2026-07-19: **D-088 the facts answered: three storylets consume the faction graph.** The consumers the last three decisions deferred, landed in one stroke: the-steads-reckoning (Talk, prio 12: a named thief told so to their face, once per stead, gated on the live barred rung so restitution stills it, writing a `confronted` fact), the-tale-carried (NearHouse, prio 6: the hearthtale's rumor fact consumed, the tarred door-posts read differently because a story was told, nothing gained and nothing needing to be), and what-the-stead-keeps (Talk, prio 7, one under the hearthtale so the ladder keeps its order: the own rung shown the stead's deep cellar, the graph's first `secret` fact). All three lines-and-facts only: no coin, no grant, so every journey number held to the digit. Save v37 -> v38 by the v35 precedent (new storylets shift the weighted draws). 392 tests green (7 new); byte-identical + emit->sim exact + sweep unchanged. Checked off the fact-consumers item; new tracked line for `confronted`/`secret` consumers in their turn.
 - 2026-07-19: **D-087 the stead's teaching: the own rung's boon.** The bright ladder's top rung finally pays: at "the stead's own" (regard 5) every lesson the stead sells is shown freely, the boon paid in the one currency in the stead's gift that crosses the arch (lessons bank on the bearer past death and waygate, D-052), where the friend rung paid in this world's coin: D-077's collision lesson applied at the top. SteadsTeaching gate beside FriendsPrice; crossing narrated with a taking-stock variant when nothing is left to show; bench/smith labels rename ("freely, to the stead's own", label text only, digits hold); the coin's refusal narrated at the showing. Suspicion (unwelcome+) closes it with a narrated withholding; live-shame gating means restitution reopens the craft. Save v36 -> v37 (a v36 journal that bought a showing at the own rung replays richer). 385 tests green (4 new RegardTests); byte-identical + emit->sim exact (baseline held: the pilot buys no lessons) + sweep unchanged. Checked off the regard-boons item (every rung pays); new tracked line for rumor/shame-fact consumers and a rung-3 storylet beat.

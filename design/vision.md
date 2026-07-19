@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-089); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-090); the research behind it lives in `../research/`.
 
 ---
 
@@ -82,7 +82,7 @@ Rare, feared, revered. Spells are found, never picked from menus: grimoire pages
 
 ## 6. The Life: Activities and Economy
 
-Four activity families, all first-class: **crafting trades** (smithing, alchemy, cooking), **wilderness living** (hunting, tracking, foraging, fishing, camping), **crime** (lockpicking, pickpocketing, burglary, fencing), **town life** (gambling, carousing, tournaments, trading, property). The discipline: every activity feeds at least two of skill growth, money, world-state/reputation, story hooks, or it does not ship. Activities hook into generated facts: the apothecary pays well for herbs because her supplier died in the raid the fact graph remembers.
+Four activity families, all first-class: **crafting trades** (smithing, alchemy, cooking), **wilderness living** (hunting, tracking, foraging, fishing, camping), **crime** (lockpicking, pickpocketing, burglary, fencing), **town life** (gambling, carousing, tournaments, trading, property). The discipline: every activity feeds at least two of skill growth, money, world-state/reputation, story hooks, or it does not ship. Activities hook into generated facts: the apothecary pays well for herbs because her supplier died in the raid the fact graph remembers. Alchemy opened at D-090 in exactly this shape: the foraged simples (D-074) steep into a hale-draught at the stillroom (D-081) or, once the stillcraft is taught, at any shrine rest in any world, giving the herb lane its first sink (sell the sprigs or drink them) and the deep sites their first carried remedy.
 
 Coin is fully separate from Essence and must matter all game:
 - **Auto-scaling sinks**: upkeep and repair cost a percentage of your own gear's value, so wealth taxes itself.

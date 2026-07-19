@@ -57,6 +57,13 @@ public sealed class Player
     /// </summary>
     public int Herb { get; set; }
 
+    /// <summary>
+    /// Hale-draughts steeped from the simples (D-090): the stillroom's craft in
+    /// a stoppered vial, drunk anywhere the road hurts. On your person like the
+    /// satchel it came from, surviving death and the crossing.
+    /// </summary>
+    public int Draughts { get; set; }
+
     // Gear (D-041): the other half of the build. Banked like attributes: the
     // remnant never takes it, and it crosses waygates untouched (vision secs 8, 10).
 

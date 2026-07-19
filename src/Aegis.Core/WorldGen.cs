@@ -20,6 +20,18 @@ public sealed class Site
     public required Pos ChestPos { get; init; }
     public bool ChestLooted { get; set; }
     public bool Cleared { get; set; }
+
+    /// <summary>
+    /// The graven stone (D-091): one old word set deep in the site's fabric,
+    /// where the fabric is older than the stead. Null where none stands.
+    /// </summary>
+    public Pos? StonePos { get; set; }
+
+    /// <summary>Whether the stone's word has been read (D-091): a stone gives its word once.</summary>
+    public bool StoneRead { get; set; }
+
+    /// <summary>Whether the veil-word has been said on this floor (D-091): pretenders drawn for what they are.</summary>
+    public bool Unveiled { get; set; }
 }
 
 public sealed class World
@@ -671,6 +683,32 @@ public static class WorldGen
                 || herbs.Any(h => h.Manhattan(p) < 8))
                 continue;
             herbs.Add(p);
+        }
+
+        // The graven stones (D-091): one old word set deep in each fighting
+        // site whose fabric predates the stead (the camp squats in a cave that
+        // was something else first). Own stream per site, drawn after every
+        // existing draw, so pinned worlds keep their layouts and only gain a
+        // stone. Worldgen never reads the character: the stone stands for
+        // everyone; which word it yields is decided at the reading.
+        foreach (var site in sites)
+        {
+            if (site.Kind is not (SiteKind.GoblinCamp or SiteKind.Barrow or SiteKind.Quarry
+                or SiteKind.Hall or SiteKind.Ringfort or SiteKind.Leaguer)) continue;
+            var stoneRng = new Rng(SeedTree.Derive(worldSeed, "graven-stone-" + site.Id));
+            var floor = new List<Pos>();
+            for (int y = 0; y < site.Map.Height; y++)
+                for (int x = 0; x < site.Map.Width; x++)
+                {
+                    var p = new Pos(x, y);
+                    if (site.Map[p] != Terrain.Floor || p == site.ChestPos) continue;
+                    if (site.Spawns.Any(s => s.Pos == p)) continue;
+                    floor.Add(p);
+                }
+            if (floor.Count == 0) continue;
+            int deepest = floor.Max(p => p.Manhattan(site.EntryPos));
+            var deep = floor.Where(p => p.Manhattan(site.EntryPos) >= Math.Max(1, deepest - 3)).ToList();
+            site.StonePos = stoneRng.Pick(deep);
         }
 
         facts.Add("world_name", worldName, "");

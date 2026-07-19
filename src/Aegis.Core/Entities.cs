@@ -16,6 +16,42 @@ public sealed class Player
     public int Deaths { get; set; }
 
     /// <summary>
+    /// The workings the bearer carries (D-091): words read off graven stones in
+    /// the deep places, in the order they were taken up. Knowledge like the
+    /// lessons: death never takes them and they cross the waygate whole.
+    /// </summary>
+    public List<SpellId> Spells { get; } = [];
+
+    public bool HasSpell(SpellId id) => Spells.Contains(id);
+
+    /// <summary>
+    /// The caster's pool (D-091): spent by the workings, gathered back a point
+    /// at a time on the road and whole at a shrine rest. Transient like blood
+    /// and wind; the words themselves are what persists.
+    /// </summary>
+    public int Focus { get; set; }
+
+    /// <summary>The pool's brim, from Will (D-091): the humble baseline of 5 gives 3.</summary>
+    public int MaxFocus => 3 + Math.Max(0, Attributes[Attr.Will] - AttributeSet.Baseline);
+
+    /// <summary>Flat working bonus from Mind above baseline (D-091): the learned mind drives the word harder.</summary>
+    public int SpellBonus => Math.Max(0, Attributes[Attr.Mind] - AttributeSet.Baseline);
+
+    /// <summary>Turns the ward-word still holds (D-091): while it runs, blows are turned further.</summary>
+    public int WardTurns { get; set; }
+
+    /// <summary>
+    /// The levin held one breath from spoken (D-091): the caster's own wind-up,
+    /// the mirror of the heave (D-058) and of every monster intent. The Focus is
+    /// already spent; the next act says the word on this cell, and a wound taken
+    /// while it is held can knock it crooked (Will and Spellcraft hold the grip).
+    /// </summary>
+    public Pos? LevinTarget { get; set; }
+
+    /// <summary>The Aegis speaks once at the first word taken up; never again.</summary>
+    public bool SpellLineHeard { get; set; }
+
+    /// <summary>
     /// A heavy blow wound up and not yet loosed (D-058): commitment runs both
     /// ways (D-004). 'w' and a line set the cell; the wind-up costs its stamina
     /// now and stands one turn, visible, for the field to answer; the next act

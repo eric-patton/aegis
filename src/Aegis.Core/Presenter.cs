@@ -50,6 +50,7 @@ public static class Presenter
         if (game.InThresholdMenu) DrawThresholdMenu(frame, layout);
         if (game.InLayingMenu) DrawLayingMenu(frame, game, layout);
         if (game.InGearMenu) DrawGearMenu(frame, game, layout);
+        if (game.InCastMenu) DrawCastMenu(frame, game, layout);
         if (game.InSheetMenu) DrawSheet(frame, game, layout);
         if (game.InCrossingMenu) DrawCrossingMenu(frame, game, layout);
         return frame;
@@ -215,6 +216,35 @@ public static class Presenter
     }
 
     /// <summary>
+    /// The workings (D-091): what words are carried, what each asks of the
+    /// pool, and which are wound up rather than said outright. Reached on 'z',
+    /// turn-free like every menu.
+    /// </summary>
+    private static void DrawCastMenu(Frame frame, Game game, Layout layout)
+    {
+        var spells = game.Player.Spells;
+        const int boxW = 46;
+        int boxH = 5 + spells.Count;
+        int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
+        int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
+
+        DrawBox(frame, x0, y0, boxW, boxH);
+        frame.Write(x0 + 2, y0 + 1, "The workings you carry", Hue.White);
+        frame.Write(x0 + 2, y0 + 2, $"Focus {game.Player.Focus}/{game.Player.MaxFocus}", Hue.Cyan);
+
+        for (int i = 0; i < spells.Count; i++)
+        {
+            var def = SpellCatalog.Def(spells[i]);
+            frame.Write(x0 + 2, y0 + 4 + i,
+                $"{i + 1}) {def.Name,-14} {def.Focus} focus{(def.WindUp ? "  (wind-up)" : "")}",
+                game.Player.Focus >= def.Focus ? Hue.White : Hue.DarkGray);
+        }
+
+        frame.Write(x0 + 2, y0 + boxH - 2,
+            $"1-{spells.Count} speak; any other key keeps silence", Hue.DarkGray);
+    }
+
+    /// <summary>
     /// The pack (D-041): what is owned, what is worn, what each piece asks and
     /// gives. Requirements print here before any coin or essence is invested.
     /// </summary>
@@ -261,7 +291,9 @@ public static class Presenter
         var p = game.Player;
         var choice = game.PendingKnack;
         const int boxW = 54;
-        int boxH = choice is null ? 17 : 18 + choice.Options.Length;
+        // Every skill gets its own row (a D-091 mending: the Taught and Legend
+        // rows used to overwrite the newest skills), then Taught, then Legend.
+        int boxH = choice is null ? 12 + SkillSet.Count : 14 + SkillSet.Count + choice.Options.Length;
         int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
         int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
 
@@ -293,11 +325,11 @@ public static class Presenter
         }
 
         // The lessons row (D-052): the fourth ledger, what other hands put in.
-        frame.Write(x0 + 2, y0 + 13,
+        frame.Write(x0 + 2, y0 + 8 + SkillSet.Count,
             $"Taught   {(p.Lessons.Count > 0 ? string.Join(", ", p.Lessons.Select(l => LessonCatalog.Def(l).Short)) : "-")}",
             p.Lessons.Count > 0 ? Hue.White : Hue.Gray);
 
-        frame.Write(x0 + 2, y0 + 14,
+        frame.Write(x0 + 2, y0 + 9 + SkillSet.Count,
             game.Standing > 0
                 ? $"Legend {p.Legend,4}   {LegendStanding.TitleOf(game.Standing)}"
                 : $"Legend {p.Legend,4}",
@@ -305,12 +337,12 @@ public static class Presenter
 
         if (choice is not null)
         {
-            frame.Write(x0 + 2, y0 + 15,
+            frame.Write(x0 + 2, y0 + 10 + SkillSet.Count,
                 choice.Level >= 4
                     ? $"{SkillSet.NameOf(choice.Skill)} has deepened into a second question:"
                     : $"{SkillSet.NameOf(choice.Skill)} has settled into a question:", Hue.Cyan);
             for (int i = 0; i < choice.Options.Length; i++)
-                frame.Write(x0 + 2, y0 + 16 + i,
+                frame.Write(x0 + 2, y0 + 11 + SkillSet.Count + i,
                     $"{i + 1}) {choice.Options[i].Name}: {choice.Options[i].Blurb}", Hue.White);
             frame.Write(x0 + 2, y0 + boxH - 2,
                 $"1-{choice.Options.Length} choose, for good; any other key closes", Hue.DarkGray);
@@ -443,6 +475,16 @@ public static class Presenter
         if (game.Player.HeaveTarget is { } heaveCell)
             PutWorld(heaveCell, '!', Hue.White, Hue.DarkYellow);
 
+        // The levin held (D-091): the caster's commitment marks its ground in
+        // the bearer's own amber, exactly as the heave marks its cell.
+        if (game.Player.LevinTarget is { } levinCell)
+            PutWorld(levinCell, '!', Hue.White, Hue.DarkYellow);
+
+        // The graven stone (D-091): the descent's prize, standing where the
+        // site's fabric runs deepest, until its word is read.
+        if (game.CurrentSite is { StonePos: { } stonePos, StoneRead: false })
+            PutWorld(stonePos, 'I', Hue.Cyan);
+
         if (game.Remnant is { } remnant && remnant.MapId == map.Id)
             PutWorld(remnant.Pos, '%', Hue.Magenta);
 
@@ -481,13 +523,15 @@ public static class Presenter
             {
                 MonsterKind.Wight => Hue.Cyan,
                 MonsterKind.Severed => Hue.Magenta,
-                // A sleeping graven man is drawn like the stone it is pretending to be.
-                MonsterKind.Graven => monster.Dormant ? Hue.DarkGray : Hue.DarkYellow,
+                // A sleeping graven man is drawn like the stone it is pretending
+                // to be, unless the veil-word has shown it for what it is (D-091).
+                MonsterKind.Graven => monster.Dormant && !(game.CurrentSite?.Unveiled ?? false) ? Hue.DarkGray : Hue.DarkYellow,
                 MonsterKind.Hound => Hue.DarkCyan,
                 MonsterKind.Carl => Hue.Yellow,
                 MonsterKind.Boar => Hue.DarkRed,
-                // A watching warder is drawn low, part of the works it stands.
-                MonsterKind.Warder => monster.Dormant ? Hue.DarkGray : Hue.DarkGreen,
+                // A watching warder is drawn low, part of the works it stands,
+                // unless the veil-word has picked it off the works (D-091).
+                MonsterKind.Warder => monster.Dormant && !(game.CurrentSite?.Unveiled ?? false) ? Hue.DarkGray : Hue.DarkGreen,
                 // The sword-thegn stands steel-grey and still, giving nothing away.
                 MonsterKind.Thegn => Hue.Gray,
                 _ => Hue.Red,
@@ -540,6 +584,9 @@ public static class Presenter
         Line(new string('-', 22), Hue.DarkGray);
         Line($"HP  {Bar(p.Hp, p.EffectiveMaxHp, 10)} {p.Hp}/{p.EffectiveMaxHp}", p.Hp * 3 <= p.EffectiveMaxHp ? Hue.Red : Hue.Gray);
         Line($"ST  {Bar(p.Stamina, p.MaxStamina, 10)} {p.Stamina}/{p.MaxStamina}", Hue.Gray);
+        // The pool (D-091): unveiled with the first word, and never before.
+        if (p.Spells.Count > 0)
+            Line($"FO  {Bar(p.Focus, p.MaxFocus, 10)} {p.Focus}/{p.MaxFocus}", Hue.Cyan);
         Line($"Coin    {p.Coin}", Hue.Yellow);
         Line($"Essence {p.Essence}", Hue.Cyan);
         if (p.Rations > 0) Line($"Rations {p.Rations}", Hue.Green);
@@ -580,7 +627,12 @@ public static class Presenter
             if (game.InAim) Line("Shaft set: choose a line", Hue.Cyan);
             if (game.InThrust) Line("Spear leveled: choose a line", Hue.Cyan);
             if (game.InHeave) Line("Feet set: choose a line", Hue.DarkYellow);
+            if (game.InCastLine) Line("The word waits: choose a line", Hue.Cyan);
             if (game.Player.HeaveTarget is not null) Line("! heave wound up: act to loose", Hue.DarkYellow);
+            if (game.Player.LevinTarget is not null) Line("! levin held: act to say it", Hue.DarkYellow);
+            if (game.Player.WardTurns > 0) Line($"Warded ({game.Player.WardTurns})", Hue.Cyan);
+            if (game.CurrentSite is { StonePos: { } stonePos, StoneRead: false } && stonePos == p.Pos)
+                Line("Graven stone: g reads", Hue.Cyan);
             // The read, in words (D-059). A stranger's wind-up reads as danger
             // without a name; a read tell is named; a keen read knows its weight.
             static string Weight(IntentKind k) => k switch
@@ -644,7 +696,8 @@ public static class Presenter
         Line("hjkl/yubn move  . wait", Hue.DarkGray);
         Line("g grab  >/< enter/exit", Hue.DarkGray);
         Line("f loose  e eat  d drink", Hue.DarkGray);
-        Line("i gear  c you  q quit", Hue.DarkGray);
+        Line("z cast  i gear  c you", Hue.DarkGray);
+        Line("q quit", Hue.DarkGray);
     }
 
     private static string Bar(int value, int max, int slots)

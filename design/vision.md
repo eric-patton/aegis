@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-090); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-091); the research behind it lives in `../research/`.
 
 ---
 
@@ -77,6 +77,8 @@ Formal 1v1 duels (judicial combat, arena bouts) may later reuse these verbs as s
 ## 5. Magic
 
 Rare, feared, revered. Spells are found, never picked from menus: grimoire pages (literacy required), mentors, shrine rituals tied to world facts. Attunement capacity comes from found world objects, so hybrids are never double-taxed on attributes. Mind scales potency; Will scales control. Casting draws the shared stamina pool; strong spells consume components; overreaching Will risks miscast. Casts are telegraphed windups on the grid, interruptible both ways, for you and against you. Casters accrue social texture: awe, suspicion, and faction attention.
+
+Magic v1 shipped at D-091 in exactly the found-not-picked shape, with one amendment: casting spends its own small pool (Focus, from Will) rather than the shared stamina, so the caster and martial identities stay distinct. Four workings wait on graven stones, one at the deepest reach of each fighting deep site: the spark, the levin (the caster's own telegraphed wind-up, dodgeable by feet and breakable by a wound the Will fails to hold through), the ward, and the veilsight. Mind drives the weight, Will holds the pool and the grip, and Spellcraft grows only by workings that did work. Words are knowledge: they survive death and cross the waygate whole, and each world's unread stones regrow, so the deep sites carry a prize beyond coin and iron. Still to come from the sketch above: components, attunement objects, the social texture, enemy casters (Will's resist role), and the wider spell list.
 
 ---
 
@@ -170,7 +172,7 @@ And the loop closes on itself: **your finished characters enter the mythology.**
 ## 12. Open Items
 
 - Final race list (which originals join the anchors)
-- Spell list and magic-school content design
+- Spell list growth past D-091's first four workings, and whether any school shape ever forms
 - Storylet external data-file format and condition/effect vocabulary (v1 C# format spec'd; see `storylets.md` sec. 6)
 - Scar, Legend-rung (D-048 landed five, hospitality-boon shaped), further-oath (D-047 landed four), and hostility-tier content catalogs (first tier band landed in D-033: the barrow at tier 2+; tiers 3+ still need their own)
 - Story content open items: bottle-episode playability, Unbinder guise tells, templates 4-5 (see `story/aegis-arc.md` sec. 11, `story/world-story-templates.md` sec. 9; final names settled by D-043; generated world, stead, and person naming rewoven in D-049 with worlds unique per character)

@@ -137,10 +137,15 @@ namespace Aegis.Core;
 /// journal's stray 'd' was ignored and now drinks), the stillroom bench grew
 /// the steeping and the stillcraft entries (digits a v39 press used to close
 /// the menu), and a taught rest steeps a draught from carried sprigs.
+/// v41 when D-091 taught the deep places their words: 'z' gained meaning (a
+/// v40 journal's stray 'z' was ignored and now opens the workings), reading a
+/// graven stone takes a word into the bearer, and a death mid-wind-up now
+/// drops the held heave, so the rare v40 journal that died with a blow wound
+/// up replays without loosing it at the shrine.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 40;
+    public const int Version = 41;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

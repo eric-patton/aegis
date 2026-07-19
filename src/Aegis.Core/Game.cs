@@ -78,6 +78,24 @@ public sealed class Game
     public bool InHeave { get; private set; }
 
     /// <summary>
+    /// The workings carried (D-091): 'z' opens them, digits speak one, anything
+    /// else keeps silence. Turn-free like every menu: the choosing costs nothing
+    /// until a word is actually said.
+    /// </summary>
+    public bool InCastMenu { get; private set; }
+
+    /// <summary>
+    /// A line-hungry word chosen (D-091): the spark and the levin want a line
+    /// the way the shaft and the point do; the next direction key gives it.
+    /// </summary>
+    public bool InCastLine { get; private set; }
+
+    private SpellId? _pendingLineSpell;
+
+    /// <summary>The bearer's blood when the levin was raised (D-091): a wound taken while it is held threatens the word.</summary>
+    private int _hpAtLevinCommit;
+
+    /// <summary>
     /// The terms of the crossing (D-047), open only at an open waygate: digits
     /// swear or unswear oaths on the next world, '>' crosses under what stands
     /// sworn, anything else steps back and the selection is let go.
@@ -419,6 +437,20 @@ public sealed class Game
             return;
         }
 
+        if (InCastMenu)
+        {
+            HandleCastMenuKey(key);
+            KeyApplied?.Invoke(key);
+            return;
+        }
+
+        if (InCastLine)
+        {
+            HandleCastLineKey(key);
+            KeyApplied?.Invoke(key);
+            return;
+        }
+
         var cmd = CommandMap.FromKey(key);
         if (cmd == Command.None) return;
 
@@ -449,6 +481,15 @@ public sealed class Game
             return;
         }
 
+        // The levin held (D-091) commits the same way the heave does: the next
+        // act that would cost a turn spends it saying the word instead.
+        if (Player.LevinTarget is { } levinCell && cmd is not (Command.Gear or Command.Sheet))
+        {
+            ResolveLevin(levinCell);
+            AdvanceTurn();
+            return;
+        }
+
         bool tookTime = cmd switch
         {
             Command.Wait => DoWait(),
@@ -463,6 +504,7 @@ public sealed class Game
             Command.Loose => DoLoose(),
             Command.Thrust => DoThrust(),
             Command.Heave => DoHeave(),
+            Command.Cast => DoCast(),
             _ => CommandMap.Delta(cmd) is { } d && DoMove(d.dx, d.dy),
         };
 
@@ -613,6 +655,8 @@ public sealed class Game
                     SiteKind.Leaguer => "A cist of stacked stone sits on the holm's crown, its capstone set square against the weather. Press g to lift it.",
                     _ => "A battered strongbox sits here. Press g to open it.",
                 }, LogTone.Reward);
+            else if (CurrentSite is { StonePos: { } sp, StoneRead: false } && p == sp)
+                Log.Add(Turn, "A standing stone, man-high, one word cut deep in its face. The cuts have kept their edges an age. Press g to read it.", LogTone.Aegis);
             else if (t == Terrain.ExitLadder)
                 Log.Add(Turn, "Daylight above. Press < to climb out.");
             else if (t == Terrain.Hearth && CurrentSite!.Kind == SiteKind.Threshold && Player.Resolution != Resolution.None)
@@ -798,9 +842,18 @@ public sealed class Game
         InGearMenu = false;
         InSheetMenu = false;
         InCrossingMenu = false;
+        InCastMenu = false;
+        InCastLine = false;
+        _pendingLineSpell = null;
         _chosenOaths.Clear();
         TalkNpc = null;
         CurrentSite = null;
+        // The words cross whole; the said state does not (D-091): no ward holds
+        // through an arch, no levin survives it, and the pool arrives at brim.
+        Player.HeaveTarget = null;
+        Player.LevinTarget = null;
+        Player.WardTurns = 0;
+        Player.Focus = Player.MaxFocus;
         // The menders' honor (D-048): a world's Unbinder will loosen one more
         // raise for a bearer the songs carry high. The hushed name (D-051)
         // silences it with every other favor standing buys.
@@ -974,6 +1027,9 @@ public sealed class Game
             return true;
         }
 
+        if (Mode == MapMode.Site && CurrentSite is { StonePos: { } stonePos, StoneRead: false } && Player.Pos == stonePos)
+            return ReadGravenStone(CurrentSite);
+
         if (Mode == MapMode.Site && !CurrentSite!.ChestLooted && Player.Pos == CurrentSite.ChestPos)
         {
             int coin = CurrentSite.Kind switch
@@ -1065,6 +1121,46 @@ public sealed class Game
 
         Log.Add(Turn, "There is nothing here to take.");
         return false;
+    }
+
+    /// <summary>
+    /// Reading a graven stone (D-091): the descent's own prize, a word taken
+    /// into the reader for good. Each kind of old fabric leans toward its own
+    /// word and gives the first of its leaning the bearer lacks, so the grant
+    /// is journal-derived and worldgen stays blind to the character. The first
+    /// word ever taken unveils the Focus the bearer never knew they held.
+    /// </summary>
+    private bool ReadGravenStone(Site site)
+    {
+        site.StoneRead = true;
+        Log.Add(Turn, "You set your palm flat on the graven word, and the cuts warm under it.", LogTone.Reward);
+
+        SpellId? next = null;
+        foreach (var id in SpellCatalog.StonePreference(site.Kind))
+            if (!Player.HasSpell(id)) { next = id; break; }
+        if (next is null)
+        {
+            Log.Add(Turn, "The word is one you already carry. The stone has nothing left to give but company.", LogTone.Info);
+            return true;
+        }
+
+        var def = SpellCatalog.Def(next.Value);
+        bool first = Player.Spells.Count == 0;
+        Player.Spells.Add(next.Value);
+        Player.Focus = Player.MaxFocus;
+        Log.Add(Turn, $"The word goes into you like cold water: {def.Name} is yours, for good. {def.FoundLine} (z speaks what you carry)", LogTone.Reward);
+        World.Facts.Add("working", SpellCatalog.IdOf(next.Value), World.SettlementName,
+            $"In the deep places near {World.SettlementName} a graven word was taken up: {def.Name}.");
+        if (first)
+        {
+            Log.Add(Turn, "And behind your breastbone, something gathers that was never there before: a focus, waiting to be spent.", LogTone.Reward);
+            if (!Player.SpellLineHeard)
+            {
+                Player.SpellLineHeard = true;
+                Log.Add(Turn, "\"...That word is older than the stead, bearer. Older than me, it may be. I cannot hold what it does; only you can. Say it carefully.\"", LogTone.Aegis);
+            }
+        }
+        return true;
     }
 
     /// <summary>
@@ -2385,6 +2481,7 @@ public sealed class Game
 
         Player.Hp = Player.EffectiveMaxHp;
         Player.Stamina = Player.MaxStamina;
+        Player.Focus = Player.MaxFocus;
 
         // The tended iron (D-052): a taught bearer's rest holds their gear back
         // from the worst of its wear. Only back to half: the deep wear is the
@@ -2991,6 +3088,277 @@ public sealed class Game
         GainSkill(family);
     }
 
+    /// <summary>How far a said word carries (D-091): half a bowshot. The words are old, not long.</summary>
+    public const int SpellRange = 4;
+
+    /// <summary>How many turns the ward-word holds the air thick (D-091).</summary>
+    public const int WardHeldTurns = 6;
+
+    /// <summary>Turns between the pool gathering a point back on the road (D-091).</summary>
+    public const int FocusRegenTurns = 8;
+
+    /// <summary>
+    /// The workings ('z', D-091): opens what the bearer carries. Costs no turn;
+    /// an empty head costs nothing either, only the telling of where words wait.
+    /// </summary>
+    private bool DoCast()
+    {
+        if (Player.Spells.Count == 0)
+        {
+            Log.Add(Turn, "You carry no workings. What words there are wait graven in the deep places.");
+            return false;
+        }
+        InCastMenu = true;
+        return false;
+    }
+
+    private void HandleCastMenuKey(char key)
+    {
+        InCastMenu = false;
+        var known = Player.Spells;
+        if (key < '1' || key > (char)('0' + known.Count))
+        {
+            Log.Add(Turn, "You let the words be.");
+            return;
+        }
+
+        var def = SpellCatalog.Def(known[key - '1']);
+        if (Mode != MapMode.Site)
+        {
+            Log.Add(Turn, "The words want the old dark they were cut in; under this open sky nothing answers them.");
+            return;
+        }
+        if (Player.Focus < def.Focus)
+        {
+            Log.Add(Turn, $"{Cap(def.Name)} asks {def.Focus} focus of the {Player.Focus} you hold. It gathers back with the turns, and whole at a rest.");
+            return;
+        }
+
+        switch (def.Id)
+        {
+            case SpellId.Spark:
+                _pendingLineSpell = SpellId.Spark;
+                InCastLine = true;
+                Log.Add(Turn, "The spark sits ready behind your teeth. Choose a line; any other key swallows it.");
+                return;
+            case SpellId.Levin:
+                _pendingLineSpell = SpellId.Levin;
+                InCastLine = true;
+                Log.Add(Turn, "The levin gathers, wanting a line. Choose one; any other key lets it go.");
+                return;
+            case SpellId.Ward:
+                CastWard();
+                AdvanceTurn();
+                return;
+            default:
+                CastVeilsight();
+                AdvanceTurn();
+                return;
+        }
+    }
+
+    private static string Cap(string s) => char.ToUpperInvariant(s[0]) + s[1..];
+
+    private void HandleCastLineKey(char key)
+    {
+        InCastLine = false;
+        var spell = _pendingLineSpell;
+        _pendingLineSpell = null;
+        if (CommandMap.Delta(CommandMap.FromKey(key)) is { } d)
+        {
+            if (spell == SpellId.Spark) CastSpark(d.dx, d.dy);
+            else CommitLevin(d.dx, d.dy);
+            AdvanceTurn();
+        }
+        else
+        {
+            Log.Add(Turn, "You swallow the word unsaid, and keep its focus.");
+        }
+    }
+
+    /// <summary>
+    /// The spark (D-091): the small word, said and gone in the same breath. It
+    /// flies its short line like a shaft, but it is fire, not wood: a linden
+    /// board is no answer to it, which is the caster's own lane past the
+    /// shield-carls. Only a spark that found a body teaches (D-014's gate).
+    /// </summary>
+    private void CastSpark(int dx, int dy)
+    {
+        Player.Focus -= SpellCatalog.Def(SpellId.Spark).Focus;
+        var map = CurrentMap;
+        var pos = Player.Pos;
+        for (int step = 0; step < SpellRange; step++)
+        {
+            pos = pos.Plus(dx, dy);
+            if (!map.Walkable(pos))
+            {
+                Log.Add(Turn, "The spark cracks against stone and dies to an ember-smell.", LogTone.Combat);
+                return;
+            }
+
+            var target = Monsters.FirstOrDefault(m => m.Alive && m.SiteId == CurrentSite!.Id && m.Pos == pos);
+            if (target is null) continue;
+
+            int damage = _combatRng.Range(2, 5) + Player.SpellBonus + Player.Skills.Bonus(SkillId.Spellcraft);
+            target.Hp -= damage;
+            if (target.Alive)
+            {
+                Log.Add(Turn, $"The spark takes the {target.Name} in a snap of white fire for {damage}.", LogTone.Combat);
+                WakeStruck(target, "The head grinds around, hunting the hand that burned it.");
+            }
+            else
+            {
+                HarvestRemains(target);
+            }
+            GainSkill(SkillId.Spellcraft);
+            return;
+        }
+
+        Log.Add(Turn, "The spark flies its short line and gutters out on the dark.", LogTone.Combat);
+    }
+
+    /// <summary>
+    /// The levin raised (D-091): the caster's own wind-up, the heave's mirror
+    /// said instead of swung. The Focus is spent now and the ground is marked
+    /// now: the first body on the line within the word's reach, or the line's
+    /// far end. It stands one turn, visible, and the next act says it, hit or
+    /// miss. A wound taken while it is held can knock it crooked: Will and
+    /// Spellcraft are the grip (see ResolveLevin).
+    /// </summary>
+    private void CommitLevin(int dx, int dy)
+    {
+        Player.Focus -= SpellCatalog.Def(SpellId.Levin).Focus;
+        var map = CurrentMap;
+        var cell = Player.Pos;
+        for (int step = 0; step < SpellRange; step++)
+        {
+            var next = cell.Plus(dx, dy);
+            if (!map.Walkable(next)) break;
+            cell = next;
+            if (Monsters.Any(m => m.Alive && m.SiteId == CurrentSite!.Id && m.Pos == cell)) break;
+        }
+        if (cell == Player.Pos)
+        {
+            Log.Add(Turn, "Stone crowds the line before the word can mark it. The levin goes unsaid, its focus kept.", LogTone.Combat);
+            Player.Focus += SpellCatalog.Def(SpellId.Levin).Focus;
+            return;
+        }
+
+        Player.LevinTarget = cell;
+        _hpAtLevinCommit = Player.Hp;
+        Log.Add(Turn, "You raise the levin-word and hold it one breath from spoken. The air over the marked ground goes taut; everything here can feel where it will fall.", LogTone.Combat);
+    }
+
+    /// <summary>
+    /// The levin said (D-091): the biggest working a mouth holds, on the ground
+    /// marked a turn ago. A body that left the mark is a body the word never
+    /// touches: a telegraph is dodged by feet, both ways, the heave's own rule.
+    /// A wound taken while it was held threatens the saying: Will and Spellcraft
+    /// keep the grip, or the word scatters, its focus spent on nothing.
+    /// </summary>
+    private void ResolveLevin(Pos cell)
+    {
+        Player.LevinTarget = null;
+
+        if (Player.Hp < _hpAtLevinCommit)
+        {
+            double hold = Math.Clamp(
+                0.5 + 0.1 * (Player.Attributes[Attr.Will] - AttributeSet.Baseline)
+                    + 0.05 * Player.Skills.Level(SkillId.Spellcraft), 0.5, 0.95);
+            if (!_combatRng.Chance(hold))
+            {
+                Log.Add(Turn, "The blow you took knocked the word crooked in your mouth: the levin scatters as heat and a smell of storms, spent on nothing.", LogTone.Combat);
+                return;
+            }
+            Log.Add(Turn, "Hurt, and the word held anyway: your will keeps its grip on the gathered weight.", LogTone.Combat);
+        }
+
+        var target = Monsters.FirstOrDefault(m => m.Alive && m.SiteId == CurrentSite!.Id && m.Pos == cell);
+        if (target is null)
+        {
+            Log.Add(Turn, "The levin comes down and cracks the empty ground white. A word that big, spent on stone.", LogTone.Combat);
+            return;
+        }
+
+        int damage = _combatRng.Range(7, 12) + 2 * Player.SpellBonus + Player.Skills.Bonus(SkillId.Spellcraft);
+        target.Hp -= damage;
+        if (target.Alive)
+        {
+            Log.Add(Turn, $"The levin comes down full on the {target.Name} for {damage}.", LogTone.Combat);
+            WakeStruck(target, "Grit sifts from the figure. The head grinds around to face you.");
+        }
+        else
+        {
+            HarvestRemains(target);
+        }
+        GainSkill(SkillId.Spellcraft);
+    }
+
+    /// <summary>A struck sleeper wakes (D-040, D-057): the working's blow follows the iron's rule.</summary>
+    private void WakeStruck(Monster target, string line)
+    {
+        if (!target.Dormant) return;
+        if (target.Kind == MonsterKind.Warder) RouseLeaguer(target);
+        else
+        {
+            target.Dormant = false;
+            Log.Add(Turn, line, LogTone.Danger);
+        }
+    }
+
+    /// <summary>
+    /// The ward (D-091): the patient word. While it holds, every blow that
+    /// lands is turned further (see Absorb), and a blow it actually turned is
+    /// the only ward that teaches (D-014's gate, the Warding skill's own rule).
+    /// </summary>
+    private void CastWard()
+    {
+        Player.Focus -= SpellCatalog.Def(SpellId.Ward).Focus;
+        Player.WardTurns = WardHeldTurns;
+        Log.Add(Turn, "You say the ward-word, low. The air about you thickens faintly, like a held breath that is not yours.", LogTone.Info);
+    }
+
+    /// <summary>
+    /// The veilsight (D-091): the quiet word. The floor gives up what moves on
+    /// it: every kind named and read (the bestiary sharpened on the spot, D-059,
+    /// restamped at this tier, D-061), and the pretenders shown for what they
+    /// are, drawn true from here on. It teaches only when it truly sharpened a
+    /// read: a floor already known cold has nothing left to school.
+    /// </summary>
+    private void CastVeilsight()
+    {
+        Player.Focus -= SpellCatalog.Def(SpellId.Veilsight).Focus;
+        var here = Monsters.Where(m => m.Alive && m.SiteId == CurrentSite!.Id).ToList();
+        Log.Add(Turn, "You say the veil-word, and for a heartbeat the dark forgets how to hold its shapes.", LogTone.Info);
+        if (here.Count == 0)
+        {
+            Log.Add(Turn, "Nothing moves on this floor that your eye had not already found.", LogTone.Info);
+            return;
+        }
+
+        bool sharpened = false;
+        var kinds = here.GroupBy(m => m.Kind).OrderBy(g => (int)g.Key).ToList();
+        Log.Add(Turn, "The floor gives up its living: " + string.Join(", ",
+            kinds.Select(g => g.Count() == 1 ? $"one {g.First().Name}" : $"{g.Count()} of the {g.First().Name}'s kind")) + ".", LogTone.Reward);
+        int feigning = here.Count(m => m.Dormant);
+        if (feigning > 0 && !CurrentSite!.Unveiled)
+            Log.Add(Turn, feigning == 1
+                ? "And one of the still figures is not what it stands as. You will know it now."
+                : $"And {feigning} of the still figures are not what they stand as. You will know them now.", LogTone.Danger);
+        CurrentSite!.Unveiled = true;
+
+        foreach (var group in kinds)
+        {
+            if (Player.Reads.GetValueOrDefault(group.Key) < Player.ReadKeen) sharpened = true;
+            Player.WitnessTell(group.Key, Cycle);
+        }
+        if (sharpened)
+        {
+            Log.Add(Turn, "Their shapes settle into your reading: you will know their blows before they are thrown.", LogTone.Reward);
+            GainSkill(SkillId.Spellcraft);
+        }
+    }
+
     /// <summary>
     /// The loosed line (D-050): the shaft flies flat along one of the eight
     /// lines, stops at the first body or the first stone, and reaches eight
@@ -3108,6 +3476,7 @@ public sealed class Game
             SkillId.Cooking => $"The fire and the meat have stopped surprising you; more comes off the same carcass. (Cooking rises to {after})",
             SkillId.Survival => $"The wood keeps fewer secrets from you; your hands find the good growth without your eyes. (Survival rises to {after})",
             SkillId.Warding => $"You take the blow where the iron is thickest. (Warding rises to {after})",
+            SkillId.Spellcraft => $"The words come steadier now, and cost you less of yourself to hold. (Spellcraft rises to {after})",
             _ => $"Your craft deepens. ({SkillSet.NameOf(id)} rises to {after})",
         }, LogTone.Reward);
 
@@ -3150,6 +3519,19 @@ public sealed class Game
             - (telegraphed && Player.HasPerk(PerkId.BracedShoulder) ? 2 : 0)
             - (Player.HasPerk(PerkId.ShieldWall) ? Math.Min(2, Math.Max(0, FoesBeside() - 1)) : 0)
             - (Player.HasPerk(PerkId.FittedIron) ? 1 : 0));
+        // The ward-word (D-091): while the air holds thick, every landing blow
+        // is turned further, and only a blow the word actually turned teaches
+        // the craft (the Warding skill's own gate, kept to the letter).
+        if (Player.WardTurns > 0)
+        {
+            int warded = Math.Max(1, reduced - (2 + Math.Min(2, Player.SpellBonus) + Player.Skills.Bonus(SkillId.Spellcraft)));
+            if (warded < reduced)
+            {
+                Log.Add(Turn, "The thickened air drinks a part of the blow.", LogTone.Combat);
+                GainSkill(SkillId.Spellcraft);
+            }
+            reduced = warded;
+        }
         if (reduced < raw)
         {
             // The mended strap (D-046): every second turned blow spares the
@@ -3494,6 +3876,13 @@ public sealed class Game
         if (Mode == MapMode.Site)
             foreach (var monster in Monsters.Where(m => m.Alive && m.SiteId == CurrentSite!.Id))
                 ActMonster(monster);
+
+        // The ward-word runs out with the turns (D-091), and the pool gathers
+        // itself back a point at a time on the road, once any word is carried.
+        if (Player.WardTurns > 0 && --Player.WardTurns == 0)
+            Log.Add(Turn, "The ward-word's held breath goes out of the air.", LogTone.Info);
+        if (Player.Spells.Count > 0 && Player.Focus < Player.MaxFocus && Turn % FocusRegenTurns == 0)
+            Player.Focus++;
 
         if (Player.WoundedTurns > 0)
         {
@@ -4239,8 +4628,16 @@ public sealed class Game
         _chosenOaths.Clear();
         InGearMenu = false;
         InSheetMenu = false;
+        InCastMenu = false;
+        InCastLine = false;
+        _pendingLineSpell = null;
         TalkNpc = null;
         _layingTarget = null;
+        // Death drops what was held mid-swing and mid-word (D-058, D-091): the
+        // fall is its own interruption, and the shrine is no place to loose either.
+        Player.HeaveTarget = null;
+        Player.LevinTarget = null;
+        Player.WardTurns = 0;
 
         bool forfeited = Remnant is not null;
         if (forfeited)
@@ -4272,6 +4669,7 @@ public sealed class Game
         Player.Hp = Player.EffectiveMaxHp;
         Player.Stamina = Player.MaxStamina;
 
+        Player.Focus = Player.MaxFocus;
         Log.Add(Turn, $"You wake at the shrine, wounded. The Aegis is spent; it will recover in time.", LogTone.Info);
         if (Remnant is not null)
             Log.Add(Turn, $"What you carried lies where you fell. One chance to reclaim it.", LogTone.Danger);
@@ -4286,6 +4684,11 @@ public sealed class Game
     }
     internal void Debug_HurtPlayer(int damage) => Player.Hp -= damage;
     internal void Debug_GrantGear(string id) => AcquireGear(GearCatalog.Create(id));
+    internal void Debug_LearnSpell(SpellId id)
+    {
+        if (!Player.HasSpell(id)) Player.Spells.Add(id);
+        Player.Focus = Player.MaxFocus;
+    }
     internal void Debug_ForceDeathCheck() { if (Player.Hp <= 0) HandleDeath(); }
     internal void Debug_ClearCamp() => Debug_ClearSite(SiteKind.GoblinCamp);
     internal void Debug_ClearSite(SiteKind kind)
@@ -4381,6 +4784,10 @@ public sealed class Game
         RawMeat: Player.RawMeat,
         Herb: Player.Herb,
         Draughts: Player.Draughts,
+        Focus: Player.Focus,
+        MaxFocus: Player.MaxFocus,
+        Spells: string.Join(",", Player.Spells.Select(SpellCatalog.IdOf)),
+        WardTurns: Player.WardTurns,
         RationPrice: RationPrice,
         MendPrice: Player.WoundedTurns > 0 ? MendPrice : 0,
         WeaponId: Player.Weapon?.Id ?? "",
@@ -4429,7 +4836,10 @@ public sealed class Game
         InAim: InAim,
         InThrust: InThrust,
         InHeave: InHeave,
+        InCastMenu: InCastMenu,
+        InCastLine: InCastLine,
         HeaveLoaded: Player.HeaveTarget is not null,
+        LevinLoaded: Player.LevinTarget is not null,
         TalkNpc: TalkNpc?.Name ?? "",
         WoundedTurns: Player.WoundedTurns,
         Deaths: Player.Deaths,
@@ -4516,6 +4926,10 @@ public sealed record Snapshot(
     int RawMeat,
     int Herb,
     int Draughts,
+    int Focus,
+    int MaxFocus,
+    string Spells,
+    int WardTurns,
     int RationPrice,
     int MendPrice,
     string WeaponId,
@@ -4561,7 +4975,10 @@ public sealed record Snapshot(
     bool InAim,
     bool InThrust,
     bool InHeave,
+    bool InCastMenu,
+    bool InCastLine,
     bool HeaveLoaded,
+    bool LevinLoaded,
     string TalkNpc,
     int WoundedTurns,
     int Deaths,

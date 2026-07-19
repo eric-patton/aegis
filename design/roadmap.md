@@ -29,12 +29,13 @@ single place to answer "where are we and what is next." Keep it current.
 ## Status at a glance
 
 The **spine is deep for a martial (melee + ranged) build** and the full trans-world story
-arc ships. The **breadth pillars are the holes**: magic, factions, companions, player
-crafting, character creation, and the Death's-Toll/scar layer are design-only, as are three
-of the four activity families (crime, town-life, most wilderness). Rough fill levels:
+arc ships, and the **magic pillar opened (D-091)**: four workings found on graven stones,
+Focus, and Spellcraft. The remaining **breadth holes**: companions, character creation, and
+the Death's-Toll/scar layer are design-only, as are two of the four activity families
+(crime, town-life). Rough fill levels:
 
-- Attributes: **4 of 7** mechanically active (Mind, Will, Presence are inert)
-- Skills: **8 of ~18** (five combat, Hunting from D-070, Cooking from D-073, Survival from D-074)
+- Attributes: **6 of 7** mechanically active (D-091 wakes Mind and Will; Presence is the last inert one)
+- Skills: **9 of ~18** (five combat, Hunting from D-070, Cooking from D-073, Survival from D-074, Spellcraft from D-091)
 - Activity families: **wilderness-living core built** (hunting, selling, cooking, foraging: D-070..D-074) and the **craft family opened** (cooking D-073; alchemy v1 D-090, the hale-draught); crime and town life unbuilt
 - Launch story templates: **2** built (of 3 named, 4-5 planned)
 - **Factions begun (D-076..D-089):** the local-reputation foundation is in (the home stead's
@@ -53,7 +54,8 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
   stores + boldness on the tick: raids embolden and take double, culls cow the dens, bared
   lofts end the raids, cleared worlds recover); the stead's own tick moves and a third
   faction remain
-- Major vision pillars still unbuilt: magic, companions, crafting, character creation, Toll/scars
+- Major vision pillars still unbuilt: companions, character creation, Toll/scars (magic opened
+  D-091; the craft family opened D-073/D-090)
 
 ---
 
@@ -82,8 +84,9 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
   the keeping shown), and the keystone clause itself landed (D-089: state vectors on the
   tick, stores and boldness, with recovery as the exit's aftermath). Next in this phase:
   the stead acting on the tick, a third faction, and consumers for the `confronted` and
-  `secret` facts. **Magic** remains the alternative keystone (activates Mind/Will and the
-  caster build).
+  `secret` facts. **Magic, the alternative keystone, landed (D-091):** Mind and Will wake,
+  the caster build exists (graven stones, four workings, Focus, Spellcraft), and the deep
+  sites carry a prize beyond coin and gear.
 - **Phase 3: Remaining pillars & stakes.** Companions, the Death's-Toll/scar layer, the
   other activity families, and the skills those unlock.
 - **Ongoing: Breadth & depth.** Catalog growth (templates, monsters, tiers, gear, oaths),
@@ -117,13 +120,14 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 ### Character identity
 
-- [~] Attributes: 7 defined, **4 active** (Might, Grace, Vigor, Wits); Mind/Will/Presence inert (D-015)
+- [~] Attributes: 7 defined, **6 active** (Might, Grace, Vigor, Wits; D-091 wakes Mind as
+  working-power and Will as the Focus pool and the wind-up's grip); Presence inert (D-015)
 - [ ] Character creation flow (pick at start) (vision §3)
 - [ ] Races: familiar anchors + originals, per-world regenerated cultures/standing (D-017)
 - [ ] Backgrounds: seed starting skills; some starts illiterate (D-005)
 - [ ] Literacy skill + books gating recipes/techniques/lore (D-005, vision §3)
 
-### Skills (6 of ~18)
+### Skills (9 of ~18)
 
 - [x] Blades, Hafted, Brawling, Warding, Ranged (use-grown, cost-gated) (D-042, D-050)
 - [x] Hunting: use-grown, fed by game brought down in the wilds; fattens the hide yield (D-070)
@@ -135,7 +139,8 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 - [~] Wilderness skills: Hunting (D-070) and Survival (D-074, foraging) done; Athletics pending (vision §3)
 - [ ] Subterfuge skills: Stealth, Larceny (vision §3)
 - [ ] Social skills: Persuasion, Commerce (vision §3)
-- [ ] Mind skills: Lore, magic skills (vision §3)
+- [~] Mind skills: Spellcraft shipped (D-091: use-grown, fed only by workings that did work,
+  feeding power and the levin's grip); Lore pending (vision §3)
 - [~] Proficiencies: 4 lessons shipped (D-052 clean dressing/tended iron/gleaning; D-090 the
   stillcraft, paying D-087's deferred fourth slot); book/quest-taught still pending
 - [ ] Knacks: level-6+ questions, 3-option questions, knacks for new skills (D-055)
@@ -161,13 +166,26 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 - [ ] Aspirational sink ladder: property, retinue, master training, commissions (D-025, D-036)
 - [~] Grow the wood's-edge bench: cooking (D-073) + foraged-goods sale (D-074) shipped; hunting gear/lessons pending (D-071)
 
-### Magic
+### Magic (v1 shipped, D-091)
 
-- [ ] Spell system: found not menu-picked (grimoires, mentors, shrine rituals) (D-022, vision §5)
+- [x] Spell system: found not menu-picked (D-091: graven stones, one per fighting deep site,
+  the word decided at the reading so worldgen stays blind; grimoires/mentors/rituals remain
+  as future sources) (D-022, vision §5)
+- [x] Mind = potency, Will = pool + grip (D-091 amends D-022's shared-stamina sketch: casts
+  spend their own Focus, 3 at baseline Will, +1 per point, regen on the road, full at rest;
+  miscast lives only in the levin's broken grip, not on every cast)
+- [x] Telegraphed cast wind-ups, interruptible both ways (D-091: the levin marks its ground a
+  turn ahead, dodged by feet; a wound mid-hold can knock the word crooked, Will holds it)
+- [x] First four workings: the spark (instant line, boards no answer), the levin (the wind-up),
+  the ward (thickened air, teaches only when it turns a blow), the veilsight (names the floor,
+  sharpens the reads, shows the pretenders) (D-091)
 - [ ] Attunement capacity from found world objects (D-022)
-- [ ] Mind = potency, Will = control; casts draw shared stamina; miscast risk (D-022)
-- [ ] Telegraphed cast windups, interruptible both ways (D-022)
 - [ ] Caster social texture: awe, suspicion, faction attention (D-022)
+- [ ] More workings as the deep bands grow (a word against the dark, a mender's word) (D-091)
+- [ ] Enemy casters, and Will's resist role against them (D-091)
+- [ ] Spellcraft knacks once the craft has a curve worth questioning (D-091)
+- [ ] The pilot learning to read stones and say words (policy increment, D-072/D-082 line) (D-091)
+- [ ] Character creation hook: a known word as one possible precious starting thing (D-091, fork 4)
 - [ ] Spell list / school content design (◇ parking lot)
 
 ### Factions & the living world
@@ -260,7 +278,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 ## Open design questions (mirror of the `decisions.md` parking lot)
 
 - ◇ Final race list: which 1-2 originals join the anchors (D-017)
-- ◇ Spell list / magic-school content (architecture set by D-022)
+- ◇ Spell list growth past the first four workings / school-shaped content, if any (D-022, D-091)
 - ◇ Storylet external data-file format + condition/effect vocabulary (D-030)
 - ◇ Catalogs to grow: more oaths, the scar list, Legend rungs past 5, patron deeds past 3, hostility bands past the fen-leaguer (D-047, D-009, D-048, D-054, D-033+)
 - ◇ Story open items: bottle-episode playability, Unbinder guise tells, reveal-tier sharing across characters, template 4-5 candidates (aegis-arc.md §11, world-story-templates.md §9)
@@ -272,6 +290,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-19: **D-091 the remnant craft: graven stones, the four workings, Focus, and Spellcraft.** Magic v1, designed in a Q&A session with the player and built to their picks (found not taught, rare-and-old, small pool over stamina/essence/risk pricing, weight-split casting, Mind=power / Will=pool+grip, Spellcraft from day one). Graven stones stand at the deepest reach of every fighting deep site (camp/barrow/quarry/hall/ringfort/leaguer, own worldgen streams, pinned layouts hold); 'g' reads the word in for good; each fabric leans toward its own word and gives the first the bearer lacks, decided at the reading so worldgen stays character-blind; stones regenerate per world. Four workings on 'z' + digits: the spark (1 focus, instant line, boards no answer: the caster's lane past shield-carls), the levin (2, the caster's OWN wind-up: marked ground, one visible turn, dodged by feet both ways, a mid-hold wound threatens it and Will+Spellcraft hold the grip), the ward (2, six turns of thickened air, teaches only when it turns a blow), the veilsight (2, names the floor's living, sharpens the D-059 reads at this tier, shows the feigning graven men and warders: adapted from "unveils the layout" because the engine has no fog of war). Focus: Will's pool (3+), regen every 8 turns, full at rest/death-wake/crossing, HIDDEN until the first word so the system unveils as a discovery. Spellcraft: 9th skill, D-014 cost-gated (only workings that did work). Words are knowledge: cross whole, survive death. Sheet overwrite bug fixed (Taught/Legend rows had hidden the newest 3 skills since D-070). Save v40 -> v41 ('z' gains meaning; a death now drops a held heave). 409 tests green (9 new MagicTests, first-run pass; 1 knock-on in the knack catalog test); twins byte-identical; emit->sim exact; sweep identical to baseline to the digit (the pilot never reads a stone). New tracked: more workings, enemy casters + Will resists, Spellcraft knacks, caster social texture, pilot stone policy, the fork-4 starting-word hook.
 - 2026-07-19: **D-090 the stillroom's craft: the hale-draught, 'd', and the stillcraft.** Alchemy v1 on the lane D-074/D-081 built: three sprigs steep into a hale-draught at the herbwife's bench (satchel cap 2, priced in sprigs NEVER coin: the herb lane's first sink, forage becoming a choice instead of pure income); 'd' gains meaning (v26 'w' precedent) and drinks it anywhere: +12 blood, -24 wound-weight, a turn for the swallow: the first remedy that walks into a deep site (the niche: shrine rest heals free at home, nothing helped in the dark). The STILLCRAFT lesson (4th lesson, 12c at her bench, D-052 pattern, free to the stead's own via D-087's gate untouched: pays D-087's deferred fourth-lesson slot with the herbwife as honest teacher): a taught shrine rest steeps a draught from carried sprigs, any world (TendedIron rider pattern). Bench entries appended so digits hold (D-041); vials on the HUD rail; Draughts in Snapshot. Save v39 -> v40. 400 tests green (5 new AlchemyTests; 2 knock-ons: the drink's turn ticks the wound one further, and the D-087 taking-stock test must now buy the fourth lesson: the teaching gate absorbed the new lesson unmodified); twins byte-identical; emit->sim exact; sweep identical (the pilot never brews). New tracked: recipes as effects arrive, the pilot learning to brew, the skill question if the lane outgrows know-how.
 - 2026-07-19: **D-089 the factions get their state: stores, boldness, and the tick that gives back.** Vision §2's keystone clause lands: two causal axes on the coarse tick. The stead's STORES (Max 6, stored, reset each world): raids drain it, RationPrice rides it via PriceBump (replacing the frozen + Raids term), bared lofts END the raids as their own dark exit (fact lofts_bare, replacing the flat cap of 3), and once the camp falls the stead recovers +1/tick to full (each easing narrated, fact lofts_full): deliberately amends D-079's grain-stays-taken, since the exit now has an aftermath. The dens' BOLDNESS (DERIVED, not stored: Base 3 + Raids - Wrath): below 2 a tick raids nothing (fact dens_cowed, once: wrath's first faction-scale consequence, the cull buying the stead quiet), at 4+ the raid comes greedy and takes double, so an untouched camp bares the lofts in 4 raids. Snapshot carries Stores + Boldness. Save v38 -> v39. 395 tests green (5 new/rewritten RaidsTests; WrathTests camp helpers promoted internal); twins byte-identical; emit->sim exact (final stores 6/boldness 3: a recovered world); sweep turns/deaths IDENTICAL to baseline with raids now varying by seed (the culls showing through). Checked off the state-vectors item; new tracked lines: the stead acting on the tick, a third faction.
 - 2026-07-19: **D-088 the facts answered: three storylets consume the faction graph.** The consumers the last three decisions deferred, landed in one stroke: the-steads-reckoning (Talk, prio 12: a named thief told so to their face, once per stead, gated on the live barred rung so restitution stills it, writing a `confronted` fact), the-tale-carried (NearHouse, prio 6: the hearthtale's rumor fact consumed, the tarred door-posts read differently because a story was told, nothing gained and nothing needing to be), and what-the-stead-keeps (Talk, prio 7, one under the hearthtale so the ladder keeps its order: the own rung shown the stead's deep cellar, the graph's first `secret` fact). All three lines-and-facts only: no coin, no grant, so every journey number held to the digit. Save v37 -> v38 by the v35 precedent (new storylets shift the weighted draws). 392 tests green (7 new); byte-identical + emit->sim exact + sweep unchanged. Checked off the fact-consumers item; new tracked line for `confronted`/`secret` consumers in their turn.

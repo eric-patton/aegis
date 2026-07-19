@@ -245,14 +245,15 @@ public static class JourneyRunner
                 meatCooked += rawBefore - game.Player.RawMeat;
                 rationsCooked += Math.Max(0, game.Player.Rations - rationsBefore);
             }
-            // Herbs rise on a step in the wood (foraged) and fall to zero at the bench
-            // (sold): the two clean signals of the forage loop (D-074/D-075).
+            // Herbs rise on a step in the wood (foraged) and fall to zero at a bench
+            // (sold): the two clean signals of the forage loop (D-074/D-075). The
+            // coin is read off the key itself, since the stillroom pays the
+            // apothecary's price where the wood's edge paid the middleman's (D-081/D-082).
             if (game.Player.Herb > herbBefore) herbsForaged += game.Player.Herb - herbBefore;
             else if (game.Player.Herb < herbBefore)
             {
-                int sold = herbBefore - game.Player.Herb;
-                herbsSold += sold;
-                coinFromHerbs += sold * game.HerbPrice;
+                herbsSold += herbBefore - game.Player.Herb;
+                coinFromHerbs += game.Player.Coin - coinBefore;
             }
             // The stead's regard, at its high-water mark (D-076): it resets at each
             // crossing, so the peak is the warmest one stead ever came to hold the bearer.
@@ -439,7 +440,7 @@ public static class JourneyRunner
         if (meatCooked > 0)
             w.WriteLine($"         the fire: cooked {meatCooked} cut(s) of raw meat into {rationsCooked} ration(s) (D-073).");
         if (herbsForaged > 0)
-            w.WriteLine($"         the forage: picked {herbsForaged} sprig(s) of herb; sold {herbsSold} for {coinFromHerbs} coin (D-074/D-075).");
+            w.WriteLine($"         the forage: picked {herbsForaged} sprig(s) of herb; sold {herbsSold} for {coinFromHerbs} coin at the stillroom's price (D-074/D-075, D-082).");
         w.WriteLine($"         the stead: came to hold the bearer as {(maxRegard > 0 ? SteadRegard.TitleOf(maxRegard) : "a stranger")} at its warmest "
                     + $"(peak regard {maxRegard}, reset at every crossing) (D-076).");
         w.WriteLine($"         the dens: came to hold the bearer as {(maxWrath > 0 ? RaiderWrath.TitleOf(maxWrath) : "no one at all")} at their most fearful "

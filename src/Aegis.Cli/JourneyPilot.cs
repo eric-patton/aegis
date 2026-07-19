@@ -69,7 +69,11 @@ public static class JourneyPilot
         // (D-071), so it is opened, driven, and left in turn.
         if (g.InTradeMenu) return BenchDigit(g);
         if (g.InTalkMenu && g.TalkNpc?.Id == "npc_woodward" && BenchErrand(g))
-            return WoodEdgeDigit(g) ?? 'z';
+            return TradeOpenDigit(g) ?? 'z';
+        // The stillroom (D-081, D-082): with sprigs in the satchel, open the
+        // herbwife's bench the same way and sell at the apothecary's price.
+        if (g.InTalkMenu && g.TalkNpc?.Id == "npc_herbwife" && g.Player.Herb > 0)
+            return TradeOpenDigit(g) ?? 'z';
         if (g.InAim) return AimDirection(g) ?? 'z';
         // The pack is a menu we drive on purpose too (D-066): wear the best piece
         // owned, one digit at a time, then close. Chest loot lands here unworn
@@ -229,6 +233,17 @@ public static class JourneyPilot
                 .ThenBy(h => h.Y).ThenBy(h => h.X).First();
             var toHerb = NavKey(g, g.World.Overworld, p.Pos, spot, OverworldBlocked(g));
             if (toHerb is not null) return toHerb;
+        }
+
+        // Sell the satchel at the stillroom before the arch (D-082): the wood
+        // picked, the walk to the herbwife pays a coin more a sprig than the
+        // wood's edge would (D-081), and she is in the village the road passes
+        // anyway. If she cannot be reached the sprigs simply ride the crossing,
+        // as they always did.
+        if (g.Player.Herb > 0 && Herbwife(g) is { } wife)
+        {
+            var toWife = NavKey(g, g.World.Overworld, p.Pos, wife.Pos, OverworldBlocked(g));
+            if (toWife is not null) return toWife;
         }
 
         // Every site is cleared or written off: the deed is done, the arch will answer.
@@ -579,9 +594,11 @@ public static class JourneyPilot
 
     private static Npc? Woodward(Game g) => g.World.Npcs.FirstOrDefault(n => n.Id == "npc_woodward");
 
-    /// <summary>The talk digit that opens the woodward's bench (D-071/D-072): the topic
-    /// count plus the Trade offer's place in the woodward's short offer list.</summary>
-    private static char? WoodEdgeDigit(Game g)
+    private static Npc? Herbwife(Game g) => g.World.Npcs.FirstOrDefault(n => n.Id == "npc_herbwife");
+
+    /// <summary>The talk digit that opens whichever bench the talk partner keeps
+    /// (D-071, D-081): the topic count plus the Trade offer's place in the offer list.</summary>
+    private static char? TradeOpenDigit(Game g)
     {
         for (int i = 0; i < g.Offers.Count; i++)
             if (g.Offers[i].Good == TradeGood.Trade)
@@ -589,10 +606,11 @@ public static class JourneyPilot
         return null;
     }
 
-    /// <summary>Whether the bearer has business at the woodward's bench (D-072, D-073, D-075):
-    /// hides or herbs to sell, or raw meat to cook while the larder still has room to carry it.</summary>
+    /// <summary>Whether the bearer has business at the woodward's bench (D-072, D-073):
+    /// hides to sell, or raw meat to cook while the larder still has room to carry it.
+    /// Herbs stopped being his business in D-082: they ride to the stillroom now.</summary>
     private static bool BenchErrand(Game g) =>
-        g.Player.Hide > 0 || g.Player.Herb > 0
+        g.Player.Hide > 0
         || (g.Player.RawMeat > 0 && g.Player.Rations < Game.RationCap);
 
     /// <summary>
@@ -604,8 +622,10 @@ public static class JourneyPilot
     /// </summary>
     private static char BenchDigit(Game g)
     {
+        // The stillroom (D-082): only the simples are ours to sell across her table.
+        if (g.TalkNpc?.Id == "npc_herbwife")
+            return g.Player.Herb > 0 ? TradeDigit(g, TradeGood.Herb) : 'z';
         if (g.Player.Hide > 0) return TradeDigit(g, TradeGood.Hide);
-        if (g.Player.Herb > 0) return TradeDigit(g, TradeGood.Herb);
         if (g.Player.RawMeat > 0 && g.Player.Rations < Game.RationCap) return TradeDigit(g, TradeGood.Cook);
         return 'z';
     }

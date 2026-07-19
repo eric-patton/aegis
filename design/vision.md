@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-095); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-096); the research behind it lives in `../research/`.
 
 ---
 
@@ -71,6 +71,8 @@ Turn-based on the local tactical maps: a **telegraphed-intent grid**.
 - **Weapon movesets**: weapon families change your verbs, not just numbers. Spears brace and control reach; greatswords cleave arcs; daggers reward flanks.
 - **Knowledge-sharpened telegraphs**: telegraph clarity scales with Wits, weapon familiarity, and bestiary knowledge of that enemy family. A first-met horror shows only "it is preparing something." Mastery is learnable, diegetic, banked, and carried into NG+, where new enemy families arrive unreadable again.
 - **Pacing at epic length**: lethality runs both directions (trash dies in 2-3 turns and can still punish sloppiness), simple enemies have simple intents, and one-keypress overwhelm resolution handles fights far beneath you.
+
+Combat depth's first sweep shipped at D-094 through D-096: three stances on one key (flat 2-point trades on the blow given and taken, free on quiet ground, a turn under live steel); a signature verb per melee family (the hafted heave sunders a linden board for good and staggers wind-ups, a paid cut carries the feet off marked ground, bare knuckles shove a stride back, the spear's long thrust standing as its identity); and a second telegraphed move for four known kinds (the goblin's rallying cry, the wight's grave-chill, the thegn's measured cut whose mark lies to any read short of keen: the bestiary's tiers paying differently at last, and the hound-lunge that drags toward the pack). Weapon movesets grew real verbs, not just numbers; posture bars and enemies reading the bearer's own commitment remain open.
 
 Formal 1v1 duels (judicial combat, arena bouts) may later reuse these verbs as set-pieces.
 

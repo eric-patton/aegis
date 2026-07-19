@@ -52,6 +52,9 @@ public sealed class Player
     /// <summary>The footing (D-094): cycled on 'x', free off the fight, a turn inside it.</summary>
     public Stance Stance { get; set; } = Stance.Measured;
 
+    /// <summary>The grave-cold in the arms (D-096): while it runs, melee blows land 2 softer.</summary>
+    public int ChilledTurns { get; set; }
+
     /// <summary>What the footing adds to a struck blow (D-094): melee only, the body's own fight.</summary>
     public int StanceBlow => Stance switch { Stance.Pressing => 2, Stance.Guarded => -2, _ => 0 };
 
@@ -467,9 +470,16 @@ public sealed class Intent
     public required IntentKind Kind { get; init; }
     public required Pos TargetCell { get; init; }
     public int TurnsUntilResolve { get; set; } = 1;
+
+    /// <summary>
+    /// The feint (D-096): where the blow truly falls, when the shown mark is a
+    /// lie. Only the sword-thegn's measured cut sets it, and only against a
+    /// bearer whose read of the kind is short of keen.
+    /// </summary>
+    public Pos? FeintCell { get; init; }
 }
 
-public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut, HurledStone, GravenFist, ThroatLunge, SeaxStab, BoarCharge, LoftedStone }
+public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut, HurledStone, GravenFist, ThroatLunge, SeaxStab, BoarCharge, LoftedStone, RallyCry, GraveChill, MeasuredCut }
 
 /// <summary>
 /// How clearly the bearer reads a kind's wind-up (D-059): a stranger's is a

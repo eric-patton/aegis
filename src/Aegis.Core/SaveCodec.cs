@@ -157,10 +157,15 @@ namespace Aegis.Core;
 /// linden board for good and staggers a wind-up, a paid cut can carry the
 /// bearer's feet off marked ground, and a bare-knuckle blow shoves the body a
 /// stride back, so a v44 journal's fights replay onto different cells.
+/// v46 when D-096 taught the known kinds their second moves: goblins may cry
+/// the camp down on the bearer, wights breathe the grave-cold over marked
+/// ground, the thegn's one marked cut lies to any read short of keen, and a
+/// landed hound-lunge hauls the bearer toward the pack, so a v45 journal's
+/// fights draw different dice from the first goblin lope onward.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 45;
+    public const int Version = 46;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

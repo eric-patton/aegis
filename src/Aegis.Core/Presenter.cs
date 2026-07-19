@@ -762,6 +762,9 @@ public static class Presenter
             static string Weight(IntentKind k) => k switch
             {
                 IntentKind.HurledStone or IntentKind.CrushingBlow => " (light)",
+                IntentKind.RallyCry => " (a call, not a blow)",
+                IntentKind.GraveChill => " (cold, not iron)",
+                IntentKind.MeasuredCut => " (and the mark is honest)",
                 _ => " (heavy)",
             };
             foreach (var monster in game.LiveMonstersHere.Where(m => m.Intent is not null))
@@ -780,6 +783,9 @@ public static class Presenter
                     IntentKind.GravenFist => "! graven fist poised",
                     IntentKind.ThroatLunge => "! throat-lunge gathering",
                     IntentKind.LoftedStone => "! sling-stone falling",
+                    IntentKind.RallyCry => "! a cry filling its lungs",
+                    IntentKind.GraveChill => "! grave-cold gathering",
+                    IntentKind.MeasuredCut => "! the measured cut marked",
                     _ => "! crushing blow poised",
                 };
                 if (tier == ReadTier.Keen) named += Weight(monster.Intent!.Kind);

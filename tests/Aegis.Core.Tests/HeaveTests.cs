@@ -261,7 +261,7 @@ public class HeaveTests
     }
 
     [Fact]
-    public void TheThegn_IsPatient_AndNeverTelegraphs()
+    public void TheThegn_IsPatient_AndItsOneMark_IsTheMeasuredCut()
     {
         var game = EnterFortAt(TierSevenGame());
         var thegn = Thegn(game);
@@ -269,11 +269,20 @@ public class HeaveTests
         game.Player.Hp = game.Player.MaxHp;
         game.Debug_SetPlayerPos(AdjacentOpen(game, thegn.Pos));
 
-        // It reads, it does not declare: no intent ever hangs over a thegn.
+        // It reads first, and declares one thing only (D-096): the measured
+        // cut, whose mark lies to any read short of keen. Every other blow
+        // stays the old unhurried certainty, undeclared.
         for (int i = 0; i < 8; i++)
         {
+            game.Player.Hp = game.Player.MaxHp;
             game.ApplyKey('.');
-            Assert.Null(thegn.Intent);
+            if (thegn.Intent is { } marked)
+            {
+                Assert.Equal(IntentKind.MeasuredCut, marked.Kind);
+                // Below a keen read the shown mark is a lie beside the truth.
+                Assert.True(game.Player.ReadOf(MonsterKind.Thegn, game.Cycle) == ReadTier.Keen
+                    || marked.FeintCell is not null);
+            }
         }
     }
 

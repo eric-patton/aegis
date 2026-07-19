@@ -1193,6 +1193,7 @@ public sealed class Game
         Player.HeaveTarget = null;
         Player.LevinTarget = null;
         Player.WardTurns = 0;
+        Player.ChilledTurns = 0;
         Player.Focus = Player.MaxFocus;
         // The menders' honor (D-048): a world's Unbinder will loosen one more
         // raise for a bearer the songs carry high. The hushed name (D-051)
@@ -2952,7 +2953,7 @@ public sealed class Game
                 + (weapon is null && Player.HasPerk(PerkId.KnuckleAndBone) ? 2 : 0)
                 + (weapon is null && Player.HasPerk(PerkId.CaughtArm) && target.Intent is not null ? 3 : 0);
             // The footing (D-094): pressing gives the blow 2 more, guarded 2 less, never below 1.
-            damage = Math.Max(1, damage + Player.StanceBlow);
+            damage = Math.Max(1, damage + Player.StanceBlow - (Player.ChilledTurns > 0 ? 2 : 0));
             // Only a full swing teaches (D-014's cost gating: this one was paid
             // for in wind and wear). Feeble flailing is free, and free is unfed.
             trained = family;
@@ -3336,7 +3337,7 @@ public sealed class Game
             int damage = _combatRng.Range(2, 5) + Player.MeleeBonus + spear.EffectiveBonus(Player.Attributes)
                 + Player.Skills.Bonus(SkillId.Hafted)
                 + (Player.HasPerk(PerkId.TrueArc) ? 1 : 0);
-            damage = Math.Max(1, damage + Player.StanceBlow); // the footing (D-094)
+            damage = Math.Max(1, damage + Player.StanceBlow - (Player.ChilledTurns > 0 ? 2 : 0)); // footing (D-094), grave-cold (D-096)
             target.Hp -= damage;
 
             if (target.Alive)
@@ -3478,7 +3479,7 @@ public sealed class Game
             + Player.Skills.Bonus(family)
             + (family == SkillId.Blades && Player.HasPerk(PerkId.DrawnCut) ? 1 : 0)
             + (family == SkillId.Hafted && Player.HasPerk(PerkId.TrueArc) ? 1 : 0);
-        damage = Math.Max(1, damage + Player.StanceBlow); // the footing (D-094)
+        damage = Math.Max(1, damage + Player.StanceBlow - (Player.ChilledTurns > 0 ? 2 : 0)); // footing (D-094), grave-cold (D-096)
         target.Hp -= damage;
 
         if (target.Alive)
@@ -4340,6 +4341,10 @@ public sealed class Game
             }
         }
 
+        // The grave-cold (D-096) works its way out a turn at a time.
+        if (Player.ChilledTurns > 0 && --Player.ChilledTurns == 0)
+            Log.Add(Turn, "The grave-cold works out of your arms at last.", LogTone.Info);
+
         if (Mode == MapMode.Overworld && Player.Hp > 0)
             _storylets.TryFire(this, StoryletTrigger.AmbientTurn);
 
@@ -4360,7 +4365,9 @@ public sealed class Game
                 // across the crossing. This is the one clause of D-004 still
                 // owed since the first combat decision: the read is earned.
                 Player.WitnessTell(monster.Kind, Cycle);
-                bool landed = Player.Pos == intent.TargetCell;
+                // The feint (D-096): the blow falls where it was always going,
+                // which is not always where the mark said.
+                bool landed = Player.Pos == (intent.FeintCell ?? intent.TargetCell);
                 if (intent.Kind == IntentKind.BoarCharge)
                 {
                     // The charge (D-053) resolves along its lane, not on one cell.
@@ -4370,6 +4377,21 @@ public sealed class Game
                 {
                     // The lofted cast (D-057) falls on its marked ground and bursts.
                     ResolveLoft(monster, intent);
+                }
+                else if (intent.Kind == IntentKind.RallyCry)
+                {
+                    // The cry (D-096): not a blow at all. The camp answers it.
+                    ResolveCry(monster);
+                }
+                else if (intent.Kind == IntentKind.GraveChill)
+                {
+                    if (landed)
+                    {
+                        Player.ChilledTurns = 4;
+                        Log.Add(Turn, "The grave-cold closes over the ground you kept, and gets into your arms: your blows will come slower while it holds.", LogTone.Danger);
+                    }
+                    else
+                        Log.Add(Turn, "The grave-cold closes on ground you had the sense to leave: frost stars the stone where you stood.", LogTone.Combat);
                 }
                 else if (landed)
                 {
@@ -4381,6 +4403,7 @@ public sealed class Game
                         IntentKind.GravenFist => _combatRng.Range(6, 10),
                         IntentKind.ThroatLunge => _combatRng.Range(6, 10),
                         IntentKind.SeaxStab => _combatRng.Range(6, 10),
+                        IntentKind.MeasuredCut => _combatRng.Range(5, 9),
                         _ => _combatRng.Range(4, 7),
                     };
                     // The dread stays the raider's hand (D-078): applied to the
@@ -4396,8 +4419,26 @@ public sealed class Game
                         IntentKind.GravenFist => $"The graven fist comes down like a falling lintel for {damage}!",
                         IntentKind.ThroatLunge => $"The iron hound hits you full-length, jaws first, for {damage}!",
                         IntentKind.SeaxStab => $"The seax comes over the board's rim and finds you for {damage}!",
+                        IntentKind.MeasuredCut => intent.FeintCell is not null
+                            ? $"The mark was the lie. The thegn's point was always coming here, and it opens you for {damage}!"
+                            : $"The sword-thegn's measured cut falls true for {damage}!",
                         _ => $"The {monster.Name}'s crushing blow lands for {damage}!",
                     }, LogTone.Danger);
+                    // The drag (D-096): the hound's lunge that lands does not
+                    // let go: jaws lock and haul the bearer a stride toward
+                    // whatever of the pack still stands.
+                    if (intent.Kind == IntentKind.ThroatLunge && Player.Hp > 0
+                        && Monsters.Where(m => m.Alive && m != monster && m.Kind == MonsterKind.Hound && m.SiteId == monster.SiteId)
+                            .OrderBy(m => m.Pos.Chebyshev(Player.Pos)).FirstOrDefault() is { } pack)
+                    {
+                        var pull = Player.Pos.Plus(Math.Sign(pack.Pos.X - Player.Pos.X), Math.Sign(pack.Pos.Y - Player.Pos.Y));
+                        if (pull != Player.Pos && CurrentMap.Walkable(pull)
+                            && !Monsters.Any(m => m.Alive && m.SiteId == monster.SiteId && m.Pos == pull))
+                        {
+                            Player.Pos = pull;
+                            Log.Add(Turn, "The jaws do not let go: you are hauled a full stride toward the rest of the pack before you tear free.", LogTone.Danger);
+                        }
+                    }
                 }
                 else
                 {
@@ -4409,6 +4450,9 @@ public sealed class Game
                         IntentKind.GravenFist => "The graven fist cracks the floor where you stood.",
                         IntentKind.ThroatLunge => "The hound's lunge carries it through the space you left; it lands badly and comes up snarling.",
                         IntentKind.SeaxStab => "The seax jabs over the rim into air gone empty.",
+                        IntentKind.MeasuredCut => intent.FeintCell is not null
+                            ? "The thegn's point comes back to where you truly stood, and finds you gone anyway. It inclines its head a fraction."
+                            : "The sword-thegn's measured cut parts air, and it does not seem surprised.",
                         _ => $"The {monster.Name}'s crushing blow splinters empty stone.",
                     }, LogTone.Combat);
                 }
@@ -4488,7 +4532,28 @@ public sealed class Game
             return;
         }
 
+        // The cry (D-096): a goblin with campmates left may stop mid-lope and
+        // fill its lungs, marked a turn like any wind-up. Killing it first, or
+        // being gone when the camp answers, is the counterplay.
+        if (monster.Kind == MonsterKind.Goblin && dist >= 2 && dist <= 6
+            && Monsters.Any(m => m.Alive && m != monster && m.Kind == MonsterKind.Goblin && m.SiteId == monster.SiteId)
+            && _combatRng.Chance(0.12))
+        {
+            monster.Intent = new Intent { Kind = IntentKind.RallyCry, TargetCell = monster.Pos };
+            Log.Add(Turn, "A goblin stops dead, plants its feet, and fills its lungs!", LogTone.Danger);
+            return;
+        }
+
         if (dist <= 8) StepToward(monster);
+    }
+
+    /// <summary>The cry answered (D-096): every campmate still standing comes a stride at once.</summary>
+    private void ResolveCry(Monster crier)
+    {
+        Log.Add(Turn, "The screech goes through the camp like a thrown knife: every ear in it now knows exactly where you stand.", LogTone.Danger);
+        foreach (var packmate in Monsters.Where(m => m.Alive && m != crier
+            && m.Kind == MonsterKind.Goblin && m.SiteId == crier.SiteId && m.Intent is null).ToList())
+            StepToward(packmate);
     }
 
     /// <summary>
@@ -4498,6 +4563,16 @@ public sealed class Game
     private void ActWight(Monster monster)
     {
         int dist = monster.Pos.Chebyshev(Player.Pos);
+
+        // The chill (D-096): at its slow closing distance the wight may instead
+        // breathe the barrow out over the bearer's ground. Marked a turn;
+        // stepping off it is the whole answer.
+        if (dist >= 2 && dist <= 4 && _combatRng.Chance(0.25))
+        {
+            monster.Intent = new Intent { Kind = IntentKind.GraveChill, TargetCell = Player.Pos };
+            Log.Add(Turn, "The wight stops, and the air goes wrong: a grave-cold gathers over the ground you stand on!", LogTone.Danger);
+            return;
+        }
 
         if (dist == 1)
         {
@@ -4983,6 +5058,30 @@ public sealed class Game
 
         if (dist == 1)
         {
+            // The feint (D-096): the thegn's one marked blow, and the mark lies
+            // to any bearer whose read of the kind is short of keen. The shown
+            // cell is a neighbor of the truth; the point was always coming to
+            // the ground the bearer keeps. A keen read is shown the truth.
+            if (_combatRng.Chance(0.3))
+            {
+                if (Player.ReadOf(MonsterKind.Thegn, Cycle) < ReadTier.Keen)
+                {
+                    var lies = new List<Pos>();
+                    foreach (var (dx, dy) in Directions.All8)
+                    {
+                        var p = Player.Pos.Plus(dx, dy);
+                        if (p != monster.Pos && CurrentMap.Walkable(p)) lies.Add(p);
+                    }
+                    var shown = lies.Count > 0 ? lies[_combatRng.Next(lies.Count)] : Player.Pos;
+                    monster.Intent = new Intent { Kind = IntentKind.MeasuredCut, TargetCell = shown, FeintCell = Player.Pos };
+                }
+                else
+                {
+                    monster.Intent = new Intent { Kind = IntentKind.MeasuredCut, TargetCell = Player.Pos };
+                }
+                Log.Add(Turn, "The sword-thegn's point rises and settles on its mark, unhurried and certain.", LogTone.Danger);
+                return;
+            }
             if (_combatRng.Chance(0.5))
             {
                 if (_combatRng.Chance(Player.DodgeChance))
@@ -5084,6 +5183,7 @@ public sealed class Game
         Player.HeaveTarget = null;
         Player.LevinTarget = null;
         Player.WardTurns = 0;
+        Player.ChilledTurns = 0;
 
         bool forfeited = Remnant is not null;
         if (forfeited)

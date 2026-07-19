@@ -48,8 +48,10 @@ public static class JourneyPilot
     /// The next key to press, or null when the bot can find no move (report it, do not spin).
     /// <paramref name="skip"/> is the set of site ids the runner has given up clearing; the
     /// pilot treats them as done (engage no further, leave and move on).
+    /// <paramref name="wits"/> plays the perception build (D-084): Wits raised first,
+    /// to the point innate acuity clears D-061's dulling floor, then the usual rotation.
     /// </summary>
-    public static char? NextKey(Game g, IReadOnlySet<string> skip)
+    public static char? NextKey(Game g, IReadOnlySet<string> skip, bool wits = false)
     {
         var p = g.Player;
 
@@ -57,7 +59,7 @@ public static class JourneyPilot
         // Vigor and Might, the survivability the deep sites demand) and the arch's terms
         // (handled below). Any other menu that trapped it gets stepped back out of.
         if (g.InShrineMenu)
-            return p.Essence >= g.NextRaiseCost ? RaiseDigit(p) : 'z';
+            return p.Essence >= g.NextRaiseCost ? RaiseDigit(p, wits) : 'z';
         // The smith's trade is a talk menu we drive on purpose: buy what a bare slot and
         // the purse both allow, then leave (D-064). The aim is the bow's second key
         // (D-050), sent along whatever line bears a target.
@@ -960,10 +962,16 @@ public static class JourneyPilot
     /// then hitting harder). Once a bow is on the shoulder the eye earns its keep, so
     /// Grace joins the rotation: it is what makes a shaft bite (D-050) and what slips a
     /// lofted stone (D-057), and the leaguer asks for both. Wits is left alone throughout,
-    /// so the read goes on dulling across the crossings for the report to show (D-061).
+    /// so the read goes on dulling across the crossings for the report to show (D-061),
+    /// EXCEPT under the wits demo (D-084): there the eye comes first, raised until innate
+    /// acuity alone clears the dulling floor (two over the baseline holds every mastered
+    /// kind Keen for good, D-061's own identity for the perception build), then the
+    /// usual survivability rotation resumes.
     /// </summary>
-    private static char RaiseDigit(Player p)
+    private static char RaiseDigit(Player p, bool wits = false)
     {
+        if (wits && p.Attributes[Attr.Wits] < AttributeSet.Baseline + 2)
+            return (char)('1' + (int)Attr.Wits);
         Attr choice = p.Bow is not null
             ? Lowest(p, Attr.Vigor, Attr.Might, Attr.Grace)
             : Lowest(p, Attr.Vigor, Attr.Might);

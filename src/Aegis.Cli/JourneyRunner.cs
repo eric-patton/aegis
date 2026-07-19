@@ -40,6 +40,7 @@ public static class JourneyRunner
         int siteDeathBudget = 8;    // deaths at one site before writing it off.
         bool emitKeys = false;
         bool json = false;
+        bool wits = false; // the perception-build demo (D-084): the eye raised first.
 
         for (int i = 0; i < args.Length; i++)
         {
@@ -53,6 +54,7 @@ public static class JourneyRunner
                 case "--site-deaths": siteDeathBudget = int.Parse(args[++i]); break;
                 case "--emit-keys": emitKeys = true; break;
                 case "--json": json = true; break;
+                case "--wits": wits = true; break;
                 default:
                     Console.Error.WriteLine($"aegis journey: unexpected argument '{args[i]}'");
                     return 1;
@@ -161,7 +163,7 @@ public static class JourneyRunner
                 if (k > siteKeyBudget) skip.Add(activeSite);
             }
 
-            char? key = JourneyPilot.NextKey(game, skip);
+            char? key = JourneyPilot.NextKey(game, skip, wits);
             if (key is null)
             {
                 // Cannot win or even reach a foe here: write the site off and move on.
@@ -303,6 +305,7 @@ public static class JourneyRunner
             var report = new JourneyReport(
                 Seed: seed,
                 TargetCrossings: cycles,
+                WitsDemo: wits,
                 CycleReached: game.Cycle,
                 Tier: game.World.Tier,
                 CrossingsMade: crossings.Count,
@@ -358,7 +361,7 @@ public static class JourneyRunner
             return 0;
         }
 
-        Report(seed, cycles, crossings, stop, game, totalKeys, keys, emitKeys,
+        Report(seed, cycles, wits, crossings, stop, game, totalKeys, keys, emitKeys,
             remnantsReclaimed, coinReclaimed, essenceReclaimed,
             chestsLooted, chestCoin, gearTaken, knacksTaken,
             resolvedAs, resolvedCycle, laidCycle, mendedCycle, legendFromBurden,
@@ -426,7 +429,7 @@ public static class JourneyRunner
             : $"on the overworld at ({game.Player.Pos.X},{game.Player.Pos.Y})";
 
     private static void Report(
-        ulong seed, int cycles, List<Crossing> crossings, string stop,
+        ulong seed, int cycles, bool wits, List<Crossing> crossings, string stop,
         Game game, int totalKeys, StringBuilder keys, bool emitKeys,
         int remnantsReclaimed, int coinReclaimed, int essenceReclaimed,
         int chestsLooted, int chestCoin, int gearTaken, int knacksTaken,
@@ -436,7 +439,8 @@ public static class JourneyRunner
         int maxRegard, int maxWrath, int raidsSuffered)
     {
         var w = Console.Out;
-        w.WriteLine($"AEGIS JOURNEY   seed {seed}   target {cycles} crossing(s)");
+        w.WriteLine($"AEGIS JOURNEY   seed {seed}   target {cycles} crossing(s)"
+                    + (wits ? "   [--wits: the keen-eyed walk (D-084)]" : ""));
         w.WriteLine(new string('=', 62));
 
         if (crossings.Count == 0)
@@ -543,7 +547,7 @@ internal sealed record JourneyCrossingDto(
     List<JourneySiteDto> Sites, List<JourneyReadDto> BestiaryBefore, List<JourneyReadDto> BestiaryAfter);
 
 internal sealed record JourneyReport(
-    ulong Seed, int TargetCrossings, int CycleReached, int Tier, int CrossingsMade, string Stop,
+    ulong Seed, int TargetCrossings, bool WitsDemo, int CycleReached, int Tier, int CrossingsMade, string Stop,
     int KeysPressed, int Turns, int Deaths,
     int RemnantsReclaimed, int CoinReclaimed, int EssenceReclaimed,
     int ChestsLooted, int ChestCoin, int GearTaken,

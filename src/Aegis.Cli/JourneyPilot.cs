@@ -63,6 +63,12 @@ public static class JourneyPilot
         // (D-050), sent along whatever line bears a target.
         if (g.InTalkMenu && g.TalkNpc?.Kind == NpcKind.Smith)
             return SmithBuyDigit(g) ?? 'z';
+        // The woodward's bench is a talk menu we drive on purpose too (D-072): with hides
+        // cured, open the wood's edge and sell the lot, then step back. The trade menu
+        // sits behind one talk digit (D-071), so it is opened, driven, and left in turn.
+        if (g.InTradeMenu) return HideSellDigit(g);
+        if (g.InTalkMenu && g.TalkNpc?.Id == "npc_woodward" && p.Hide > 0)
+            return WoodEdgeDigit(g) ?? 'z';
         if (g.InAim) return AimDirection(g) ?? 'z';
         // The pack is a menu we drive on purpose too (D-066): wear the best piece
         // owned, one digit at a time, then close. Chest loot lands here unworn
@@ -174,6 +180,16 @@ public static class JourneyPilot
             if (p.Pos == stair.OverworldPos) return '>';
             var toStair = NavKey(g, g.World.Overworld, p.Pos, stair.OverworldPos, OverworldBlocked(g));
             if (toStair is not null) return toStair;
+        }
+
+        // Cash out the hunt before arming or crossing (D-072): with hides cured and this
+        // world holding a woodward, walk to the bench and sell the lot. The coin funds the
+        // smith just below, or rides to the arch to be weighed. It fires only with hides in
+        // hand, and a sale empties them, so it makes one trip per world's hunt, no more.
+        if (p.Hide > 0 && Woodward(g) is { } ward)
+        {
+            var toWard = NavKey(g, g.World.Overworld, p.Pos, ward.Pos, OverworldBlocked(g));
+            if (toWard is not null) return toWard;
         }
 
         // Arm at the smith before taking the next site, whenever a slot of ours is bare
@@ -542,6 +558,35 @@ public static class JourneyPilot
             if (g.Offers[i].Good == TradeGood.Gear && g.Offers[i].Arg == id)
                 return (char)('1' + g.Topics.Count + i);
         return null;
+    }
+
+    // ---- the trade (D-072): cash the hunt out at the wood's edge ----
+
+    private static Npc? Woodward(Game g) => g.World.Npcs.FirstOrDefault(n => n.Id == "npc_woodward");
+
+    /// <summary>The talk digit that opens the woodward's bench (D-071/D-072): the topic
+    /// count plus the Trade offer's place in the woodward's short offer list.</summary>
+    private static char? WoodEdgeDigit(Game g)
+    {
+        for (int i = 0; i < g.Offers.Count; i++)
+            if (g.Offers[i].Good == TradeGood.Trade)
+                return (char)('1' + g.Topics.Count + i);
+        return null;
+    }
+
+    /// <summary>
+    /// At the open bench, the digit that sells the hide-lot, or 'z' to step back once it is
+    /// empty (D-072). A single sale weighs the whole lot (D-071), so the next look finds no
+    /// hides and leaves, and the overworld errand will not send the bearer back until the
+    /// next world's hunt fills the bundle again.
+    /// </summary>
+    private static char HideSellDigit(Game g)
+    {
+        if (g.Player.Hide > 0)
+            for (int i = 0; i < g.TradeOffers.Count; i++)
+                if (g.TradeOffers[i].Good == TradeGood.Hide)
+                    return (char)('1' + i);
+        return 'z';
     }
 
     // ---- the reclaim (D-065): what a death drops, a life gets one chance to take back ----

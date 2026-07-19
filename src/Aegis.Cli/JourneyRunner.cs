@@ -106,6 +106,11 @@ public static class JourneyRunner
         // deterministic way as the loot and the knacks, by the counter's rise on the key
         // that lands a hart. Meat folds into rations, so the hides are the clean signal.
         int hidesTaken = 0;
+        // What the trade brought in (D-072): the same counter falling to zero at the bench,
+        // and the coin it fetched, so the hunt's whole loop (catch, cure, sell) shows in the
+        // report the way arming and looting already do.
+        int hidesSold = 0;
+        int coinFromHides = 0;
         string stop;
 
         while (true)
@@ -205,6 +210,14 @@ public static class JourneyRunner
             if (game.Player.SeveredUnbound > unboundBefore && laidCycle == 0) laidCycle = game.Cycle;
             if (game.Player.SeveredRestored > restoredBefore) mendedCycle = game.Cycle;
             if (game.Player.Hide > hideBefore) hidesTaken += game.Player.Hide - hideBefore;
+            // Hides only ever fall at the bench (a sale zeroes the lot); death and the
+            // crossing carry them whole, so a drop is a sale and nothing else (D-072).
+            else if (game.Player.Hide < hideBefore)
+            {
+                int sold = hideBefore - game.Player.Hide;
+                hidesSold += sold;
+                coinFromHides += sold * game.HidePrice;
+            }
 
             if (game.Player.Deaths > prevDeaths)
             {
@@ -239,7 +252,8 @@ public static class JourneyRunner
         Report(seed, cycles, crossings, stop, game, totalKeys, keys, emitKeys,
             remnantsReclaimed, coinReclaimed, essenceReclaimed,
             chestsLooted, chestCoin, gearTaken, knacksTaken,
-            resolvedAs, resolvedCycle, laidCycle, mendedCycle, legendFromBurden, hidesTaken);
+            resolvedAs, resolvedCycle, laidCycle, mendedCycle, legendFromBurden,
+            hidesTaken, hidesSold, coinFromHides);
         return 0;
     }
 
@@ -307,7 +321,7 @@ public static class JourneyRunner
         int remnantsReclaimed, int coinReclaimed, int essenceReclaimed,
         int chestsLooted, int chestCoin, int gearTaken, int knacksTaken,
         Resolution resolvedAs, int resolvedCycle, int laidCycle, int mendedCycle,
-        int legendFromBurden, int hidesTaken)
+        int legendFromBurden, int hidesTaken, int hidesSold, int coinFromHides)
     {
         var w = Console.Out;
         w.WriteLine($"AEGIS JOURNEY   seed {seed}   target {cycles} crossing(s)");
@@ -373,6 +387,8 @@ public static class JourneyRunner
             w.WriteLine($"           (no mending this run: {cycles} crossing(s) reached no second post-resolution hollow.)");
         w.WriteLine($"         the hunt: took {hidesTaken} hide(s) off the wilds (D-070)"
                     + (hidesTaken == 0 ? " (no game bagged this run)." : ", plus meat for the road."));
+        if (hidesSold > 0)
+            w.WriteLine($"         the trade: sold {hidesSold} hide(s) at the wood's edge for {coinFromHides} coin (D-072).");
         int sworn = crossings.Count(c => c.Sworn.Count > 0);
         if (sworn > 0)
         {

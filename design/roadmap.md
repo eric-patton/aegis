@@ -174,8 +174,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 ### Tooling & verification, built
 
 - [x] Dev harness: headless pilot pipe, `sim` scripted JSON runs (D-027)
-- [x] Journey-bot autopilot: clears sites, arms, raises, reclaims, loots, answers the sheet, walks the arc, swears oaths, hunts the wilds (D-062..D-070)
-- [ ] Journey-bot sells its hides at the bench (close the economy loop in the autopilot, D-071)
+- [x] Journey-bot autopilot: clears sites, arms, raises, reclaims, loots, answers the sheet, walks the arc, swears oaths, hunts the wilds, sells its hides (D-062..D-072)
 - [ ] `--wits` demo mode for the perception build (deferred D-063)
 - [ ] Machine-readable journey report for a sweep / CI (deferred D-063)
 
@@ -196,6 +195,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-18: **D-072 journey-bot sells its hides.** The autopilot now cashes the hunt out at the wood's edge (one overworld errand + driving the D-071 bench), so the whole catch-cure-sell-coin loop is exercised live and reproducibly. Master seed sells all 34 hides for 102 coin; sweep all sell their take and reach the mending. Cli-only, no engine/save touch. Checked off the bot-sells item.
 - 2026-07-18: **D-071 hide-sell path shipped.** The woodward's "wood's edge" trade sub-menu (a reusable vendor-menu pattern behind one talk digit) turns cured hides to coin and now holds the Gleaning lesson too; hunting feeds three payoffs (skill, food, coin). Checked off the hide-buyer, the vendor sub-menu pattern, and folded the sale into economy v0. New tracked item: teach the journey-bot to sell (close the loop in the autopilot). No save-format change.
 - 2026-07-18: **D-070 hunting v1 shipped.** New: the wilds site, the hart, the Hunting skill (6th), meat + hide yield; journey-bot hunts live. Checked off Hunting skill and partial wilderness/Life family. New tracked item: a hide-buyer vendor menu (sell path deferred at the 9-digit menu cap). Save v26 -> v27.
 - 2026-07-18: Tracker created. Snapshot of Phase 0 complete (spine + journey-bot through D-069).

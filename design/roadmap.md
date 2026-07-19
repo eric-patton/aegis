@@ -37,7 +37,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 - Skills: **8 of ~18** (five combat, Hunting from D-070, Cooking from D-073, Survival from D-074)
 - Activity families: **wilderness-living core built** (hunting, selling, cooking, foraging: D-070..D-074) and the **craft family opened** (cooking); crime and town life unbuilt
 - Launch story templates: **2** built (of 3 named, 4-5 planned)
-- **Factions begun (D-076..D-086):** the local-reputation foundation is in (the home stead's
+- **Factions begun (D-076..D-087):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
   raider slain, dread softening their blows past its rung), the coarse tick began (D-079,
@@ -45,8 +45,10 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
   raid), it pays again at the friend rung (D-080, the friend's price; D-085, the hearthtale
   kept from strangers, riding regard rungs written as facts), and the Infamy half opened
   (D-086, the stead's suspicion: pilfering a door climbs a three-rung shame ladder that
-  closes the friend's boons and bars the larder, with coin on the robbed sill the way back);
-  true multi-axis state vectors and rung-3 boons remain
+  closes the friend's boons and bars the larder, with coin on the robbed sill the way back),
+  and the bright ladder's top rung pays (D-087, the stead's teaching: lessons shown freely
+  to the stead's own, closed by suspicion, reopened by restitution);
+  true multi-axis state vectors remain
 - Major vision pillars still unbuilt: magic, companions, crafting, character creation, Toll/scars
 
 ---
@@ -71,8 +73,9 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
   live pressure to clear the camp, price consequence, designed exit). The friend-rung boons
   shipped (D-080 the friend's price, D-085 the hearthtale), and the stead-Infamy half opened
   on the first transgression verb (D-086, pilfering with restitution as the designed exit).
-  Next in this phase: rung-3 boons, content consuming the rumor and shame facts, and growing
-  the tick toward true state vectors. **Magic** remains the alternative keystone (activates
+  The bright ladder is fully paid (D-087, the stead's teaching at the own rung).
+  Next in this phase: content consuming the rumor and shame facts, the stead acting on its
+  suspicion beyond commerce, and growing the tick toward true state vectors. **Magic** remains the alternative keystone (activates
   Mind/Will and the caster build).
 - **Phase 3: Remaining pillars & stakes.** Companions, the Death's-Toll/scar layer, the
   other activity families, and the skills those unlock.
@@ -164,15 +167,21 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
   suspicion: pilfering as the first transgression verb, a three-rung shame ladder beside the
   regard it never cancels, restitution as the designed exit, save v36). Both axes now exist on
   both factions' books; deeper transgressions (violence, oath-breaking) are future verbs
-- [~] Regard-gated boons and access (D-076, D-077, D-080, D-085): the friend's welcome (D-077,
-  v30, a one-time coin purse), the friend's price (D-080, v33, a standing coin off bread that
-  the hushed name never silences), and the rumor kept from strangers (D-085, v35: regard rungs
+- [x] Regard-gated boons and access (D-076, D-077, D-080, D-085, D-087): the friend's welcome
+  (D-077, v30, a one-time coin purse), the friend's price (D-080, v33, a standing coin off bread
+  that the hushed name never silences), the rumor kept from strangers (D-085, v35: regard rungs
   now write facts, and a friend-gated Talk storylet tells the stead's own story once per world,
-  the seam for all authored reputation-gated content). Remaining: rung-3 boons (the stead's own),
-  content consuming the rumor fact
+  the seam for all authored reputation-gated content), and the stead's teaching (D-087, v37: at
+  the own rung every lesson is shown freely, the boon paid in the one currency that crosses,
+  closed by suspicion and reopened by restitution). Every rung now pays; remaining follow-ons
+  (content consuming the rumor fact, a rung-3 storylet beat) are tracked below
 - [x] A second faction with a relationship to the stead (the raiders as its standing enemy, so a
   blow to one is a favor to the other) (D-078: wrath per raider slain on its own faster ladder,
   the dread softening raiders' blows past rung 2, reset at every crossing, save v31)
+- [ ] Content consuming the rumor and shame facts (D-085, D-086): a topic or later storylet
+  calling back to the hearthtale's telling; a rung-3 storylet beat only the stead's own are
+  shown (D-087); the stead acting on suspicion beyond commerce (a confrontation or turned-out
+  beat for the named thief)
 - [~] Faction state-vectors on a coarse tick, transitions write facts + narration hooks (D-023,
   vision §2, D-079): the tick seam exists and its first event runs (uncleared camps raid the
   stead every 160 turns, capped at 3/world: fact + narration + ration-price consequence, camp
@@ -241,6 +250,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-19: **D-087 the stead's teaching: the own rung's boon.** The bright ladder's top rung finally pays: at "the stead's own" (regard 5) every lesson the stead sells is shown freely, the boon paid in the one currency in the stead's gift that crosses the arch (lessons bank on the bearer past death and waygate, D-052), where the friend rung paid in this world's coin: D-077's collision lesson applied at the top. SteadsTeaching gate beside FriendsPrice; crossing narrated with a taking-stock variant when nothing is left to show; bench/smith labels rename ("freely, to the stead's own", label text only, digits hold); the coin's refusal narrated at the showing. Suspicion (unwelcome+) closes it with a narrated withholding; live-shame gating means restitution reopens the craft. Save v36 -> v37 (a v36 journal that bought a showing at the own rung replays richer). 385 tests green (4 new RegardTests); byte-identical + emit->sim exact (baseline held: the pilot buys no lessons) + sweep unchanged. Checked off the regard-boons item (every rung pays); new tracked line for rumor/shame-fact consumers and a rung-3 storylet beat.
 - 2026-07-19: **D-086 the stead's suspicion: pilfering, shame, and the coin on the sill.** The home faction's Infamy axis opens on the game's first transgression verb: g beside an overworld house pilfers the door (a ration's worth, once per door per world), thematically casting the bearer as the raiders' twin. Keyed `_factionInfamy` ledger beside the regard (wrath migrated in: each dictionary now means one thing); three houses, thresholds 1/2/3, one rung per door (watched / unwelcome / named a thief), each rung costing in its own currency: watched closes the hearthtale + opens a closed-doors NearHouse storylet (first shame-fact consumer), unwelcome closes the friend's price and purse (withholdings narrated), thief bars the larder. Shame runs beside regard, never against it (both titles on the HUD). Designed exit: 6 coin on the robbed sill walks the ladder down; repay outranks theft at shared corners (a mistaken press never commits a worse deed). Shame facts written as permanent history; live shame gates the reopenable doors. Save v35 -> v36 (the overworld g press changed meaning). 381 tests green (13 new ShameTests); byte-identical + emit->sim exact (10425 turns, matching the D-085 baseline: the pilot never robs) + sweep unchanged. Checked off the Fame/Infamy dual-axis item; new tracked ideas: the stead acting on suspicion beyond commerce, raider-perceivable transgressions for the relation matrix.
 - 2026-07-19: **D-085 regard rungs become facts + the friend's hearthtale.** Every rung crossed writes a `regard` fact (known/friend/own) into the world graph, making reputation queryable by storylets, topics, and template casting with one declarative pattern: the structural seam for all reputation-gated content. First passenger: a friend-gated Talk storylet (priority 8, once per world) where a villager tells the stead's own story to a friend and never to a stranger, writing a `rumor` fact for later content. Narrative-only by design (D-077's currency-collision lesson). Closes the last D-077-named boon via the storylet channel D-080 pointed at. Save v34 -> v35 (new Talk storylet shifts the weighted draw). 368 tests green (3 new); byte-identical + emit->sim exact (keys read off the new JSON field) + sweep via --json. Advanced the boons item.
 - 2026-07-19: **D-084 --wits: the keen-eyed walk.** The pilot raises Wits to baseline+2 first (D-061's perception-build identity: innate acuity clears the dulling floor), then resumes the survivability rotation. Seed 42 x6 crossings: every mastered kind holds Keen at every arch (baseline softens all to Read), at the honest price of 8 deaths vs 5. Header names the mode; JSON carries witsDemo. Default path proven untouched by hash. Cli-only, 365 tests unchanged. Checked off the last D-062/D-063 tooling deferral: that ledger is clear.

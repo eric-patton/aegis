@@ -247,7 +247,7 @@ public class ShameTests
     /// before any other is opened (repay outranks theft at a shared corner), so
     /// the thief must find, for each door, an angle clear of their earlier work.
     /// </summary>
-    private static void RobDoors(Game game, int n)
+    internal static void RobDoors(Game game, int n)
     {
         var map = game.World.Overworld;
         for (int robbed = 0; robbed < n; robbed++)

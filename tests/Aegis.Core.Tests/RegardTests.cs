@@ -338,6 +338,114 @@ public class RegardTests
         Assert.False(game.World.Facts.Exists("rumor", "stead_hearthtale"));
     }
 
+    // ---- D-087: the stead's teaching, the own rung's boon ----
+
+    [Fact]
+    public void TheSteadsTeaching_OpensAtTheOwnRung_AndTheShowingsAreFree()
+    {
+        var game = CrossTo(42, 2);
+        game.Debug_ClearSite(SiteKind.Barrow); // +2: a known face
+        game.Debug_ClearCamp();                // +3 -> 5: friend and own crossed in one stroke
+
+        Assert.Equal(SteadRegard.MaxRung, SteadRegard.RungFor(game.Regard));
+        Assert.True(game.World.Facts.Exists("regard", "own")); // the rung is in the graph (D-085)
+        Assert.Contains(game.Log.Recent(15), e => e.Text.Contains("yours for the asking now"));
+
+        // The bench names the boon, and the showing takes no coin.
+        game.Player.Coin = 0;
+        NpcTests.BumpNpc(game, game.World.Npcs.First(n => n.Id == "npc_woodward"));
+        game.ApplyKey(OfferKey(game, TradeGood.Trade));
+        Assert.Contains(game.TradeOffers, o => o.Good == TradeGood.Lesson
+            && o.Label.Contains("freely, to the stead's own"));
+        game.ApplyKey(TradeKey(game, TradeGood.Lesson));
+        Assert.True(game.Player.HasLesson(LessonId.Gleaning));
+        Assert.Equal(0, game.Player.Coin);
+        Assert.Contains(game.Log.Recent(6), e => e.Text.Contains("Not from you"));
+    }
+
+    [Fact]
+    public void TheTeaching_IsStillSold_BelowTheOwnRung()
+    {
+        var game = new Game(42);
+        game.Debug_ClearCamp(); // regard 3: a friend, not yet the stead's own
+
+        game.Player.Coin = 0;
+        NpcTests.BumpNpc(game, game.World.Npcs.First(n => n.Id == "npc_woodward"));
+        game.ApplyKey(OfferKey(game, TradeGood.Trade));
+        Assert.Contains(game.TradeOffers, o => o.Good == TradeGood.Lesson && o.Label.Contains("(10 coin)"));
+        game.ApplyKey(TradeKey(game, TradeGood.Lesson));
+        Assert.False(game.Player.HasLesson(LessonId.Gleaning));
+        Assert.Contains(game.Log.Recent(2), e => e.Text.Contains("Knowing has a price"));
+    }
+
+    [Fact]
+    public void TheTeaching_IsWithheldFromTheUnwelcome_AndRestitutionReopensIt()
+    {
+        var game = CrossTo(42, 2);
+        game.Player.Rations = 0; // room in the pack: a full pack turns the thieving hand away
+        ShameTests.RobDoors(game, 2); // unwelcome here, before the deeds land
+        game.Debug_ClearSite(SiteKind.Barrow);
+        game.Debug_ClearCamp(); // regard 5: the own rung crossed under suspicion
+
+        // The opening is withheld, and the withholding is narrated (D-023's rule).
+        Assert.Contains(game.Log.Recent(15), e => e.Text.Contains("It is not said to you"));
+        game.Player.Coin = 12;
+        NpcTests.BumpNpc(game, game.World.Npcs.First(n => n.Id == "npc_woodward"));
+        game.ApplyKey(OfferKey(game, TradeGood.Trade));
+        Assert.Contains(game.TradeOffers, o => o.Good == TradeGood.Lesson && o.Label.Contains("(10 coin)"));
+        game.ApplyKey(' '); // step back from the bench
+
+        // Restitution is the designed exit (D-086): the sills paid, the craft opens.
+        RepayAllDoors(game);
+        Assert.Equal(0, game.Shame);
+        NpcTests.BumpNpc(game, game.World.Npcs.First(n => n.Id == "npc_woodward"));
+        game.ApplyKey(OfferKey(game, TradeGood.Trade));
+        Assert.Contains(game.TradeOffers, o => o.Good == TradeGood.Lesson
+            && o.Label.Contains("freely, to the stead's own"));
+    }
+
+    [Fact]
+    public void TheTeaching_TakesStock_WhenThereIsNothingLeftToShow()
+    {
+        var game = CrossTo(42, 2);
+        game.Debug_ClearSite(SiteKind.Barrow);
+        game.Player.Coin = 30;
+        NpcTests.BumpNpc(game, game.World.Npcs.First(n => n.Id == "npc_woodward"));
+        game.ApplyKey(OfferKey(game, TradeGood.Trade));
+        game.ApplyKey(TradeKey(game, TradeGood.Lesson)); // the gleaning, bought
+        game.ApplyKey(' ');
+        NpcTests.BumpNpc(game, game.World.Smith);
+        game.ApplyKey(OfferKey(game, TradeGood.Lesson)); // the tended iron, bought
+        Assert.True(game.Player.HasLesson(LessonId.TendedIron));
+
+        game.Debug_ClearCamp(); // the own rung, with every showing already paid for
+        Assert.Contains(game.Log.Recent(15), e => e.Text.Contains("little left they could show you"));
+    }
+
+    /// <summary>Pays every robbed sill: for each unrepaid door, an angle beside it, and the grab that leaves the coin.</summary>
+    private static void RepayAllDoors(Game game)
+    {
+        var map = game.World.Overworld;
+        while (game.World.PilferedHouses.Any(h => !game.World.RepaidHouses.Contains(h)))
+        {
+            var door = game.World.PilferedHouses.First(h => !game.World.RepaidHouses.Contains(h));
+            var spot = Directions.All8.Select(d => door.Plus(d.dx, d.dy))
+                .First(p => map.InBounds(p) && map.Walkable(p) && !game.World.Npcs.Any(n => n.Pos == p));
+            game.Debug_SetPlayerPos(spot);
+            int before = game.Shame;
+            game.Apply(Command.Grab);
+            Assert.Equal(before - 1, game.Shame);
+        }
+    }
+
+    /// <summary>The digit that selects a good in the open talk menu.</summary>
+    private static char OfferKey(Game game, TradeGood good) =>
+        (char)('1' + game.Topics.Count + game.Offers.ToList().FindIndex(o => o.Good == good));
+
+    /// <summary>The digit that selects an entry at an open vendor's trade bench (D-071).</summary>
+    private static char TradeKey(Game game, TradeGood good) =>
+        (char)('1' + game.TradeOffers.ToList().FindIndex(o => o.Good == good));
+
     /// <summary>Crosses from a fresh seed to the given cycle, clearing each world's camp to open the gate.</summary>
     private static Game CrossTo(ulong seed, int targetCycle)
     {

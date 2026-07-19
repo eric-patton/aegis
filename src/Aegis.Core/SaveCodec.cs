@@ -121,10 +121,13 @@ namespace Aegis.Core;
 /// which was an inert "nothing here to take" in v35, now pilfers the door (a
 /// ration taken, shame raised, a turn spent), so a v35 journal that pressed g
 /// near the stead replays to different state from that press on.
+/// v37 when D-087 opened the stead's teaching: at the own rung the lessons are
+/// shown freely, so a v36 journal that bought a showing while the stead held
+/// the bearer its own paid coin this version does not take, and replays richer.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 36;
+    public const int Version = 37;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

@@ -205,6 +205,15 @@ public sealed class Game
     /// <summary>Whether the steadholder bars the larder to the bearer (D-086): bread is not sold to a named thief.</summary>
     public bool LarderBarred => SteadShame.RungFor(Shame) >= SteadShame.BarredRung;
 
+    /// <summary>
+    /// Whether the stead teaches the bearer freely (D-087): the own rung's boon.
+    /// What the stead knows is not sold to the stead's own, only shown. Suspicion
+    /// closes it like the friend's terms (D-086): know-how is trust made plain,
+    /// and the folk do not put their craft into a hand they are watching.
+    /// </summary>
+    private bool SteadsTeaching => SteadRegard.RungFor(Regard) >= SteadRegard.OwnRung
+        && SteadShame.RungFor(Shame) < SteadShame.UnwelcomeRung;
+
     /// <summary>How far one wear event moves the ledger: the spent edge (D-047) doubles it.</summary>
     private int WearStep => World.Oaths.Contains(OathId.SpentEdge) ? 2 : 1;
 
@@ -1432,12 +1441,14 @@ public sealed class Game
         _offers.AddRange(BuildOffers(TalkNpc!));
     }
 
-    /// <summary>A teaching entry's label (D-052): the asking before, the keeping after.</summary>
+    /// <summary>A teaching entry's label (D-052): the asking before, the keeping after, and the boon named when the stead teaches its own (D-087).</summary>
     private string LessonLabel(LessonId id)
     {
         var def = LessonCatalog.Def(id);
-        return Player.HasLesson(id)
-            ? $"{char.ToUpperInvariant(def.Name[0])}{def.Name[1..]} (yours already)"
+        if (Player.HasLesson(id))
+            return $"{char.ToUpperInvariant(def.Name[0])}{def.Name[1..]} (yours already)";
+        return def.Price > 0 && SteadsTeaching
+            ? $"Be shown {def.Name} (freely, to the stead's own)"
             : $"Be shown {def.Name} ({def.Price} coin)";
     }
 
@@ -1455,13 +1466,19 @@ public sealed class Game
             Log.Add(Turn, $"{TalkNpc!.Name}: \"You have it. Shown once is shown; the rest is your own hands' business.\"");
             return;
         }
-        if (Player.Coin < def.Price)
+        // The stead's teaching (D-087): to the stead's own, the price is waved off
+        // before the showing starts. The refusal of the coin is itself narrated,
+        // so the boon is felt at the moment it pays (D-023's rule).
+        int price = SteadsTeaching ? 0 : def.Price;
+        if (Player.Coin < price)
         {
             Log.Add(Turn, $"{TalkNpc!.Name}: \"Knowing has a price like anything else: {def.Price} coin, and you hold {Player.Coin}.\"");
             return;
         }
+        if (price == 0 && def.Price > 0)
+            Log.Add(Turn, $"{TalkNpc!.Name} pushes your coin back across with two fingers. \"Not from you. What this stead knows, its own are shown.\"", LogTone.Reward);
 
-        Player.Coin -= def.Price;
+        Player.Coin -= price;
         Player.Lessons.Add(id);
         switch (id)
         {
@@ -3079,6 +3096,8 @@ public sealed class Game
         // (D-051) never silences it: the songs may go unsung and the gratitude still stands.
         if (rungBefore < SteadRegard.FriendRung && rungAfter >= SteadRegard.FriendRung)
             GiveFriendsWelcome();
+        if (rungBefore < SteadRegard.OwnRung && rungAfter >= SteadRegard.OwnRung)
+            NameSteadsTeaching();
         if (!Player.RegardLineHeard)
         {
             Player.RegardLineHeard = true;
@@ -3110,6 +3129,26 @@ public sealed class Game
         const int giftCoin = 5;
         Player.Coin += giftCoin;
         Log.Add(Turn, $"The folk of {World.SettlementName} gather what coin they can spare for the one who has stood for them: a purse of {giftCoin}, pressed on you with both hands.", LogTone.Reward);
+    }
+
+    /// <summary>
+    /// The stead's teaching named (D-087), the own rung's boon: where the friend
+    /// rung paid in this world's coin (the purse, the price), the top rung pays in
+    /// the one coin that crosses the arch: know-how. Every showing the stead sells
+    /// is shown freely to its own. The crossing narrates the opening (or, under
+    /// suspicion, the withholding: never a change the bearer cannot feel, D-023),
+    /// and the benches say it again in their own labels.
+    /// </summary>
+    private void NameSteadsTeaching()
+    {
+        if (SteadShame.RungFor(Shame) >= SteadShame.UnwelcomeRung)
+        {
+            Log.Add(Turn, $"What {World.SettlementName} knows, it shows its own freely; so the saying goes. It is not said to you. The folk count their doors, and keep their craft behind them.", LogTone.Info);
+            return;
+        }
+        Log.Add(Turn, LessonCatalog.All.Any(l => l.Price > 0 && !Player.HasLesson(l.Id))
+            ? $"What {World.SettlementName} knows is yours for the asking now. Nothing its folk can show is sold to the stead's own; it is only shown."
+            : $"What {World.SettlementName} knows is yours for the asking now, though its folk find, taking stock, that there is little left they could show you.", LogTone.Reward);
     }
 
     /// <summary>

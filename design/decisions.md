@@ -231,7 +231,7 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
-### D-097: The one who walks with you: the guest engine (stage 1 of the companions pillar) (2026-07-19)
+### D-097: The one who walks with you: guests, the huntsman's debt, and the bond's ledger (2026-07-19)
 The companions pillar (D-024) breaks ground, guests first by Q&A: the mortal, story-scoped
 ally is the pillar's heart and builds the walking/fighting/dying engine the summon slot and
 the pack animal will later reuse. Q&A-settled shape: one guest at a time; acquisition is
@@ -264,12 +264,34 @@ matching D-096 exactly. 449 tests green (11 new GuestTests: following, hold/with
 off the fight, refused with no one beside, tending, fighter-vs-crofter blow bands, body-
 block on marked ground, guest death with the Aegis line, raider turning on the nearer
 body, place-trading, doors both ways, shrine wake). Twin journeys hash-identical; sim
-replay exact. STAGE 2 (gated, next): the huntsman's-debt storylet arc, loyalty-beat
-banking, full death weight (grave fact + stead shame + memorial thread), crossing
-farewell/portfolio, and the bestiary of guests beyond the first two roles. Deferred with
-stage 2: guests and ranged friendly fire (shafts pass through a guest silently for now),
-specialized kinds targeting guests directly (today they only body-block those intents),
-boar-charge lanes and lofted bursts ignoring guests.
+replay exact. STAGE 2, same day, gate approved: THE HUNTSMAN'S DEBT: once the stead has
+bled (a raid suffered or raider blood on the bearer's hands) and the camp stands, talking
+to the woodward fires the casting storylet (world scope, once per world): they set down
+the hide-scales, their NPC steps off the map, and a 16-HP Huntsman-role guest falls in
+until the camp breaks; at the broken camp the arc pays (farewell scene, a portfolio fact,
+the NPC home to the bench, +1 regard: a stead believes its own). LOYALTY BEATS bank on
+Guest.Beats from all four Q&A sources: shared blood (a kill with the two within 3 of each
+other), care spent (each tending), fireside words (each shrine rest mends the guest whole,
+banks a beat, and speaks one line of who they are, fixed rotation), and arc deeds (every
+raider felled). DEATH WEIGHT: a fallen cast guest writes the grave fact (guest-fell), a
+bond of 3+ beats writes guest-beloved, the stead takes a point of shame with a cold line
+(a life spent in the bearer's keeping costs standing), and the NPC NEVER comes home: the
+world's woodward bench stands empty all world, the price made structural. The memorial
+storylet (the-name-kept-warm, once per world) cashes guest-beloved in any villager's
+mouth. Save v46 -> v47 (the woodward talk used to be plain; two Talk storylets enter the
+draws). THE DIVIDEND: the journey pilot already drives the woodward's bench to sell
+hides, so every journey now casts the huntsman live, un-scripted: the new master baseline
+(2024 x12: cycle 13, turns 10313, deaths 2, regard 6, wrath 7, raids 31, keys 10705) and
+sweep (deaths 5/4/8/6, all finish) show the arc running end to end in every world and the
+huntsman honestly pulling their weight; while they walk, the pilot's bench errand sees no
+woodward and simply skips, resuming when the arc returns them. 453 tests green (4 new
+GuestArcTests: cast + refusal-before-blood + paid arc, the four beat sources, the full
+death weight + memorial, the unloved fall leaving no beloved fact). Twins hash-identical,
+sim replay exact. Deferred: guests and ranged friendly fire (shafts pass through a guest
+silently), specialized kinds targeting guests directly (they body-block those intents
+today), boar lanes and lofted bursts ignoring guests, more guest roles and arcs, a
+crossing farewell for a future arc that outlives its world (the huntsman's cannot: the
+camp gates the gate), and cross-world echo of portfolio facts.
 
 ### D-096: The kinds' second moves: cry, chill, feint, and the drag (2026-07-19)
 Combat depth's third rung, closing the Q&A-settled set. Known kinds learn one new

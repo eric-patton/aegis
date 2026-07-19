@@ -31,10 +31,37 @@ public sealed class Game
 
     /// <summary>
     /// The one who walks with the bearer (D-097): at most one, world-bound,
-    /// mortal. Null is the usual state of the road; stage 1 casts guests only
-    /// through the test hooks, and the storylet doors open in stage 2.
+    /// mortal. Null is the usual state of the road; the storylet door (the
+    /// huntsman's debt) casts one from the stead's own people.
     /// </summary>
     public Guest? Guest { get; private set; }
+
+    /// <summary>The cast NPC held aside while they walk (D-097): re-added at the arc's end, never after a death.</summary>
+    private Npc? _guestNpc;
+
+    /// <summary>
+    /// The casting (D-097 stage 2): the NPC across the talk is set aside from
+    /// their life and falls in beside the bearer. The talk closes; the road
+    /// starts here.
+    /// </summary>
+    internal void CastTalkNpcAsGuest(GuestRole role)
+    {
+        if (TalkNpc is not { } npc || Guest is not null) return;
+        _guestNpc = npc;
+        World.Npcs.Remove(npc);
+        Guest = new Guest
+        {
+            Id = $"guest_{npc.Id}",
+            Name = npc.Name,
+            Role = role,
+            NpcId = npc.Id,
+            Pos = npc.Pos,
+            MaxHp = 16,
+            Hp = 16,
+        };
+        InTalkMenu = false;
+        TalkNpc = null;
+    }
     public MapMode Mode { get; private set; } = MapMode.Overworld;
     public int Turn { get; private set; }
     public bool Running { get; private set; } = true;
@@ -2901,6 +2928,7 @@ public sealed class Game
             else if (Player.Herb > 0) { Player.Herb--; mended = 4; spent = "You bind the worst of it with a good sprig from the satchel"; }
             else { Player.Rations--; mended = 2; spent = "You put bread in their hands and make them sit until it is eaten"; }
             guest.Hp = Math.Min(guest.MaxHp, guest.Hp + mended);
+            guest.Beats++; // care spent banks a beat (D-097 stage 2)
             Log.Add(Turn, $"{spent}: {guest.Name} is mended {mended}. ({guest.Hp}/{guest.MaxHp})", LogTone.Reward);
             return true;
         }
@@ -2948,6 +2976,23 @@ public sealed class Game
             Player.Herb -= DraughtHerbs;
             Player.Draughts++;
             Log.Add(Turn, $"While the shrine hums you steep the simples as she showed you: bruised, slow, patient. A draught of your own goes stoppered into the pack. ({Player.Draughts} vial{(Player.Draughts == 1 ? "" : "s")} carried)", LogTone.Reward);
+        }
+
+        // Fireside words (D-097 stage 2): a rest with the guest beside mends
+        // them whole, banks a beat, and gives up a little of who they are, one
+        // line at a time, in a fixed round so replay agrees.
+        if (Guest is { Alive: true } friend)
+        {
+            friend.Hp = friend.MaxHp;
+            friend.Beats++;
+            string[] fireside =
+            [
+                "I have not slept a night away from my own bench in years. The wood will keep. It kept before me.",
+                "My kin fed those dens a winter's worth of hides once, for peace. The peace lasted until the meat did.",
+                "You sleep like something hunted, you know. I will watch a while. I am good at watching.",
+                "When this is done I will go back to the bench and weigh hides, and no one will believe a word of it. That is fine. I will know.",
+            ];
+            Log.Add(Turn, $"{friend.Name}, at the fire: \"{fireside[(friend.Beats - 1) % fireside.Length]}\"", LogTone.Info);
         }
 
         InShrineMenu = true;
@@ -3229,6 +3274,13 @@ public sealed class Game
         // The dens count their dead (D-078): every raider felled deepens the
         // raiders' wrath, the enemy half of the ledger the stead's regard opened.
         if (target.Kind == MonsterKind.Goblin) RaiseWrath(1);
+        // The bond banks its beats (D-097 stage 2): blood shared within reach
+        // of each other, and every raider felled toward the huntsman's debt.
+        if (Guest is { Alive: true } fellow)
+        {
+            if (fellow.Pos.Chebyshev(Player.Pos) <= 3) fellow.Beats++;
+            if (target.Kind == MonsterKind.Goblin) fellow.Beats++;
+        }
         CheckSiteCleared(CurrentSite!);
     }
 
@@ -4309,6 +4361,21 @@ public sealed class Game
             Log.Add(Turn, "\"A deed with weight. It is counted.\"", LogTone.Aegis);
             Log.Add(Turn, $"\"And far to the {Compass(World.CampPos, World.GatePos)} of this cave, something old has unlocked. I feel it the way you feel a door open in a dark house.\"", LogTone.Aegis);
             RaiseRegard(3, $"Word of the ended raids will reach {World.SettlementName} before you do. The stead knows whose hand it was.");
+
+            // The huntsman's debt paid (D-097 stage 2): the arc ends where it
+            // aimed. The guest goes home to the bench, the going home is the
+            // portfolio, and a stead believes its own.
+            if (Guest is { Alive: true } guest && guest.NpcId is { } npcId && _guestNpc is { } home)
+            {
+                Log.Add(Turn, $"{guest.Name} stands a long moment over the cold fire-pits, counting something private. \"That is the debt paid. Mine, and the wood's. I will walk the rest of my roads alone now, and gladly.\"", LogTone.Info);
+                Log.Add(Turn, "\"They stepped out of a whole life to see this done, bearer. Few do. It is counted for them too.\"", LogTone.Aegis);
+                World.Facts.Add("portfolio", npcId, World.SettlementName,
+                    $"{guest.Name} walked with the bearer until the camp broke, and keeps the wood's edge with a straighter back for it.");
+                World.Npcs.Add(home);
+                RaiseRegard(1, $"{guest.Name} carries the tale home themselves. A stead believes its own.");
+                Guest = null;
+                _guestNpc = null;
+            }
         }
         else if (site.Kind == SiteKind.Barrow)
         {
@@ -4759,14 +4826,26 @@ public sealed class Game
     }
 
     /// <summary>
-    /// A guest falls (D-097 stage 1): the fact of it, marked plainly. The full
-    /// weight (the grave fact, the stead's grief, the memorial thread) is
-    /// stage 2's work; nothing here forecloses it.
+    /// A guest falls (D-097): the full weight. The world writes the grave
+    /// fact; a bond with beats enough writes the beloved fact the memorial
+    /// thread cashes; and the stead grieves and remembers: a life spent in
+    /// the bearer's keeping costs standing. Their NPC never comes home.
     /// </summary>
     private void GuestFalls(Guest guest)
     {
         Log.Add(Turn, $"{guest.Name} goes down, and does not move again.", LogTone.Danger);
         Log.Add(Turn, "\"I could not reach them, bearer. I was never made to hold but one.\"", LogTone.Aegis);
+        if (guest.NpcId is { } npcId)
+        {
+            World.Facts.Add("guest-fell", npcId, World.SettlementName,
+                $"{guest.Name} fell on the bearer's road, and {World.SettlementName} keeps the name.");
+            if (guest.Beats >= 3)
+                World.Facts.Add("guest-beloved", npcId, World.SettlementName,
+                    $"{guest.Name} shared the road's bread and blood with the bearer, and the small kindnesses were counted.");
+            RaiseShame(1);
+            Log.Add(Turn, $"{World.SettlementName} will hear how {guest.Name} ended, and in whose company. Doors will be slower for a while.", LogTone.Danger);
+            _guestNpc = null;
+        }
     }
 
     /// <summary>

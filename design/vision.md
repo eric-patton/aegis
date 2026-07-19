@@ -102,7 +102,7 @@ Coin is fully separate from Essence and must matter all game:
 
 Three niches, no permanent party; combat is balanced around one character:
 - **A summon slot**: one autonomous Spirit-Ash-style ally, resource-gated against your own pool. Conjurer builds, zero management.
-- **Guest companions**: story-scoped, role-cast from world NPCs, a command verb or two, and *they can permanently die*. Guests carry the mortal stakes you cannot. **Stage 1 shipped (D-097)**: the guest engine walks at your shoulder, holds ground or comes on one contextual key ('o'), fights to their own measure (competence read from who they are), takes real blows and body-blocks marked ground, is tended from your own satchel, and dies for real. Stage 2 (gated): the first storylet arc (the huntsman's debt), loyalty beats, the full death weight, and the crossing farewell.
+- **Guest companions**: story-scoped, role-cast from world NPCs, a command verb or two, and *they can permanently die*. Guests carry the mortal stakes you cannot. **Shipped whole (D-097)**: the guest engine walks at your shoulder, holds ground or comes on one contextual key ('o'), fights to their own measure (competence read from who they are), takes real blows and body-blocks marked ground, is tended from your own satchel, and dies for real. The first arc is the huntsman's debt: the woodward walks once the stead has bled, until the camp breaks; loyalty beats bank from blood, care, firesides, and deeds; a death writes the grave and beloved facts, costs stead standing, empties the bench for the whole world, and is remembered aloud; the paid arc ends in a portfolio fact and the walk home.
 - **A pack animal or mount**: logistics and warmth.
 
 The persistent companion voice is the Aegis itself.

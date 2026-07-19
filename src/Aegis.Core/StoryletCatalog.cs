@@ -1117,5 +1117,45 @@ public static class StoryletCatalog
             ],
             Effect = g => g.Player.Keepsake = true,
         },
+
+        // The one who walks with you (D-097). The huntsman's debt: once the
+        // stead has bled (a raid suffered, or raider blood on the bearer's own
+        // hands), the woodward sets down the scales and asks to walk until the
+        // camp is broken. World-scoped: each world's woodward carries their own
+        // grievance, and each may take the road once.
+        new Storylet
+        {
+            Id = "the-huntsmans-debt",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.World,
+            Priority = 10,
+            When = g => g.TalkNpc is { Kind: NpcKind.Villager, Id: "npc_woodward" }
+                && !g.CampCleared && g.Guest is null && (g.Raids >= 1 || g.Wrath >= 1),
+            Lines =
+            [
+                ("The woodward sets the hide-scales down mid-weighing and looks at you the way a bow is drawn. \"Those dens have had a winter of this wood's blood and my kin's peace-meat, and given back neither. You are going at them. I have watched you go at things.\"", LogTone.Info),
+                ("\"I know every deer-slot and dead-fall between here and that cave mouth, and I owe that camp a debt with my own hands on it. Let me walk with you until it is paid. I will not slow you, and I do not miss.\"", LogTone.Info),
+                ("\"A mortal walks beside you now, bearer. Mind it. I can catch only you.\"", LogTone.Aegis),
+            ],
+            Effect = g => g.CastTalkNpcAsGuest(GuestRole.Huntsman),
+        },
+
+        // The memorial thread: a guest who fell with beats enough banked is
+        // remembered aloud, once, by the stead that lost them. The beloved
+        // fact is written at the fall itself; this is where it is cashed.
+        new Storylet
+        {
+            Id = "the-name-kept-warm",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.World,
+            Priority = 8,
+            Requires = [new FactPattern("guest-beloved")],
+            When = g => g.TalkNpc?.Kind == NpcKind.Villager,
+            Lines =
+            [
+                ("The talk finds its way, as stead talk always does, to the bench that stands unweighed. \"{r0.detail}\" The villager says it looking straight at you, and does not look away until you have heard all of it.", LogTone.Info),
+                ("\"That is how the mortal ones hold a name, bearer: they pass it hand to hand so it stays warm. I keep a colder ledger. I find I do not prefer it.\"", LogTone.Aegis),
+            ],
+        },
     ];
 }

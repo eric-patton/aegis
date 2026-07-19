@@ -537,6 +537,16 @@ public sealed class Guest
     /// <summary>Told to hold their ground ('o'): they keep the cell until called back.</summary>
     public bool Holding { get; set; }
 
+    /// <summary>
+    /// The banked loyalty beats (D-097 stage 2): the small logged moments of
+    /// the bond. Shared blood, care spent, fireside words, and deeds toward
+    /// their arc all bank here, and the memorial layer cashes them.
+    /// </summary>
+    public int Beats { get; set; }
+
+    /// <summary>The world NPC this guest was cast from, when they were: the door home.</summary>
+    public string? NpcId { get; init; }
+
     public bool Alive => Hp > 0;
 
     /// <summary>Whether these hands were raised to a killing trade.</summary>

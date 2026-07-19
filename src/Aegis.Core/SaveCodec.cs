@@ -162,10 +162,14 @@ namespace Aegis.Core;
 /// ground, the thegn's one marked cut lies to any read short of keen, and a
 /// landed hound-lunge hauls the bearer toward the pack, so a v45 journal's
 /// fights draw different dice from the first goblin lope onward.
+/// v47 when D-097 opened the guest door: the huntsman's debt casts the
+/// woodward as a walking companion off a talk that used to be plain, and two
+/// new Talk storylets enter the eligible draws, so a v46 journal that spoke
+/// to the woodward after the stead had bled replays into a different road.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 46;
+    public const int Version = 47;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

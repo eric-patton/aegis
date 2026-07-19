@@ -33,10 +33,11 @@ arc ships, the **magic pillar opened (D-091)**: four workings found on graven st
 Focus, and Spellcraft, and **character creation shipped whole (D-092/D-093)**: the
 asking at the first wake, five original folk, seven pasts, shapings, the precious
 thing, and stage 2's burdens, vows, remembered face, and keepsake thread. The
-**companions pillar broke ground (D-097)**: the guest ally engine walks, fights, tends,
-and dies; its storylet arc and death weight are stage 2. The remaining **breadth
-holes**: the Death's-Toll/scar layer, companions stage 2, and two of the four
-activity families (crime, town-life). Rough fill levels:
+**companions pillar opened with guests whole (D-097)**: the ally engine plus the
+huntsman's-debt arc, loyalty beats, full death weight, and the paid ending, run live by
+every journey. The remaining **breadth holes**: the Death's-Toll/scar layer, the summon
+slot and pack animal, and two of the four activity families (crime, town-life). Rough
+fill levels:
 
 - Attributes: **6 of 7** mechanically active (D-091 wakes Mind and Will; Presence is the last inert one)
 - Skills: **9 of ~18** (five combat, Hunting from D-070, Cooking from D-073, Survival from D-074, Spellcraft from D-091)
@@ -60,7 +61,7 @@ activity families (crime, town-life). Rough fill levels:
   faction remain
 - Major vision pillars still unbuilt: Toll/scars (magic opened D-091; the craft family
   opened D-073/D-090; character creation shipped both stages, D-092/D-093; companions
-  broke ground with the guest engine, D-097)
+  opened with guests whole, D-097: the summon slot and pack animal remain)
 
 ---
 
@@ -254,14 +255,16 @@ activity families (crime, town-life). Rough fill levels:
 ### Companions
 
 - [ ] Summon slot: one autonomous ally, resource-gated (D-024, vision §7)
-- [~] Guest companions: role-cast from world NPCs, can permanently die (D-024): **stage 1
-  shipped (D-097)**: the guest engine (follow, fight to their measure, body-block, 'o'
-  contextual order key, tending from the satchel, doors/death-wake shared, real death)
-- [ ] Guests stage 2: the huntsman's-debt storylet arc, loyalty beats (shared blood,
-  care, fireside words, arc deeds), full death weight (grave fact + stead grief +
-  memorial thread), crossing farewell and portfolio fact (D-097 gate)
+- [x] Guest companions: role-cast from world NPCs, can permanently die (D-024, D-097):
+  the guest engine (follow, fight to their measure, body-block, 'o' contextual order
+  key, tending from the satchel, doors/death-wake shared) plus the first full arc:
+  the huntsman's debt (woodward cast off a talk once the stead has bled, until the
+  camp breaks), loyalty beats from all four sources, full death weight (grave fact,
+  guest-beloved at 3+ beats, stead shame, the bench empty all world, memorial
+  storylet), and the paid ending (portfolio fact, NPC home, +1 regard)
 - [ ] Guest follow-ons: specialized kinds targeting guests directly, ranged friendly
-  fire, charge lanes and lofted bursts seeing guests, more guest roles (D-097)
+  fire, charge lanes and lofted bursts seeing guests, more guest roles and arcs, a
+  crossing farewell for arcs that outlive their world, portfolio echo down the chain (D-097)
 - [ ] Pack animal / mount: logistics and warmth (D-024)
 
 ### Death, stakes & consequence
@@ -318,6 +321,7 @@ activity families (crime, town-life). Rough fill levels:
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-19: **D-097 stage 2: the huntsman's debt, the bond's ledger, and the full weight.** The woodward, once the stead has bled, sets down the hide-scales off a talk and walks as a 16-HP huntsman until the camp breaks (world scope, once per world; their NPC steps off the map). Loyalty beats bank from all four Q&A sources (shared blood within 3, each tending, each fireside rest: mends whole + one line of who they are, every raider felled). A fallen guest writes guest-fell, guest-beloved at 3+ beats, costs the stead a point of shame, and the bench stands empty ALL WORLD (the woodward never comes home); the memorial storylet cashes the beloved fact in any villager's mouth, once. The paid arc: farewell at the cold fire-pits, portfolio fact, NPC home, +1 regard. Save v46 -> v47. The dividend: the pilot already works the woodward's bench, so EVERY journey now casts the huntsman live: new master baseline 10313 turns/2 deaths/10705 keys, sweep deaths 5/4/8/6 (the huntsman pulls their weight). 453 tests green (4 new GuestArcTests); twins identical; sim replay exact.
 - 2026-07-19: **D-097 the one who walks with you: the guest engine (companions stage 1).** The D-024 pillar breaks ground, guests first (Q&A-settled: they build the ally engine the summon and mule reuse). Guest entity with role-derived competence (a huntsman's blow 2-5, a crofter's 1-2: who they are, not a slider), one at a time, world-bound. They follow at the shoulder, hold ground on order, fight the adjacent foe to their measure (kills route through HarvestRemains: wrath and site-clearing stay honest; never a severed one, a hart, or the dormant), and take real blows: a raider the guest stands nearer turns on them, and a guest on any intent's resolved cell takes the roll whole (no stance, no iron, no Aegis). One key 'o', contextual: tend a hurt guest from the satchel (draught 8 / sprig 4 / bread 2, always a turn) or hold-here/with-me (free off the fight, a turn under live steel, D-094's grammar). Place-trading steps; doors, exits, and the death-wake shared; a living guest never crosses. Stage-1 death is a stark line + one Aegis line; the full weight is stage 2. NO save bump (fourth no-bump): no journaled path casts a guest, dice roll only when a body is struck: master baseline and sweep held to the digit. 449 tests green (11 new GuestTests). Stage 2 next: the huntsman's-debt arc, loyalty beats, death weight, farewell/portfolio.
 - 2026-07-19: **D-096 the kinds' second moves: cry, chill, feint, and the drag.** Combat depth's third rung closes the Q&A set. Goblin: the rallying cry (marked a turn; on resolve the whole camp takes an extra stride at the bearer; kill the crier or be gone). Wight: the grave-chill (marked cell; kept ground = 4 turns of blows landing 2 softer; stepping off is the whole answer). Thegn: the measured cut, its first declared blow, whose mark LIES to any read short of keen (FeintCell carries the truth: the read tiers finally pay differently at the top). Hound: the landed lunge hauls the bearer a stride toward the pack. Sidebar tells + keen weight notes for all three new intents. Save v45 -> v46. 438 tests green (5 new; the thegn's never-telegraphs test superseded by design). Twins identical; sim replay exact; new master baseline 10404 turns/4 deaths/10801 keys; sweep all finish, honestly deadlier (6/5/12/11). New tracked: stance-reading monsters, more second moves, cry waking dormant bands.
 - 2026-07-19: **D-095 the families' verbs: sunder, answered step, and the shove.** Each melee family does one thing only it does. Hafted: the heave now sunders a carl/warder's linden board FOR GOOD (thrust and shaft board-turns check BoardBroken) and its weight staggers any wind-up, knackless. Blades: a paid cut into a body whose wind-up marks YOUR cell carries the feet a half-step off the marked ground (deterministic slip, keeps the reach). Brawling: a paid bare-knuckle blow shoves the body a stride back where the ground gives. Spear: the long thrust (D-053) recorded as its standing identity. No new keys anywhere: every verb rides an existing act. Save v44 -> v45 (fights replay onto different cells). 433 tests green (3 new; stropped-edge parity re-aims per swing, an honest knock-on of the answered step). Twins identical; sim replay exact; master seed held, sweep shifted where fights met boards. New tracked: flanking, wall-slam cost, warder rim post-board.

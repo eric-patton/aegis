@@ -37,7 +37,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 - Skills: **8 of ~18** (five combat, Hunting from D-070, Cooking from D-073, Survival from D-074)
 - Activity families: **wilderness-living core built** (hunting, selling, cooking, foraging: D-070..D-074) and the **craft family opened** (cooking); crime and town life unbuilt
 - Launch story templates: **2** built (of 3 named, 4-5 planned)
-- **Factions begun (D-076..D-088):** the local-reputation foundation is in (the home stead's
+- **Factions begun (D-076..D-089):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
   raider slain, dread softening their blows past its rung), the coarse tick began (D-079,
@@ -49,8 +49,10 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
   and the bright ladder's top rung pays (D-087, the stead's teaching: lessons shown freely
   to the stead's own, closed by suspicion, reopened by restitution), and the facts got their
   consumers (D-088, three storylets: the named thief confronted, the hearthtale carried on
-  the lane, the deep cellar shown to the stead's own);
-  true multi-axis state vectors remain
+  the lane, the deep cellar shown to the stead's own), and the state vectors landed (D-089,
+  stores + boldness on the tick: raids embolden and take double, culls cow the dens, bared
+  lofts end the raids, cleared worlds recover); the stead's own tick moves and a third
+  faction remain
 - Major vision pillars still unbuilt: magic, companions, crafting, character creation, Toll/scars
 
 ---
@@ -77,9 +79,11 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
   on the first transgression verb (D-086, pilfering with restitution as the designed exit).
   The bright ladder is fully paid (D-087, the stead's teaching at the own rung), and the
   faction facts have their first consumers (D-088: the thief confronted, the tale carried,
-  the keeping shown). Next in this phase: consumers for the `confronted` and `secret` facts
-  in their turn, and growing the tick toward true state vectors. **Magic** remains the
-  alternative keystone (activates Mind/Will and the caster build).
+  the keeping shown), and the keystone clause itself landed (D-089: state vectors on the
+  tick, stores and boldness, with recovery as the exit's aftermath). Next in this phase:
+  the stead acting on the tick, a third faction, and consumers for the `confronted` and
+  `secret` facts. **Magic** remains the alternative keystone (activates Mind/Will and the
+  caster build).
 - **Phase 3: Remaining pillars & stakes.** Companions, the Death's-Toll/scar layer, the
   other activity families, and the skills those unlock.
 - **Ongoing: Breadth & depth.** Catalog growth (templates, monsters, tiers, gear, oaths),
@@ -189,10 +193,16 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 - [ ] Content consuming the `confronted` and `secret` facts in their turn (D-088): a
   making-right beat at the sills for the confronted thief; the cellar mattering in a later
   raid, storm, or story beat
-- [~] Faction state-vectors on a coarse tick, transitions write facts + narration hooks (D-023,
-  vision §2, D-079): the tick seam exists and its first event runs (uncleared camps raid the
-  stead every 160 turns, capped at 3/world: fact + narration + ration-price consequence, camp
-  clear as the designed exit, save v32); true multi-axis state vectors and transition rules pending
+- [x] Faction state-vectors on a coarse tick, transitions write facts + narration hooks (D-023,
+  vision §2, D-079; delivered D-089, v39): two causal axes ride the tick: the stead's stores
+  (raids drain it, bread's price rides it, bared lofts are the raids' own dark exit, and a
+  cleared world recovers a measure per tick until the lofts stand full) and the dens' boldness
+  (derived: plunder emboldens toward greedy double-raids, raiders slain cow a tick to nothing:
+  wrath's first faction-scale consequence). Every transition narrated + written (lofts_bare,
+  dens_cowed, lofts_full); Snapshot carries both axes
+- [ ] The stead acting on the tick (D-089): the home faction still only suffers and recovers;
+  its own moves (a levy at low stores, a watch posted at high wrath) are future transitions
+- [ ] A third faction, giving the relation matrix its second edge (D-078, D-089)
 - [ ] Bounded Nemesis-style leader/lieutenant roster with memory (D-023)
 - [ ] Designed conflict exit conditions (no eternal stalemates) (D-023)
 - [ ] (Unblocks: full-form story templates, institution/zealot/warden roles) (D-035)
@@ -257,6 +267,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-19: **D-089 the factions get their state: stores, boldness, and the tick that gives back.** Vision §2's keystone clause lands: two causal axes on the coarse tick. The stead's STORES (Max 6, stored, reset each world): raids drain it, RationPrice rides it via PriceBump (replacing the frozen + Raids term), bared lofts END the raids as their own dark exit (fact lofts_bare, replacing the flat cap of 3), and once the camp falls the stead recovers +1/tick to full (each easing narrated, fact lofts_full): deliberately amends D-079's grain-stays-taken, since the exit now has an aftermath. The dens' BOLDNESS (DERIVED, not stored: Base 3 + Raids - Wrath): below 2 a tick raids nothing (fact dens_cowed, once: wrath's first faction-scale consequence, the cull buying the stead quiet), at 4+ the raid comes greedy and takes double, so an untouched camp bares the lofts in 4 raids. Snapshot carries Stores + Boldness. Save v38 -> v39. 395 tests green (5 new/rewritten RaidsTests; WrathTests camp helpers promoted internal); twins byte-identical; emit->sim exact (final stores 6/boldness 3: a recovered world); sweep turns/deaths IDENTICAL to baseline with raids now varying by seed (the culls showing through). Checked off the state-vectors item; new tracked lines: the stead acting on the tick, a third faction.
 - 2026-07-19: **D-088 the facts answered: three storylets consume the faction graph.** The consumers the last three decisions deferred, landed in one stroke: the-steads-reckoning (Talk, prio 12: a named thief told so to their face, once per stead, gated on the live barred rung so restitution stills it, writing a `confronted` fact), the-tale-carried (NearHouse, prio 6: the hearthtale's rumor fact consumed, the tarred door-posts read differently because a story was told, nothing gained and nothing needing to be), and what-the-stead-keeps (Talk, prio 7, one under the hearthtale so the ladder keeps its order: the own rung shown the stead's deep cellar, the graph's first `secret` fact). All three lines-and-facts only: no coin, no grant, so every journey number held to the digit. Save v37 -> v38 by the v35 precedent (new storylets shift the weighted draws). 392 tests green (7 new); byte-identical + emit->sim exact + sweep unchanged. Checked off the fact-consumers item; new tracked line for `confronted`/`secret` consumers in their turn.
 - 2026-07-19: **D-087 the stead's teaching: the own rung's boon.** The bright ladder's top rung finally pays: at "the stead's own" (regard 5) every lesson the stead sells is shown freely, the boon paid in the one currency in the stead's gift that crosses the arch (lessons bank on the bearer past death and waygate, D-052), where the friend rung paid in this world's coin: D-077's collision lesson applied at the top. SteadsTeaching gate beside FriendsPrice; crossing narrated with a taking-stock variant when nothing is left to show; bench/smith labels rename ("freely, to the stead's own", label text only, digits hold); the coin's refusal narrated at the showing. Suspicion (unwelcome+) closes it with a narrated withholding; live-shame gating means restitution reopens the craft. Save v36 -> v37 (a v36 journal that bought a showing at the own rung replays richer). 385 tests green (4 new RegardTests); byte-identical + emit->sim exact (baseline held: the pilot buys no lessons) + sweep unchanged. Checked off the regard-boons item (every rung pays); new tracked line for rumor/shame-fact consumers and a rung-3 storylet beat.
 - 2026-07-19: **D-086 the stead's suspicion: pilfering, shame, and the coin on the sill.** The home faction's Infamy axis opens on the game's first transgression verb: g beside an overworld house pilfers the door (a ration's worth, once per door per world), thematically casting the bearer as the raiders' twin. Keyed `_factionInfamy` ledger beside the regard (wrath migrated in: each dictionary now means one thing); three houses, thresholds 1/2/3, one rung per door (watched / unwelcome / named a thief), each rung costing in its own currency: watched closes the hearthtale + opens a closed-doors NearHouse storylet (first shame-fact consumer), unwelcome closes the friend's price and purse (withholdings narrated), thief bars the larder. Shame runs beside regard, never against it (both titles on the HUD). Designed exit: 6 coin on the robbed sill walks the ladder down; repay outranks theft at shared corners (a mistaken press never commits a worse deed). Shame facts written as permanent history; live shame gates the reopenable doors. Save v35 -> v36 (the overworld g press changed meaning). 381 tests green (13 new ShameTests); byte-identical + emit->sim exact (10425 turns, matching the D-085 baseline: the pilot never robs) + sweep unchanged. Checked off the Fame/Infamy dual-axis item; new tracked ideas: the stead acting on suspicion beyond commerce, raider-perceivable transgressions for the relation matrix.

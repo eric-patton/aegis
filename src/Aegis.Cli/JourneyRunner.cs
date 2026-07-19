@@ -513,7 +513,7 @@ public static class JourneyRunner
                     + $"(peak regard {maxRegard}, reset at every crossing) (D-076).");
         w.WriteLine($"         the dens: came to hold the bearer as {(maxWrath > 0 ? RaiderWrath.TitleOf(maxWrath) : "no one at all")} at their most fearful "
                     + $"(peak wrath {maxWrath}, reset at every crossing) (D-078).");
-        w.WriteLine($"         the raids: the steads suffered {raidsSuffered} raid(s) while camps stood, each pricing bread a coin dearer (D-079).");
+        w.WriteLine($"         the raids: the steads suffered {raidsSuffered} raid(s) while camps stood, each thinning the lofts bread is priced by (D-079, D-089).");
         int sworn = crossings.Count(c => c.Sworn.Count > 0);
         if (sworn > 0)
         {

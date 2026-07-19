@@ -147,16 +147,61 @@ public static class SteadShame
 /// living-world half begun. While the camp stands, the raiders act: every tick
 /// of turns they come down on the stead by night, each raid writing a fact,
 /// narrated the moment it fires (the mandatory hook: no change the player
-/// cannot perceive), and thinning the stead's stores so bread costs a coin
-/// more for the rest of the world. Clearing the camp is the designed exit
-/// condition (D-023's no-eternal-stalemates rule): the raids stop, though the
-/// grain already taken does not come back before the crossing.
+/// cannot perceive), and thinning the stead's stores so bread costs more for
+/// the rest of the world. Clearing the camp is the designed exit condition
+/// (D-023's no-eternal-stalemates rule); D-089 gave the tick its state
+/// vectors, so what a raid takes rides the dens' boldness, the raids end on
+/// their own dark exit when the lofts bare out, and a stead whose camp has
+/// fallen recovers on the same tick.
 /// </summary>
 public static class SteadRaids
 {
-    /// <summary>Turns between raids while the camp stands: the coarse tick.</summary>
+    /// <summary>Turns between faction moves: the coarse tick both vectors ride.</summary>
     public const int TickTurns = 160;
+}
 
-    /// <summary>The most raids a world suffers: the stead has only so much to lose.</summary>
-    public const int Cap = 3;
+/// <summary>
+/// The stead's stores (D-089): the home faction's first internal state axis,
+/// the grain its season stands on. Raids drain it (an emboldened raid drains
+/// double), bread's price rides it, and its floor is the raids' dark exit:
+/// lofts bared to nothing leave nothing worth a night's ride. Once the camp
+/// falls the stores recover a measure per tick until the lofts stand full,
+/// each easing narrated as it lands, so ending the raids earns the stead its
+/// season back rather than a frozen price. Per-world, replay-rebuilt.
+/// </summary>
+public static class SteadStores
+{
+    /// <summary>Full lofts: what a world's stead starts its season holding.</summary>
+    public const int Max = 6;
+
+    /// <summary>What a raid carries off; an emboldened raid takes double.</summary>
+    public const int RaidTake = 1;
+    public const int BoldRaidTake = 2;
+
+    /// <summary>Bread's mark-up from thinned lofts: nothing while full, three coin at bare.</summary>
+    public static int PriceBump(int stores) => (Max - stores + 1) / 2;
+}
+
+/// <summary>
+/// The dens' boldness (D-089): the raider faction's internal state axis, and
+/// deliberately a derived one: nights of unanswered plunder embolden the dens
+/// and raiders slain cow them, so the axis is causal by construction and
+/// rebuilt by replay for free. Below the raiding line the dens keep to their
+/// dens (wrath's first faction-scale consequence: the fear that softens their
+/// blows past the dread rung also holds the hills quiet); at the bold line
+/// the raid comes greedy and carries off double.
+/// </summary>
+public static class RaiderBoldness
+{
+    /// <summary>Where a fresh world's dens start: bold enough to raid, not yet greedy.</summary>
+    public const int Base = 3;
+
+    /// <summary>Below this the dens hold to their dens: a cowed tick raids nothing.</summary>
+    public const int RaidingAt = 2;
+
+    /// <summary>At and past this the raid comes greedy: double grain carried off.</summary>
+    public const int BoldAt = 4;
+
+    /// <summary>Boldness as the causes stand: plunder emboldens, dead raiders cow.</summary>
+    public static int Of(int raids, int wrath) => Math.Max(0, Base + raids - wrath);
 }

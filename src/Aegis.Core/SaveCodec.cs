@@ -128,10 +128,15 @@ namespace Aegis.Core;
 /// enter the draws (the named thief confronted, the hearthtale carried on the
 /// lane, the cellar shown to the stead's own), so a v37 journal's talk and
 /// lane events can resolve to different winners from the first eligible hook.
+/// v39 when D-089 gave the factions their state vectors: raids ride the dens'
+/// boldness (an emboldened raid drains double and the cull can cow a tick to
+/// nothing), bread's price rides the stead's stores instead of a frozen raid
+/// count, and a cleared world recovers on the tick, so a v38 journal that
+/// lived past a raid or a camp-clear replays to different prices and coin.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 38;
+    public const int Version = 39;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

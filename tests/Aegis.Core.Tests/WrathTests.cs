@@ -137,7 +137,7 @@ public class WrathTests
     }
 
     /// <summary>Enters the camp and leaves every goblin standing, ready to be slain one by one.</summary>
-    private static Game ArrangeCamp(ulong seed)
+    internal static Game ArrangeCamp(ulong seed)
     {
         var game = new Game(seed);
         game.Debug_SetMode(MapMode.Site);
@@ -148,7 +148,7 @@ public class WrathTests
     /// Slays the next living goblin through the real kill path: dropped to one
     /// hit point, the bearer set beside it, and the blow struck as a bump.
     /// </summary>
-    private static void SlayNext(Game game)
+    internal static void SlayNext(Game game)
     {
         var goblin = game.Monsters.First(m => m.Alive && m.Kind == MonsterKind.Goblin);
         goblin.Hp = 1;

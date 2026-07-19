@@ -3,12 +3,12 @@ using Aegis.Core;
 namespace Aegis.Core.Tests;
 
 /// <summary>
-/// The raids are real (D-079): the first coarse-tick faction event, D-023's
-/// living-world half begun. While the camp stands the raiders come down on the
-/// stead every tick of turns, each raid narrated as it lands, written as a fact,
-/// and pricing bread a coin dearer for the rest of the world. Clearing the camp
-/// is the designed exit condition; the grain already taken does not come back
-/// before the crossing.
+/// The raids are real (D-079) and the factions have state (D-089): while the
+/// camp stands the raiders come down on the coarse tick, each raid narrated as
+/// it lands and written as a fact; what a raid takes rides the dens' boldness
+/// (plunder emboldens, dead raiders cow), bread's price rides the stead's
+/// stores, bared lofts are the raids' own dark exit, and a stead whose camp
+/// has fallen recovers a measure per tick until the lofts stand full.
 /// </summary>
 public class RaidsTests
 {
@@ -30,13 +30,75 @@ public class RaidsTests
     }
 
     [Fact]
-    public void TheRaids_StopAtTheCap()
+    public void TheDens_Embolden_AsThePlunderGoesUnanswered()
     {
         var game = new Game(42);
-        Wait(game, SteadRaids.TickTurns * (SteadRaids.Cap + 2));
+        Wait(game, SteadRaids.TickTurns);
+        Assert.Equal(SteadStores.Max - 1, game.Stores); // the first raid takes a measure
 
-        // The stead has only so much to lose.
-        Assert.Equal(SteadRaids.Cap, game.Raids);
+        // A night of unanswered plunder emboldens: the second raid comes greedy.
+        Wait(game, SteadRaids.TickTurns);
+        Assert.Equal(SteadStores.Max - 3, game.Stores); // and carries off double
+        Assert.Contains(game.Log.Recent(4), e => e.Text.Contains("they come greedy now"));
+    }
+
+    [Fact]
+    public void TheRaids_EndWhenTheLoftsBareOut()
+    {
+        var game = new Game(42);
+        int priceBefore = game.RationPrice;
+        Wait(game, SteadRaids.TickTurns * 6);
+
+        // Four raids (one plain, three greedy) bare the lofts; the dark exit closes the tick.
+        Assert.Equal(4, game.Raids);
+        Assert.Equal(0, game.Stores);
+        Assert.Equal(priceBefore + 3, game.RationPrice);
+        Assert.True(game.World.Facts.Exists("event", "lofts_bare"));
+        Assert.Contains(game.Log.Entries, e => e.Text.Contains("nothing left in this stead worth a night's ride"));
+    }
+
+    [Fact]
+    public void TheCull_CowsTheDens()
+    {
+        // Two raiders slain (the dread rung, D-078) drop the dens below the
+        // raiding line: wrath's first faction-scale consequence, named once.
+        var game = WrathTests.ArrangeCamp(42);
+        WrathTests.SlayNext(game);
+        WrathTests.SlayNext(game);
+        Assert.Equal(2, game.Wrath);
+        game.Debug_SetMode(MapMode.Overworld);
+
+        Wait(game, SteadRaids.TickTurns);
+        Assert.Equal(0, game.Raids);
+        Assert.Equal(SteadStores.Max, game.Stores);
+        Assert.True(game.World.Facts.Exists("event", "dens_cowed"));
+        Assert.Contains(game.Log.Entries, e => e.Text.Contains("no torch shows on the hills"));
+
+        // The quiet holds, and it is named only the once.
+        Wait(game, SteadRaids.TickTurns);
+        Assert.Equal(0, game.Raids);
+        Assert.Single(game.Log.Entries, e => e.Text.Contains("no torch shows on the hills"));
+    }
+
+    [Fact]
+    public void TheStores_Recover_OnceTheCampFalls()
+    {
+        var game = new Game(42);
+        int priceBefore = game.RationPrice;
+        Wait(game, SteadRaids.TickTurns); // one raid lands
+        Assert.Equal(priceBefore + 1, game.RationPrice);
+
+        game.Debug_ClearCamp(); // the raids end; the grain is still gone
+        Assert.Equal(priceBefore + 1 - 1, game.RationPrice); // raid's coin beside the friend's price
+
+        // The next tick makes the season good: lofts full, the easing narrated.
+        Wait(game, SteadRaids.TickTurns);
+        Assert.Equal(SteadStores.Max, game.Stores);
+        Assert.Equal(priceBefore - 1, game.RationPrice); // only the friend's price remains
+        Assert.True(game.World.Facts.Exists("event", "lofts_full"));
+        var log = game.Log.Recent(4).Select(e => e.Text).ToList();
+        Assert.Contains(log, t => t.Contains("bread comes a coin back down"));
+        Assert.Contains(log, t => t.Contains("lofts stand full again"));
     }
 
     [Fact]
@@ -52,28 +114,26 @@ public class RaidsTests
     }
 
     [Fact]
-    public void TheGrainTaken_DoesNotComeBack_UntilTheCrossing()
+    public void TheCrossing_StandsTheNewWorldWhole()
     {
         var game = new Game(42);
-        int priceBefore = game.RationPrice;
         Wait(game, SteadRaids.TickTurns); // one raid lands
-        game.Debug_ClearCamp();           // the raids end, but the grain is gone
-
-        // The raid's +1 still stands; the friend's price (D-080) the camp-clear
-        // just earned takes its own coin off beside it, two ledgers side by side.
-        Assert.Equal(priceBefore + 1 - 1, game.RationPrice);
-        Assert.Equal(1, game.Raids);
-        Wait(game, SteadRaids.TickTurns); // and no further raid comes
-        Assert.Equal(1, game.Raids);
+        Assert.Equal(SteadStores.Max - 1, game.Stores);
+        game.Debug_ClearCamp();
 
         game.Debug_SetPlayerPos(game.World.GatePos);
         game.Apply(Command.Enter);
         game.Apply(Command.Enter);
         Assert.Equal(2, game.Cycle);
 
-        // A fresh world's stores stand whole.
+        // A fresh world's lofts stand full, its dens at their base nerve.
         Assert.Equal(0, game.Raids);
-        Assert.Equal(0, game.TakeSnapshot().Raids);
+        Assert.Equal(SteadStores.Max, game.Stores);
+        Assert.Equal(RaiderBoldness.Base, game.Boldness);
+        var snap = game.TakeSnapshot();
+        Assert.Equal(0, snap.Raids);
+        Assert.Equal(SteadStores.Max, snap.Stores);
+        Assert.Equal(RaiderBoldness.Base, snap.Boldness);
     }
 
     [Fact]

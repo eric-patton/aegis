@@ -140,6 +140,16 @@ public sealed class Game
     /// </summary>
     public int Raids { get; private set; }
 
+    /// <summary>
+    /// The stead's stores (D-089): the grain its season stands on, full at each
+    /// world's start. Raids drain it, bread's price rides it, and once the camp
+    /// falls it recovers a measure per tick until the lofts stand full again.
+    /// </summary>
+    public int Stores { get; private set; } = SteadStores.Max;
+
+    /// <summary>The dens' boldness (D-089): derived, causal, replay-free. Plunder emboldens; dead raiders cow.</summary>
+    public int Boldness => RaiderBoldness.Of(Raids, Wrath);
+
     /// <summary>The turn this world began: the raid tick counts from here, not from cycle 1.</summary>
     private int _worldStartTurn;
 
@@ -178,16 +188,18 @@ public sealed class Game
 
     /// <summary>
     /// Fact-derived pricing (D-025 v0): while a blight story stands uncompleted,
-    /// the larders are thin and bread costs half again as much, and every raid
-    /// the stead has suffered (D-079) adds a coin, the grain gone until the
-    /// crossing. The hearth-price (D-048) takes a coin off for the storied, the
-    /// friend's price (D-080) another for the one who ended the raids, before
-    /// the hungry road (D-047) doubles whatever the world was asking.
+    /// the larders are thin and bread costs half again as much, and the thinned
+    /// lofts (D-079, D-089) add their mark-up, riding the stores themselves now
+    /// rather than a frozen raid count, so a stead whose camp has fallen prices
+    /// its bread back down as its season recovers. The hearth-price (D-048)
+    /// takes a coin off for the storied, the friend's price (D-080) another for
+    /// the one who ended the raids, before the hungry road (D-047) doubles
+    /// whatever the world was asking.
     /// </summary>
     public int RationPrice =>
         ((World.Facts.Exists("story", CreepingBlightTemplate.Id)
         && !World.Facts.Exists("story_complete", CreepingBlightTemplate.Id) ? 6 : 4)
-        + Raids
+        + SteadStores.PriceBump(Stores)
         - (Standing >= 2 && !World.Oaths.Contains(OathId.HushedName) ? 1 : 0)
         // The friend's price (D-080): deed-earned like the welcome (D-077), so
         // the hushed name never touches it where it silences the hearth-price.
@@ -800,9 +812,10 @@ public sealed class Game
         // kept them, and the next world starts the bearer at a stranger to both.
         _factionRegard.Clear();
         _factionInfamy.Clear();
-        // A fresh world's stores stand whole (D-079), and its raiders' tick
-        // counts from this arrival, not from the far side of the arch.
+        // A fresh world's stores stand whole (D-079, D-089), and its raiders'
+        // tick counts from this arrival, not from the far side of the arch.
         Raids = 0;
+        Stores = SteadStores.Max;
         _worldStartTurn = Turn;
         _friendsPriceNamed = false;
 
@@ -3235,22 +3248,68 @@ public sealed class Game
     }
 
     /// <summary>
-    /// A raid lands on the stead (D-079): the raiders acting on their coarse
-    /// tick, the first faction event that is not the bearer's own deed. Every
-    /// firing is perceived as it lands (D-023's mandatory narration hook): the
-    /// raid is named, the cost is named, and a fact is written so the world
-    /// remembers it happened. The grain does not come back: RationPrice carries
-    /// the raids until the crossing, camp cleared or no.
+    /// A raid lands on the stead (D-079, D-089): the raiders acting on their
+    /// coarse tick, sized by their boldness: a bold den carries off double.
+    /// Every firing is perceived as it lands (D-023's mandatory narration
+    /// hook): the raid is named, the cost is named, and a fact is written so
+    /// the world remembers it happened. Lofts bared to nothing are the raids'
+    /// own dark exit, named the moment it closes.
     /// </summary>
     private void RaidTheStead()
     {
+        bool bold = Boldness >= RaiderBoldness.BoldAt;
+        int take = Math.Min(Stores, bold ? SteadStores.BoldRaidTake : SteadStores.RaidTake);
         Raids++;
+        Stores -= take;
         World.Facts.Add("event", "raid", World.SettlementName,
             $"Raiders came down on {World.SettlementName} by night and left with grain.");
-        Log.Add(Turn, $"By night the raiders come down on {World.SettlementName} again: grain gone, a byre-door split, no one dead but no one unshaken.", LogTone.Danger);
-        Log.Add(Turn, Raids >= SteadRaids.Cap
-            ? "Bread will be dearer for it, and there is little left worth the taking."
-            : "Bread will be dearer for it while the camp stands.", LogTone.Info);
+        Log.Add(Turn, bold
+            ? $"By night the raiders come down on {World.SettlementName} again, and they come greedy now: two lofts opened, grain gone by the sackful, no one dead but no one unshaken."
+            : $"By night the raiders come down on {World.SettlementName} again: grain gone, a byre-door split, no one dead but no one unshaken.", LogTone.Danger);
+        if (Stores == 0)
+        {
+            if (!World.Facts.Exists("event", "lofts_bare"))
+                World.Facts.Add("event", "lofts_bare", World.SettlementName,
+                    $"{World.SettlementName}'s lofts were raided down to the boards; there is nothing left worth a night's ride.");
+            Log.Add(Turn, "Bread will be dearer for it, and the lofts are down to the boards now: there is nothing left in this stead worth a night's ride.", LogTone.Danger);
+        }
+        else
+            Log.Add(Turn, "Bread will be dearer for it while the camp stands.", LogTone.Info);
+    }
+
+    /// <summary>
+    /// The tick passes and no raid comes (D-089): the dens cowed below the
+    /// raiding line, wrath's first faction-scale consequence. Named once per
+    /// world, the moment the quiet is first owed to the bearer's hand.
+    /// </summary>
+    private void NoteCowedDens()
+    {
+        if (World.Facts.Exists("event", "dens_cowed")) return;
+        World.Facts.Add("event", "dens_cowed", World.SettlementName,
+            $"A raiding night passed {World.SettlementName} by: the dens count their dead now before they count the stead's lofts.");
+        Log.Add(Turn, $"The raiding night comes and goes, and no torch shows on the hills. Word is the dens count their dead now before they count {World.SettlementName}'s lofts.", LogTone.Reward);
+        Log.Add(Turn, "\"Fear is a ledger too, bearer, and you have been writing in it. While it holds, the stead sleeps on your credit.\"", LogTone.Aegis);
+    }
+
+    /// <summary>
+    /// The stead recovers on the tick (D-089): with the camp fallen, the stores
+    /// climb a measure per tick until the lofts stand full, each easing of the
+    /// bread narrated as it lands and the made-good season written to the graph.
+    /// Ending the raids now earns the stead its season back, where D-079 froze
+    /// the taken grain until the crossing.
+    /// </summary>
+    private void RecoverStores()
+    {
+        int bumpBefore = SteadStores.PriceBump(Stores);
+        Stores++;
+        if (SteadStores.PriceBump(Stores) < bumpBefore)
+            Log.Add(Turn, $"Carts creak in from the far fields: {World.SettlementName}'s lofts fill a little, and bread comes a coin back down.", LogTone.Reward);
+        if (Stores == SteadStores.Max)
+        {
+            World.Facts.Add("event", "lofts_full", World.SettlementName,
+                $"{World.SettlementName}'s lofts stand full again; the raided season is made good.");
+            Log.Add(Turn, $"The last of it is made good: {World.SettlementName}'s lofts stand full again, as if the raided nights had never been.", LogTone.Reward);
+        }
     }
 
     private void CheckSiteCleared(Site site)
@@ -3325,14 +3384,22 @@ public sealed class Game
     {
         Turn++;
 
-        // The raids are real (D-079): while the camp stands, the raiders act on
-        // their coarse tick. Not while the bearer is inside the camp itself: a
-        // den under attack defends its own. Clearing the camp is the designed
-        // exit condition, and the cap is the stead running out of things to lose.
-        if (!CampCleared && Raids < SteadRaids.Cap
-            && CurrentSite?.Kind != SiteKind.GoblinCamp
-            && Turn > _worldStartTurn && (Turn - _worldStartTurn) % SteadRaids.TickTurns == 0)
-            RaidTheStead();
+        // The factions act on the coarse tick (D-079, D-089). While the camp
+        // stands and the lofts hold grain, a bold den raids and a cowed one
+        // keeps to its dens; not while the bearer is inside the camp itself (a
+        // den under attack defends its own). Once the camp falls the stead
+        // recovers, a measure per tick, until the lofts stand full. Bared
+        // lofts are the raids' own dark exit: nothing left worth a night's ride.
+        if (Turn > _worldStartTurn && (Turn - _worldStartTurn) % SteadRaids.TickTurns == 0)
+        {
+            if (!CampCleared && Stores > 0 && CurrentSite?.Kind != SiteKind.GoblinCamp)
+            {
+                if (Boldness >= RaiderBoldness.RaidingAt) RaidTheStead();
+                else NoteCowedDens();
+            }
+            else if (CampCleared && Stores < SteadStores.Max)
+                RecoverStores();
+        }
 
         if (Mode == MapMode.Site)
             foreach (var monster in Monsters.Where(m => m.Alive && m.SiteId == CurrentSite!.Id))
@@ -4215,6 +4282,8 @@ public sealed class Game
         Wrath: Wrath,
         WrathTitle: RaiderWrath.TitleOf(Wrath),
         Raids: Raids,
+        Stores: Stores,
+        Boldness: Boldness,
         Shame: Shame,
         ShameTitle: SteadShame.TitleOf(Shame),
         Rations: Player.Rations,
@@ -4347,6 +4416,8 @@ public sealed record Snapshot(
     int Wrath,
     string WrathTitle,
     int Raids,
+    int Stores,
+    int Boldness,
     int Shame,
     string ShameTitle,
     int Rations,

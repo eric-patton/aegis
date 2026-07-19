@@ -8,9 +8,10 @@ namespace Aegis.Cli;
 /// world and hands it to <see cref="JourneyPilot"/>, which plays it through the key
 /// surface, world after world, up to K crossings. In each world it clears every site it
 /// can reach and win (the camp that gates the arch, and the barrow, hollow, quarry, hall,
-/// ringfort, and leaguer besides), then crosses. It reports what it cleared, and above
-/// all what the bearer's bestiary read on either side of each arch: the bank carried
-/// whole, the read softened by the harder ground (D-061). Because the pilot is a pure
+/// ringfort, and leaguer besides), then crosses under its own sworn terms (D-069). It
+/// reports what it cleared, the arc it walked, the burden it took up and the Legend that
+/// bought, and above all what the bearer's bestiary read on either side of each arch: the
+/// bank carried whole, the read softened by the harder ground (D-061). Because the pilot is a pure
 /// function of state, `--seed N` reruns identically, so the crossing evidence is
 /// reproducible, not a one-off hand-driven session.
 ///
@@ -26,7 +27,7 @@ public static class JourneyRunner
 
     private sealed record Crossing(
         int FromCycle, string FromWorld, int ToCycle, string ToWorld,
-        int Turn, int DeathsInWorld, string Arms,
+        int Turn, int DeathsInWorld, string Arms, IReadOnlyList<OathId> Sworn, int Burden,
         IReadOnlyList<SiteOutcome> Sites, IReadOnlyList<Read> Before, IReadOnlyList<Read> After);
 
     public static int Run(string[] args)
@@ -96,6 +97,11 @@ public static class JourneyRunner
         int resolvedCycle = 0;
         int laidCycle = 0;
         int mendedCycle = 0;
+        // What the sworn terms earned (D-069): the bot sets its own harder walking at each
+        // arch, and the burden it carries through a world is honored in Legend on the crossing
+        // out of it (10 per weight). Summed by reading the leaving world's burden as each
+        // crossing fires, which is exactly the count the engine turns into Legend right then.
+        int legendFromBurden = 0;
         string stop;
 
         while (true)
@@ -150,6 +156,10 @@ public static class JourneyRunner
             var resolutionBefore = game.Player.Resolution;
             int unboundBefore = game.Player.SeveredUnbound;
             int restoredBefore = game.Player.SeveredRestored;
+            // The burden of the world being left (D-069): if this key crosses the arch, the
+            // engine honors 10 per weight of it in Legend right now. Read it before the key,
+            // because crossing replaces the world and clears the burden with it.
+            int burdenLeftBehind = game.World.Burden;
             game.ApplyKey(key.Value);
             keys.Append(key.Value);
             totalKeys++;
@@ -205,9 +215,13 @@ public static class JourneyRunner
 
             if (game.Cycle > cycleBefore)
             {
+                // The far side carries the terms just sworn: game.World is now the new world,
+                // so its Oaths are what the bot took up and its Burden is their summed weight.
+                legendFromBurden += 10 * burdenLeftBehind;
                 crossings.Add(new Crossing(
                     cycleBefore, worldBefore, game.Cycle, game.World.Name,
-                    game.Turn, deathsThisWorld, Arms(game), sitesBefore, beforeReads, Bestiary(game, game.Cycle)));
+                    game.Turn, deathsThisWorld, Arms(game), game.World.Oaths.ToList(), game.World.Burden,
+                    sitesBefore, beforeReads, Bestiary(game, game.Cycle)));
                 keysThisWorld = 0;
                 deathsThisWorld = 0;
                 skip.Clear();
@@ -219,7 +233,7 @@ public static class JourneyRunner
         Report(seed, cycles, crossings, stop, game, totalKeys, keys, emitKeys,
             remnantsReclaimed, coinReclaimed, essenceReclaimed,
             chestsLooted, chestCoin, gearTaken, knacksTaken,
-            resolvedAs, resolvedCycle, laidCycle, mendedCycle);
+            resolvedAs, resolvedCycle, laidCycle, mendedCycle, legendFromBurden);
         return 0;
     }
 
@@ -286,7 +300,8 @@ public static class JourneyRunner
         Game game, int totalKeys, StringBuilder keys, bool emitKeys,
         int remnantsReclaimed, int coinReclaimed, int essenceReclaimed,
         int chestsLooted, int chestCoin, int gearTaken, int knacksTaken,
-        Resolution resolvedAs, int resolvedCycle, int laidCycle, int mendedCycle)
+        Resolution resolvedAs, int resolvedCycle, int laidCycle, int mendedCycle,
+        int legendFromBurden)
     {
         var w = Console.Out;
         w.WriteLine($"AEGIS JOURNEY   seed {seed}   target {cycles} crossing(s)");
@@ -307,6 +322,10 @@ public static class JourneyRunner
                         + (standing.Length == 0 ? "" : $"; left standing: {standing}"));
             w.WriteLine($"  {c.DeathsInWorld} death(s) in that world.");
             w.WriteLine($"  arms: {c.Arms}");
+            if (c.Sworn.Count > 0)
+                w.WriteLine($"  terms taken up into \"{c.ToWorld}\": "
+                            + $"{string.Join(", ", c.Sworn.Select(o => OathCatalog.Def(o).Name))} "
+                            + $"(burden {c.Burden}, honored in Legend at its far arch) (D-069).");
 
             if (c.Before.Count == 0)
             {
@@ -346,6 +365,18 @@ public static class JourneyRunner
             w.WriteLine($"           mended a keeper in cycle {mendedCycle}: D-060's restore path driven live, end to end.");
         else if (resolvedCycle > 0)
             w.WriteLine($"           (no mending this run: {cycles} crossing(s) reached no second post-resolution hollow.)");
+        int sworn = crossings.Count(c => c.Sworn.Count > 0);
+        if (sworn > 0)
+        {
+            var terms = crossings.First(c => c.Sworn.Count > 0);
+            string names = string.Join(", ", terms.Sworn.Select(o => OathCatalog.Def(o).Name));
+            w.WriteLine($"         swore terms at {sworn} of {crossings.Count} crossing(s) (D-069): "
+                        + $"{names} (burden {terms.Burden}), the harder walking freely taken.");
+            w.WriteLine($"           the burden honored: {legendFromBurden} of the bearer's {game.Player.Legend} "
+                        + $"Legend was earned carrying it (10 per weight, paid at each sworn world's far arch).");
+        }
+        else
+            w.WriteLine("         swore no terms this run (D-069): no crossing was made under oath.");
         w.WriteLine("         a seeded journey replays identically: the pilot reads only game state.");
         if (emitKeys)
         {

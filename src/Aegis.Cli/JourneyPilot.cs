@@ -30,7 +30,11 @@ namespace Aegis.Cli;
 /// for the words that turn the reveal, rests for the vision, goes down the last stair to
 /// answer the keeping, and then, face to face with a ward-dropped keeper, lays one down
 /// gently and mends the next, so D-060's rarest grace is driven live by real keys instead
-/// of stood in for by a hand-set flag.
+/// of stood in for by a hand-set flag. And at the arch itself it sets its own terms now
+/// (D-069): rather than crossing plain it swears the three oaths its own way of playing
+/// makes nearly free (the hungry road, the spent edge, the hushed name), lighting each with
+/// its digit and then crossing, so it carries a real, honored burden the whole ladder down
+/// for the Legend it buys, while refusing the four that would cost this bot blood or growth.
 ///
 /// It is a pure function of game state (and the runner's skip-set, which is itself
 /// derived deterministically), so a seeded run is perfectly reproducible: the same seed
@@ -118,7 +122,11 @@ public static class JourneyPilot
         }
 
         // Overworld.
-        if (g.InCrossingMenu) return '>';   // already at the arch: cross plain, no terms.
+        // At the arch the bearer sets its own terms now (D-069): it swears the oaths its
+        // own way of living already absorbs, lighting each with its digit, then crosses. The
+        // toggle only ever adds a term here (it never presses a digit for one already lit),
+        // so the set climbs to the sworn one and the cross fires exactly once, no oscillation.
+        if (g.InCrossingMenu) return CrossingKey(g);
 
         // The vision is a rung of the ladder taken by resting (D-068): once the guilt has
         // been spoken at a crossing, the next rest at the shrine pulls the bearer under
@@ -729,6 +737,49 @@ public static class JourneyPilot
             for (int x = 0; x < map.Width; x++)
                 if (map[new Pos(x, y)] == Terrain.Hearth) return new Pos(x, y);
         return null;
+    }
+
+    // ---- the terms of the crossing (D-069): the harder walking, freely taken ----
+
+    /// <summary>
+    /// The oaths the bearer swears at every arch (D-011, D-047): the three its own way of
+    /// living renders nearly free, so the burden buys Legend and a louder echo (10 per weight,
+    /// honored at the sworn world's far gate) without spiking the death toll the arc climb
+    /// keeps low. It takes the hungry road (it heals by resting at the shrine, never by bought
+    /// bread), the spent edge (it re-arms at every forge and loots deep iron from each site, so
+    /// a blade that wears twice as fast is one it was replacing anyway), and the hushed name (it
+    /// never leans on songs or standing for power, and the arc's rungs turn on the bearer's own
+    /// carried flags, not on a song crossing the arch, so a silent world climbs the same ladder).
+    /// It refuses the other four, each of which would cost this bot real blood or real growth:
+    /// the crowded dark and the old blood put more death in every den (the old blood the heaviest
+    /// oath there is, a whole weight of 2), the slow mending lets a wound its step-off fight still
+    /// takes linger and compound, and the lean dark would halve the essence its growth, and so its
+    /// survival at depth, is fed by. The result is a real, honored burden carried the whole ladder
+    /// down while the mending still lands and the deaths stay where D-068 left them.
+    /// </summary>
+    private static readonly OathId[] SwornOaths =
+        { OathId.HungryRoad, OathId.SpentEdge, OathId.HushedName };
+
+    /// <summary>
+    /// The next key at the open arch (D-069): light each sworn oath not yet lit (its digit is
+    /// its one-indexed place in the catalog, the very index the terms menu toggles by), then
+    /// cross. Because a digit only ever adds a term here, the chosen set climbs monotonically
+    /// to <see cref="SwornOaths"/> and the '>' fires exactly once, so the menu cannot loop.
+    /// </summary>
+    private static char CrossingKey(Game g)
+    {
+        foreach (var oath in SwornOaths)
+            if (!g.ChosenOaths.Contains(oath))
+                return (char)('1' + OathIndex(oath));
+        return '>';
+    }
+
+    /// <summary>The one-indexed digit's index for an oath: its place in the catalog, which is what <see cref="Game"/>'s terms menu keys off (key - '1').</summary>
+    private static int OathIndex(OathId oath)
+    {
+        for (int i = 0; i < OathCatalog.All.Count; i++)
+            if (OathCatalog.All[i].Id == oath) return i;
+        return 0; // unreached: every sworn oath is in the catalog.
     }
 
     // ---- navigation: breadth-first, one step at a time ----

@@ -84,10 +84,13 @@ public class TradeTests
         Assert.Equal(72, game.Player.WoundedTurns);
         Assert.Equal(18, game.MendPrice);
 
-        // The bump itself takes a turn (71 left); the price still rounds to 18.
+        // The bump itself takes a turn (71 left). The dressing is done at the
+        // stillroom's table now (D-081): off the talk menu, onto her bench.
         NpcTests.BumpNpc(game, Herbwife(game));
-        Assert.Contains(game.Offers, o => o.Good == TradeGood.Mending);
-        char mend = OfferKey(game, TradeGood.Mending);
+        Assert.DoesNotContain(game.Offers, o => o.Good == TradeGood.Mending);
+        game.ApplyKey(OfferKey(game, TradeGood.Trade));
+        Assert.True(game.InTradeMenu);
+        char mend = BenchKey(game, TradeGood.Mending);
 
         // Death dropped the coin, and the herbwife does not work on credit.
         game.Player.Coin = 5;
@@ -101,12 +104,13 @@ public class TradeTests
         Assert.Equal(0, game.Player.WoundedTurns);
         Assert.Equal(2, game.Player.Coin);
         Assert.Equal(game.Player.MaxHp, game.Player.EffectiveMaxHp);
-        Assert.DoesNotContain(game.Offers, o => o.Good == TradeGood.Mending);
 
-        // Whole again: the offer is not made at all.
-        game.ApplyKey(' ');
-        NpcTests.BumpNpc(game, Herbwife(game));
-        Assert.DoesNotContain(game.Offers, o => o.Good == TradeGood.Mending);
+        // Whole again: the entry stays listed (digits never shift under a
+        // buyer's hand) but reads whole, and pressing it takes no coin.
+        Assert.Contains(game.TradeOffers, o => o.Good == TradeGood.Mending && o.Label.Contains("you are whole"));
+        game.ApplyKey(mend);
+        Assert.Equal(2, game.Player.Coin);
+        Assert.Contains(game.Log.Recent(2), e => e.Text.Contains("You are whole"));
     }
 
     [Fact]
@@ -208,5 +212,14 @@ public class TradeTests
             if (game.Offers[i].Good == good)
                 return (char)('1' + game.Topics.Count + i);
         throw new InvalidOperationException($"no {good} offer in this menu");
+    }
+
+    /// <summary>The digit that selects a good at an open bench (D-071/D-081).</summary>
+    private static char BenchKey(Game game, TradeGood good)
+    {
+        for (int i = 0; i < game.TradeOffers.Count; i++)
+            if (game.TradeOffers[i].Good == good)
+                return (char)('1' + i);
+        throw new InvalidOperationException($"no {good} entry on this bench");
     }
 }

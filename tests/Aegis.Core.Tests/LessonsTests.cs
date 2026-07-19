@@ -177,7 +177,9 @@ public class LessonsTests
         game.Debug_HurtPlayer(999);
         game.Debug_ForceDeathCheck();
         NpcTests.BumpNpc(game, Npc(game, "npc_herbwife"));
-        char mend = OfferKey(game, TradeGood.Mending);
+        // The dressing moved onto the stillroom's bench (D-081).
+        game.ApplyKey(OfferKey(game, TradeGood.Trade));
+        char mend = (char)('1' + game.TradeOffers.ToList().FindIndex(o => o.Good == TradeGood.Mending));
 
         // A refused mend teaches nothing: she works before she shows.
         game.Player.Coin = 1;

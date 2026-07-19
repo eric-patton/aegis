@@ -70,6 +70,56 @@ public class ForagingTests
         Assert.Contains(game.TradeOffers, o => o.Good == TradeGood.Herb && o.Label.Contains("satchel empty"));
     }
 
+    // ---- D-081: the herbwife's stillroom, the second bench ----
+
+    [Fact]
+    public void TheStillroom_PaysTheApothecarysPrice()
+    {
+        // The same satchel is worth a coin more a sprig at the stillroom than at
+        // the wood's edge: the herbwife is the simples' true buyer, the woodward
+        // a middleman, and carrying them in is the arbitrage.
+        var game = new Game(42);
+        game.Player.Herb = 3;
+        game.Player.Coin = 0;
+        OpenStillroom(game);
+
+        Assert.Contains(game.TradeOffers, o => o.Good == TradeGood.Herb && o.Label.Contains("3 at 5c, 15 coin"));
+        game.ApplyKey(TradeKey(game, TradeGood.Herb));
+
+        Assert.Equal(0, game.Player.Herb);
+        Assert.Equal(15, game.Player.Coin); // 5 a sprig, not the wood's-edge 4
+        Assert.Contains(game.Log.Recent(3), e => e.Text.Contains("full worth"));
+    }
+
+    [Fact]
+    public void TheStillroom_KeepsTheDressingOnItsBench()
+    {
+        // The wound-dressing lives at the stillroom's table now (D-081), off the
+        // herbwife's talk menu, which her topics alone can fill to the cap.
+        var game = new Game(42);
+        NpcTests.BumpNpc(game, game.World.Npcs.First(n => n.Id == "npc_herbwife"));
+        Assert.DoesNotContain(game.Offers, o => o.Good == TradeGood.Mending);
+        Assert.Contains(game.Offers, o => o.Good == TradeGood.Trade);
+
+        game.ApplyKey(OfferKey(game, TradeGood.Trade));
+        Assert.Contains(game.TradeOffers, o => o.Good == TradeGood.Mending && o.Label.Contains("you are whole"));
+    }
+
+    [Fact]
+    public void TheWoodsEdge_StillPaysItsOwnPrice()
+    {
+        // The two benches quote their own prices side by side: no shared state
+        // bleeds between them beyond the satchel itself.
+        var game = new Game(42);
+        game.Player.Herb = 2;
+        OpenStillroom(game);
+        Assert.Contains(game.TradeOffers, o => o.Good == TradeGood.Herb && o.Label.Contains("2 at 5c"));
+        game.ApplyKey(' '); // leave the stillroom, satchel unsold
+
+        OpenBench(game);
+        Assert.Contains(game.TradeOffers, o => o.Good == TradeGood.Herb && o.Label.Contains("2 at 4c"));
+    }
+
     // ---- helpers ----
 
     /// <summary>Places the bearer beside a cell and walks the one legal step onto it.</summary>
@@ -92,6 +142,13 @@ public class ForagingTests
     private static void OpenBench(Game game)
     {
         NpcTests.BumpNpc(game, game.World.Npcs.First(n => n.Id == "npc_woodward"));
+        game.ApplyKey(OfferKey(game, TradeGood.Trade));
+        Assert.True(game.InTradeMenu);
+    }
+
+    private static void OpenStillroom(Game game)
+    {
+        NpcTests.BumpNpc(game, game.World.Npcs.First(n => n.Id == "npc_herbwife"));
         game.ApplyKey(OfferKey(game, TradeGood.Trade));
         Assert.True(game.InTradeMenu);
     }

@@ -110,10 +110,14 @@ namespace Aegis.Core;
 /// v33 when D-080 opened the friend's price: once a stead holds the bearer a
 /// friend the steadholder takes a coin off bread, so a v32 journal that bought
 /// rations after ending the raids now keeps more coin from that turn on.
+/// v34 when D-081 opened the herbwife's stillroom: her talk menu carries a
+/// trade digit where the wound-dressing digit sat (the dressing moved onto the
+/// bench inside), so a v33 journal's digit at her menu lands differently, and
+/// herbs sold to her pay five a sprig where the wood's edge paid four.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 33;
+    public const int Version = 34;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

@@ -214,6 +214,12 @@ public sealed class Game
     /// </summary>
     public int HerbPrice => 4;
 
+    /// <summary>What the herbwife pays a sprig at her stillroom (D-081): the apothecary's price, a coin over the wood's-edge middleman's.</summary>
+    public int StillroomHerbPrice => 5;
+
+    /// <summary>The price the current buyer pays for herbs: the stillroom's if the herbwife is across the bench.</summary>
+    private int HerbPriceHere => TalkNpc?.Id == "npc_herbwife" ? StillroomHerbPrice : HerbPrice;
+
     /// <summary>
     /// Fired for every key that reached the engine while running (including menu keys
     /// and refused moves, which still write log entries). The save journal records
@@ -1227,8 +1233,15 @@ public sealed class Game
         if (npc.Id == "npc_steadholder")
             offers.Add((TradeGood.Ration, "",
                 $"Buy a ration ({RationPrice} coin{(FriendsPrice ? ", a friend's price" : "")})"));
-        if (npc.Id == "npc_herbwife" && Player.WoundedTurns > 0)
-            offers.Add((TradeGood.Mending, "", $"Have the wound dressed ({MendPrice} coin)"));
+        // The herbwife keeps a stillroom (D-081): the second bench, proving the
+        // wood's-edge pattern (D-071) generalizes. She is the simples' true
+        // buyer, and pays the apothecary's price where the woodward pays a
+        // middleman's at the wood's edge: a coin more a sprig for the walk in.
+        // The wound-dressing moved in off her talk menu with it: in a full world
+        // her topics alone fill eight of the nine shared digits, and the
+        // stillroom is where that work would happen anyway.
+        if (npc.Id == "npc_herbwife")
+            offers.Add((TradeGood.Trade, "", "Trade at the stillroom"));
         // The woodward keeps a bench at the wood's edge (D-071): one talk digit that
         // opens a trade menu of its own, so the teaching (D-052) and the hunt's
         // hide-trade (D-070) share a counter with room to grow, and the villagers'
@@ -1392,17 +1405,29 @@ public sealed class Game
             offers.Add((TradeGood.Herb, "", HerbSaleLabel()));
             offers.Add((TradeGood.Lesson, LessonCatalog.IdOf(LessonId.Gleaning), LessonLabel(LessonId.Gleaning)));
         }
+        // The stillroom (D-081): the simples at their true price, and the
+        // wound-dressing at the table where that work was always done.
+        if (npc.Id == "npc_herbwife")
+        {
+            offers.Add((TradeGood.Herb, "", HerbSaleLabel()));
+            offers.Add((TradeGood.Mending, "", MendLabel()));
+        }
         return offers;
     }
+
+    /// <summary>The wound-dressing entry (D-081): priced when there is a wound to dress.</summary>
+    private string MendLabel() => Player.WoundedTurns > 0
+        ? $"Have the wound dressed ({MendPrice} coin)"
+        : "Have a wound dressed (you are whole)";
 
     /// <summary>The hide-sale entry (D-071): what the bench will weigh, and for how much.</summary>
     private string HideSaleLabel() => Player.Hide > 0
         ? $"Sell your hides ({Player.Hide} at {HidePrice}c, {Player.Hide * HidePrice} coin)"
         : "Sell hides (none cured yet)";
 
-    /// <summary>The herb-sale entry (D-074): what the satchel holds, and for how much.</summary>
+    /// <summary>The herb-sale entry (D-074): what the satchel holds, at this buyer's price (D-081).</summary>
     private string HerbSaleLabel() => Player.Herb > 0
-        ? $"Sell your herbs ({Player.Herb} at {HerbPrice}c, {Player.Herb * HerbPrice} coin)"
+        ? $"Sell your herbs ({Player.Herb} at {HerbPriceHere}c, {Player.Herb * HerbPriceHere} coin)"
         : "Sell herbs (satchel empty)";
 
     private void OpenTradeMenu()
@@ -1411,7 +1436,9 @@ public sealed class Game
         InTradeMenu = true;
         _tradeOffers.Clear();
         _tradeOffers.AddRange(BuildTradeOffers(TalkNpc!));
-        Log.Add(Turn, $"{TalkNpc!.Name} leads you to the bench at the wood's edge, where the hides hang to cure and the wood's own lessons are kept.");
+        Log.Add(Turn, TalkNpc!.Id == "npc_herbwife"
+            ? $"{TalkNpc.Name} leads you into the stillroom, low-beamed and sharp with green smells, the simples hanging in ranked bunches to dry."
+            : $"{TalkNpc.Name} leads you to the bench at the wood's edge, where the hides hang to cure and the wood's own lessons are kept.");
     }
 
     private void HandleTradeMenuKey(char key)
@@ -1425,6 +1452,7 @@ public sealed class Game
                 case TradeGood.Cook: TryCook(); break;
                 case TradeGood.Herb: TrySellHerbs(); break;
                 case TradeGood.Lesson: TryLearnLesson(arg); break;
+                case TradeGood.Mending: TryBuyMending(); break; // the stillroom's table (D-081)
             }
             // The labels move with the state (hides sold, lesson taken); rebuild so the
             // bench reads true, and the digits keep their order under the buyer's hand.
@@ -1434,7 +1462,9 @@ public sealed class Game
         }
 
         InTradeMenu = false;
-        Log.Add(Turn, $"You leave the bench. {TalkNpc!.Name} turns back to the day's hides.");
+        Log.Add(Turn, TalkNpc!.Id == "npc_herbwife"
+            ? $"You leave the stillroom. {TalkNpc.Name} turns back to her hanging simples."
+            : $"You leave the bench. {TalkNpc.Name} turns back to the day's hides.");
         TalkNpc = null;
     }
 
@@ -1475,10 +1505,12 @@ public sealed class Game
             return;
         }
         int herbs = Player.Herb;
-        int paid = herbs * HerbPrice;
+        int paid = herbs * HerbPriceHere; // the stillroom pays the apothecary's price (D-081)
         Player.Herb = 0;
         Player.Coin += paid;
-        Log.Add(Turn, $"You empty {herbs} sprig{(herbs == 1 ? "" : "s")} onto the bench. {TalkNpc!.Name} sorts them with a herb-wife's quickness and pays {paid} coin. ({Player.Coin} now)", LogTone.Reward);
+        Log.Add(Turn, TalkNpc!.Id == "npc_herbwife"
+            ? $"You empty {herbs} sprig{(herbs == 1 ? "" : "s")} onto the stillroom's table. {TalkNpc.Name} names each one without looking twice and pays {paid} coin, full worth. ({Player.Coin} now)"
+            : $"You empty {herbs} sprig{(herbs == 1 ? "" : "s")} onto the bench. {TalkNpc.Name} sorts them with a herb-wife's quickness and pays {paid} coin. ({Player.Coin} now)", LogTone.Reward);
     }
 
     /// <summary>

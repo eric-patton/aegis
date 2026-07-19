@@ -176,8 +176,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 ### Tooling & verification, built
 
 - [x] Dev harness: headless pilot pipe, `sim` scripted JSON runs (D-027)
-- [x] Journey-bot autopilot: clears sites, arms, raises, reclaims, loots, answers the sheet, walks the arc, swears oaths, hunts the wilds, sells its hides, cooks its meat (D-062..D-073)
-- [ ] Journey-bot seeks herb spots and sells the satchel (forages incidentally today; close the loop, D-074)
+- [x] Journey-bot autopilot: clears sites, arms, raises, reclaims, loots, answers the sheet, walks the arc, swears oaths, hunts, sells hides, cooks meat, forages and sells herbs (D-062..D-075)
 - [ ] `--wits` demo mode for the perception build (deferred D-063)
 - [ ] Machine-readable journey report for a sweep / CI (deferred D-063)
 
@@ -198,6 +197,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-18: **D-075 bot forages and sells herbs.** The autopilot now deliberately gathers herb spots before crossing and sells the satchel at the bench, so the whole wilderness family (hunt, sell, cook, forage, sell) is exercised live end to end. Master seed forages 44 sprigs for 176 coin, arming it better so deaths fall 7 -> 5. Cli-only, no engine/save touch. Checked off the bot-forage item.
 - 2026-07-18: **D-074 foraging shipped.** Herbs grow in every world (own worldgen stream), picked by anyone on the step, growing a new Survival skill (8th) and sold at the woodward's bench for coin. Rounds out the wilderness-living core (hunt/sell/cook/forage). Bot forages incidentally. Checked off Survival, partial wilderness/bench. Save v28 -> v29. New tracked item: bot seeks + sells herbs.
 - 2026-07-18: **D-073 cooking shipped, the first craft.** A 7th skill (Cooking); the hart now yields raw meat, cooked into rations at the woodward's bench (D-071), skill-scaled, capped at what a body can carry. Opens the Craft family. Bot cooks live. Checked off Cooking skill, partial Craft family, partial crafting-trades/wilderness/bench. Save v27 -> v28 (also covers D-071's un-bumped bench).
 - 2026-07-18: **D-072 journey-bot sells its hides.** The autopilot now cashes the hunt out at the wood's edge (one overworld errand + driving the D-071 bench), so the whole catch-cure-sell-coin loop is exercised live and reproducibly. Master seed sells all 34 hides for 102 coin; sweep all sell their take and reach the mending. Cli-only, no engine/save touch. Checked off the bot-sells item.

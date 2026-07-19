@@ -218,6 +218,19 @@ public static class JourneyPilot
         // left to the dark; the coin is not worth re-entering ground that killed us.
         if (ReclaimDetour(g, skip) is { } reclaim) return reclaim;
 
+        // Gather the wood's herbs before the arch (D-075): low priority, once the sites and
+        // any remnant are seen to. A spot is foraged on the step (D-074), so the walk onto
+        // it is the whole errand; the sprigs bank across the crossing and sell at the next
+        // world's bench. It clears the nearest reachable spot each tick until the wood is
+        // picked, then falls through to the arch, so it always terminates.
+        if (g.World.Herbs.Count > 0)
+        {
+            var spot = g.World.Herbs.OrderBy(h => Chebyshev(p.Pos, h))
+                .ThenBy(h => h.Y).ThenBy(h => h.X).First();
+            var toHerb = NavKey(g, g.World.Overworld, p.Pos, spot, OverworldBlocked(g));
+            if (toHerb is not null) return toHerb;
+        }
+
         // Every site is cleared or written off: the deed is done, the arch will answer.
         var gate = g.World.GatePos;
         if (p.Pos == gate) return '>';       // set a hand on the arch: the terms open.
@@ -576,10 +589,11 @@ public static class JourneyPilot
         return null;
     }
 
-    /// <summary>Whether the bearer has business at the woodward's bench (D-072, D-073):
-    /// hides to sell, or raw meat to cook while the larder still has room to carry it.</summary>
+    /// <summary>Whether the bearer has business at the woodward's bench (D-072, D-073, D-075):
+    /// hides or herbs to sell, or raw meat to cook while the larder still has room to carry it.</summary>
     private static bool BenchErrand(Game g) =>
-        g.Player.Hide > 0 || (g.Player.RawMeat > 0 && g.Player.Rations < Game.RationCap);
+        g.Player.Hide > 0 || g.Player.Herb > 0
+        || (g.Player.RawMeat > 0 && g.Player.Rations < Game.RationCap);
 
     /// <summary>
     /// At the open bench, the digit for the next piece of business (D-072, D-073): sell the
@@ -590,14 +604,18 @@ public static class JourneyPilot
     /// </summary>
     private static char BenchDigit(Game g)
     {
-        if (g.Player.Hide > 0)
-            for (int i = 0; i < g.TradeOffers.Count; i++)
-                if (g.TradeOffers[i].Good == TradeGood.Hide)
-                    return (char)('1' + i);
-        if (g.Player.RawMeat > 0 && g.Player.Rations < Game.RationCap)
-            for (int i = 0; i < g.TradeOffers.Count; i++)
-                if (g.TradeOffers[i].Good == TradeGood.Cook)
-                    return (char)('1' + i);
+        if (g.Player.Hide > 0) return TradeDigit(g, TradeGood.Hide);
+        if (g.Player.Herb > 0) return TradeDigit(g, TradeGood.Herb);
+        if (g.Player.RawMeat > 0 && g.Player.Rations < Game.RationCap) return TradeDigit(g, TradeGood.Cook);
+        return 'z';
+    }
+
+    /// <summary>The bench digit for a good, or 'z' if the bench does not offer it.</summary>
+    private static char TradeDigit(Game g, TradeGood good)
+    {
+        for (int i = 0; i < g.TradeOffers.Count; i++)
+            if (g.TradeOffers[i].Good == good)
+                return (char)('1' + i);
         return 'z';
     }
 

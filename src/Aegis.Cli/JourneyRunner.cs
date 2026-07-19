@@ -116,6 +116,11 @@ public static class JourneyRunner
         // clean signal, watched the same deterministic way.
         int meatCooked = 0;
         int rationsCooked = 0;
+        // What the wood gave (D-074/D-075): herbs foraged and the coin they fetched, the
+        // counter rising on a step in the wood and falling to zero at the bench.
+        int herbsForaged = 0;
+        int herbsSold = 0;
+        int coinFromHerbs = 0;
         string stop;
 
         while (true)
@@ -177,6 +182,7 @@ public static class JourneyRunner
             int hideBefore = game.Player.Hide;
             int rawBefore = game.Player.RawMeat;
             int rationsBefore = game.Player.Rations;
+            int herbBefore = game.Player.Herb;
             game.ApplyKey(key.Value);
             keys.Append(key.Value);
             totalKeys++;
@@ -232,6 +238,15 @@ public static class JourneyRunner
                 meatCooked += rawBefore - game.Player.RawMeat;
                 rationsCooked += Math.Max(0, game.Player.Rations - rationsBefore);
             }
+            // Herbs rise on a step in the wood (foraged) and fall to zero at the bench
+            // (sold): the two clean signals of the forage loop (D-074/D-075).
+            if (game.Player.Herb > herbBefore) herbsForaged += game.Player.Herb - herbBefore;
+            else if (game.Player.Herb < herbBefore)
+            {
+                int sold = herbBefore - game.Player.Herb;
+                herbsSold += sold;
+                coinFromHerbs += sold * game.HerbPrice;
+            }
 
             if (game.Player.Deaths > prevDeaths)
             {
@@ -267,7 +282,8 @@ public static class JourneyRunner
             remnantsReclaimed, coinReclaimed, essenceReclaimed,
             chestsLooted, chestCoin, gearTaken, knacksTaken,
             resolvedAs, resolvedCycle, laidCycle, mendedCycle, legendFromBurden,
-            hidesTaken, hidesSold, coinFromHides, meatCooked, rationsCooked);
+            hidesTaken, hidesSold, coinFromHides, meatCooked, rationsCooked,
+            herbsForaged, herbsSold, coinFromHerbs);
         return 0;
     }
 
@@ -336,7 +352,7 @@ public static class JourneyRunner
         int chestsLooted, int chestCoin, int gearTaken, int knacksTaken,
         Resolution resolvedAs, int resolvedCycle, int laidCycle, int mendedCycle,
         int legendFromBurden, int hidesTaken, int hidesSold, int coinFromHides,
-        int meatCooked, int rationsCooked)
+        int meatCooked, int rationsCooked, int herbsForaged, int herbsSold, int coinFromHerbs)
     {
         var w = Console.Out;
         w.WriteLine($"AEGIS JOURNEY   seed {seed}   target {cycles} crossing(s)");
@@ -406,6 +422,8 @@ public static class JourneyRunner
             w.WriteLine($"         the trade: sold {hidesSold} hide(s) at the wood's edge for {coinFromHides} coin (D-072).");
         if (meatCooked > 0)
             w.WriteLine($"         the fire: cooked {meatCooked} cut(s) of raw meat into {rationsCooked} ration(s) (D-073).");
+        if (herbsForaged > 0)
+            w.WriteLine($"         the forage: picked {herbsForaged} sprig(s) of herb; sold {herbsSold} for {coinFromHerbs} coin (D-074/D-075).");
         int sworn = crossings.Count(c => c.Sworn.Count > 0);
         if (sworn > 0)
         {

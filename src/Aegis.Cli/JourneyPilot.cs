@@ -15,10 +15,14 @@ namespace Aegis.Cli;
 /// spoken for, and answer a foe that stands off (the sling-warder on the leaguer's works,
 /// D-057) with the loosed line instead of a chase that never closes. When a death leaves a
 /// remnant behind, it walks back over the ground it fell on, the foes there down, and takes
-/// its coin and Essence back rather than letting the next crossing forfeit them (D-065). A
-/// site it still cannot bring to ground the runner budgets and writes off, handing the
-/// pilot a skip-set of the ones to leave standing, so it engages, learns the tell, and
-/// moves on rather than spinning.
+/// its coin and Essence back rather than letting the next crossing forfeit them (D-065).
+/// Every site it holds it strips before climbing out (D-066): it opens the chest for its
+/// coin and the deep iron the smith never stocks (the barrow's blade, the hall's mail, the
+/// ringfort's warbow, and their like), and it puts that iron on, wearing the best piece it
+/// owns in each slot rather than leaving a stronger one dead in the pack. A site it still
+/// cannot bring to ground the runner budgets and writes off, handing the pilot a skip-set
+/// of the ones to leave standing, so it engages, learns the tell, and moves on rather than
+/// spinning.
 ///
 /// It is a pure function of game state (and the runner's skip-set, which is itself
 /// derived deterministically), so a seeded run is perfectly reproducible: the same seed
@@ -48,7 +52,18 @@ public static class JourneyPilot
         if (g.InTalkMenu && g.TalkNpc?.Kind == NpcKind.Smith)
             return SmithBuyDigit(g) ?? 'z';
         if (g.InAim) return AimDirection(g) ?? 'z';
+        // The pack is a menu we drive on purpose too (D-066): wear the best piece
+        // owned, one digit at a time, then close. Chest loot lands here unworn
+        // whenever the slot it wants was already filled at the forge.
+        if (g.InGearMenu) return GearEquipDigit(g) ?? 'z';
         if (StuckInMenu(g)) return 'z';
+
+        // Wear the best iron in hand before anything else (D-066). A stronger piece
+        // taken from a deep chest sits useless in the pack until it is put on, and
+        // putting it on is a free glance down, no turn spent, so re-arm at once. It
+        // only ever fires on cleared ground: the loot that fills the pack is taken
+        // from a site already emptied of its foes, so this never pre-empts a dodge.
+        if (BestPackUpgrade(g) is not null) return 'i';
 
         if (g.Mode == MapMode.Site)
         {
@@ -56,9 +71,13 @@ public static class JourneyPilot
             // Still work to do here: clear it. Otherwise climb back to daylight.
             if (!site.Cleared && !skip.Contains(site.Id))
                 return FightOrApproach(g);
-            // Held, foes down: take back a remnant a death left here before climbing out
-            // (D-065). Only when the site is cleared, never one we gave up on: chasing coin
-            // through the foes that beat us only courts the death that would forfeit it.
+            // Held, foes down: open the site's own chest before leaving (D-066). It
+            // holds coin and, in the deep sites, a piece of iron better than any the
+            // smith draws, and it costs only the walk back over ground already won.
+            if (site.Cleared && LootHere(g) is { } take) return take;
+            // Take back a remnant a death left here before climbing out (D-065). Only
+            // when the site is cleared, never one we gave up on: chasing coin through
+            // the foes that beat us only courts the death that would forfeit it.
             if (site.Cleared && ReclaimHere(g) is { } grab) return grab;
             var ladder = site.EntryPos;
             if (p.Pos == ladder) return '<';
@@ -471,6 +490,67 @@ public static class JourneyPilot
         return NavKey(g, g.World.Overworld, p.Pos, site.OverworldPos, OverworldBlocked(g));
     }
 
+    // ---- the chest (D-066): the site's own prize, and wearing what it holds ----
+
+    /// <summary>
+    /// Walk onto the current site's chest and open it: coin, and in the deep sites a
+    /// signature piece of iron the smith never stocks (D-041). Called only on a cleared
+    /// site, so the ground to it is safe and the foes are down. Null when the chest is
+    /// already open or there is none (the songhall and threshold carry none to take).
+    /// </summary>
+    private static char? LootHere(Game g)
+    {
+        if (g.CurrentSite is not { } site || site.ChestLooted) return null;
+        var p = g.Player;
+        if (p.Pos == site.ChestPos) return 'g';
+        return NavKey(g, g.CurrentMap, p.Pos, site.ChestPos, LiveFoeCells(g))
+            ?? NavKey(g, g.CurrentMap, p.Pos, site.ChestPos, Empty);
+    }
+
+    /// <summary>
+    /// The piece sitting in the pack that ought to be worn: for each slot, the best-owned
+    /// good is compared to what is worn there, and if the better one is in the pack it is
+    /// handed back to be equipped. Ranked by the good it gives here and now (the effective
+    /// bonus, which already halves an under-met or worn piece), then by raw bonus so a
+    /// higher ceiling wins a tie and is worn early against the day the arm grows into it,
+    /// then by stauncher wear and id for a stable order. Null when every slot already wears
+    /// its best, which is also the signal to stop opening the pack. Cannot oscillate: the
+    /// ranking shifts only toward the higher-req piece as attributes rise, and equipping is
+    /// free, so it converges in one swap per slot and holds.
+    /// </summary>
+    private static GearItem? BestPackUpgrade(Game g)
+    {
+        var p = g.Player;
+        foreach (var slot in Slots)
+        {
+            var best = p.AllGear
+                .Where(it => it.Slot == slot)
+                .OrderByDescending(it => it.EffectiveBonus(p.Attributes))
+                .ThenByDescending(it => it.Bonus)
+                .ThenByDescending(it => it.MaxWear)
+                .ThenBy(it => it.Id, StringComparer.Ordinal)
+                .FirstOrDefault();
+            if (best is not null && !ReferenceEquals(best, WornIn(p, slot)))
+                return best;
+        }
+        return null;
+    }
+
+    /// <summary>The digit that wears <see cref="BestPackUpgrade"/> out of the open pack: its place in the gear list, which lists worn pieces first then the pack in order.</summary>
+    private static char? GearEquipDigit(Game g)
+    {
+        if (BestPackUpgrade(g) is not { } item) return null;
+        int idx = g.Player.AllGear.ToList().IndexOf(item);
+        return idx >= 0 ? (char)('1' + idx) : null;
+    }
+
+    private static GearItem? WornIn(Player p, GearSlot slot) => slot switch
+    {
+        GearSlot.Weapon => p.Weapon,
+        GearSlot.Ranged => p.Bow,
+        _ => p.Armor,
+    };
+
     // ---- navigation: breadth-first, one step at a time ----
 
     /// <summary>
@@ -515,7 +595,7 @@ public static class JourneyPilot
 
     private static bool StuckInMenu(Game g) =>
         g.InTalkMenu || g.InUnbindMenu || g.InThresholdMenu
-        || g.InLayingMenu || g.InGearMenu || g.InSheetMenu; // the shrine and crossing menus are driven, not escaped.
+        || g.InLayingMenu || g.InSheetMenu; // the shrine, crossing, and pack menus are driven, not escaped.
 
     /// <summary>
     /// Which attribute to raise. Bare-handed, keep Vigor and Might level (staying alive,

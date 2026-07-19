@@ -78,6 +78,12 @@ public static class JourneyRunner
         int remnantsReclaimed = 0;
         int coinReclaimed = 0;
         int essenceReclaimed = 0;
+        // What the looting brought up (D-066): every cleared site's chest opened for its
+        // coin, and in the deep sites a piece of iron the smith never stocks. Counted by
+        // watching the chest's own flag flip as the 'g' lands on its cell.
+        int chestsLooted = 0;
+        int chestCoin = 0;
+        int gearTaken = 0;
         string stop;
 
         while (true)
@@ -124,6 +130,10 @@ public static class JourneyRunner
             }
 
             var remnantBefore = game.Remnant;
+            var chestSite = game.CurrentSite;
+            bool chestOpenBefore = chestSite?.ChestLooted ?? true;
+            int coinBefore = game.Player.Coin;
+            int gearBefore = game.Player.AllGear.Count();
             game.ApplyKey(key.Value);
             keys.Append(key.Value);
             totalKeys++;
@@ -137,6 +147,17 @@ public static class JourneyRunner
                 remnantsReclaimed++;
                 coinReclaimed += remnantBefore.Coin;
                 essenceReclaimed += remnantBefore.Essence;
+            }
+
+            // A chest that opened this key (a 'g' on its cell adds coin and, in the deep
+            // sites, a piece of iron): tally the coin it gave and whether iron came with
+            // it (D-066). A loot never changes CurrentSite, so the held reference reads
+            // its own flipped flag.
+            if (chestSite is not null && !chestOpenBefore && chestSite.ChestLooted)
+            {
+                chestsLooted++;
+                chestCoin += game.Player.Coin - coinBefore;
+                if (game.Player.AllGear.Count() > gearBefore) gearTaken++;
             }
 
             if (game.Player.Deaths > prevDeaths)
@@ -166,7 +187,8 @@ public static class JourneyRunner
         }
 
         Report(seed, cycles, crossings, stop, game, totalKeys, keys, emitKeys,
-            remnantsReclaimed, coinReclaimed, essenceReclaimed);
+            remnantsReclaimed, coinReclaimed, essenceReclaimed,
+            chestsLooted, chestCoin, gearTaken);
         return 0;
     }
 
@@ -207,7 +229,8 @@ public static class JourneyRunner
     private static void Report(
         ulong seed, int cycles, List<Crossing> crossings, string stop,
         Game game, int totalKeys, StringBuilder keys, bool emitKeys,
-        int remnantsReclaimed, int coinReclaimed, int essenceReclaimed)
+        int remnantsReclaimed, int coinReclaimed, int essenceReclaimed,
+        int chestsLooted, int chestCoin, int gearTaken)
     {
         var w = Console.Out;
         w.WriteLine($"AEGIS JOURNEY   seed {seed}   target {cycles} crossing(s)");
@@ -254,6 +277,8 @@ public static class JourneyRunner
         w.WriteLine($"         {totalKeys} keys pressed, {game.Turn} turns, {game.Player.Deaths} death(s) total.");
         w.WriteLine($"         reclaimed {remnantsReclaimed} remnant(s) from where it fell: "
                     + $"{coinReclaimed} coin, {essenceReclaimed} essence kept back from the dark (D-065).");
+        w.WriteLine($"         looted {chestsLooted} chest(s) from the sites it cleared: "
+                    + $"{chestCoin} coin, {gearTaken} piece(s) of deep iron taken up and worn (D-066).");
         w.WriteLine("         a seeded journey replays identically: the pilot reads only game state.");
         if (emitKeys)
         {

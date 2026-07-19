@@ -59,7 +59,10 @@ public class RaidsTests
         Wait(game, SteadRaids.TickTurns); // one raid lands
         game.Debug_ClearCamp();           // the raids end, but the grain is gone
 
-        Assert.Equal(priceBefore + 1, game.RationPrice);
+        // The raid's +1 still stands; the friend's price (D-080) the camp-clear
+        // just earned takes its own coin off beside it, two ledgers side by side.
+        Assert.Equal(priceBefore + 1 - 1, game.RationPrice);
+        Assert.Equal(1, game.Raids);
         Wait(game, SteadRaids.TickTurns); // and no further raid comes
         Assert.Equal(1, game.Raids);
 
@@ -110,6 +113,21 @@ public class RaidsTests
         Assert.Equal(0, game.Raids);
         Wait(game, SteadRaids.TickTurns / 2);
         Assert.Equal(1, game.Raids);
+    }
+
+    [Fact]
+    public void TheSteadsTalk_KeepsTheRaidLedger()
+    {
+        // D-080: the goblin-raids topic sharpens as the raids land, so the world
+        // speaks its own state back through the ask-about surface.
+        var game = new Game(42);
+        Wait(game, SteadRaids.TickTurns);
+        Assert.Equal(1, game.Raids);
+
+        var villager = game.World.Npcs.First(n => n.Kind == NpcKind.Villager);
+        NpcTests.BumpNpc(game, villager);
+        var raidsTopic = game.Topics.First(t => t.Label == "The goblin raids");
+        Assert.Contains("since you walked in", raidsTopic.Answer);
     }
 
     private static void Wait(Game game, int turns)

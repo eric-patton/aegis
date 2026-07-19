@@ -107,10 +107,13 @@ namespace Aegis.Core;
 /// stead on a coarse tick, each raid pricing bread a coin dearer for the rest
 /// of the world, so a v31 journal that bought rations in a raided world now
 /// pays more for them and every coin downstream moves.
+/// v33 when D-080 opened the friend's price: once a stead holds the bearer a
+/// friend the steadholder takes a coin off bread, so a v32 journal that bought
+/// rations after ending the raids now keeps more coin from that turn on.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 32;
+    public const int Version = 33;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

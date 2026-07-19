@@ -128,6 +128,9 @@ public sealed class Game
     /// <summary>The turn this world began: the raid tick counts from here, not from cycle 1.</summary>
     private int _worldStartTurn;
 
+    /// <summary>Whether this world's steadholder has named the friend's price aloud (D-080); once per stead.</summary>
+    private bool _friendsPriceNamed;
+
     public Npc? TalkNpc { get; private set; }
 
     /// <summary>Unbindings per world (D-016: a handful, refreshed at each crossing).</summary>
@@ -162,15 +165,22 @@ public sealed class Game
     /// Fact-derived pricing (D-025 v0): while a blight story stands uncompleted,
     /// the larders are thin and bread costs half again as much, and every raid
     /// the stead has suffered (D-079) adds a coin, the grain gone until the
-    /// crossing. The hearth-price (D-048) takes a coin off for the storied
-    /// before the hungry road (D-047) doubles whatever the world was asking.
+    /// crossing. The hearth-price (D-048) takes a coin off for the storied, the
+    /// friend's price (D-080) another for the one who ended the raids, before
+    /// the hungry road (D-047) doubles whatever the world was asking.
     /// </summary>
     public int RationPrice =>
         ((World.Facts.Exists("story", CreepingBlightTemplate.Id)
         && !World.Facts.Exists("story_complete", CreepingBlightTemplate.Id) ? 6 : 4)
         + Raids
-        - (Standing >= 2 && !World.Oaths.Contains(OathId.HushedName) ? 1 : 0))
+        - (Standing >= 2 && !World.Oaths.Contains(OathId.HushedName) ? 1 : 0)
+        // The friend's price (D-080): deed-earned like the welcome (D-077), so
+        // the hushed name never touches it where it silences the hearth-price.
+        - (FriendsPrice ? 1 : 0))
         * (World.Oaths.Contains(OathId.HungryRoad) ? 2 : 1);
+
+    /// <summary>Whether the stead holds the bearer a friend (D-080): the rung that opens the friend's price.</summary>
+    private bool FriendsPrice => SteadRegard.RungFor(Regard) >= SteadRegard.FriendRung;
 
     /// <summary>How far one wear event moves the ledger: the spent edge (D-047) doubles it.</summary>
     private int WearStep => World.Oaths.Contains(OathId.SpentEdge) ? 2 : 1;
@@ -755,6 +765,7 @@ public sealed class Game
         // counts from this arrival, not from the far side of the arch.
         Raids = 0;
         _worldStartTurn = Turn;
+        _friendsPriceNamed = false;
 
         Mode = MapMode.Overworld;
         Player.Pos = World.ShrinePos;
@@ -1062,7 +1073,15 @@ public sealed class Game
             string crowded = World.Oaths.Contains(OathId.CrowdedDark)
                 ? " And there are more of them this year than the oldest of us can account for."
                 : "";
-            topics.Add(("The goblin raids", $"\"{grievance.Detail} We have fed them to keep the peace. It has not bought much peace.{crowded}\""));
+            // The stead's talk keeps D-079's ledger: raids suffered since the
+            // bearer walked in sharpen the answer, and the price is named.
+            string raided = Raids switch
+            {
+                0 => "",
+                1 => " And once since you walked in they have come again by night. The grain gone prices what is left.",
+                _ => $" And {Raids} times since you walked in they have come by night. Every raid prices the bread the dearer.",
+            };
+            topics.Add(("The goblin raids", $"\"{grievance.Detail} We have fed them to keep the peace. It has not bought much peace.{raided}{crowded}\""));
         }
 
         if (World.Facts.Find("rest_point", "shrine") is { } shrine)
@@ -1206,7 +1225,8 @@ public sealed class Game
     {
         var offers = new List<(TradeGood, string, string)>();
         if (npc.Id == "npc_steadholder")
-            offers.Add((TradeGood.Ration, "", $"Buy a ration ({RationPrice} coin)"));
+            offers.Add((TradeGood.Ration, "",
+                $"Buy a ration ({RationPrice} coin{(FriendsPrice ? ", a friend's price" : "")})"));
         if (npc.Id == "npc_herbwife" && Player.WoundedTurns > 0)
             offers.Add((TradeGood.Mending, "", $"Have the wound dressed ({MendPrice} coin)"));
         // The woodward keeps a bench at the wood's edge (D-071): one talk digit that
@@ -1527,6 +1547,12 @@ public sealed class Game
         Log.Add(Turn, $"Bread, hard cheese, a fist of dried plums, wrapped in waxed cloth. ({Player.Rations} carried)", LogTone.Reward);
         if (price > 4)
             Log.Add(Turn, $"{TalkNpc!.Name}: \"Dear, I know. Prices are what the fields let them be, of late.\"");
+        // The friend's price named once per stead (D-080), the first time it is taken.
+        if (FriendsPrice && !_friendsPriceNamed)
+        {
+            _friendsPriceNamed = true;
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"A coin off for you, and no argument. The stead does not forget whose hand ended the raids.\"");
+        }
     }
 
     private void TryBuyMending()

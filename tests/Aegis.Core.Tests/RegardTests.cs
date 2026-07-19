@@ -211,6 +211,82 @@ public class RegardTests
         Assert.Contains(game.Log.Recent(12), e => e.Text.Contains("gather what coin they can spare"));
     }
 
+    // ---- D-080: the friend's price, the boon that keeps on giving ----
+
+    [Fact]
+    public void TheFriendsPrice_TakesACoinOffBread()
+    {
+        var game = new Game(42);
+        int priceBefore = game.RationPrice;
+
+        game.Debug_ClearCamp(); // regard 3: the stead holds the bearer a friend
+
+        Assert.Equal(priceBefore - 1, game.RationPrice);
+    }
+
+    [Fact]
+    public void TheFriendsPrice_IsNotGivenBelowTheFriendRung()
+    {
+        // A world without the blight story, so the barrow moves nothing but
+        // regard (in a blighted world the barrow completes the story and the
+        // base price itself eases, a different mechanism than the one on trial).
+        bool tested = false;
+        for (ulong seed = 1; seed <= 20 && !tested; seed++)
+        {
+            var game = CrossTo(seed, 2);
+            if (game.World.BarrowSite is null) continue;
+            if (game.World.Facts.Exists("story", CreepingBlightTemplate.Id)) continue;
+
+            int priceBefore = game.RationPrice;
+            game.Debug_ClearSite(SiteKind.Barrow); // rung 1: a known face, not yet a friend
+            Assert.Equal(1, SteadRegard.RungFor(game.Regard));
+            Assert.Equal(priceBefore, game.RationPrice);
+            tested = true;
+        }
+        Assert.True(tested, "no unblighted tier-2 barrow found in seeds 1..20");
+    }
+
+    [Fact]
+    public void TheFriendsPrice_IsNotSilencedByTheHushedName()
+    {
+        // The hearth-price (D-048) rides the bearer's name and the hushed name
+        // silences it; the friend's price is bought by a deed the folk watched,
+        // so it stands, the same line D-077's welcome drew.
+        var game = new Game(42);
+        game.Debug_ClearCamp();
+        game.Debug_SetPlayerPos(game.World.GatePos);
+        game.ApplyKey('>');
+        game.ApplyKey('7'); // swear the hushed name
+        game.ApplyKey('>');
+        Assert.Contains(OathId.HushedName, game.World.Oaths);
+
+        int priceBefore = game.RationPrice;
+        game.Debug_ClearCamp();
+        Assert.Equal(priceBefore - 1, game.RationPrice);
+    }
+
+    [Fact]
+    public void TheFriendsPrice_IsNamedInTheOffer_AndAloudOnce()
+    {
+        var game = new Game(42);
+        game.Debug_ClearCamp();
+        game.Player.Coin = 10;
+
+        var steadholder = game.World.Npcs.First(n => n.Id == "npc_steadholder");
+        NpcTests.BumpNpc(game, steadholder);
+        var offer = game.Offers.First(o => o.Good == TradeGood.Ration);
+        Assert.Contains("a friend's price", offer.Label);
+
+        char buy = (char)('1' + game.Topics.Count + game.Offers.ToList().FindIndex(o => o.Good == TradeGood.Ration));
+        game.ApplyKey(buy);
+        Assert.Equal(1, game.Player.Rations);
+        game.ApplyKey(buy);
+        Assert.Equal(2, game.Player.Rations);
+
+        // The steadholder names the coin off exactly once per stead.
+        Assert.Single(game.Log.Entries, e => e.Text.Contains("does not forget whose hand"));
+    }
+
     /// <summary>Crosses from a fresh seed to the given cycle, clearing each world's camp to open the gate.</summary>
     private static Game CrossTo(ulong seed, int targetCycle)
     {

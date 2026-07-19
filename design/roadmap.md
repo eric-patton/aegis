@@ -37,12 +37,14 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 - Skills: **8 of ~18** (five combat, Hunting from D-070, Cooking from D-073, Survival from D-074)
 - Activity families: **wilderness-living core built** (hunting, selling, cooking, foraging: D-070..D-074) and the **craft family opened** (cooking); crime and town life unbuilt
 - Launch story templates: **2** built (of 3 named, 4-5 planned)
-- **Factions begun (D-076..D-079):** the local-reputation foundation is in (the home stead's
+- **Factions begun (D-076..D-080):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
   raider slain, dread softening their blows past its rung), and the coarse tick began (D-079,
   the raids are real: uncleared camps raid the stead every 160 turns, bread a coin dearer per
-  raid); the stead-Infamy half (needs a transgression verb) and richer boons remain
+  raid) and pays again at the friend rung (D-080, the friend's price: a coin off bread,
+  stacking with and outliving the hearth-price under the hushed name); the stead-Infamy half
+  (needs a transgression verb) and the rumor boon remain
 - Major vision pillars still unbuilt: magic, companions, crafting, character creation, Toll/scars
 
 ---
@@ -152,10 +154,11 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
   surfacing) and the keyed per-faction ledger shipped with the raiders' wrath (D-078, the
   Infamy-shaped enemy ledger); the true stead-Infamy half (deeds that cost regard, a stead
   that turns cold) needs a transgression verb the game does not yet have (◇ user steer)
-- [~] Regard-gated boons and access (D-076, D-077): the friend's welcome shipped (D-077, the
-  first faction save-format touch, v30): the stead's folk gift a coin purse when they first
-  hold the bearer a friend, deed-earned so the hushed name never silences it. Richer boons
-  (a friend's price, a gift of goods, a topic/rumor kept from strangers, gated access) pending
+- [~] Regard-gated boons and access (D-076, D-077, D-080): the friend's welcome shipped (D-077,
+  v30, a one-time coin purse at the friend rung) and the friend's price (D-080, v33: a standing
+  coin off bread beside the hearth-price, deed-earned so the hushed name silences one and not
+  the other; the raids topic also counts D-079's raids back in talk). Remaining: a rumor the
+  folk keep from strangers (needs menu-cap headroom or a non-topic channel), rung-3 boons
 - [x] A second faction with a relationship to the stead (the raiders as its standing enemy, so a
   blow to one is a favor to the other) (D-078: wrath per raider slain on its own faster ladder,
   the dread softening raiders' blows past rung 2, reset at every crossing, save v31)
@@ -225,6 +228,7 @@ of the four activity families (crime, town-life, most wilderness). Rough fill le
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-19: **D-080 the friend's price + the talk keeps the raid ledger.** At the friend rung the steadholder takes a coin off bread: a new RationPrice term beside the hearth-price, stacking with it, deed-earned so the hushed name silences the hearth-price and not this one (the local-vs-global split proven in one formula). Composes with D-079: a raid prices bread +1, the deed that ends raids prices it -1, so camp-clear moves bread twice over. Offer label names it every open; steadholder says it aloud once per stead. The goblin-raids topic now counts raids suffered since arrival (no new topics: villager menu at its 9-digit cap). Save v32 -> v33. 362 tests green (5 new, 2 honest updates where the discount and the blight story crossed old expectations); byte-identical + emit->sim exact + sweep unchanged. Advanced the boons item; remaining: the rumor boon, rung-3 boons.
 - 2026-07-19: **D-079 the raids are real: first coarse-tick faction event.** While a camp stands, the raiders raid the stead every 160 turns (cap 3/world): each raid writes an event fact, narrates as it fires (D-023's mandatory hook), and prices bread +1 coin at the steadholder for the rest of the world (inside the hungry-road doubling). Tick counts from world arrival; skipped while the bearer is inside the camp (a den defends its own); camp clear is the designed exit but taken grain stays taken until the crossing. The Raided Stead becomes live pressure; the tick seam in AdvanceTurn is reusable machinery for every later faction event. Save v31 -> v32. 357 tests green (6 new RaidsTests); byte-identical + emit->sim exact + sweep honest (12-25 raids/run). Partial-checked the coarse-tick state-vector item.
 - 2026-07-19: **D-078 the raiders' wrath: second faction, keyed ledger.** The single regard scalar became a FactionId-keyed store, and the raiders now keep the enemy ledger: wrath +1 per raider slain (all kill paths), on its own faster ladder (1/2/4: a name the raiders curse / a dread on the raiders / the bane of the dens), reset at every crossing. Past the dread rung a raider's blow lands one point weaker (never below 1), applied after the dice so the draw count never moves. A blow to one is a favor to the other, live: emptying the camp raises stead regard and raider wrath in the same strokes. HUD (red, under the stead's green), snapshot (Wrath/WrathTitle), journey dens line. Save v30 -> v31. 351 tests green (8 new WrathTests); byte-identical + emit->sim exact + five-seed sweep (all peak at the bane of the dens). Checked off the second-faction item; stead-Infamy re-scoped: needs a transgression verb (user steer).
 - 2026-07-19: **D-077 the friend's welcome, regard's first boon.** Regard now pays: the first time a stead holds the bearer a friend (rung 2, reached by clearing the camp), its folk gift a coin purse. Coin not bread (stays clear of the arrival-welcome's larder); once per stead (rung-cross gated); NOT silenced by the hushed name (deed-earned, not name-carried). Save v29 -> v30, the first faction touch on the format. 343 tests green (4 new welcome tests + 6 honest crossing-math updates for the +5); byte-identical + emit->sim exact + sweep unchanged in shape. Partial-checked regard-gated boons.

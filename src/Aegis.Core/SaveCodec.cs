@@ -117,10 +117,14 @@ namespace Aegis.Core;
 /// v35 when D-085 taught the graph the regard rungs and gated the friend's
 /// hearthtale on them: a new Talk storylet enters the weighted draw, so a v34
 /// journal's talk events can resolve to different winners from that world on.
+/// v36 when D-086 gave the grab key its dark use: g beside an overworld house,
+/// which was an inert "nothing here to take" in v35, now pilfers the door (a
+/// ration taken, shame raised, a turn spent), so a v35 journal that pressed g
+/// near the stead replays to different state from that press on.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 35;
+    public const int Version = 36;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

@@ -54,6 +54,16 @@ public sealed class World
     public required List<Pos> Herbs { get; init; }
 
     /// <summary>
+    /// Doors already robbed this world (D-086): a house gives its ration's worth
+    /// once. Runtime state like a looted chest, rebuilt by replay, regenerated
+    /// whole (and innocent) with everything else at the crossing.
+    /// </summary>
+    public List<Pos> PilferedHouses { get; } = [];
+
+    /// <summary>Doors made right (D-086): sills that hold their restitution coin. A repaid house is closed both ways.</summary>
+    public List<Pos> RepaidHouses { get; } = [];
+
+    /// <summary>
     /// The terms this world was crossed into under (D-047): oaths sworn at the
     /// previous world's waygate. A generation input like the tier; they lapse at
     /// this world's far gate. Empty for a first world and for a plain crossing.

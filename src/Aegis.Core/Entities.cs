@@ -138,6 +138,9 @@ public sealed class Player
     /// <summary>The Aegis marks the first wrath the dens ever hold for the bearer (D-078); once only.</summary>
     public bool WrathLineHeard { get; set; }
 
+    /// <summary>Whether the Aegis's one line on the taking has been heard (D-086); once per character.</summary>
+    public bool ShameLineHeard { get; set; }
+
     /// <summary>
     /// The bestiary (D-059, paying D-004's oldest clause: telegraph clarity
     /// scales with what the bearer knows). How many of a kind's wind-ups the

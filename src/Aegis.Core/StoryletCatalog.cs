@@ -134,6 +134,24 @@ public static class StoryletCatalog
             ],
         },
 
+        // Suspicion made walkable (D-086): the first authored content the shame
+        // fact opens, D-085's seam read from the dark side. Once per world, gated
+        // on live shame too, so a bearer who has paid every sill back stops
+        // being watched at the doors as well as on the ledger.
+        new Storylet
+        {
+            Id = "the-closed-doors",
+            Trigger = StoryletTrigger.NearHouse,
+            Priority = 8,
+            Requires = [new FactPattern("shame", "watched")],
+            When = g => g.Shame > 0,
+            Lines =
+            [
+                ("A door ahead of you closes. Not slammed: eased shut, the way a thing is done when the doing of it is meant to be seen. Somewhere behind it, a bar comes down.", LogTone.Info),
+                ("\"They have not stopped weighing your deeds, bearer. They have started weighing your hands.\"", LogTone.Aegis),
+            ],
+        },
+
         // The rumor kept from strangers (D-085): the last of D-077's named
         // friend-rung boons, carried by the storylet channel since the villagers'
         // talk menu has no digit to spare (D-080). Gated on the regard fact the
@@ -146,7 +164,10 @@ public static class StoryletCatalog
             Trigger = StoryletTrigger.Talk,
             Priority = 8,
             Requires = [new FactPattern("regard", "friend")],
-            When = g => g.TalkNpc?.Kind == NpcKind.Villager,
+            // Suspicion closes the fence (D-086): the inside story is not told
+            // while any door's count stands. Gated on live shame, not the shame
+            // fact, because the fact is history and restitution reopens the telling.
+            When = g => g.TalkNpc?.Kind == NpcKind.Villager && g.Shame == 0,
             Lines =
             [
                 ("They glance down the lane before they speak, which is how you know it is no stranger's story. Then they tell you the part the stead keeps inside its own fence: the winter it nearly broke, the name not said at the well, why the door-posts are tarred and the third field lies fallow.", LogTone.Info),

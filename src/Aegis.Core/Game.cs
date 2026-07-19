@@ -104,8 +104,20 @@ public sealed class Game
     /// </summary>
     private readonly Dictionary<FactionId, int> _factionRegard = [];
 
+    /// <summary>
+    /// The other side of every faction's book (D-086): what each holds against the
+    /// bearer, D-023's Infamy axis, kept apart from the regard so the two never
+    /// cancel: a faction can esteem a deed and resent another at once, and both
+    /// show. The raiders' wrath lives here (it was always their count against),
+    /// and the stead's shame joins it as the first home-faction entry.
+    /// </summary>
+    private readonly Dictionary<FactionId, int> _factionInfamy = [];
+
     /// <summary>A faction's count on the bearer: zero until a perceivable deed moves it.</summary>
     public int RegardOf(FactionId faction) => _factionRegard.GetValueOrDefault(faction);
+
+    /// <summary>A faction's count against the bearer (D-086): zero until a perceivable transgression moves it.</summary>
+    public int InfamyOf(FactionId faction) => _factionInfamy.GetValueOrDefault(faction);
 
     /// <summary>
     /// The home stead's regard for the bearer (D-076): local Fame, the first rung
@@ -115,7 +127,10 @@ public sealed class Game
     public int Regard => RegardOf(FactionId.Stead);
 
     /// <summary>The raiders' wrath at the bearer (D-078): the enemy ledger, one notch per raider slain.</summary>
-    public int Wrath => RegardOf(FactionId.Raiders);
+    public int Wrath => InfamyOf(FactionId.Raiders);
+
+    /// <summary>The stead's suspicion of the bearer (D-086): local Infamy, one rung per door pilfered.</summary>
+    public int Shame => InfamyOf(FactionId.Stead);
 
     /// <summary>
     /// Raids the stead has suffered this world (D-079): the raiders acting on
@@ -179,8 +194,16 @@ public sealed class Game
         - (FriendsPrice ? 1 : 0))
         * (World.Oaths.Contains(OathId.HungryRoad) ? 2 : 1);
 
-    /// <summary>Whether the stead holds the bearer a friend (D-080): the rung that opens the friend's price.</summary>
-    private bool FriendsPrice => SteadRegard.RungFor(Regard) >= SteadRegard.FriendRung;
+    /// <summary>
+    /// Whether the stead holds the bearer a friend (D-080): the rung that opens the
+    /// friend's price. Suspicion closes it (D-086): the folk do not extend a
+    /// friend's terms to one held unwelcome, however the deeds once weighed.
+    /// </summary>
+    private bool FriendsPrice => SteadRegard.RungFor(Regard) >= SteadRegard.FriendRung
+        && SteadShame.RungFor(Shame) < SteadShame.UnwelcomeRung;
+
+    /// <summary>Whether the steadholder bars the larder to the bearer (D-086): bread is not sold to a named thief.</summary>
+    public bool LarderBarred => SteadShame.RungFor(Shame) >= SteadShame.BarredRung;
 
     /// <summary>How far one wear event moves the ledger: the spent edge (D-047) doubles it.</summary>
     private int WearStep => World.Oaths.Contains(OathId.SpentEdge) ? 2 : 1;
@@ -763,10 +786,11 @@ public sealed class Game
         UnbindingsLeft = UnbindingsPerWorld + (Standing >= 4 && !hushed ? 1 : 0);
         _layingTarget = null;
         _layingDeclined = false;
-        // The ledgers are this world's alone (D-076, D-078): the far gate leaves
-        // regard and wrath behind with the folk and the dens that kept them, and
-        // the next world starts the bearer at a stranger to both.
+        // The ledgers are this world's alone (D-076, D-078, D-086): the far gate
+        // leaves regard, wrath, and shame behind with the folk and the dens that
+        // kept them, and the next world starts the bearer at a stranger to both.
         _factionRegard.Clear();
+        _factionInfamy.Clear();
         // A fresh world's stores stand whole (D-079), and its raiders' tick
         // counts from this arrival, not from the far side of the arch.
         Raids = 0;
@@ -994,8 +1018,80 @@ public sealed class Game
             return true;
         }
 
+        // The first transgression (D-086): a door with no one behind it, and a
+        // hand that has learned to open things. Repayment outranks theft at a
+        // shared corner: making right comes before more wrong, and a thief who
+        // wants the next door must find an angle their conscience is not standing on.
+        if (Mode == MapMode.Overworld)
+        {
+            foreach (var (dx, dy) in Directions.All8)
+            {
+                var q = Player.Pos.Plus(dx, dy);
+                if (CurrentMap.InBounds(q) && CurrentMap[q] == Terrain.House
+                    && World.PilferedHouses.Contains(q) && !World.RepaidHouses.Contains(q))
+                    return RepayHouse(q);
+            }
+            foreach (var (dx, dy) in Directions.All8)
+            {
+                var q = Player.Pos.Plus(dx, dy);
+                if (CurrentMap.InBounds(q) && CurrentMap[q] == Terrain.House
+                    && !World.PilferedHouses.Contains(q))
+                    return PilferHouse(q);
+            }
+        }
+
         Log.Add(Turn, "There is nothing here to take.");
         return false;
+    }
+
+    /// <summary>
+    /// Pilfering a house (D-086): the first thing the bearer can do that the stead
+    /// counts against them, the transgression the Infamy axis was waiting on. One
+    /// take per door per world, a ration's worth, and in a stead of three houses
+    /// nothing taken stays secret: shame rises one rung per door, narrated the
+    /// moment it lands (D-023's rule), with the way back down named the first time.
+    /// </summary>
+    private bool PilferHouse(Pos house)
+    {
+        if (Player.Rations >= RationCap)
+        {
+            Log.Add(Turn, "The latch would lift. But you carry all a walking body can, and even thieving has its arithmetic.");
+            return false;
+        }
+
+        World.PilferedHouses.Add(house);
+        Player.Rations++;
+        Log.Add(Turn, $"The latch lifts under your thumb. A loaf and a heel of cheese, wrapped rough, and out again before the fire notices. ({Player.Rations} carried)", LogTone.Reward);
+
+        var witness = World.Npcs.FirstOrDefault(n =>
+            Math.Max(Math.Abs(n.Pos.X - Player.Pos.X), Math.Abs(n.Pos.Y - Player.Pos.Y)) <= 4);
+        Log.Add(Turn, witness is not null
+            ? $"{witness.Name} marks you from the lane, and does not look away."
+            : "No eye is on you but the door's. It will not matter: steads count their loaves.", LogTone.Danger);
+
+        RaiseShame(1);
+        return true;
+    }
+
+    /// <summary>
+    /// Restitution (D-086): the designed exit off the shame ladder (D-023's
+    /// no-eternal-stalemates rule), taken at the door the wrong was done, with the
+    /// same key that did it. Coin twice the bread's worth on the sill, and the
+    /// stead's count comes down a door; a repaid house is closed both ways.
+    /// </summary>
+    private bool RepayHouse(Pos house)
+    {
+        if (Player.Coin < SteadShame.RepayCoin)
+        {
+            Log.Add(Turn, $"Making this door right costs {SteadShame.RepayCoin} coin, and you hold {Player.Coin}. The wrong keeps until you can pay for it.");
+            return false;
+        }
+
+        Player.Coin -= SteadShame.RepayCoin;
+        World.RepaidHouses.Add(house);
+        Log.Add(Turn, $"You leave {SteadShame.RepayCoin} coin on the sill, weighted under a stone: the loaf, and the trust, both paid for.", LogTone.Reward);
+        LowerShame(1);
+        return true;
     }
 
     /// <summary>
@@ -1231,8 +1327,9 @@ public sealed class Game
     {
         var offers = new List<(TradeGood, string, string)>();
         if (npc.Id == "npc_steadholder")
-            offers.Add((TradeGood.Ration, "",
-                $"Buy a ration ({RationPrice} coin{(FriendsPrice ? ", a friend's price" : "")})"));
+            offers.Add((TradeGood.Ration, "", LarderBarred
+                ? "Buy a ration (the larder is barred to you)"
+                : $"Buy a ration ({RationPrice} coin{(FriendsPrice ? ", a friend's price" : "")})"));
         // The herbwife keeps a stillroom (D-081): the second bench, proving the
         // wood's-edge pattern (D-071) generalizes. She is the simples' true
         // buyer, and pays the apothecary's price where the woodward pays a
@@ -1562,6 +1659,13 @@ public sealed class Game
 
     private void TryBuyRation()
     {
+        // The barred larder (D-086): a named thief is not sold bread. The refusal
+        // is the rung's own currency, distinct from the price the raids move.
+        if (LarderBarred)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Not to you. The stead knows where its loaves went, and my larder is not for the hand that took them.\"");
+            return;
+        }
         int price = RationPrice;
         if (Player.Rations >= RationCap)
         {
@@ -2994,6 +3098,15 @@ public sealed class Game
     /// </summary>
     private void GiveFriendsWelcome()
     {
+        // Suspicion holds the purse shut (D-086): a stead does not pool coin for a
+        // hand it has watched in its own larders, whatever that hand has slain.
+        // The withholding is narrated, per D-023's rule: a boon lost silently is a
+        // change the player cannot perceive.
+        if (SteadShame.RungFor(Shame) >= SteadShame.UnwelcomeRung)
+        {
+            Log.Add(Turn, $"There would be a purse for the one who did this, in another year. The folk of {World.SettlementName} look at you, and count their doors, and keep their coin.", LogTone.Info);
+            return;
+        }
         const int giftCoin = 5;
         Player.Coin += giftCoin;
         Log.Add(Turn, $"The folk of {World.SettlementName} gather what coin they can spare for the one who has stood for them: a purse of {giftCoin}, pressed on you with both hands.", LogTone.Reward);
@@ -3011,7 +3124,7 @@ public sealed class Game
     {
         if (amount <= 0) return;
         int rungBefore = RaiderWrath.RungFor(Wrath);
-        _factionRegard[FactionId.Raiders] = Wrath + amount;
+        _factionInfamy[FactionId.Raiders] = Wrath + amount;
         int rungAfter = RaiderWrath.RungFor(Wrath);
         if (rungAfter > rungBefore)
         {
@@ -3027,6 +3140,59 @@ public sealed class Game
             Player.WrathLineHeard = true;
             Log.Add(Turn, "\"The stead is not the only ledger kept on you, bearer. The dens keep one too, and hate is also a kind of regard.\"", LogTone.Aegis);
         }
+    }
+
+    /// <summary>
+    /// The stead marks a wrong done under its roofs (D-086): the home faction's
+    /// Infamy, the shame of the doors. Every rise crosses a rung by construction
+    /// (one door, one rung), so every rise is named aloud; each rung crossed is
+    /// written to the graph as permanent history (D-085's seam from the dark
+    /// side), because a stead remembers having watched a bearer even after the
+    /// sill is paid. The first shame ever earned names the way back down, and
+    /// draws the one line the Aegis keeps for it.
+    /// </summary>
+    private void RaiseShame(int amount)
+    {
+        if (amount <= 0) return;
+        int rungBefore = SteadShame.RungFor(Shame);
+        _factionInfamy[FactionId.Stead] = Shame + amount;
+        int rungAfter = SteadShame.RungFor(Shame);
+        if (rungAfter > rungBefore)
+        {
+            Log.Add(Turn, $"In {World.SettlementName} you are {SteadShame.TitleOf(Shame)} now.", LogTone.Danger);
+            for (int rung = rungBefore + 1; rung <= rungAfter; rung++)
+            {
+                string subject = rung switch { 1 => "watched", 2 => "unwelcome", _ => "thief" };
+                if (!World.Facts.Exists("shame", subject))
+                    World.Facts.Add("shame", subject, World.SettlementName,
+                        $"In {World.SettlementName} the bearer has been {SteadShame.TitleOf(SteadShame.Threshold(rung))}.");
+            }
+        }
+        if (rungBefore == 0)
+            Log.Add(Turn, "(What is taken can be made right at the door it was taken from: the same hand, and coin twice the loaf's worth on the sill.)", LogTone.Info);
+        if (!Player.ShameLineHeard)
+        {
+            Player.ShameLineHeard = true;
+            Log.Add(Turn, "\"I hold you whatever you carry, bearer. But what is taken is carried too, and it does not lighten on the road.\"", LogTone.Aegis);
+        }
+    }
+
+    /// <summary>
+    /// The stead lets a count come down (D-086): restitution walking the shame
+    /// ladder back, one door at a time, each step named so the easing is felt the
+    /// moment it lands. At zero the book is even, and everything suspicion closed
+    /// (the friend's price, the larder, the hearthtale's telling) stands open again.
+    /// </summary>
+    private void LowerShame(int amount)
+    {
+        if (amount <= 0 || Shame <= 0) return;
+        int rungBefore = SteadShame.RungFor(Shame);
+        _factionInfamy[FactionId.Stead] = Math.Max(0, Shame - amount);
+        int rungAfter = SteadShame.RungFor(Shame);
+        if (rungAfter < rungBefore)
+            Log.Add(Turn, Shame == 0
+                ? $"Word gets round the well by morning. The stead's book on you is even again, and the doors of {World.SettlementName} stop watching you pass."
+                : $"Word gets round the well by morning. In {World.SettlementName} you are {SteadShame.TitleOf(Shame)} now, and no worse.", LogTone.Reward);
     }
 
     /// <summary>
@@ -4010,6 +4176,8 @@ public sealed class Game
         Wrath: Wrath,
         WrathTitle: RaiderWrath.TitleOf(Wrath),
         Raids: Raids,
+        Shame: Shame,
+        ShameTitle: SteadShame.TitleOf(Shame),
         Rations: Player.Rations,
         Hide: Player.Hide,
         RawMeat: Player.RawMeat,
@@ -4140,6 +4308,8 @@ public sealed record Snapshot(
     int Wrath,
     string WrathTitle,
     int Raids,
+    int Shame,
+    string ShameTitle,
     int Rations,
     int Hide,
     int RawMeat,

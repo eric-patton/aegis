@@ -550,6 +550,9 @@ public static class Presenter
         if (game.Regard > 0) Line($" {SteadRegard.TitleOf(game.Regard)}", Hue.Green);
         // The raiders' wrath (D-078): the enemy ledger, in the enemy's color.
         if (game.Wrath > 0) Line($" {RaiderWrath.TitleOf(game.Wrath)}", Hue.Red);
+        // The stead's suspicion (D-086): the home ledger's dark side, beside the
+        // regard it never cancels: a friend and watched can both be true, and show.
+        if (game.Shame > 0) Line($" {SteadShame.TitleOf(game.Shame)}", Hue.Red);
         if (p.Weapon is { } wpn) Line($"Wpn {wpn.Name}{(wpn.Worn ? "!" : "")}", wpn.Worn ? Hue.Red : Hue.Gray);
         if (p.Bow is { } bow) Line($"Bow {bow.Name}{(bow.Worn ? "!" : "")}", bow.Worn ? Hue.Red : Hue.Gray);
         if (p.Armor is { } arm) Line($"Arm {arm.Name}{(arm.Worn ? "!" : "")}", arm.Worn ? Hue.Red : Hue.Gray);

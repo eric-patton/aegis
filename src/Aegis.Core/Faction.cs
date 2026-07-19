@@ -95,6 +95,51 @@ public static class RaiderWrath
 }
 
 /// <summary>
+/// The stead's suspicion of the bearer (D-086): the stead's own Infamy axis,
+/// D-023's dual reputation completed on the home faction's side. It is earned
+/// only one way so far, the first transgression verb: pilfering a house. The
+/// stead keeps three doors, and in a place that small nothing taken stays
+/// secret, so the ladder is the plainest in the game: one rung per door robbed
+/// (thresholds 1, 2, 3). It runs beside the regard, never against it: a bearer
+/// can be a friend to the stead and watched in it at once, and both titles say
+/// so. Like every ledger it is this world's alone and rebuilt by replay. The
+/// designed exit (D-023's rule) is restitution: coin left on the sill it was
+/// taken from walks the ladder back down, door by door.
+/// </summary>
+public static class SteadShame
+{
+    public const int MaxRung = 3;
+
+    /// <summary>The rung at which the folk stop extending a friend's terms (D-086): the purse and the price close.</summary>
+    public const int UnwelcomeRung = 2;
+
+    /// <summary>The rung at which the steadholder bars the larder (D-086): bread is not sold to a named thief.</summary>
+    public const int BarredRung = 3;
+
+    /// <summary>What one door's restitution costs: the loaf, and the trust, both paid for.</summary>
+    public const int RepayCoin = 6;
+
+    /// <summary>Shame required for a rung: 1, 2, 3. Three doors, three rungs; the stead counts its own.</summary>
+    public static int Threshold(int rung) => rung;
+
+    public static int RungFor(int shame)
+    {
+        int rung = 0;
+        while (rung < MaxRung && shame >= Threshold(rung + 1)) rung++;
+        return rung;
+    }
+
+    /// <summary>What the stead holds the bearer for it, in the words used at the well.</summary>
+    public static string TitleOf(int shame) => RungFor(shame) switch
+    {
+        1 => "watched in this stead",
+        2 => "unwelcome here",
+        3 => "named a thief here",
+        _ => "",
+    };
+}
+
+/// <summary>
 /// The raids themselves (D-079): the first coarse-tick faction event, D-023's
 /// living-world half begun. While the camp stands, the raiders act: every tick
 /// of turns they come down on the stead by night, each raid writing a fact,

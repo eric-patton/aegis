@@ -124,10 +124,14 @@ namespace Aegis.Core;
 /// v37 when D-087 opened the stead's teaching: at the own rung the lessons are
 /// shown freely, so a v36 journal that bought a showing while the stead held
 /// the bearer its own paid coin this version does not take, and replays richer.
+/// v38 when D-088 answered the faction facts with content: three storylets
+/// enter the draws (the named thief confronted, the hearthtale carried on the
+/// lane, the cellar shown to the stead's own), so a v37 journal's talk and
+/// lane events can resolve to different winners from the first eligible hook.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 37;
+    public const int Version = 38;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

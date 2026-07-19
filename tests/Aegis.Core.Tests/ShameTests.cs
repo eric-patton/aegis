@@ -213,6 +213,52 @@ public class ShameTests
         Assert.Contains(game.Log.Recent(4), e => e.Text.Contains("A door ahead of you closes"));
     }
 
+    // ---- D-088: the stead says its piece to a named thief ----
+
+    [Fact]
+    public void TheReckoning_IsSaidToTheThiefsFace_AndOnlyOnce()
+    {
+        var game = new Game(42);
+        game.Player.Coin = 0;
+        RobDoors(game, 3); // named a thief
+
+        var villagers = game.World.Npcs.Where(n => n.Kind == NpcKind.Villager).Take(2).ToList();
+        NpcTests.BumpNpc(game, villagers[0]);
+        Assert.Contains(game.Log.Recent(10), e => e.Text.Contains("now it is said"));
+        Assert.True(game.World.Facts.Exists("shame", "confronted"));
+
+        // The piece is said once per stead; the next door knows it has been said.
+        game.ApplyKey(' ');
+        NpcTests.BumpNpc(game, villagers[1]);
+        Assert.Single(game.Log.Entries, e => e.Text.Contains("now it is said"));
+    }
+
+    [Fact]
+    public void TheReckoning_WaitsForTheThirdDoor()
+    {
+        var game = new Game(42);
+        game.Player.Coin = 0;
+        RobDoors(game, 2); // unwelcome, not yet named a thief
+
+        NpcTests.BumpNpc(game, game.World.Npcs.First(n => n.Kind == NpcKind.Villager));
+        Assert.DoesNotContain(game.Log.Entries, e => e.Text.Contains("now it is said"));
+    }
+
+    [Fact]
+    public void TheReckoning_IsStilledByRestitution()
+    {
+        var game = new Game(42);
+        game.Player.Coin = 0;
+        RobDoors(game, 3);
+        game.Player.Coin = SteadShame.RepayCoin;
+        AtTheDoors(game);
+        game.Apply(Command.Grab); // one sill paid: unwelcome, no longer a named thief
+        Assert.Equal(2, game.Shame);
+
+        NpcTests.BumpNpc(game, game.World.Npcs.First(n => n.Kind == NpcKind.Villager));
+        Assert.DoesNotContain(game.Log.Entries, e => e.Text.Contains("now it is said"));
+    }
+
     [Fact]
     public void TheCrossing_LeavesTheShameBehind()
     {
@@ -277,7 +323,7 @@ public class ShameTests
         Directions.All8.Select(d => p.Plus(d.dx, d.dy)).Where(map.InBounds);
 
     /// <summary>One step that still ends beside a house, so the NearHouse hook fires.</summary>
-    private static void StepStillNearAHouse(Game game)
+    internal static void StepStillNearAHouse(Game game)
     {
         var map = game.World.Overworld;
         foreach (var (dx, dy) in Directions.All8)

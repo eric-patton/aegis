@@ -177,6 +177,70 @@ public static class StoryletCatalog
                 "The stead's own story, told to a friend: the hard winter, the unsaid name, the tarred door-posts."),
         },
 
+        // The stead says its piece (D-088): suspicion acting beyond commerce at
+        // last. The shame fact's first consumer from the confrontation side:
+        // a named thief is told so, to their face, once per stead. Gated on the
+        // live rung, not the fact alone, so paying even one sill back ends the
+        // saying before it lands; the fact it writes is history for later
+        // content (a making-right beat, a grudge carried to the next talk).
+        new Storylet
+        {
+            Id = "the-steads-reckoning",
+            Trigger = StoryletTrigger.Talk,
+            Priority = 12,
+            Requires = [new FactPattern("shame", "thief")],
+            When = g => g.TalkNpc?.Kind == NpcKind.Villager
+                && SteadShame.RungFor(g.Shame) >= SteadShame.BarredRung,
+            Lines =
+            [
+                ("There is no good day this time. They look past your shoulder while they speak, at the doors you opened, and their voice is the whole stead's voice: \"Three sills stand robbed, and the name said at the well was yours. Make them right, or keep to the road and off our ground. That is the stead's piece, and now it is said.\"", LogTone.Danger),
+                ("\"No knife in that, bearer, and none needed. A stead this small is one ledger with doors, and you are written in it. I carry what you took the same as what you earned; the way back has not moved. The same sills. The same coin.\"", LogTone.Aegis),
+            ],
+            Effect = g => g.World.Facts.Add("shame", "confronted", g.World.SettlementName,
+                "The stead said its piece to the bearer's face: three sills robbed, the name given at the well, the road named as theirs to keep to."),
+        },
+
+        // The telling carried (D-088): the rumor fact's first consumer, the
+        // hearthtale mattering after the hour it was told. Nothing is gained
+        // and nothing needs to be: the payoff is the lane reading differently
+        // because of a story, which is the whole wager of the fact graph.
+        new Storylet
+        {
+            Id = "the-tale-carried",
+            Trigger = StoryletTrigger.NearHouse,
+            Priority = 6,
+            Requires = [new FactPattern("rumor", "stead_hearthtale")],
+            When = g => g.Shame == 0,
+            Lines =
+            [
+                ("You pass the tarred door-posts on the lane, black to head height, and for the first time you know which winter taught the stead that trick and what the learning cost. A woman splitting kindling follows your look. She does not explain them. To you, now, she does not have to.", LogTone.Info),
+                ("\"Mark that, bearer: not a word passed, and something was still said. A story told once keeps telling. You walk the same lane you first came up, and not one stone of it reads the same.\"", LogTone.Aegis),
+            ],
+        },
+
+        // The showing above the showings (D-088): the own rung's narrative
+        // sibling to D-087's teaching, and the regard fact's first storylet
+        // consumer from the top of the ladder. The friend rung is told a story;
+        // the own rung is shown a place. Priority 7, one under the hearthtale,
+        // so when both rungs cross in one stroke the lesser telling leads and
+        // the ladder keeps its order. Suspicion closes it on the live count,
+        // same as every fence in the stead's gift.
+        new Storylet
+        {
+            Id = "what-the-stead-keeps",
+            Trigger = StoryletTrigger.Talk,
+            Priority = 7,
+            Requires = [new FactPattern("regard", "own")],
+            When = g => g.TalkNpc?.Kind == NpcKind.Villager && g.Shame == 0,
+            Lines =
+            [
+                ("A child is sent to fetch you, and nobody says where you are walking. Past the byres, under the turf bank, a low door you have passed a dozen times and never once marked: the stead's deep cellar. Seed-corn hung in slings, straw laid for beds, water in stone, room enough for every child in the valley to wait out a burning night. \"Now you know where it is,\" is all that is said. \"That is the whole of the showing.\"", LogTone.Info),
+                ("\"Weigh what this is, bearer. Coin they lend a friend, and craft they show their own; this is neither. This is where the stead means to keep its living through the worst night it can imagine, and they have put the door of it in your knowing. There is no rung above this one.\"", LogTone.Aegis),
+            ],
+            Effect = g => g.World.Facts.Add("secret", "stead_cellar", g.World.SettlementName,
+                "The stead's deep cellar under the turf bank: seed-corn, straw beds, and room for the children, its door shown only to the stead's own."),
+        },
+
         // First conversation with anyone, once per character: the Aegis notices people.
         new Storylet
         {

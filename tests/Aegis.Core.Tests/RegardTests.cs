@@ -422,6 +422,79 @@ public class RegardTests
         Assert.Contains(game.Log.Recent(15), e => e.Text.Contains("little left they could show you"));
     }
 
+    // ---- D-088: the facts answered: the tale carried, and the stead's keeping ----
+
+    [Fact]
+    public void TheTaleCarried_FollowsTheTelling_OnTheLane()
+    {
+        var game = new Game(42);
+        game.Debug_ClearCamp(); // the friend rung
+        NpcTests.BumpNpc(game, game.World.Npcs.First(n => n.Kind == NpcKind.Villager));
+        Assert.True(game.World.Facts.Exists("rumor", "stead_hearthtale"));
+        game.ApplyKey(' ');
+
+        ShameTests.StepStillNearAHouse(game);
+        Assert.Contains(game.Log.Recent(4), e => e.Text.Contains("tarred door-posts"));
+
+        // Once per world: the lane does not repeat itself.
+        ShameTests.StepStillNearAHouse(game);
+        Assert.Single(game.Log.Entries, e => e.Text.Contains("tarred door-posts"));
+    }
+
+    [Fact]
+    public void TheSteadsKeeping_IsShownToTheSteadsOwn()
+    {
+        var game = CrossTo(42, 2);
+        game.Debug_ClearSite(SiteKind.Barrow);
+        game.Debug_ClearCamp(); // regard 5: the stead's own
+
+        // Higher-priority talk beats (the hearthtale, the known face) take their
+        // turns first; the showing follows within a few doors.
+        var villagers = game.World.Npcs.Where(n => n.Kind == NpcKind.Villager).Take(2).ToList();
+        for (int i = 0; i < 4 && !game.World.Facts.Exists("secret", "stead_cellar"); i++)
+        {
+            NpcTests.BumpNpc(game, villagers[i % villagers.Count]);
+            game.ApplyKey(' ');
+        }
+
+        Assert.Contains(game.Log.Entries, e => e.Text.Contains("the whole of the showing"));
+        Assert.True(game.World.Facts.Exists("secret", "stead_cellar"));
+    }
+
+    [Fact]
+    public void TheSteadsKeeping_IsNotShownBelowTheOwnRung()
+    {
+        var game = new Game(42);
+        game.Debug_ClearCamp(); // a friend, not the stead's own
+
+        var villagers = game.World.Npcs.Where(n => n.Kind == NpcKind.Villager).Take(2).ToList();
+        NpcTests.BumpNpc(game, villagers[0]); // the hearthtale takes the first turn
+        game.ApplyKey(' ');
+        NpcTests.BumpNpc(game, villagers[1]);
+
+        Assert.DoesNotContain(game.Log.Entries, e => e.Text.Contains("the whole of the showing"));
+        Assert.False(game.World.Facts.Exists("secret", "stead_cellar"));
+    }
+
+    [Fact]
+    public void TheSteadsKeeping_IsNotShownToWatchedHands()
+    {
+        var game = CrossTo(42, 2);
+        game.Player.Rations = 0; // room in the pack: a full pack turns the thieving hand away
+        ShameTests.RobDoors(game, 1); // watched: the door stays unmarked
+        game.Debug_ClearSite(SiteKind.Barrow);
+        game.Debug_ClearCamp(); // the own rung crossed under suspicion
+
+        for (int i = 0; i < 3; i++)
+        {
+            NpcTests.BumpNpc(game, game.World.Npcs.First(n => n.Kind == NpcKind.Villager));
+            game.ApplyKey(' ');
+        }
+
+        Assert.False(game.World.Facts.Exists("secret", "stead_cellar"));
+        Assert.DoesNotContain(game.Log.Entries, e => e.Text.Contains("the whole of the showing"));
+    }
+
     /// <summary>Pays every robbed sill: for each unrepaid door, an angle beside it, and the grab that leaves the coin.</summary>
     private static void RepayAllDoors(Game game)
     {

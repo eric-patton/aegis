@@ -231,6 +231,47 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-108: Knucklebones at the hearth: town life opens on a wagered board (2026-07-20)
+The last unopened activity family (D-006) breaks ground with the vision's first-named town
+verb: gambling, chosen over carousing (mostly a coin-for-regard dial, and regard has honest
+roads; a round-standing verb can join the hearth scene later) and over tournaments, trading,
+and property (all wanting infrastructure that does not exist yet). The game is knucklebones
+at the skald's hearth, because the songhall is where men drink and game already and the
+skald's offer list had room under the digit law where the villagers' shared nine did not
+(the herbwife's topics alone can fill eight). One always-listed digit after the patron
+deeds: a cast of knucklebones, three coin the throw. The stake goes down before the first
+cast and is spoken for from there: the board is its own menu (the trade-menu pattern,
+D-071), the bearer's three bones lie face-up, and the one real decision is informed by
+numbers on the table: stand on what lies there, or sweep it up for the one throw back and
+live with the second cast. Standing is any key but the throw, so a live board never traps
+a hand and never refunds a committed stake, and the pilot's menu-escape key resolves
+rather than wedges. The skald answers with the house's odds played plainly and predictably
+(stands at eleven or better, sweeps up anything under, announced when it happens), so the
+game can be read and played against rather than merely drawn: the reroll decision has a
+real edge to reason about. High board takes the pot, even boards return the stakes.
+Turn-free like every menu: an evening's texture, not a clock. The world keeps a net
+ledger (BonesNet, per-world, replay-rebuilt, wiped at the crossing), and a stead this
+small talks when it runs steep either way: at nine coin up the lucky_hand fact and a Talk
+storylet gated on the live net like the levy's ask (a streak given back across the board
+ends the talk; the fact stays history), at nine down the light_purse fact, written for a
+future consumer. Coin's first pure sink-or-swell that is not a shop. Save v55 to v56: the
+new digit stakes coin where a v55 key fell through, and each game draws six to twelve
+dice. Verified the established ways: 535 tests green (ten new BonesTests on pinned seeds,
+probed once and stable: the stake asked first, the stake down and the bones face-up, the
+three outcomes, the once-only throw back, the skald's plain odds both ways, the lucky
+hand talked about while the streak stands and not after, and the crossing wiping the
+board); twins hash-identical; sim replay exact (cycle 13, 11750 turns, 1 death, bonesNet
+0); baselines byte-identical on master and all four sweep seeds (the bones digit appended
+after the laying so no digit shifts, and the pilot never gambles: covered by tests, the
+D-107 precedent). Options set aside: carousing leading the family (above; a small
+round-standing verb may join the hearth later); the steadholder or a villager keeping the
+game (their digits are full, and the digit law is load-bearing, D-041); a pure coin-flip
+(the vision asks for decision points; the visible cast plus the readable house line is
+the smallest real game); an exitable live board (walking away from a committed stake is
+either a refund exploit or a confiscation surprise; stand-by-default is both honest and
+escapable). Deferred: carousing; a second game or higher-stakes table deeper in the
+chain; the light_purse consumer; tournaments, trading, property (infrastructure first).
+
 ### D-107: The light hand: pickpocketing, the Sleight skill, and the unified ladder (2026-07-20)
 The crime family opens in earnest: after four sessions in the faction pillar, the third of
 the four activity families (D-006) gets its second verb and its first skill. The fork was

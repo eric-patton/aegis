@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones }
 
 /// <summary>
 /// The deterministic game engine. No console, no I/O, no wall clock: state advances
@@ -122,6 +122,19 @@ public sealed class Game
     /// <summary>A vendor's own trade menu (D-071), reached from one digit of the talk
     /// menu, with its own nine digits for what does not fit the shared topics.</summary>
     public bool InTradeMenu { get; private set; }
+
+    /// <summary>The knucklebones board (D-108): open at the skald's hearth, the stakes down.</summary>
+    public bool InBonesMenu { get; private set; }
+
+    /// <summary>The bearer's cast as it lies (D-108): three bones face-up on the board.</summary>
+    public IReadOnlyList<int> BonesCast => _bonesCast;
+    private readonly List<int> _bonesCast = [];
+
+    /// <summary>Whether the one throw back has been taken (D-108): a second cast must lie as it lands.</summary>
+    public bool BonesRethrown { get; private set; }
+
+    /// <summary>The world's ledger on the hearth game (D-108): net coin won or lost. Per-world, replay-rebuilt.</summary>
+    public int BonesNet { get; private set; }
 
     /// <summary>The keeping's choice menu (D-039), open only at the Hearth itself.</summary>
     public bool InThresholdMenu { get; private set; }
@@ -835,6 +848,13 @@ public sealed class Game
             return;
         }
 
+        if (InBonesMenu)
+        {
+            HandleBonesMenuKey(key);
+            KeyApplied?.Invoke(key);
+            return;
+        }
+
         if (InTradeMenu)
         {
             HandleTradeMenuKey(key);
@@ -1401,6 +1421,7 @@ public sealed class Game
         LevyStands = false;
         WatchStands = false;
         _risenCount = 0;
+        BonesNet = 0;
         _worldStartTurn = Turn;
         _friendsPriceNamed = false;
 
@@ -2152,6 +2173,10 @@ public sealed class Game
             // bearer home is sung to rest where the songs live, and the walk
             // out to the hall is the pilgrimage.
             offers.Add((TradeGood.Laying, "", LayingLabel()));
+            // The hearth game (D-108): town life's first activity, kept where
+            // men drink and game already. Always listed, after the deeds, so
+            // no digit shifts (D-041).
+            offers.Add((TradeGood.Bones, "", $"A cast of knucklebones ({Knucklebones.Stake} coin the throw)"));
         }
         return offers;
     }
@@ -2808,6 +2833,101 @@ public sealed class Game
 
     private const string UnbinderFarewell = "Nothing needs to be counted. Walk well.";
 
+    /// <summary>
+    /// Sitting down to the bones (D-108): the stake goes on the board before
+    /// the first cast, matched from the skald's own purse, and from there the
+    /// coin is spoken for: there is no stepping away from a live board, only
+    /// standing on what lies there. Turn-free like every menu; the game is an
+    /// evening's texture, not a clock.
+    /// </summary>
+    private void TryPlayBones()
+    {
+        if (Player.Coin < Knucklebones.Stake)
+        {
+            Log.Add(Turn, $"The stake is {Knucklebones.Stake} coin, and you hold {Player.Coin}. {TalkNpc!.Name} smiles without unkindness: \"The bones do not roll on promises.\"");
+            return;
+        }
+
+        Player.Coin -= Knucklebones.Stake;
+        InTalkMenu = false;
+        InBonesMenu = true;
+        BonesRethrown = false;
+        Log.Add(Turn, $"{TalkNpc!.Name} sweeps a board-end clear and sets {Knucklebones.Stake} coin against yours. \"The old game, then. Three bones, one throw back if you dare it, high board takes the pot.\"");
+        CastBones();
+    }
+
+    private void CastBones()
+    {
+        _bonesCast.Clear();
+        for (int i = 0; i < 3; i++) _bonesCast.Add(_combatRng.Range(1, 7));
+        Log.Add(Turn, $"Your cast: {string.Join(", ", _bonesCast)}. The board reads {_bonesCast.Sum()}.");
+    }
+
+    /// <summary>
+    /// The board's one choice (D-108): '2' sweeps the bones up for the one
+    /// throw back; anything else stands on what lies there and lets the skald
+    /// answer. Standing as the default keeps a live board escapable without
+    /// ever refunding a committed stake.
+    /// </summary>
+    private void HandleBonesMenuKey(char key)
+    {
+        if (key == '2' && !BonesRethrown)
+        {
+            BonesRethrown = true;
+            Log.Add(Turn, "You sweep the bones up and throw again. However they land now, they lie.");
+            CastBones();
+            return;
+        }
+        ResolveBones();
+    }
+
+    /// <summary>
+    /// The skald's answer and the pot (D-108): the house plays its odds
+    /// plainly (stands at its line, sweeps up anything under), so the game
+    /// can be read and played against. The world's net rides a per-world
+    /// ledger, and a stead this small talks when it runs steep either way.
+    /// </summary>
+    private void ResolveBones()
+    {
+        int mine = _bonesCast.Sum();
+        var theirs = new List<int> { _combatRng.Range(1, 7), _combatRng.Range(1, 7), _combatRng.Range(1, 7) };
+        Log.Add(Turn, $"{TalkNpc!.Name} casts: {string.Join(", ", theirs)}. The board reads {theirs.Sum()}.");
+        if (theirs.Sum() < Knucklebones.SkaldStandsAt)
+        {
+            theirs = [_combatRng.Range(1, 7), _combatRng.Range(1, 7), _combatRng.Range(1, 7)];
+            Log.Add(Turn, $"\"Not those.\" The skald sweeps them up and throws again: {string.Join(", ", theirs)}, for {theirs.Sum()}.");
+        }
+
+        if (mine > theirs.Sum())
+        {
+            Player.Coin += 2 * Knucklebones.Stake;
+            BonesNet += Knucklebones.Stake;
+            Log.Add(Turn, $"High board. The pot slides to your side of the table: {2 * Knucklebones.Stake} coin off the board. ({Player.Coin} carried)", LogTone.Reward);
+            if (BonesNet >= Knucklebones.TalkedAboutAt && !World.Facts.Exists("game", "lucky_hand"))
+            {
+                World.Facts.Add("game", "lucky_hand", World.SettlementName,
+                    $"At the hearth in {World.SettlementName} the bearer's knucklebones have run winner throw after throw, and the luck is being talked about.");
+                Log.Add(Turn, "Luck like that gets counted in a stead this small.", LogTone.Info);
+            }
+        }
+        else if (mine < theirs.Sum())
+        {
+            BonesNet -= Knucklebones.Stake;
+            Log.Add(Turn, $"Low board. Your coin crosses the table without looking back. \"The bones owe no one,\" the skald says, not unkindly.", LogTone.Danger);
+            if (BonesNet <= -Knucklebones.TalkedAboutAt && !World.Facts.Exists("game", "light_purse"))
+                World.Facts.Add("game", "light_purse", World.SettlementName,
+                    $"At the hearth in {World.SettlementName} the bearer's coin has crossed the board to the skald's purse, throw after throw.");
+        }
+        else
+        {
+            Player.Coin += Knucklebones.Stake;
+            Log.Add(Turn, "Even boards. The stakes go home the way they came, and the game owes nothing either way.");
+        }
+
+        InBonesMenu = false;
+        InTalkMenu = true; // the hearth stays warm: another throw is one digit away
+    }
+
     private void HandleTalkMenuKey(char key)
     {
         if (key >= '1' && key <= '0' + _topics.Count)
@@ -2833,6 +2953,7 @@ public sealed class Game
                 case TradeGood.Trade: OpenTradeMenu(); break;
                 case TradeGood.Brace: TryForgeBrace(); break;   // the hand's road back (D-098)
                 case TradeGood.Laying: TryLayHaunting(); break; // the look's road back (D-098)
+                case TradeGood.Bones: TryPlayBones(); break;    // the hearth game (D-108)
             }
             return;
         }
@@ -6611,6 +6732,8 @@ public sealed class Game
         InTalkMenu: InTalkMenu,
         InUnbindMenu: InUnbindMenu,
         InTradeMenu: InTradeMenu,
+        InBonesMenu: InBonesMenu,
+        BonesNet: BonesNet,
         InThresholdMenu: InThresholdMenu,
         InLayingMenu: InLayingMenu,
         InGearMenu: InGearMenu,
@@ -6764,6 +6887,8 @@ public sealed record Snapshot(
     bool InTalkMenu,
     bool InUnbindMenu,
     bool InTradeMenu,
+    bool InBonesMenu,
+    int BonesNet,
     bool InThresholdMenu,
     bool InLayingMenu,
     bool InGearMenu,

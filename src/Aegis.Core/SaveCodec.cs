@@ -200,10 +200,15 @@ namespace Aegis.Core;
 /// skill) where a v54 journal's stray 'p' fell through as nothing, and the
 /// first shame's way-back hint moved from the ladder to the deed that earned
 /// it, so old journals holding 'p' replay into different bearers.
+/// v56 when D-108 set the bones on the skald's board: the hearth digit is a
+/// new always-listed entry after the deeds (a v55 key there fell through as
+/// nothing and now stakes coin), the board is its own menu whose every key
+/// means something, each game draws six to twelve dice, and a winning streak
+/// puts a new storylet in the talk draws.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 55;
+    public const int Version = 56;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

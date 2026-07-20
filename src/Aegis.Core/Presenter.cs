@@ -47,6 +47,7 @@ public static class Presenter
         if (game.InTalkMenu) DrawTalkMenu(frame, game, layout);
         if (game.InUnbindMenu) DrawUnbindMenu(frame, game, layout);
         if (game.InTradeMenu) DrawTradeMenu(frame, game, layout);
+        if (game.InBonesMenu) DrawBonesMenu(frame, game, layout);
         if (game.InThresholdMenu) DrawThresholdMenu(frame, layout);
         if (game.InLayingMenu) DrawLayingMenu(frame, game, layout);
         if (game.InGearMenu) DrawGearMenu(frame, game, layout);
@@ -288,6 +289,29 @@ public static class Presenter
 
         frame.Write(x0 + 2, y0 + boxH - 2,
             $"1-{game.TradeOffers.Count} choose; any other key to step back", Hue.DarkGray);
+    }
+
+    /// <summary>
+    /// The bones on the board (D-108): the cast face-up, the one choice named.
+    /// Standing is any key but the throw, so a live board never traps a hand.
+    /// </summary>
+    private static void DrawBonesMenu(Frame frame, Game game, Layout layout)
+    {
+        var npc = game.TalkNpc;
+        if (npc is null) return;
+
+        const int boxW = 46;
+        const int boxH = 8;
+        int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
+        int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
+
+        DrawBox(frame, x0, y0, boxW, boxH);
+        frame.Write(x0 + 2, y0 + 1, $"Knucklebones | {npc.Name} the {npc.Role}", Hue.White);
+        frame.Write(x0 + 2, y0 + 2, $"The pot holds {2 * Knucklebones.Stake} coin", Hue.Cyan);
+        frame.Write(x0 + 2, y0 + 4, $"Your cast: {string.Join("  ", game.BonesCast)}   ({game.BonesCast.Sum()})", Hue.Yellow);
+        frame.Write(x0 + 2, y0 + boxH - 2, game.BonesRethrown
+            ? "the throw is spent; any key stands the board"
+            : "2 throw again (once); any other key stands", Hue.DarkGray);
     }
 
     /// <summary>

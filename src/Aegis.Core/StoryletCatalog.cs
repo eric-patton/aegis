@@ -238,6 +238,24 @@ public static class StoryletCatalog
             ],
         },
 
+        // The lucky hand (D-108): the hearth game's winnings perceived by the
+        // stead, gated on the live net like the levy's ask, so a streak given
+        // back across the board ends the talk of it. The fact stays history
+        // either way; the talking rides the standing luck.
+        new Storylet
+        {
+            Id = "the-lucky-hand",
+            Trigger = StoryletTrigger.Talk,
+            Priority = 8,
+            Requires = [new FactPattern("game", "lucky_hand")],
+            When = g => g.BonesNet >= Knucklebones.TalkedAboutAt && g.TalkNpc?.Kind == NpcKind.Villager,
+            Lines =
+            [
+                ("They nod toward the songhall before they say anything else. \"You are the one whose bones keep coming up, then. The skald has stood rounds on lighter purses than the one you have made him. Sit at that board with my husband and I will send you home in your shirt, mind.\"", LogTone.Info),
+                ("\"Luck is also a kind of regard, bearer, though no ledger I keep. The stead counts what crosses a table the same as what crosses a fold wall: aloud, and to everyone.\"", LogTone.Aegis),
+            ],
+        },
+
         // The telling carried (D-088): the rumor fact's first consumer, the
         // hearthtale mattering after the hour it was told. Nothing is gained
         // and nothing needs to be: the payoff is the lane reading differently

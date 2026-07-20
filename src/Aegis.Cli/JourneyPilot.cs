@@ -39,6 +39,11 @@ namespace Aegis.Cli;
 /// as the price is in hand: the hand braced at the forge, the eye seen to at the stillroom,
 /// and what haunts sung to rest at the hall door, the laying's essence held back from the
 /// shrine's raising until it is paid.
+/// It keeps its feet and its medicine now too (D-094, D-090): the footing set to what the
+/// body can pay for (pressing while the blood is high, guarded when it runs low, reset free
+/// on quiet ground, and mid-fight only the one-press drop from pressing to guarded is ever
+/// bought at the price of the turn), and a vial or two steeped from its own sprigs at the
+/// stillroom before the rest are sold, drunk where the road hurts.
 ///
 /// It is a pure function of game state (and the runner's skip-set, which is itself
 /// derived deterministically), so a seeded run is perfectly reproducible: the same seed
@@ -119,6 +124,12 @@ public static class JourneyPilot
         // the very next blow; and because it is turn-free it is safe even mid-fight, no
         // turn passing means no stone falls while the bearer reads its own ledger.
         if (g.PendingKnack is not null) return 'c';
+
+        // The vial and the footing (D-090, D-094). The draught is drunk where the road
+        // hurts, never while standing on an aimed cell (the dodge answers that first);
+        // the feet are kept set to what the body can pay for, free on quiet ground.
+        if (DrinkKey(g) is { } vial) return vial;
+        if (StanceKey(g) is { } foot) return foot;
 
         if (g.Mode == MapMode.Site)
         {
@@ -657,6 +668,10 @@ public static class JourneyPilot
         // the sprig-coin counting toward her own price.
         if (g.TalkNpc?.Id == "npc_herbwife")
         {
+            // The steeping first (D-090): sprigs into vials while the satchel has
+            // room, and only what is left of the wood goes across the scales.
+            if (g.Player.Draughts < Game.DraughtCap && g.Player.Herb >= Game.DraughtHerbs)
+                return TradeDigit(g, TradeGood.Draught);
             if (g.Player.Herb > 0) return TradeDigit(g, TradeGood.Herb);
             if (EyeCureWanted(g)) return TradeDigit(g, TradeGood.Surgery);
             return 'z';
@@ -673,6 +688,46 @@ public static class JourneyPilot
             if (g.TradeOffers[i].Good == good)
                 return (char)('1' + i);
         return 'z';
+    }
+
+    // ---- the vial and the footing (D-090, D-094): medicine, and the feet ----
+
+    /// <summary>
+    /// Drink the draught where the road hurts (D-090): blood below a third of the whole,
+    /// a vial in the satchel, and no stone due on this cell (the dodge outranks the
+    /// stopper). Costs the turn the swallow costs, which is why the line is drawn low.
+    /// </summary>
+    private static char? DrinkKey(Game g)
+    {
+        var p = g.Player;
+        if (p.Draughts == 0 || p.Hp * 3 >= p.EffectiveMaxHp) return null;
+        if (g.LiveMonstersHere.Any(m => m.Intent is { } it && it.TargetCell == p.Pos)) return null;
+        return 'd';
+    }
+
+    /// <summary>
+    /// Keep the feet set to what the body can pay for (D-094): pressing while the blood
+    /// is high (two thirds and up), guarded when it runs low (under a third), measured
+    /// between. On quiet ground the resetting is free, so the footing is simply held at
+    /// the mark; under live steel a press costs the turn, so only the one-press drop
+    /// from pressing to guarded is ever bought, and never on an aimed cell. The wilds
+    /// are left alone entirely: a hart answers no stance, and the presses there would
+    /// cost hunting turns. Cannot oscillate: each press moves toward the one desired
+    /// footing, and the desire only moves when the blood crosses a line.
+    /// </summary>
+    private static char? StanceKey(Game g)
+    {
+        var p = g.Player;
+        var desired = p.Hp * 3 < p.EffectiveMaxHp ? Stance.Guarded
+            : p.Hp * 3 >= p.EffectiveMaxHp * 2 ? Stance.Pressing
+            : Stance.Measured;
+        if (p.Stance == desired) return null;
+        if (!g.LiveMonstersHere.Any()) return 'x';
+        if (g.CurrentSite?.Kind == SiteKind.Wilds) return null;
+        if (desired == Stance.Guarded && p.Stance == Stance.Pressing
+            && !g.LiveMonstersHere.Any(m => m.Intent is { } it && it.TargetCell == p.Pos))
+            return 'x';
+        return null;
     }
 
     // ---- the cure roads (D-098): a mark carried until it can be paid off ----

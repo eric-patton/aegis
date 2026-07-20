@@ -125,6 +125,10 @@ public static class JourneyRunner
         int herbsForaged = 0;
         int herbsSold = 0;
         int coinFromHerbs = 0;
+        // The steeping and the swallow (D-090): vials drawn at the stillroom and
+        // drunk where the road hurt, watched by the satchel's own count.
+        int draughtsDrawn = 0;
+        int draughtsDrunk = 0;
         // The stead's regard at its height (D-076): a per-world Fame, reset at every
         // crossing, so the run's peak is the warmest any one stead came to hold the
         // bearer, watched by the counter's high-water mark on every key.
@@ -194,6 +198,7 @@ public static class JourneyRunner
             int rawBefore = game.Player.RawMeat;
             int rationsBefore = game.Player.Rations;
             int herbBefore = game.Player.Herb;
+            int draughtsBefore = game.Player.Draughts;
             game.ApplyKey(key.Value);
             keys.Append(key.Value);
             totalKeys++;
@@ -254,11 +259,16 @@ public static class JourneyRunner
             // coin is read off the key itself, since the stillroom pays the
             // apothecary's price where the wood's edge paid the middleman's (D-081/D-082).
             if (game.Player.Herb > herbBefore) herbsForaged += game.Player.Herb - herbBefore;
-            else if (game.Player.Herb < herbBefore)
+            else if (game.Player.Herb < herbBefore && game.Player.Draughts == draughtsBefore)
             {
                 herbsSold += herbBefore - game.Player.Herb;
                 coinFromHerbs += game.Player.Coin - coinBefore;
             }
+            // The steeping takes its sprigs without a sale (D-090): a herb drop
+            // with a vial rising on the same key is the pot, not the scales. The
+            // swallow only ever falls out on the road.
+            if (game.Player.Draughts > draughtsBefore) draughtsDrawn += game.Player.Draughts - draughtsBefore;
+            else if (game.Player.Draughts < draughtsBefore) draughtsDrunk += draughtsBefore - game.Player.Draughts;
             // The stead's regard, at its high-water mark (D-076): it resets at each
             // crossing, so the peak is the warmest one stead ever came to hold the bearer.
             maxRegard = Math.Max(maxRegard, game.Regard);
@@ -337,6 +347,8 @@ public static class JourneyRunner
                 HerbsForaged: herbsForaged,
                 HerbsSold: herbsSold,
                 CoinFromHerbs: coinFromHerbs,
+                DraughtsDrawn: draughtsDrawn,
+                DraughtsDrunk: draughtsDrunk,
                 MaxRegard: maxRegard,
                 RegardTitle: SteadRegard.TitleOf(maxRegard),
                 MaxWrath: maxWrath,
@@ -367,7 +379,8 @@ public static class JourneyRunner
             chestsLooted, chestCoin, gearTaken, knacksTaken,
             resolvedAs, resolvedCycle, laidCycle, mendedCycle, legendFromBurden,
             hidesTaken, hidesSold, coinFromHides, meatCooked, rationsCooked,
-            herbsForaged, herbsSold, coinFromHerbs, maxRegard, maxWrath, raidsSuffered);
+            herbsForaged, herbsSold, coinFromHerbs, draughtsDrawn, draughtsDrunk,
+            maxRegard, maxWrath, raidsSuffered);
         return 0;
     }
 
@@ -437,6 +450,7 @@ public static class JourneyRunner
         Resolution resolvedAs, int resolvedCycle, int laidCycle, int mendedCycle,
         int legendFromBurden, int hidesTaken, int hidesSold, int coinFromHides,
         int meatCooked, int rationsCooked, int herbsForaged, int herbsSold, int coinFromHerbs,
+        int draughtsDrawn, int draughtsDrunk,
         int maxRegard, int maxWrath, int raidsSuffered)
     {
         var w = Console.Out;
@@ -512,6 +526,8 @@ public static class JourneyRunner
             w.WriteLine($"         the fire: cooked {meatCooked} cut(s) of raw meat into {rationsCooked} ration(s) (D-073).");
         if (herbsForaged > 0)
             w.WriteLine($"         the forage: picked {herbsForaged} sprig(s) of herb; sold {herbsSold} for {coinFromHerbs} coin at the stillroom's price (D-074/D-075, D-082).");
+        if (draughtsDrawn > 0)
+            w.WriteLine($"         the steeping: drew {draughtsDrawn} hale-draught(s) from the satchel's own sprigs; drank {draughtsDrunk} where the road hurt (D-090).");
         w.WriteLine($"         the stead: came to hold the bearer as {(maxRegard > 0 ? SteadRegard.TitleOf(maxRegard) : "a stranger")} at its warmest "
                     + $"(peak regard {maxRegard}, reset at every crossing) (D-076).");
         w.WriteLine($"         the dens: came to hold the bearer as {(maxWrath > 0 ? RaiderWrath.TitleOf(maxWrath) : "no one at all")} at their most fearful "
@@ -560,6 +576,7 @@ internal sealed record JourneyReport(
     int HidesTaken, int HidesSold, int CoinFromHides,
     int MeatCooked, int RationsCooked,
     int HerbsForaged, int HerbsSold, int CoinFromHerbs,
+    int DraughtsDrawn, int DraughtsDrunk,
     int MaxRegard, string RegardTitle, int MaxWrath, string WrathTitle, int RaidsSuffered,
     string? Keys,
     List<JourneyCrossingDto> Crossings);

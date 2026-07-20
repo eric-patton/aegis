@@ -200,6 +200,78 @@ public static class StoryletCatalog
                 "The stead said its piece to the bearer's face: three sills robbed, the name given at the well, the road named as theirs to keep to."),
         },
 
+        // The debt made right (D-109): the confronted fact's consumer, the
+        // making-right beat the roadmap promised. Both producers feed it (the
+        // reckoning at the barred rung, D-088, and the caught hand, D-107),
+        // and it is gated on live shame back at zero, so it plays only when
+        // every sill and every hand stands paid. Narrative and a fact,
+        // deliberately no coin and no regard: restitution must never turn a
+        // profit, or the ladder becomes a market. The made_right fact is the
+        // reward, fuel for content that remembers the one who made it right.
+        new Storylet
+        {
+            Id = "the-debt-made-right",
+            Trigger = StoryletTrigger.Talk,
+            Priority = 9,
+            Requires = [new FactPattern("shame", "confronted")],
+            When = g => g.TalkNpc?.Kind == NpcKind.Villager && g.Shame == 0,
+            Lines =
+            [
+                ("They step into your road by the well, which is how the stead says a thing is official. \"It is paid, then. Every door, every hand, and into the right ones. What was said of you here is done being said.\" A nod, witnessed, and the lane goes back to its work. At a stead's well, a nod is a document.", LogTone.Info),
+                ("\"Mark what came back to you here, bearer, because it was not coin. A stead this small cannot afford forgetting, so it has done the dearer thing and forgiven with its eyes open. I have written it beside the wrong, and the two lines hold each other still.\"", LogTone.Aegis),
+            ],
+            Effect = g => g.World.Facts.Add("shame", "made_right", g.World.SettlementName,
+                "The debt was paid down to nothing and the stead marked it at the well: the naming ended, the book kept open at both lines."),
+        },
+
+        // The door that held (D-109): the cellar secret's consumer, the
+        // roadmap's "cellar mattering in a later raid." Gated on both facts,
+        // so it can only fire for a bearer the stead's own showed the door
+        // and a world the raiders have already reached into. Pure perception,
+        // once per world: the same raid morning every stranger walks past
+        // reads differently to one inside the count.
+        new Storylet
+        {
+            Id = "the-door-that-held",
+            Trigger = StoryletTrigger.NearHouse,
+            Priority = 7,
+            Requires =
+            [
+                new FactPattern("secret", "stead_cellar"),
+                new FactPattern("event", "raid"),
+            ],
+            Lines =
+            [
+                ("The lane wears the raid's morning: chaff on the wind, a byre-door leaning on its one good hinge. By the turf bank a woman folds straw bedding into a basket, small and neat, and when she sees where your eye has gone she does not move to stand in front of it. The low door is ajar to air. The children slept the burning night below, every one of them, and came up to daylight. You knew where they were. That is what the showing was for.", LogTone.Info),
+                ("\"Weigh the showing again, bearer. The day they put that door in your knowing, it was an honor. Last night it was the stead's whole wager, and it held. What its own know is what a stead is, and you were inside the count when it mattered.\"", LogTone.Aegis),
+            ],
+        },
+
+        // The two ledgers (D-109): the lifted purse's consumer, the
+        // trust-collision beat. A clean lift has no restitution road (there
+        // is no hand that knows to be paid), so the secret stands for the
+        // world's life; this is where its weight is felt: the stead opens its
+        // fence to a friend whose hand has already been inside it unseen.
+        // Priority 6, under the hearthtale and the showing, so the trust
+        // lands before the weight of it does.
+        new Storylet
+        {
+            Id = "the-two-ledgers",
+            Trigger = StoryletTrigger.Talk,
+            Priority = 6,
+            Requires =
+            [
+                new FactPattern("secret", "lifted_purse"),
+                new FactPattern("regard", "friend"),
+            ],
+            When = g => g.TalkNpc?.Kind == NpcKind.Villager,
+            Lines =
+            [
+                ("They lean on the fence rail to talk, easy, unhurried, the way the stead only stands with folk it counts its own. Somewhere up this lane is a purse that has been lighter since a day nobody marked, and the hand they are glad to see come up the road is the hand that lightened it.", LogTone.Info),
+                ("\"I keep both of these, bearer, and I will not pretend they sit quietly together. Their ledger of you is open to the friendly page. Mine holds a line theirs is missing. Nothing needs doing; there is no door for this coin to go back through. It is only true, and only we two carry it.\"", LogTone.Aegis),
+            ],
+        },
+
         // The levy's ask (D-105): the stead's move on the tick given a voice.
         // While the levy stands a villager says what the closed larder means
         // and where its answer is taken; the mechanical answer stays on the

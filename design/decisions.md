@@ -231,6 +231,48 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-109: The facts answered: made right, the door that held, and the two ledgers (2026-07-20)
+The fact graph's oldest open promise is paid: the three facts standing produced but unread
+(the roadmap's named "next in this phase," and better fuel now than when it was written,
+because D-107 gave two of them live repeatable producers) get their consumers, three
+storylets in the D-088 discipline: narrative and facts, deliberately no mechanics, because
+the graph's whole wager is that the world reading differently IS the payoff. First, the
+making-right beat (shame/confronted's consumer): when the confrontation has happened and
+live shame stands back at zero, the stead marks the debt paid to the bearer's face at the
+well, once per world, and writes shame/made_right for content that remembers the one who
+made it right. Both producers feed it, the reckoning at the barred rung (D-088) and the
+caught hand (D-107), which is the unified ladder's payoff arriving on schedule: however the
+stead came to say its piece, the same restitution roads end at the same document. Priority
+9, above the hearthtale, below the known face; gated on the live count, not the fact, so
+the ladder's exits stay the trigger. Deliberately no coin and no regard: restitution must
+never turn a profit or the ladder becomes a market; the made_right fact is the reward.
+Second, the door that held (secret/stead_cellar's consumer, the roadmap's "cellar mattering
+in a later raid"): a NearHouse beat gated on both the showing and the event/raid fact the
+tick already writes, so the raid's morning reads differently to one inside the count: the
+children slept the burning night below, and the bearer knew where. Pure perception, once
+per world, priority 7 over the tale carried. Third, the two ledgers (secret/lifted_purse's
+consumer): a clean lift has no restitution road, there being no hand that knows to be paid,
+so the secret stands for the world's life; its weight is felt where it collides with trust,
+the stead opening its fence at the friend rung to a hand that has been inside it unseen.
+The Aegis holds both books and pretends nothing; priority 6, under the hearthtale and the
+showing, so the trust lands before the weight of it does. No new state, no save bump (v56
+holds): all three ride facts and flags the replay already rebuilds. Verified the
+established ways: 542 tests green (seven new FactConsumerTests: the well's document once
+every hand is paid and not one sill sooner, the caught hand repaid earning the same mark,
+the cellar beat needing both facts and reading once, the raid alone saying nothing, the
+two ledgers carried together and needing the lift); twins hash-identical; sim replay exact
+(cycle 13, 11750 turns, 1 death); baselines byte-identical on master and all four sweep
+seeds, and honestly so: the journey log was grepped and none of the three beats fires
+under the pilot (it never steals, never lifts, and never reaches the own-rung showing),
+so all three are pilot-unexercised and test-covered, the D-106 precedent. Options set
+aside: a regard point for making right (profit on the ladder, the exploit with a bow on
+it); the cellar held for a storm or arc beat instead (the raid seam exists today and
+fires naturally; a storm system does not); a discovery-risk mechanic for the lifted purse
+(real teeth, but new machinery and a punishing surprise, better as its own lane if wanted).
+Deferred: content consuming made_right in its turn (the stead remembering the one who made
+right, natural Nemesis-roster fuel); the light_purse consumer (D-108); the discovery-risk
+lane if the secret should ever be able to come out.
+
 ### D-108: Knucklebones at the hearth: town life opens on a wagered board (2026-07-20)
 The last unopened activity family (D-006) breaks ground with the vision's first-named town
 verb: gambling, chosen over carousing (mostly a coin-for-regard dial, and regard has honest

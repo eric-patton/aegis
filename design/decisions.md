@@ -231,6 +231,45 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-100: The beasts of the road: the stead's mule, the ridden stride, and the saddlebags (2026-07-19)
+The pack animal (D-024's last niche) opens, Q&A-shaped with one custom answer that
+grew the lane: not one beast but a roster (the user's own call: all three acquisition
+roads, different mounts with different stats and abilities, a collection kept but only
+one at your side), so the design is three beasts on three roads: the MULE (bought),
+the COURSER (a storylet arc, the fastest road), and the FELL PONY (won wild, unafraid
+at the uncanny mouths), with a per-world stable to pick from. Grounding finding first:
+the game has no carry caps and goods already survive death (only coin and essence
+forfeit), so "carry capacity" was no real niche; what the turn economy genuinely
+rewards is TRAVEL (every clock counts turns: toll drain, wounds, raid ticks, focus),
+plus a RISK CHOICE on coin. Settled: both niches from day one; mortal and world-bound;
+overworld only, waiting at a site's mouth through every delve; the raid stake (a raid
+that lands while the bearer is below takes a tethered beast whole, riding the existing
+faction tick: the counterplay is the game's spine, break the camp or carry the coin
+down); two stages with a gate. THIS IS STAGE 1, the mule whole: sold at the woodward's
+wood's-edge bench for 40 coin (the steadholder's shared nine digits are full: the
+digit law shaped the placement), always listed with a state-read label, and only ever
+to a friend of the stead (regard rung 2: the ladder pays again, and no coin moves a
+stranger's answer). It follows on the overworld (greedy stride, its cell honest in
+every occupancy seam via MountAt, place-trading like the fellows), and the ridden
+road: with the beast at your side, a step from open grass to open grass passes TWO
+strides to a key (half the turns for the distance; forest, hills, and every doorstep
+stay a walk). The saddlebags are one key ('o' beside it, a turn of handwork): a full
+purse loads whole, an empty one takes the bags back out; banked coin does not fall
+with the bearer (the remnant holds only what the body carried), and the raid takes it
+whole instead: banking is a choice of risks, never an escape from them. The beast
+never crosses: its land keeps it, bags and all. 'o' priority: tending a hurt guest
+first, then the saddlebags, then the ground-word. Presenter: 'm' in dark yellow,
+sidebar line with the bags (and ", above" while the bearer is below), the small
+homecoming line at every exit. Save v50 -> v51 (the bench grew an entry, mounted
+steps cover two cells, 'o' gained a meaning). 489 tests green (9 new MountTests:
+sold to a friend only, following, the two-stride key over grass, the single stride
+afoot, the bags' one key, the fall sparing the bags while the remnant takes the
+carried coin, the raid taking the tethered beast below, the raid sparing it beside
+the bearer, the crossing leaving it). Twins hash-identical; sim replay exact; master
+and sweep held to the digit (the pilot neither buys nor rides: a pilot mule policy
+joins the follow-ons). STAGE 2, gated: the courser's arc, the wild fell pony's
+taming, the stable's pick-one, and per-beast leans.
+
 ### D-099: The calling: the fifth word, and the shade that walks while it is held (2026-07-19)
 The summon slot (D-024, vision sec 7) ships, where the guest engine (D-097) and the
 remnant craft (D-091) shake hands. Q&A-settled shape, every answer the recommendation:

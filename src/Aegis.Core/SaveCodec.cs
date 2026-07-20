@@ -176,10 +176,14 @@ namespace Aegis.Core;
 /// v50 when D-099 added the calling: the stones' leanings grew a fifth word
 /// (the barrow leans toward it second), so a v49 journal's stone readings can
 /// grant a different working, and the cast menu carries a fifth digit.
+/// v51 when D-100 stage 1 brought the stead's mule: the wood's-edge bench
+/// grew an always-listed entry, mounted overworld steps can cover two cells,
+/// and 'o' beside the beast means the saddlebags, so v50 journals that walked
+/// those keys replay differently.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 50;
+    public const int Version = 51;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

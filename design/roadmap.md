@@ -38,9 +38,10 @@ huntsman's-debt arc, loyalty beats, full death weight, and the paid ending, run 
 every journey. The **Death's-Toll pillar shipped whole (D-098)**: the deterministic
 ledger, three scars matched to their deaths, their live weight, and each one's costly
 cure road. The **summon slot shipped (D-099)**: the calling, a fifth word on the
-stones, holding Focus while its shade walks the guest engine. The remaining **breadth
-holes**: the pack animal, and two of the four activity families (crime, town-life).
-Rough fill levels:
+stones, holding Focus while its shade walks the guest engine. The **beasts opened
+(D-100)**: the stead's mule bought, ridden, and banked on, with the roster's stage 2
+gated. The remaining **breadth holes**: two of the four activity families (crime,
+town-life). Rough fill levels:
 
 - Attributes: **6 of 7** mechanically active (D-091 wakes Mind and Will; Presence is the last inert one)
 - Skills: **9 of ~18** (five combat, Hunting from D-070, Cooking from D-073, Survival from D-074, Spellcraft from D-091)
@@ -64,8 +65,9 @@ Rough fill levels:
   faction remain
 - Major vision pillars: all broken ground (magic opened D-091; the craft family
   opened D-073/D-090; character creation shipped both stages, D-092/D-093; companions
-  opened with guests whole, D-097, and the summon slot shipped, D-099: the pack
-  animal remains; the Death's Toll shipped whole, D-098: ledger, scars, and cure roads)
+  opened with guests whole, D-097, the summon slot shipped, D-099, and the beasts
+  opened, D-100 stage 1: the roster's stage 2 remains; the Death's Toll shipped
+  whole, D-098: ledger, scars, and cure roads)
 
 ---
 
@@ -277,7 +279,13 @@ Rough fill levels:
 - [ ] Guest follow-ons: specialized kinds targeting guests directly, ranged friendly
   fire, charge lanes and lofted bursts seeing guests, more guest roles and arcs, a
   crossing farewell for arcs that outlive their world, portfolio echo down the chain (D-097)
-- [ ] Pack animal / mount: logistics and warmth (D-024)
+- [~] Pack animal / mount (D-024, D-100): stage 1 shipped: the stead's mule, sold at the
+  wood's-edge bench to a friend of the stead (40 coin), following on the overworld,
+  open grass passing two strides to a key, waiting at site mouths, saddlebags banking
+  coin against the bearer's fall at the price that a raid landing while the bearer is
+  below takes the beast whole; mortal, world-bound
+- [ ] Beasts stage 2 (D-100): the courser's storylet arc, the wild fell pony won over,
+  the per-world stable's pick-one, per-beast leans; plus a pilot mule policy
 
 ### Death, stakes & consequence
 
@@ -344,6 +352,7 @@ Rough fill levels:
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-19: **D-100 stage 1: the stead's mule, the ridden stride, and the saddlebags.** The pack animal (D-024's last niche) opens, with the user's custom roster call setting the design: three beasts on three roads (mule bought / courser storied / fell pony won wild), a per-world stable, one at your side; stage 2 gated. Stage 1 is the mule whole: sold at the wood's-edge bench (the steadholder's nine digits are full: the digit law placed it), 40 coin, only to a friend of the stead (regard rung 2 pays again). It follows on the overworld, waits at site mouths, and open grass passes two strides to a key: half the turns for the distance against every clock the game counts. The saddlebags are one key and a turn: banked coin does not fall with the bearer, and a raid landing while the bearer is below takes the beast whole instead: banking is a choice of risks (grounding finding: no carry caps exist and goods already survive death, so travel + the coin-risk choice are the honest niches). World-bound; never crosses. Save v50 -> v51. 489 tests green (9 new MountTests); twins identical; sim replay exact; master and sweep held to the digit (the pilot neither buys nor rides: pilot mule policy tracked).
 - 2026-07-19: **D-099 the calling: the fifth word, and the shade that walks while it is held.** The summon slot (D-024) ships where D-097's guest engine and D-091's craft meet, every Q&A answer the recommendation. A called remnant: SpellId.Calling on every stone leaning (the barrow second), held rather than spent: 2 of the pool stay bound while the shade walks (SpendableFocus the new seam), freed on any ending. The shade IS a Guest (role Shade, 10 HP, blow 1-3 doubled on wight/graven: soul-stuff answering soul-stuff) and the engine generalized to fellows: own slot beside a mortal guest, full physics, follows/holds/place-trades, raiders turn on the nearer body. It refuses the severed (mid-build finding: the laying is the bearer's choice surface, D-038/D-045, so auto-striking would foreclose it). Not mortal, on purpose: unravels on fall (no fact, no shame, "nothing here mourns"), the bearer's death lets the word slip, the waygate keeps only the knowledge; released by saying the word again, anywhere. Never tended; whole again at a rest. Cyan 's' glyph, the rail line, the FO bar and cast menu reading the hold. Save v49 -> v50 (the leanings grew a word). 480 tests green (13 new ShadeTests); twins identical; sim replay exact; master and sweep held to the digit (the pilot never casts: a pilot cast policy joins the tracked follow-ons, with a shade-noticing storylet and the warder's kinship question).
 - 2026-07-19: **D-098 stage 2: the cure roads.** Each scar's way back, on the bench it belongs to, always listed with a state-read label (D-041's law), dear on purpose. The eye: the stillroom's longest work (30 coin; the Keen read restored whole). The hand: the smith's brace (24 coin; jointed iron built TO the crookedness; D-009's superior-prosthetic hook in fiction, mechanical edge deferred). The look: sung to rest at the songhall (8 essence, paid in what deeds weigh; the walk out is the pilgrimage; bread and regard warm the same turn). One shared Aegis parity line per mend. Plus the vision's dialogue-hook clause: the marks-they-carry Talk storylet, any villager, once per world. Save v48 -> v49 (three benches grew an entry; a scarred talk draws a new storylet). 467 tests green (5 new); twins identical; sim replay exact; every stage-1 baseline held to the digit (the pilot walks no cure road yet: new tracked follow-on). Also tracked: brace's mechanical edge, scar facts, dragging step, tier fill, sheet display.
 - 2026-07-19: **D-098 stage 1: the Death's Toll, and the scars matched to their deaths.** The last untouched pillar (D-009) opens as a deterministic ledger: deaths fill the count (100; a thegn's or hart's hand 160; Will above baseline shaves a tenth per point, floored 40), it drains 1 a turn, and a death at the line (20) or above converts, no roll: the judgment reads the count as it stood, THEN this death's fill lands, so a first death always warns and never scars, and two deaths within the Wounded span (80 turns) is what clustering means. The scar matches the death (uncanny kinds -> the haunted look; thrown/lofted -> the taken eye; iron close in -> the crushed hand; shapeless -> fixed order), replay-clean, zero new rng. Weights on surfaces the game already reads: the eye steps ReadOf down a whole tier, the hand adds 1 stamina per swing, the look docks every regard gain by 1 and dears bread by a coin. TOLL on the sidebar (red at the line), scars named under it, the drain's crossing spoken, one Aegis scar line on the motif. Waygate wipes the count; scars cross until cured (cure roads = gated stage 2). Save v47 -> v48. 462 tests green (9 new TollTests); twins identical + sim replay exact on master AND scarred seed 1; sweep: seeds 1/88888 land the haunted look live and still finish, seed 99's eight spaced deaths land nothing, every v47 baseline held to the digit. Journey report grew a scars stat.

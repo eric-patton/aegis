@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-099); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-100); the research behind it lives in `../research/`.
 
 ---
 
@@ -103,7 +103,7 @@ Coin is fully separate from Essence and must matter all game:
 Three niches, no permanent party; combat is balanced around one character:
 - **A summon slot**: one autonomous Spirit-Ash-style ally, resource-gated against your own pool. Conjurer builds, zero management. **Shipped (D-099)**: the calling, a fifth word on the graven stones (the barrow leans toward it second), held rather than spent: 2 Focus stay bound while the called shade walks. The shade rides the guest engine whole in its own slot beside a mortal guest: full body, modest blow doubled on the uncanny kinds, refusing the severed (the laying stays the bearer's choice). Not mortal, on purpose: it unravels without weight (fall, release anywhere, the bearer's death, the waygate), the deliberate contrast with the guest's full-weight mortality.
 - **Guest companions**: story-scoped, role-cast from world NPCs, a command verb or two, and *they can permanently die*. Guests carry the mortal stakes you cannot. **Shipped whole (D-097)**: the guest engine walks at your shoulder, holds ground or comes on one contextual key ('o'), fights to their own measure (competence read from who they are), takes real blows and body-blocks marked ground, is tended from your own satchel, and dies for real. The first arc is the huntsman's debt: the woodward walks once the stead has bled, until the camp breaks; loyalty beats bank from blood, care, firesides, and deeds; a death writes the grave and beloved facts, costs stead standing, empties the bench for the whole world, and is remembered aloud; the paid arc ends in a portfolio fact and the walk home.
-- **A pack animal or mount**: logistics and warmth.
+- **A pack animal or mount**: logistics and warmth. **Opened (D-100 stage 1)**: the stead's mule, sold at the wood's-edge bench to a friend of the stead. It walks the open land at your side (open grass passes two strides to a key), waits at every site's mouth, and its saddlebags bank coin against your fall, at the price that a raid landing while you are below takes the beast whole. Mortal, world-bound. The roster's stage 2 (the courser's arc, the wild fell pony, the stable's pick-one) is designed and gated.
 
 The persistent companion voice is the Aegis itself.
 

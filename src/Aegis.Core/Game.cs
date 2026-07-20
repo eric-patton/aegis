@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast }
 
 /// <summary>
 /// The deterministic game engine. No console, no I/O, no wall clock: state advances
@@ -55,6 +55,16 @@ public sealed class Game
     }
 
     private bool FellowAt(Pos p) => Fellows.Any(f => f.Pos == p);
+
+    /// <summary>
+    /// The beast of the road (D-100): mortal, world-bound, and never below
+    /// ground: it walks the open land at the bearer's side, waits at a site's
+    /// mouth through every delve, and carries what is loaded on it.
+    /// </summary>
+    public Mount? Mount { get; private set; }
+
+    /// <summary>The beast's cell counts only where the beast is (D-100): its coordinates live on the overworld alone.</summary>
+    private bool MountAt(Pos p) => Mode == MapMode.Overworld && Mount is { } m && m.Pos == p;
 
     /// <summary>
     /// What the pool will actually answer with (D-099): the calling is held,
@@ -947,6 +957,15 @@ public sealed class Game
             return true;
         }
 
+        // The beast at a gate (D-100) is an obstacle only to strangers.
+        if (MountAt(target) && Mount is { } led)
+        {
+            (led.Pos, Player.Pos) = (Player.Pos, target);
+            Player.Stamina = Math.Min(Player.MaxStamina, Player.Stamina + 1);
+            Log.Add(Turn, $"You push past {led.Name} with a hand on its neck, trading places in a step.");
+            return true;
+        }
+
         if (!map.Walkable(target))
         {
             Log.Add(Turn, Mode == MapMode.Site ? "Rough stone blocks the way." : "You cannot cross there.");
@@ -961,6 +980,25 @@ public sealed class Game
         if (Mode == MapMode.Overworld && Directions.All8.Any(d =>
                 map.InBounds(target.Plus(d.dx, d.dy)) && map[target.Plus(d.dx, d.dy)] == Terrain.House))
             _storylets.TryFire(this, StoryletTrigger.NearHouse);
+
+        // The ridden road (D-100): with the beast at your side, open grass
+        // passes two strides to a key: the same clocks (toll, wounds, the
+        // raiders' tick) count half the turns for the distance. The far cell
+        // must be plain ground with no one standing on it.
+        if (Mode == MapMode.Overworld && Mount is { } steed && steed.Pos.Chebyshev(Player.Pos) <= 2)
+        {
+            var far = target.Plus(dx, dy);
+            if (map.InBounds(far) && map[target] == Terrain.Grass && map[far] == Terrain.Grass
+                && far != steed.Pos && !FellowAt(far)
+                && !World.Npcs.Any(n => n.Pos == far))
+            {
+                target = far;
+                Player.Pos = far;
+                Player.Stamina = Math.Min(Player.MaxStamina, Player.Stamina + 1);
+                DescribeTileIfNotable(far);
+                _storylets.TryFire(this, StoryletTrigger.EnterTile, map[far]);
+            }
+        }
 
         // The gleaning (D-052): the spots exist in every world; the lesson is
         // what makes them visible and takeable. An untaught step gathers nothing.
@@ -1256,6 +1294,9 @@ public sealed class Game
         // The called thing does not cross either (D-099): only the word does,
         // knowledge like every working, to be said again in the new dark.
         Shade = null;
+        // And the beast is world-bound like every mortal thing (D-100): its
+        // land keeps it, saddlebags and all. The waygate takes only the bearer.
+        Mount = null;
         InShrineMenu = false;
         InTalkMenu = false;
         InUnbindMenu = false;
@@ -1444,6 +1485,9 @@ public sealed class Game
             // Whoever walks with you climbs out behind you (D-097, D-099),
             // held ground or no: no one is left standing alone in the dark.
             PlaceFellowsBeside(Player.Pos);
+            // The tether held (D-100): the small homecoming.
+            if (Mount is { } steed)
+                Log.Add(Turn, $"{Cap(steed.Name)} waits where you left it, cropping the grass, unimpressed by the underworld.");
             return true;
         }
         Log.Add(Turn, "There is no way out here.");
@@ -2076,6 +2120,10 @@ public sealed class Game
             offers.Add((TradeGood.Cook, "", CookLabel()));
             offers.Add((TradeGood.Herb, "", HerbSaleLabel()));
             offers.Add((TradeGood.Lesson, LessonCatalog.IdOf(LessonId.Gleaning), LessonLabel(LessonId.Gleaning)));
+            // The stead's beast (D-100): the woodward keeps the byre's business
+            // at the wood's edge on the stead's behalf. Appended and always
+            // listed with a state-read label, so the older digits hold (D-041).
+            offers.Add((TradeGood.Beast, "", MuleLabel()));
         }
         // The stillroom (D-081): the simples at their true price, and the
         // wound-dressing at the table where that work was always done.
@@ -2198,6 +2246,44 @@ public sealed class Game
         Log.Add(Turn, $"\"{AegisVoice.ScarMendedLine}\"", LogTone.Aegis);
     }
 
+    /// <summary>The stead's beast entry (D-100): always listed, the label reading the state (D-041).</summary>
+    private string MuleLabel() =>
+        Mount is not null ? "The mule (yours; it waits without)"
+        : SteadRegard.RungFor(Regard) < SteadRegard.FriendRung
+            ? $"Buy the stead's mule ({MountCatalog.MuleCoin} coin; a beast is sold to friends)"
+            : $"Buy the stead's mule ({MountCatalog.MuleCoin} coin)";
+
+    /// <summary>
+    /// The stead's beast bought (D-100 stage 1): the mule falls in on the open
+    /// land. A stead sells its own beast only to a friend of the stead: the
+    /// regard ladder pays again, and no coin moves a stranger's answer.
+    /// </summary>
+    private void TryBuyMule()
+    {
+        if (Mount is not null)
+        {
+            Log.Add(Turn, "\"You have the stead's beast already. Feed it something green now and then; it has opinions.\"");
+            return;
+        }
+        if (SteadRegard.RungFor(Regard) < SteadRegard.FriendRung)
+        {
+            Log.Add(Turn, "\"That mule was foaled on this land and it will not leave with a stranger. Be more than that to the stead, and we will talk.\"");
+            return;
+        }
+        if (Player.Coin < MountCatalog.MuleCoin)
+        {
+            Log.Add(Turn, $"\"{MountCatalog.MuleCoin} coin for the mule, tack and temper included. Come back when your purse agrees.\"");
+            return;
+        }
+        Player.Coin -= MountCatalog.MuleCoin;
+        Mount = new Mount { Kind = MountKind.Mule, Pos = Player.Pos };
+        PlaceMountBeside(Player.Pos);
+        Log.Add(Turn, "The coin is counted and the halter changes hands. The mule looks you over the way the stead once did, and decides you will do.", LogTone.Reward);
+        Log.Add(Turn, "It walks the open land at your side (open grass passes two strides to a key), waits above while you go below, and its saddlebags keep what you load there ('o' beside it). What the raiders' night finds tethered, it may take.", LogTone.Info);
+        World.Facts.Add("beast", "mule", World.SettlementName,
+            $"The stead sold its mule to the bearer: {World.SettlementName}'s own beast walks a friend's road now.");
+    }
+
     /// <summary>The wound-dressing entry (D-081): priced when there is a wound to dress.</summary>
     private string MendLabel() => Player.WoundedTurns > 0
         ? $"Have the wound dressed ({MendPrice} coin)"
@@ -2238,6 +2324,7 @@ public sealed class Game
                 case TradeGood.Mending: TryBuyMending(); break; // the stillroom's table (D-081)
                 case TradeGood.Draught: TryDrawDraught(); break; // the steeping (D-090)
                 case TradeGood.Surgery: TryEyeSurgery(); break; // the eye's road back (D-098)
+                case TradeGood.Beast: TryBuyMule(); break;      // the stead's beast (D-100)
             }
             // The labels move with the state (hides sold, lesson taken); rebuild so the
             // bench reads true, and the digits keep their order under the buyer's hand.
@@ -3040,10 +3127,13 @@ public sealed class Game
     private bool DoOrder()
     {
         // The word goes to the mortal first (D-099): a hurt friend outranks a
-        // held working. With no guest walking, the shade takes the ground-word.
+        // held working. With no guest walking, the shade takes the ground-word,
+        // and with no one walking at all, the beast's saddlebags answer (D-100).
+        bool muleBeside = Mode == MapMode.Overworld && Mount is { } steed && steed.Pos.Chebyshev(Player.Pos) == 1;
         var fellow = Guest is { Alive: true } ? Guest : Shade;
         if (fellow is not { Alive: true } guest)
         {
+            if (muleBeside) return DoSaddlebags();
             Log.Add(Turn, "No one walks with you.");
             return false;
         }
@@ -3065,6 +3155,10 @@ public sealed class Game
             return true;
         }
 
+        // The bank outranks the ground-word (D-100), never the tending: coin
+        // is loaded standing beside the beast, whoever else walks.
+        if (muleBeside) return DoSaddlebags();
+
         guest.Holding = !guest.Holding;
         Log.Add(Turn, (guest.Role, guest.Holding) switch
         {
@@ -3074,6 +3168,33 @@ public sealed class Game
             _ => $"\"With me.\" {guest.Name} falls in at your shoulder.",
         }, LogTone.Info);
         return LiveMonstersHere.Any();
+    }
+
+    /// <summary>
+    /// The saddlebags (D-100): one key beside the beast, a turn of handwork.
+    /// A full purse goes in whole; an empty one takes the bags back out.
+    /// What rides the beast does not fall with the bearer; what the raiders'
+    /// night finds tethered while the bearer is below, it may take whole.
+    /// </summary>
+    private bool DoSaddlebags()
+    {
+        var steed = Mount!;
+        if (Player.Coin > 0)
+        {
+            steed.Bags += Player.Coin;
+            Player.Coin = 0;
+            Log.Add(Turn, $"You count your coin into the saddlebags: {steed.Bags} rides with {steed.Name} now. What the beast carries does not fall with you; what the beast risks, it risks whole.", LogTone.Info);
+            return true;
+        }
+        if (steed.Bags > 0)
+        {
+            Player.Coin += steed.Bags;
+            steed.Bags = 0;
+            Log.Add(Turn, $"You take the coin back out of the saddlebags: {Player.Coin} in your own purse, and your own risk again.", LogTone.Info);
+            return true;
+        }
+        Log.Add(Turn, "The saddlebags hang empty, and so does your purse.");
+        return false;
     }
 
     private bool DoRest()
@@ -4526,6 +4647,20 @@ public sealed class Game
         }
         else
             Log.Add(Turn, "Bread will be dearer for it while the camp stands.", LogTone.Info);
+
+        // A landing raid takes a beast left tethered while the bearer is below
+        // (D-100): the saddlebags' honest counterweight. The counterplay is the
+        // game's own spine: break the camp first, or carry the coin down and
+        // let the shrine's ledger hold the risk instead.
+        if (Mount is { } steed && Mode == MapMode.Site)
+        {
+            Log.Add(Turn, steed.Bags > 0
+                ? $"And the tether above stands cut: {steed.Name} is gone with the raiders, saddlebags and all: {steed.Bags} coin, off into the hills."
+                : $"And the tether above stands cut: {steed.Name} is gone with the raiders.", LogTone.Danger);
+            World.Facts.Add("event", "beast_taken", World.SettlementName,
+                $"Raiders led the bearer's beast off {World.SettlementName}'s land by night.");
+            Mount = null;
+        }
     }
 
     /// <summary>
@@ -4686,6 +4821,7 @@ public sealed class Game
         {
             ActFellow(Guest);
             ActFellow(Shade);
+            ActMount();
         }
 
         // The ward-word runs out with the turns (D-091), and the pool gathers
@@ -5049,6 +5185,7 @@ public sealed class Game
             if (!map.Walkable(next)) continue;
             if (next == Player.Pos) continue;
             if (Fellows.Any(f => f != guest && f.Pos == next)) continue;
+            if (MountAt(next)) continue;
             if (LiveMonstersHere.Any(m => m.Pos == next)) continue;
             int d = next.Manhattan(Player.Pos);
             if (d < bestDist) { bestDist = d; best = next; }
@@ -5068,6 +5205,47 @@ public sealed class Game
         if (Shade is { Alive: true } shade) PlaceFellowBeside(shade, anchor);
     }
 
+    /// <summary>
+    /// The beast's own step (D-100): overworld only, one greedy stride back to
+    /// the bearer's side. It waits, uncommanded, whenever the bearer is below.
+    /// </summary>
+    private void ActMount()
+    {
+        if (Mode != MapMode.Overworld || Mount is not { } steed) return;
+        if (steed.Pos.Chebyshev(Player.Pos) <= 1) return;
+        var map = CurrentMap;
+        var best = steed.Pos;
+        int bestDist = steed.Pos.Manhattan(Player.Pos);
+        foreach (var (dx, dy) in Directions.All8)
+        {
+            var next = steed.Pos.Plus(dx, dy);
+            if (!map.Walkable(next)) continue;
+            if (next == Player.Pos) continue;
+            if (FellowAt(next)) continue;
+            if (World.Npcs.Any(n => n.Pos == next)) continue;
+            int d = next.Manhattan(Player.Pos);
+            if (d < bestDist) { bestDist = d; best = next; }
+        }
+        steed.Pos = best;
+    }
+
+    /// <summary>The beast set down beside an anchor (D-100): the fellows' compass rule, overworld coordinates.</summary>
+    private void PlaceMountBeside(Pos anchor)
+    {
+        var steed = Mount!;
+        var map = World.Overworld;
+        foreach (var (dx, dy) in Directions.All8)
+        {
+            var cell = anchor.Plus(dx, dy);
+            if (!map.Walkable(cell) || cell == Player.Pos) continue;
+            if (Fellows.Any(f => f.Pos == cell)) continue;
+            if (World.Npcs.Any(n => n.Pos == cell)) continue;
+            steed.Pos = cell;
+            return;
+        }
+        steed.Pos = anchor;
+    }
+
     private void PlaceFellowBeside(Guest fellow, Pos anchor)
     {
         fellow.Holding = false;
@@ -5077,6 +5255,7 @@ public sealed class Game
             var cell = anchor.Plus(dx, dy);
             if (!map.Walkable(cell) || cell == Player.Pos) continue;
             if (Fellows.Any(f => f != fellow && f.Pos == cell)) continue;
+            if (MountAt(cell)) continue;
             if (LiveMonstersHere.Any(m => m.Pos == cell)) continue;
             fellow.Pos = cell;
             return;
@@ -5852,6 +6031,7 @@ public sealed class Game
         Player.Focus = Player.MaxFocus;
     }
     internal void Debug_ForceDeathCheck() { if (Player.Hp <= 0) HandleDeath(); }
+    internal void Debug_Raid() => RaidTheStead();
     internal void Debug_ClearCamp() => Debug_ClearSite(SiteKind.GoblinCamp);
     internal void Debug_ClearSite(SiteKind kind)
     {

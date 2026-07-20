@@ -673,6 +673,10 @@ public static class Presenter
             PutWorld(shade.Pos, 's', Hue.Cyan);
         if (game.Guest is { Alive: true } guest)
             PutWorld(guest.Pos, 'a', Hue.Green);
+        // The beast of the road (D-100): overworld only; below ground it is
+        // exactly where it is drawn not to be.
+        if (game.Mode == MapMode.Overworld && game.Mount is { } steed)
+            PutWorld(steed.Pos, 'm', Hue.DarkYellow);
 
         PutWorld(game.Player.Pos, '@', Hue.White);
     }
@@ -762,6 +766,9 @@ public static class Presenter
         if (game.Shade is { Alive: true } walker)
             Line($"{walker.Name} {walker.Hp}/{walker.MaxHp}{(walker.Holding ? " (holds)" : "")}",
                 walker.Hp * 3 <= walker.MaxHp ? Hue.Red : Hue.Cyan);
+        // The beast and its bags (D-100): named where it is, even from below.
+        if (game.Mount is { } beast)
+            Line($"{beast.Name} (bags {beast.Bags}c{(game.Mode == MapMode.Site ? ", above" : "")})", Hue.DarkYellow);
         y++;
 
         if (game.Mode == MapMode.Site)

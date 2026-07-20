@@ -82,6 +82,11 @@ public static class JourneyPilot
         // seed-deterministic and still exercise the creation path every run.
         if (g.InCreation) return '0';
 
+        // A scene is answered, never escaped (D-117): the first choice is taken,
+        // which keeps the pilot deterministic and walks it through every checked
+        // branch the content puts first; a terminal node is closed with a space.
+        if (g.InScene) return g.SceneChoices.Count > 0 ? '1' : ' ';
+
         // Two menus the bot drives on purpose: the shrine's raising (spend essence on
         // Vigor and Might, the survivability the deep sites demand) and the arch's terms
         // (handled below). Any other menu that trapped it gets stepped back out of.

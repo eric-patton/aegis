@@ -44,6 +44,13 @@ public sealed record Storylet
     public Func<Game, bool>? When { get; init; }
     public required (string Text, LogTone Tone)[] Lines { get; init; }
     public Action<Game>? Effect { get; init; }
+
+    /// <summary>
+    /// The scene this storylet opens when it fires (D-117): the beat plays as a
+    /// modal dialogue tree instead of log lines alone. Gating is unchanged; the
+    /// scene is delivery, exactly as design/storylets.md sec 6 promised.
+    /// </summary>
+    public Scene? Scene { get; init; }
 }
 
 /// <summary>
@@ -138,13 +145,14 @@ public sealed class StoryletEngine
         foreach (var (text, tone) in s.Lines)
             game.Log.Add(game.Turn, Expand(text, game, captures), tone);
         s.Effect?.Invoke(game);
+        if (s.Scene is not null) game.OpenScene(s.Scene, captures);
 
         (s.Scope == StoryletScope.Character ? _firedCharacter : _firedWorld).Add(s.Id);
         _lastFiredTurn[s.Id] = game.Turn;
         TotalFired++;
     }
 
-    private static string Expand(string text, Game game, List<Fact> captures)
+    internal static string Expand(string text, Game game, List<Fact> captures)
     {
         text = text
             .Replace("{settlement}", game.World.SettlementName)

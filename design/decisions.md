@@ -231,6 +231,51 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-117: Dialogue-tree scenes with visible skill checks (2026-07-20)
+D-021's oldest open line cashed, and the seam design/storylets.md sec 6 promised is
+paid exactly as written: gating did not change, delivery grew. A storylet can now
+carry a `Scene`, and when it fires the beat plays as a modal dialogue tree instead
+of log lines alone: nodes of prose over numbered answers, branching on the digits,
+with entry effects writing facts as ever. The machinery is the talk-menu pattern
+made narrative: scene state lives on Game behind `InScene`, every key routes
+through ApplyKey and lands in the journal, so a save mid-scene replays back into
+the same open moment and the whole layer stays seed-deterministic. The prose lands
+in the log as it plays, so the log remains the game's one full transcript, and
+scene lines expand the same captures and templates storylet lines do. The visible
+check is the genuinely new surface, the first in the game: a checked choice shows
+its odds on the choice row before the player commits ("Presence, 40 in 100"), read
+off the bearer's own sheet at node entry, and the roll at commit is exactly the
+number shown, drawn on the gameplay stream. The formula is the Lifting family's:
+half for an unremarkable bearer, a twentieth per point of skill level or attribute
+over baseline, a tenth off per difficulty step, clamped to [0.05, 0.95] so every
+check stays a real one. Skill checks feed the skill on success; the first shipped
+check is Presence, which wakes the seventh and last inert attribute. One modal
+rule is deliberately not the menus': while choices stand, every other key is the
+scene waiting. A scene is a moment, not a menu; walking away is an authored
+answer, priced in content, never a free escape (the option to close-on-any-key
+like the talk menu was considered and rejected on exactly this ground). A node
+with no choices is terminal and closes on any key. First content: grievance-voiced
+grown into "The shuttered window": press the villager for the whole of it (the
+checked pressing: the shutter swings wide and writes counsel/camp_ways, or the
+bolt slides home), give your word (promise/quiet_nights), or leave them to their
+evening; the met fact and the gratitude chain stand untouched. The pilot answers
+every scene with its first choice and closes terminals with a space, so journeys
+exercise the checked branch live. Save v59 -> v60 (the scene's digits are new
+journaled keys and every check shifts the combat stream). 590 tests green (7 new
+ScenesTests: the visible tag, both branches across twenty steads, the promise,
+leaving-stays-spent, the moment waiting, the odds clamps, and a full journal
+replay through the real wake). Twins byte-identical and journals replay exact
+through sim on all five sweep seeds, all reaching cycle 13; the window fired live
+seven times in the master's twelve worlds, three carries and four fails, both
+endings live. Options set aside: a dedicated scene RNG stream (the combat stream
+is the one gameplay stream and the journal makes replay exact either way); scene
+directions inside `Lines` (a typed field keeps the format honest and maps 1:1 to
+a future data file). Deferred: converting the standing plot beats (the faiths'
+claim at the shrine first, whose full three-way ending D-116 explicitly parked on
+this machinery, then the blight and throne climaxes); checks whose consequences
+alter simulation; ask-about topics surfaced inside scenes; a scene-native frame
+for the templates' witnessed endings.
+
 ### D-116: The War of Faiths: the fourth template, cast by office on D-115's institutions (2026-07-20)
 D-114's second lane lands and the named launch-template list closes: the War of
 Faiths compiles at slice scale through the D-032/D-035 compiler seam (template 3 of

@@ -306,6 +306,8 @@ public class QuarryTests
 
     private static void StepNearHouse(Game game)
     {
+        // The shuttered window may have opened on the last step (D-117); leave it.
+        if (game.InScene) game.ApplyKey('3');
         game.Debug_SetMode(MapMode.Overworld);
         var map = game.World.Overworld;
         for (int y = 1; y < map.Height - 1; y++)

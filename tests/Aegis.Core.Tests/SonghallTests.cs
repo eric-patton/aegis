@@ -229,6 +229,8 @@ public class SonghallTests
         bool heard = false;
         foreach (var near in HouseNeighbors(game))
         {
+            // The shuttered window may have opened on the last step (D-117); leave it.
+            if (game.InScene) game.ApplyKey('3');
             var from = Directions.All8.Select(d => near.Plus(d.dx, d.dy))
                 .FirstOrDefault(p => game.World.Overworld.Walkable(p) && !game.World.Npcs.Any(n => n.Pos == p));
             if (from == default) continue;

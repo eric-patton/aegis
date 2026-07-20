@@ -287,6 +287,34 @@ public sealed class Game
 
     public Npc? TalkNpc { get; private set; }
 
+    /// <summary>
+    /// A dialogue-tree scene stands open (D-117): the world holds still while the
+    /// moment is answered. Digits choose; while choices stand, every other key is
+    /// the scene waiting. A node with no choices closes on any key.
+    /// </summary>
+    public bool InScene { get; private set; }
+
+    private Scene? _scene;
+    private List<Fact> _sceneCaptures = [];
+
+    /// <summary>The open scene's current node, null outside a scene.</summary>
+    public SceneNode? SceneNode { get; private set; }
+
+    /// <summary>The open scene's box title (Presenter reads this).</summary>
+    public string SceneTitle => _scene?.Title ?? "";
+
+    /// <summary>The current node's prose, expanded, as the panel shows it.</summary>
+    public IReadOnlyList<(string Text, LogTone Tone)> SceneProse => _sceneProse;
+    private readonly List<(string Text, LogTone Tone)> _sceneProse = [];
+
+    /// <summary>
+    /// The current node's choices as shown: the label, and for a checked choice
+    /// the visible odds tag ("Presence, 40 in 100"), "" otherwise. The odds are
+    /// read off the bearer's sheet at node entry, before anything is committed.
+    /// </summary>
+    public IReadOnlyList<(string Label, string Tag)> SceneChoices => _sceneChoices;
+    private readonly List<(string Label, string Tag)> _sceneChoices = [];
+
     /// <summary>Unbindings per world (D-016: a handful, refreshed at each crossing).</summary>
     public const int UnbindingsPerWorld = 3;
 
@@ -860,6 +888,13 @@ public sealed class Game
         if (InCreation)
         {
             HandleCreationKey(key);
+            KeyApplied?.Invoke(key);
+            return;
+        }
+
+        if (InScene)
+        {
+            HandleSceneKey(key);
             KeyApplied?.Invoke(key);
             return;
         }
@@ -1471,6 +1506,7 @@ public sealed class Game
         _pendingLineSpell = null;
         _chosenOaths.Clear();
         TalkNpc = null;
+        CloseScene();
         CurrentSite = null;
         // The words cross whole; the said state does not (D-091): no ward holds
         // through an arch, no levin survives it, and the pool arrives at brim.
@@ -3142,6 +3178,85 @@ public sealed class Game
         else
             Log.Add(Turn, $"You part ways with {TalkNpc.Name}.");
         TalkNpc = null;
+    }
+
+    /// <summary>
+    /// A storylet opens its scene (D-117). Called from the engine at fire time;
+    /// the captures come along so the scene's prose can quote the same matched
+    /// facts its storylet's lines could. A scene opened out of a conversation
+    /// takes the conversation's place: the moment outranks the menu.
+    /// </summary>
+    internal void OpenScene(Scene scene, List<Fact> captures)
+    {
+        InTalkMenu = false;
+        TalkNpc = null;
+        InScene = true;
+        _scene = scene;
+        _sceneCaptures = captures;
+        EnterSceneNode(scene.Nodes[0]);
+    }
+
+    /// <summary>
+    /// Lands a node: its prose goes to the log (the log stays the one full
+    /// transcript), its entry effect runs, and the panel state is rebuilt. The
+    /// visible odds on each checked choice are read here, at entry, so the player
+    /// commits to exactly the number they were shown.
+    /// </summary>
+    private void EnterSceneNode(SceneNode node)
+    {
+        SceneNode = node;
+        _sceneProse.Clear();
+        foreach (var (text, tone) in node.Lines)
+        {
+            string expanded = StoryletEngine.Expand(text, this, _sceneCaptures);
+            _sceneProse.Add((expanded, tone));
+            Log.Add(Turn, expanded, tone);
+        }
+        node.OnEnter?.Invoke(this);
+
+        _sceneChoices.Clear();
+        foreach (var choice in node.Choices)
+            _sceneChoices.Add((choice.Label, choice.Check is { } c
+                ? $"{c.Name}, {(int)Math.Round(c.ChanceFor(this) * 100)} in 100"
+                : ""));
+    }
+
+    /// <summary>
+    /// Digits answer the open node; a checked choice rolls its shown odds on the
+    /// gameplay stream and branches on the result. While choices stand, any other
+    /// key is ignored: a scene is a moment, not a menu, and it waits to be
+    /// answered. A node with no choices closes on any key.
+    /// </summary>
+    private void HandleSceneKey(char key)
+    {
+        var node = SceneNode!;
+        if (node.Choices.Length == 0) { CloseScene(); return; }
+        if (key < '1' || key > '0' + node.Choices.Length) return;
+
+        var choice = node.Choices[key - '1'];
+        Log.Add(Turn, $"> {choice.Label}", LogTone.Info);
+
+        string next = choice.Next;
+        if (choice.Check is { } check)
+        {
+            bool carried = _combatRng.Chance(check.ChanceFor(this));
+            Log.Add(Turn, $"({check.Name}: {(carried ? "it carries." : "it fails.")})", LogTone.Info);
+            if (carried && check.Skill is { } skill) GainSkill(skill);
+            if (!carried) next = choice.FailNext;
+        }
+
+        if (next.Length == 0) { CloseScene(); return; }
+        EnterSceneNode(_scene!.NodeById(next));
+    }
+
+    private void CloseScene()
+    {
+        InScene = false;
+        _scene = null;
+        SceneNode = null;
+        _sceneCaptures = [];
+        _sceneProse.Clear();
+        _sceneChoices.Clear();
     }
 
     /// <summary>

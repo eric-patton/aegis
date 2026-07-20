@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-116); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-117); the research behind it lives in `../research/`.
 
 ---
 
@@ -140,7 +140,7 @@ Per world, the main quest is drawn from a growing pool of authored **world-story
 Above all worlds runs the **Aegis arc**: the mystery of the thing that carries you, advancing at world completions and crossings, unfolding over the first several cycles before resolving into an earned steady state. Canon: The Ledger (D-026), fully specified in `story/aegis-arc.md`; template contract and launch templates in `story/world-story-templates.md`.
 
 ### Dialogue
-Dramatic scenes use choice menus with visible skill checks. Ordinary NPCs also expose **ask-about** topics drawn live from the fact graph: the mechanism that makes generated history touchable.
+Dramatic scenes use choice menus with visible skill checks. Ordinary NPCs also expose **ask-about** topics drawn live from the fact graph: the mechanism that makes generated history touchable. *The scene layer shipped (D-117): storylets open modal dialogue trees through the journaled key path, checked choices show their odds before the player commits, and the shuttered window is the first; the catalog and the plot-beat conversions grow from here.*
 
 ### Determinism
 No LLM at runtime, ever: the game is deterministic, testable, offline, and seed-reproducible. AI is an authoring-time tool for mass-producing storylet prose and line banks into the deterministic format.

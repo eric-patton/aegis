@@ -379,6 +379,8 @@ public class OathsTests
         {
             for (int i = 0; i < steps; i++)
             {
+                // The shuttered window may open on the pacing (D-117); leave it.
+                if (game.InScene) game.ApplyKey('3');
                 game.ApplyKey(i % 2 == 0 ? 'k' : 'j');
                 if (game.Log.Recent(4).Any(e => e.Text.Contains("Lean, and long"))) return true;
             }
@@ -389,7 +391,11 @@ public class OathsTests
         Assert.True(Spoken(sworn, 30), "the hard season was never spoken in an oath-bound world");
         // World-scoped, once: counted in the full log, because a quiet world can
         // hold the line in the recent window across many steps.
-        for (int i = 0; i < 30; i++) sworn.ApplyKey(i % 2 == 0 ? 'k' : 'j');
+        for (int i = 0; i < 30; i++)
+        {
+            if (sworn.InScene) sworn.ApplyKey('3');
+            sworn.ApplyKey(i % 2 == 0 ? 'k' : 'j');
+        }
         Assert.Single(sworn.Log.Entries, e => e.Text.Contains("Lean, and long"));
 
         var plain = CrossUnder(42, ' ');

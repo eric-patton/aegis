@@ -216,10 +216,14 @@ namespace Aegis.Core;
 /// v59 when D-116 put the War of Faiths in the pool: tier 2+ worlds draw
 /// their story among four templates instead of three, so a v58 journal that
 /// crossed the first gate replays into worlds telling different stories.
+/// v60 when D-117 gave storylets dialogue-tree scenes: the shuttered-window
+/// beat now opens a modal scene whose digits are journaled and whose checks
+/// draw on the combat stream, so a v59 journal's keys land in a scene that
+/// did not exist and every roll after the first check shifts.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 59;
+    public const int Version = 60;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

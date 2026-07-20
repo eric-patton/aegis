@@ -293,6 +293,8 @@ public class GearTests
         var target = live.World.Smith.Pos;
         for (int guard = 0; guard < 400 && !live.InTalkMenu; guard++)
         {
+            // The shuttered window may open on the way (D-117); leaving is journaled too.
+            if (live.InScene) { live.ApplyKey('3'); continue; }
             char? key = UnbinderTests.StepTo(live, target);
             if (key is null) break;
             live.ApplyKey(key.Value);

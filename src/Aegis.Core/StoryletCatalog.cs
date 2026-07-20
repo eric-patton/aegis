@@ -24,19 +24,67 @@ public static class StoryletCatalog
 
         // Visiting the settlement before the deed: the grievance gets a human voice,
         // and the meeting is written to the graph for later content to build on.
+        // The first dialogue-tree scene (D-117): the same beat, now answered instead
+        // of overheard, with the format's first visible check on the pressing.
         new Storylet
         {
             Id = "grievance-voiced",
             Trigger = StoryletTrigger.NearHouse,
             Requires = [new FactPattern("grievance")],
             Forbids = [new FactPattern("deed", "camp_cleared")],
-            Lines =
-            [
-                ("A shutter opens a finger's width. A tired voice: \"{r0.detail}\"", LogTone.Info),
-                ("\"Three winters we fed them to keep the peace. There is no more to give.\"", LogTone.Info),
-            ],
+            Lines = [],
             Effect = g => g.World.Facts.Add("met", "worried_villager", g.World.SettlementName,
                 "A villager who spoke of the goblin raids through a shuttered window."),
+            Scene = new Scene("the-shuttered-window", "The shuttered window",
+            [
+                new SceneNode
+                {
+                    Id = "open",
+                    Lines =
+                    [
+                        ("A shutter opens a finger's width. A tired voice: \"{r0.detail}\"", LogTone.Info),
+                        ("\"Three winters we fed them to keep the peace. There is no more to give.\"", LogTone.Info),
+                    ],
+                    Choices =
+                    [
+                        new SceneChoice("Press them for the whole of it", "whole",
+                            SceneCheck.OfAttr(Attr.Presence, difficulty: 1), FailNext: "shut"),
+                        new SceneChoice("Give your word on the camp", "word"),
+                        new SceneChoice("Leave them to their evening", ""),
+                    ],
+                },
+                new SceneNode
+                {
+                    Id = "whole",
+                    Lines =
+                    [
+                        ("The shutter swings wide. The voice drops low and quick, glad to be asked at last.", LogTone.Info),
+                        ("\"They come at dusk, along the dry ground, never the marsh. Count the fires before you count the knives.\"", LogTone.Info),
+                    ],
+                    OnEnter = g => g.World.Facts.Add("counsel", "camp_ways", g.World.SettlementName,
+                        "The raiders come at dusk along the dry ground, never the marsh; their fires are an honest count of them."),
+                },
+                new SceneNode
+                {
+                    Id = "shut",
+                    Lines =
+                    [
+                        ("A pause. Then, flat: \"Fine words. The last who talked so ate our bread a week and left.\"", LogTone.Info),
+                        ("The shutter draws to, and a bolt slides home behind it.", LogTone.Info),
+                    ],
+                },
+                new SceneNode
+                {
+                    Id = "word",
+                    Lines =
+                    [
+                        ("\"Words are thin blankets in this cold. But I will keep yours, and count the nights by it.\"", LogTone.Info),
+                        ("The shutter stays open a finger's width until you are well down the lane.", LogTone.Info),
+                    ],
+                    OnEnter = g => g.World.Facts.Add("promise", "quiet_nights", g.World.SettlementName,
+                        "The bearer gave a villager their word, through a shuttered window, that the camp would be dealt with."),
+                },
+            ]),
         },
 
         // Only exists if you met the villager first, then finished the deed: chained gating.

@@ -43,6 +43,7 @@ Decision record: D-030 in `../design/decisions.md`.
 | `When` | Optional compiled predicate over game state for what facts cannot express (cycle, position, flags). Kept small; anything reusable should become a fact or a named condition. |
 | `Lines` | The beat itself: (text template, tone) pairs. Templates may reference `{settlement}`, `{world}`, and captures from matched facts (section 4). |
 | `Effect` | Optional deterministic mutation: write facts, grant coin/essence. Runs after lines. |
+| `Scene` | Optional dialogue-tree the firing opens (D-117): nodes of prose over numbered choices, entry effects, and checked choices whose odds are shown before the player commits and rolled on the gameplay stream. Delivery only; gating is the storylet's, unchanged. Scene keys are journaled like every menu digit. |
 
 Authoring format today is a C# catalog (`StoryletCatalog.cs`): AOT-safe, type-checked,
 zero parser. Every field above is plain data except `When` and `Effect`. The format is
@@ -75,8 +76,8 @@ and waits for the next moment.
 - `Type` is a lower_snake noun naming the relation. Reserved types so far:
   `world_name`, `settlement`, `rest_point`, `site`, `grievance`, `deed`, `echo`,
   `person`, `wanderer`, `bearer_myth` (D-037); from storylets: `met`, `boon`,
-  `noticed`; from templates (D-032, D-035): `story`, `role`, `promise`,
-  `story_complete`, `history`, `evidence`, `coda`.
+  `noticed`, `counsel` (D-117); from templates (D-032, D-035): `story`, `role`,
+  `promise`, `story_complete`, `history`, `evidence`, `coda`.
 - `Subject` is the thing the fact is about (a site id, a settlement name, a storylet id).
 - `Object` is the other party or a coordinate pair, `""` when unary.
 - `Detail` is prose for surfacing in content; never parsed, never load-bearing.
@@ -117,5 +118,11 @@ draw count, and therefore every later draw, deterministic as the catalog grows.
   the global catalog per world. The storylet format did not change, as predicted.
   D-035 added selection: templates declare eligibility, the generator picks one per
   world from the world-story stream, and a `story` fact names the choice.
-- Dialogue trees: storylets deliver beats as log lines today. When a scene UI exists,
-  `Lines` grows scene directions without changing gating.
+- ~~Dialogue trees~~ Landed in D-117, on this exact seam: gating did not change,
+  delivery grew. A storylet's optional `Scene` opens a modal dialogue tree
+  (`Scenes.cs`): nodes land their prose in the log (the one full transcript),
+  digits answer, checked choices show their odds before the commit and roll them
+  on the gameplay stream, and every key is journaled, so a mid-scene save replays
+  back into the same open moment. Scene line templates expand the same captures
+  as storylet lines. A scene waits to be answered while choices stand; a node
+  with no choices closes on any key.

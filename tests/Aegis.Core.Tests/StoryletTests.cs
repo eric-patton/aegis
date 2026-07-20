@@ -47,6 +47,7 @@ public class StoryletTests
         var warm = new Game(42);
         StepTowardHouses(warm);
         Assert.True(warm.World.Facts.Exists("met", "worried_villager"));
+        if (warm.InScene) warm.ApplyKey('3'); // leave the shuttered window (D-117)
         warm.Debug_ClearCamp();
         int coinBefore = warm.Player.Coin;
         warm.ApplyKey('j');

@@ -55,7 +55,41 @@ public static class Presenter
         if (game.InSheetMenu) DrawSheet(frame, game, layout);
         if (game.InCrossingMenu) DrawCrossingMenu(frame, game, layout);
         if (game.InCreation) DrawCreation(frame, game, layout);
+        if (game.InScene) DrawScene(frame, game, layout);
         return frame;
+    }
+
+    /// <summary>
+    /// A dialogue-tree scene (D-117): the moment's prose over its numbered
+    /// answers, a checked answer carrying its odds in the open. Same standing
+    /// dialog grammar as the asking: bright choice rows, dim tags and hints.
+    /// </summary>
+    private static void DrawScene(Frame frame, Game game, Layout layout)
+    {
+        var node = game.SceneNode;
+        if (node is null) return;
+
+        const int boxW = 70;
+        int boxH = 6 + game.SceneProse.Count + game.SceneChoices.Count;
+        int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
+        int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
+
+        DrawBox(frame, x0, y0, boxW, boxH);
+        frame.Write(x0 + 2, y0 + 1, game.SceneTitle, Hue.Cyan);
+        for (int i = 0; i < game.SceneProse.Count; i++)
+            frame.Write(x0 + 2, y0 + 3 + i, game.SceneProse[i].Text, Hue.Gray);
+        for (int i = 0; i < game.SceneChoices.Count; i++)
+        {
+            var (label, tag) = game.SceneChoices[i];
+            string row = $"{i + 1}) {label}";
+            frame.Write(x0 + 2, y0 + 4 + game.SceneProse.Count + i, row, Hue.White);
+            if (tag.Length > 0)
+                frame.Write(x0 + 2 + row.Length + 2, y0 + 4 + game.SceneProse.Count + i,
+                    $"[{tag}]", Hue.Cyan);
+        }
+        frame.Write(x0 + 2, y0 + boxH - 2, game.SceneChoices.Count > 0
+            ? $"1-{game.SceneChoices.Count} answer"
+            : "any key", Hue.DarkGray);
     }
 
     /// <summary>

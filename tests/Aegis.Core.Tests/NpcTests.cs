@@ -118,6 +118,8 @@ public class NpcTests
         var npc = game.World.Npcs[0];
         for (int guard = 0; guard < 200 && !game.InTalkMenu; guard++)
         {
+            // The shuttered window may open on the way (D-117); leaving is journaled too.
+            if (game.InScene) { game.ApplyKey('3'); continue; }
             char? key = StepTo(game, npc.Pos);
             if (key is null) break;
             game.ApplyKey(key.Value);

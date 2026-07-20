@@ -134,6 +134,11 @@ public static class JourneyRunner
         int wordsLearned = 0;
         int wardsSaid = 0;
         int shadesCalled = 0;
+        // The beasts (D-100): mules bought, coursers claimed off the deed, and the
+        // coin the saddlebags ever carried, watched by ownership and the bags' rise.
+        int mulesBought = 0;
+        int coursersTaken = 0;
+        int coinBanked = 0;
         // The stead's regard at its height (D-076): a per-world Fame, reset at every
         // crossing, so the run's peak is the warmest any one stead came to hold the
         // bearer, watched by the counter's high-water mark on every key.
@@ -207,6 +212,9 @@ public static class JourneyRunner
             int spellsBefore = game.Player.Spells.Count;
             int wardBefore = game.Player.WardTurns;
             bool shadeBefore = game.Shade is not null;
+            bool muleBefore = OwnsBeast(game, MountKind.Mule);
+            bool courserBefore = OwnsBeast(game, MountKind.Courser);
+            int bagsBefore = TotalBags(game);
             game.ApplyKey(key.Value);
             keys.Append(key.Value);
             totalKeys++;
@@ -282,6 +290,12 @@ public static class JourneyRunner
             wordsLearned += Math.Max(0, game.Player.Spells.Count - spellsBefore);
             if (game.Player.WardTurns > wardBefore) wardsSaid++;
             if (game.Shade is not null && !shadeBefore) shadesCalled++;
+            // The beasts (D-100): ownership appearing is a buy or the deed's gift,
+            // and the bags only ever rise on a loading (the spook and the fetch
+            // hand coin back, they never add any).
+            if (!muleBefore && OwnsBeast(game, MountKind.Mule)) mulesBought++;
+            if (!courserBefore && OwnsBeast(game, MountKind.Courser)) coursersTaken++;
+            coinBanked += Math.Max(0, TotalBags(game) - bagsBefore);
             // The stead's regard, at its high-water mark (D-076): it resets at each
             // crossing, so the peak is the warmest one stead ever came to hold the bearer.
             maxRegard = Math.Max(maxRegard, game.Regard);
@@ -365,6 +379,9 @@ public static class JourneyRunner
                 WordsLearned: wordsLearned,
                 WardsSaid: wardsSaid,
                 ShadesCalled: shadesCalled,
+                MulesBought: mulesBought,
+                CoursersTaken: coursersTaken,
+                CoinBanked: coinBanked,
                 MaxRegard: maxRegard,
                 RegardTitle: SteadRegard.TitleOf(maxRegard),
                 MaxWrath: maxWrath,
@@ -397,9 +414,18 @@ public static class JourneyRunner
             hidesTaken, hidesSold, coinFromHides, meatCooked, rationsCooked,
             herbsForaged, herbsSold, coinFromHerbs, draughtsDrawn, draughtsDrunk,
             wordsLearned, wardsSaid, shadesCalled,
+            mulesBought, coursersTaken, coinBanked,
             maxRegard, maxWrath, raidsSuffered);
         return 0;
     }
+
+    /// <summary>A beast of the kind answers to the bearer, at the side or in the stable (D-100).</summary>
+    private static bool OwnsBeast(Game game, MountKind kind) =>
+        game.Mount?.Kind == kind || game.Stable.Any(b => b.Kind == kind);
+
+    /// <summary>Every coin riding in saddlebags anywhere in the roster (D-100).</summary>
+    private static int TotalBags(Game game) =>
+        (game.Mount?.Bags ?? 0) + game.Stable.Sum(b => b.Bags);
 
     /// <summary>The bearer's read of every known kind at a given tier: the bank, and what it reads to here.</summary>
     private static List<Read> Bestiary(Game game, int tier) =>
@@ -469,6 +495,7 @@ public static class JourneyRunner
         int meatCooked, int rationsCooked, int herbsForaged, int herbsSold, int coinFromHerbs,
         int draughtsDrawn, int draughtsDrunk,
         int wordsLearned, int wardsSaid, int shadesCalled,
+        int mulesBought, int coursersTaken, int coinBanked,
         int maxRegard, int maxWrath, int raidsSuffered)
     {
         var w = Console.Out;
@@ -548,6 +575,8 @@ public static class JourneyRunner
             w.WriteLine($"         the steeping: drew {draughtsDrawn} hale-draught(s) from the satchel's own sprigs; drank {draughtsDrunk} where the road hurt (D-090).");
         if (wordsLearned > 0)
             w.WriteLine($"         the words: took {wordsLearned} graven word(s) off the stones; said the ward {wardsSaid} time(s); the shade answered the calling {shadesCalled} time(s) (D-091, D-099).");
+        if (mulesBought + coursersTaken > 0)
+            w.WriteLine($"         the roads: bought the stead's mule {mulesBought} time(s); the raiders' courser answered the deed {coursersTaken} time(s); the saddlebags carried {coinBanked} coin all told (D-100).");
         w.WriteLine($"         the stead: came to hold the bearer as {(maxRegard > 0 ? SteadRegard.TitleOf(maxRegard) : "a stranger")} at its warmest "
                     + $"(peak regard {maxRegard}, reset at every crossing) (D-076).");
         w.WriteLine($"         the dens: came to hold the bearer as {(maxWrath > 0 ? RaiderWrath.TitleOf(maxWrath) : "no one at all")} at their most fearful "
@@ -598,6 +627,7 @@ internal sealed record JourneyReport(
     int HerbsForaged, int HerbsSold, int CoinFromHerbs,
     int DraughtsDrawn, int DraughtsDrunk,
     int WordsLearned, int WardsSaid, int ShadesCalled,
+    int MulesBought, int CoursersTaken, int CoinBanked,
     int MaxRegard, string RegardTitle, int MaxWrath, string WrathTitle, int RaidsSuffered,
     string? Keys,
     List<JourneyCrossingDto> Crossings);

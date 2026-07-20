@@ -50,6 +50,13 @@ namespace Aegis.Cli;
 /// the calling is said instead, a shade walking the uncanny halls where its doubled blow
 /// pays, released once that ground is cleared so the held focus comes back to the ward.
 /// Spark and levin stay unsaid: the fist and the bow already answer what they would.
+/// And it works the beasts of the road (D-100), courser forward and mule banking: with the
+/// camp broken it claims the steadholder's courser off the deed and buys the stead's mule
+/// with surplus coin, banks the purse into the mule's bags on the working road (what the
+/// beast carries does not fall with the bearer; an uncanny mouth hands it back and the
+/// bank reloads on the way out), turns the stable so the courser's stride leads between
+/// sites, and brings the bank home before the arch, because the bags are world-bound and
+/// the crossing would forfeit them.
 ///
 /// It is a pure function of game state (and the runner's skip-set, which is itself
 /// derived deterministically), so a seeded run is perfectly reproducible: the same seed
@@ -89,8 +96,9 @@ public static class JourneyPilot
         // hides cured or raw meat in hand, open the wood's edge, sell the lot and cook the
         // meat down to rations, then step back. The trade menu sits behind one talk digit
         // (D-071), so it is opened, driven, and left in turn.
-        if (g.InTradeMenu) return BenchDigit(g);
-        if (g.InTalkMenu && g.TalkNpc?.Id == "npc_woodward" && BenchErrand(g))
+        if (g.InTradeMenu) return BenchDigit(g, skip);
+        if (g.InTalkMenu && g.TalkNpc?.Id == "npc_woodward"
+            && (BenchErrand(g) || MuleBuyWanted(g) || StableTurnWanted(g, skip)))
             return TradeOpenDigit(g) ?? 'z';
         // The stillroom (D-081, D-082): with sprigs in the satchel, or an eye to be
         // seen to (D-098), open the herbwife's bench the same way and do the business.
@@ -235,7 +243,7 @@ public static class JourneyPilot
         // the hides sell (the coin funds the smith just below, or rides to the arch) and the
         // meat cooks down to rations. One trip does both, and a trip empties the bag, so it
         // fires once per world's hunt, no more.
-        if (BenchErrand(g) && Woodward(g) is { } ward)
+        if ((BenchErrand(g) || MuleBuyWanted(g) || BagFetchWanted(g, skip)) && Woodward(g) is { } ward)
         {
             var toWard = NavKey(g, g.World.Overworld, p.Pos, ward.Pos, OverworldBlocked(g));
             if (toWard is not null) return toWard;
@@ -266,12 +274,39 @@ public static class JourneyPilot
             if (toHealer is not null) return toHealer;
         }
 
+        // The raiders' courser (D-100): the camp broken and the stolen beast still
+        // unclaimed, the steadholder has a word waiting; the bump is the whole errand.
+        if (CourserGiftWaits(g) && Steadholder(g) is { } holder)
+        {
+            var toHolder = NavKey(g, g.World.Overworld, p.Pos, holder.Pos, OverworldBlocked(g));
+            if (toHolder is not null) return toHolder;
+        }
+
         // Take the nearest site still worth entering before the arch.
         var target = NearestUnclearedSite(g, skip);
+
+        // The bank (D-100): with the road still working, surplus coin rides the mule's
+        // bags at the bearer's side; what the beast carries does not fall with the
+        // bearer, an uncanny mouth hands it back, and the bank reloads on the way out.
+        if (target is not null && BankWanted(g) && g.Mount is { } steed
+            && Chebyshev(p.Pos, steed.Pos) == 1)
+            return 'o';
+
         if (target is not null)
         {
             if (p.Pos == target.OverworldPos) return '>';   // stand on the mouth, go down.
             return NavKey(g, g.World.Overworld, p.Pos, target.OverworldPos, OverworldBlocked(g));
+        }
+
+        // The bank comes home before the arch (D-100): the bags are world-bound, so the
+        // coin is taken back into the purse (one press tops the bags up off the purse,
+        // the next empties them whole) before the crossing would forfeit it. A laden
+        // beast still in the stable is fetched through the bench's stable digit first.
+        if (g.Mount is { Bags: > 0 } laden)
+        {
+            if (Chebyshev(p.Pos, laden.Pos) == 1) return 'o';
+            var toLaden = NavKey(g, g.World.Overworld, p.Pos, laden.Pos, OverworldBlocked(g));
+            if (toLaden is not null) return toLaden;
         }
 
         // Every site is cleared or written off. Before the arch forfeits it, fetch a
@@ -678,7 +713,7 @@ public static class JourneyPilot
     /// (D-071/D-073), so the bench empties in a few keys and never oscillates, and the
     /// errand only sends the bearer here once per world's hunt.
     /// </summary>
-    private static char BenchDigit(Game g)
+    private static char BenchDigit(Game g, IReadOnlySet<string> skip)
     {
         // The stillroom (D-082): the simples are ours to sell across her table, and
         // with the sale banked the taken eye is seen to on the same visit (D-098),
@@ -695,6 +730,10 @@ public static class JourneyPilot
         }
         if (g.Player.Hide > 0) return TradeDigit(g, TradeGood.Hide);
         if (g.Player.RawMeat > 0 && g.Player.Rations < Game.RationCap) return TradeDigit(g, TradeGood.Cook);
+        // The beasts (D-100): buy the stead's mule with surplus coin, and turn the
+        // stable when the roster wants a different road out front.
+        if (MuleBuyWanted(g)) return TradeDigit(g, TradeGood.Beast);
+        if (StableTurnWanted(g, skip)) return TradeDigit(g, TradeGood.Stable);
         return 'z';
     }
 
@@ -706,6 +745,62 @@ public static class JourneyPilot
                 return (char)('1' + i);
         return 'z';
     }
+
+    // ---- the beasts (D-100): the mule banks, the courser strides ----
+
+    private static Npc? Steadholder(Game g) => g.World.Npcs.FirstOrDefault(n => n.Id == "npc_steadholder");
+
+    /// <summary>The camp deed that frees the raiders' stolen beast (and quiets the raids the tether was priced against).</summary>
+    private static bool CampBroken(Game g) =>
+        g.World.Sites.FirstOrDefault(s => s.Kind == SiteKind.GoblinCamp) is { Cleared: true };
+
+    private static bool OwnsCourser(Game g) =>
+        g.Mount?.Kind == MountKind.Courser || g.Stable.Any(b => b.Kind == MountKind.Courser);
+
+    private static bool OwnsMule(Game g) =>
+        g.Mount?.Kind == MountKind.Mule || g.Stable.Any(b => b.Kind == MountKind.Mule);
+
+    /// <summary>The steadholder's word waits (D-100): the camp broken, and no courser yet answering to the bearer.</summary>
+    private static bool CourserGiftWaits(Game g) => CampBroken(g) && !OwnsCourser(g);
+
+    /// <summary>Coin is surplus once the forge and the cure roads want none of it: only then does a beast or a bank get any.</summary>
+    private static bool SurplusCoin(Game g) =>
+        SmithBestBuy(g) is null && !BraceWanted(g) && !EyeCureWanted(g);
+
+    /// <summary>
+    /// The stead's mule is bought (D-100) with surplus coin, at the friend's rung the
+    /// seller demands, when no mule answers to the bearer and the side is clear (the
+    /// bench refuses a buyer who already has a beast at hand).
+    /// </summary>
+    private static bool MuleBuyWanted(Game g) =>
+        !OwnsMule(g) && g.Mount is null
+        && SteadRegard.RungFor(g.Regard) >= SteadRegard.FriendRung
+        && g.Player.Coin >= MountCatalog.MuleCoin && SurplusCoin(g);
+
+    /// <summary>Sites are done and a stabled beast still holds coin: the bank must come home before the arch.</summary>
+    private static bool BagFetchWanted(Game g, IReadOnlySet<string> skip) =>
+        NearestUnclearedSite(g, skip) is null && g.Stable.Any(b => b.Bags > 0);
+
+    /// <summary>
+    /// The stable's one digit is pressed (D-100) to bring the right road out front: while
+    /// the world is still being worked, the courser's stride leads (the mule going up with
+    /// its bags is the vault the raiders' night cannot reach); with the sites done and coin
+    /// still stabled, the digit cycles the roster until the laden beast walks out. Each
+    /// press rotates a fixed round of at most three, so either want terminates.
+    /// </summary>
+    private static bool StableTurnWanted(Game g, IReadOnlySet<string> skip)
+    {
+        if (BagFetchWanted(g, skip)) return g.Mount is not { Bags: > 0 };
+        return NearestUnclearedSite(g, skip) is not null
+            && g.Stable.Any(b => b.Kind == MountKind.Courser)
+            && g.Mount?.Kind != MountKind.Courser;
+    }
+
+    private const int BankFloat = 25; // under this the walk to load is not worth the key.
+
+    /// <summary>Surplus coin rides the mule's bags on the working road (D-100): loaded beside it, a press at a time.</summary>
+    private static bool BankWanted(Game g) =>
+        g.Mount is { Kind: MountKind.Mule } && g.Player.Coin >= BankFloat && SurplusCoin(g);
 
     // ---- the words (D-091, D-099): the stones read, the ward said, the shade called ----
 

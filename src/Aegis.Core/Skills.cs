@@ -8,9 +8,11 @@ namespace Aegis.Core;
 /// Hunting (D-070) is woodcraft, fed only by game brought down in the wilds;
 /// Cooking (D-073) is the first craft, fed by raw meat turned to rations at a fire;
 /// Survival (D-074) is the wider wilderness lore, fed for now by foraging the wood;
-/// Spellcraft (D-091) is the said words' craft, fed only by workings that did work.
+/// Spellcraft (D-091) is the said words' craft, fed only by workings that did work;
+/// Sleight (D-107) is the light hand's craft, the crime family's first skill, fed
+/// only by lifts that came away unseen.
 /// </summary>
-public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting, Cooking, Survival, Spellcraft }
+public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting, Cooking, Survival, Spellcraft, Sleight }
 
 /// <summary>
 /// Counted uses are the only state; levels are derived, never granted. A skill
@@ -20,7 +22,7 @@ public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting, Cookin
 /// </summary>
 public sealed class SkillSet
 {
-    public const int Count = 9;
+    public const int Count = 10;
 
     private readonly int[] _uses = new int[Count];
 
@@ -58,6 +60,24 @@ public sealed class SkillSet
         SkillId.Cooking => "Cooking",
         SkillId.Survival => "Survival",
         SkillId.Spellcraft => "Spellcraft",
+        SkillId.Sleight => "Sleight",
         _ => id.ToString(),
     };
+}
+
+/// <summary>
+/// The lift itself (D-107): picking a pocket, the crime family's second verb
+/// after pilfering (D-086). The odds ride the Sleight skill alone: a green
+/// hand is caught as often as not, a practiced one rarely, and no hand is
+/// ever safe, because the cap keeps the last risk real. The take is small on
+/// purpose: at stead scale crime pays in craft and in trouble, not in wealth.
+/// </summary>
+public static class Lifting
+{
+    /// <summary>What a lifted purse yields: uniform in [TakeMin, TakeMaxExclusive).</summary>
+    public const int TakeMin = 2;
+    public const int TakeMaxExclusive = 5;
+
+    /// <summary>Odds a lift comes away unseen: half for a green hand, a twentieth per Sleight level, capped short of certainty.</summary>
+    public static double ChanceFor(int sleightLevel) => Math.Min(0.85, 0.5 + 0.05 * sleightLevel);
 }

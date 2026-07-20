@@ -86,6 +86,20 @@ public sealed class World
     public List<Pos> RepaidHouses { get; } = [];
 
     /// <summary>
+    /// Pockets already tried this world (D-107): a purse is brushed once, come
+    /// away clean or caught, because twice at one pocket is how thieves get
+    /// named. Runtime state like the pilfered doors, rebuilt by replay,
+    /// regenerated innocent at the crossing.
+    /// </summary>
+    public List<string> LiftedNpcs { get; } = [];
+
+    /// <summary>Hands that caught the bearer's wrist (D-107): each opens its own repay road until it is walked.</summary>
+    public List<string> CaughtLifts { get; } = [];
+
+    /// <summary>Wrongs made right in the hand they were done to (D-107): a repaid lift is closed both ways.</summary>
+    public List<string> RepaidLifts { get; } = [];
+
+    /// <summary>
     /// The terms this world was crossed into under (D-047): oaths sworn at the
     /// previous world's waygate. A generation input like the tier; they lapse at
     /// this world's far gate. Empty for a first world and for a plain crossing.

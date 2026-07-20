@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-106); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-107); the research behind it lives in `../research/`.
 
 ---
 
@@ -88,7 +88,7 @@ Magic v1 shipped at D-091 in exactly the found-not-picked shape, with one amendm
 
 ## 6. The Life: Activities and Economy
 
-Four activity families, all first-class: **crafting trades** (smithing, alchemy, cooking), **wilderness living** (hunting, tracking, foraging, fishing, camping), **crime** (lockpicking, pickpocketing, burglary, fencing), **town life** (gambling, carousing, tournaments, trading, property). The discipline: every activity feeds at least two of skill growth, money, world-state/reputation, story hooks, or it does not ship. Activities hook into generated facts: the apothecary pays well for herbs because her supplier died in the raid the fact graph remembers. Alchemy opened at D-090 in exactly this shape: the foraged simples (D-074) steep into a hale-draught at the stillroom (D-081) or, once the stillcraft is taught, at any shrine rest in any world, giving the herb lane its first sink (sell the sprigs or drink them) and the deep sites their first carried remedy.
+Four activity families, all first-class: **crafting trades** (smithing, alchemy, cooking), **wilderness living** (hunting, tracking, foraging, fishing, camping), **crime** (lockpicking, pickpocketing, burglary, fencing), **town life** (gambling, carousing, tournaments, trading, property). The discipline: every activity feeds at least two of skill growth, money, world-state/reputation, story hooks, or it does not ship. Activities hook into generated facts: the apothecary pays well for herbs because her supplier died in the raid the fact graph remembers. Alchemy opened at D-090 in exactly this shape: the foraged simples (D-074) steep into a hale-draught at the stillroom (D-081) or, once the stillcraft is taught, at any shrine rest in any world, giving the herb lane its first sink (sell the sprigs or drink them) and the deep sites their first carried remedy. The crime family opened at D-086 (pilfering, the shame ladder, restitution) and in earnest at D-107: pickpocketing on its own deliberate key, the Sleight skill carrying the odds, clean lifts writing the stead's first secret fact and caught lifts riding the same unified suspicion ladder, so crime feeds skill, coin, reputation, and story hooks at once, exactly the discipline above. Fencing waits on a fence worth the name; town life is the last unopened family.
 
 Coin is fully separate from Essence and must matter all game:
 - **Auto-scaling sinks**: upkeep and repair cost a percentage of your own gear's value, so wealth taxes itself.

@@ -868,7 +868,7 @@ public static class Presenter
 
         y++;
         Line("hjkl/yubn move  . wait", Hue.DarkGray);
-        Line("g grab  >/< enter/exit", Hue.DarkGray);
+        Line("g grab  p lift  >/< enter/exit", Hue.DarkGray);
         Line("f loose  e eat  d drink", Hue.DarkGray);
         Line("z cast  i gear  c you", Hue.DarkGray);
         Line("x stance  o order", Hue.DarkGray);

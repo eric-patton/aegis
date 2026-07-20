@@ -195,10 +195,15 @@ namespace Aegis.Core;
 /// harder, the mound raises its slain on the tick, and a new lane storylet
 /// enters the draws, so a v53 journal that robbed the barrow early replays
 /// differently from that grab on.
+/// v55 when D-107 put a light hand on 'p': the key now brushes an adjacent
+/// villager's purse (drawing dice, moving coin, shame, and the new Sleight
+/// skill) where a v54 journal's stray 'p' fell through as nothing, and the
+/// first shame's way-back hint moved from the ladder to the deed that earned
+/// it, so old journals holding 'p' replay into different bearers.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 54;
+    public const int Version = 55;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

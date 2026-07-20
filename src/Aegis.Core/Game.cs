@@ -936,6 +936,7 @@ public sealed class Game
             Command.Enter => DoEnter(),
             Command.Exit => DoExit(),
             Command.Grab => DoGrab(),
+            Command.Lift => DoLift(),
             Command.Rest => DoRest(),
             Command.Eat => DoEat(),
             Command.Drink => DoDrink(),
@@ -1740,7 +1741,101 @@ public sealed class Game
             ? $"{witness.Name} marks you from the lane, and does not look away."
             : "No eye is on you but the door's. It will not matter: steads count their loaves.", LogTone.Danger);
 
+        bool firstShame = Shame == 0;
         RaiseShame(1);
+        if (firstShame)
+            Log.Add(Turn, "(What is taken can be made right at the door it was taken from: the same hand, and coin twice the loaf's worth on the sill.)", LogTone.Info);
+        return true;
+    }
+
+    /// <summary>
+    /// Picking a pocket (D-107): the crime family's second verb, and the first
+    /// with dice in it. 'p' beside one of the stead's folk brushes their purse:
+    /// come away clean and the coin and the craft are yours with no one the
+    /// wiser (the stead's first secret fact from a deed); be caught and the
+    /// wrist is held, the well hears by morning, and the shame is the same
+    /// unified ladder pilfering climbs (D-086), because the stead does not
+    /// keep separate books on flavors of thief. One try per pocket per world,
+    /// and the wronged hand is repaid with the same key that tried it.
+    /// </summary>
+    private bool DoLift()
+    {
+        if (Mode != MapMode.Overworld)
+        {
+            Log.Add(Turn, "No pockets down here worth the name; what the deep places hold is not carried on a hip.");
+            return false;
+        }
+
+        Npc? mark = null;
+        foreach (var (dx, dy) in Directions.All8)
+        {
+            var q = Player.Pos.Plus(dx, dy);
+            if (World.Npcs.FirstOrDefault(n => n.Pos == q && n.Kind == NpcKind.Villager) is { } npc)
+            {
+                mark = npc;
+                break;
+            }
+        }
+        if (mark is null)
+        {
+            Log.Add(Turn, "No one stands near enough to brush against.");
+            return false;
+        }
+
+        // Making right outranks more wrong (D-086's corner rule, carried over):
+        // a caught hand's restitution takes the key until it is paid.
+        if (World.CaughtLifts.Contains(mark.Id) && !World.RepaidLifts.Contains(mark.Id))
+            return RepayLift(mark);
+
+        if (World.LiftedNpcs.Contains(mark.Id))
+        {
+            Log.Add(Turn, $"{mark.Name}'s purse has told you all it is going to. Twice at one pocket is how thieves get named.");
+            return false;
+        }
+
+        World.LiftedNpcs.Add(mark.Id);
+        if (_combatRng.Chance(Lifting.ChanceFor(Player.Skills.Level(SkillId.Sleight))))
+        {
+            int take = _combatRng.Range(Lifting.TakeMin, Lifting.TakeMaxExclusive);
+            Player.Coin += take;
+            Log.Add(Turn, $"A brush at the shoulder, a word about the weather, and {mark.Name}'s purse is {take} coin the lighter. No eye follows you away. ({Player.Coin} coin carried)", LogTone.Reward);
+            if (!World.Facts.Exists("secret", "lifted_purse"))
+                World.Facts.Add("secret", "lifted_purse", World.SettlementName,
+                    $"Coin has gone missing from a pocket in {World.SettlementName}, and no one knows whose hand took it.");
+            GainSkill(SkillId.Sleight);
+        }
+        else
+        {
+            World.CaughtLifts.Add(mark.Id);
+            Log.Add(Turn, $"Your fingers find the purse, and {mark.Name}'s hand finds your wrist. \"So that is what you are.\" It will be round the well by morning.", LogTone.Danger);
+            if (!World.Facts.Exists("shame", "confronted"))
+                World.Facts.Add("shame", "confronted", World.SettlementName,
+                    $"{mark.Name} caught the bearer's hand in their purse and said so to their face.");
+            if (World.CaughtLifts.Count == 1)
+                Log.Add(Turn, "(A wrong done to a hand is made right in that hand: coin twice the take, offered plainly, with the same key that tried it.)", LogTone.Info);
+            RaiseShame(1);
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Restitution for a caught lift (D-107): the unified ladder's exit, walked
+    /// in the hand the wrong was done to, with the key that did it (D-086's
+    /// symmetry kept). The same coin a sill asks, because the stead prices
+    /// trust, not takings.
+    /// </summary>
+    private bool RepayLift(Npc mark)
+    {
+        if (Player.Coin < SteadShame.RepayCoin)
+        {
+            Log.Add(Turn, $"Making it right with {mark.Name} costs {SteadShame.RepayCoin} coin, and you hold {Player.Coin}. The wrong keeps until you can pay for it.");
+            return false;
+        }
+
+        Player.Coin -= SteadShame.RepayCoin;
+        World.RepaidLifts.Add(mark.Id);
+        Log.Add(Turn, $"You put {SteadShame.RepayCoin} coin into {mark.Name}'s hand and name what it is for. They count it, twice, and nod once.", LogTone.Reward);
+        LowerShame(1);
         return true;
     }
 
@@ -4577,6 +4672,7 @@ public sealed class Game
             SkillId.Survival => $"The wood keeps fewer secrets from you; your hands find the good growth without your eyes. (Survival rises to {after})",
             SkillId.Warding => $"You take the blow where the iron is thickest. (Warding rises to {after})",
             SkillId.Spellcraft => $"The words come steadier now, and cost you less of yourself to hold. (Spellcraft rises to {after})",
+            SkillId.Sleight => $"Your fingers have learned the weight of a purse without asking the eyes. (Sleight rises to {after})",
             _ => $"Your craft deepens. ({SkillSet.NameOf(id)} rises to {after})",
         }, LogTone.Reward);
 
@@ -4780,7 +4876,8 @@ public sealed class Game
     /// (one door, one rung), so every rise is named aloud; each rung crossed is
     /// written to the graph as permanent history (D-085's seam from the dark
     /// side), because a stead remembers having watched a bearer even after the
-    /// sill is paid. The first shame ever earned names the way back down, and
+    /// sill is paid. The way back down is named at the deed itself (each verb
+    /// knows its own restitution road, D-107), and the first shame ever earned
     /// draws the one line the Aegis keeps for it.
     /// </summary>
     private void RaiseShame(int amount)
@@ -4800,8 +4897,6 @@ public sealed class Game
                         $"In {World.SettlementName} the bearer has been {SteadShame.TitleOf(SteadShame.Threshold(rung))}.");
             }
         }
-        if (rungBefore == 0)
-            Log.Add(Turn, "(What is taken can be made right at the door it was taken from: the same hand, and coin twice the loaf's worth on the sill.)", LogTone.Info);
         if (!Player.ShameLineHeard)
         {
             Player.ShameLineHeard = true;

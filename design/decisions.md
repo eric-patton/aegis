@@ -231,6 +231,52 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-107: The light hand: pickpocketing, the Sleight skill, and the unified ladder (2026-07-20)
+The crime family opens in earnest: after four sessions in the faction pillar, the third of
+the four activity families (D-006) gets its second verb and its first skill. The fork was
+which crime verb leads, and the lift won it over lockpicking (new coffer furniture and item
+plumbing for what pilfering half-covers) and fencing (there is no plausible fence in a
+three-door stead; it waits on a peddler or a second settlement): pickpocketing needs zero
+new NPCs, feeds the roadmap's own named next item (the confronted fact gains a live,
+repeatable producer beside the one authored storylet), and pays the faction machinery just
+built. The verb is 'p' (a new journaled key, Command.Lift) beside one of the stead's own:
+one try per pocket per world, because twice at one pocket is how thieves get named. The
+dice ride the new SLEIGHT skill alone (Lifting.ChanceFor: half for a green hand, a
+twentieth per level, capped at 0.85 so no hand is ever safe), the crime family's first
+skill and the roster's tenth, counted like every skill only by work that worked: a clean
+lift pays 2-4 coin, writes the stead's first secret fact from a deed (secret/lifted_purse,
+fuel for the roadmap's secret-fact consumer), and feeds the hand; a caught lift pays
+nothing, teaches nothing, and the wrist is held: the confronted fact written with the
+catcher's name, and the shame the same unified ladder pilfering climbs (D-086), by the
+user's pick over a separate track, because the stead does not keep separate books on
+flavors of thief. The exit keeps D-086's symmetry: the wrong is made right in the hand it
+was done to, with the same key that tried it, at the sill's own price (RepayCoin, the
+stead pricing trust rather than takings), and making right outranks more wrong at the same
+corner. One honest relocation: the first-shame way-back hint used to live inside
+RaiseShame and named the door road even when the shame came from a guest's fall; each deed
+now names its own road back at the deed itself. Save v54 to v55: a stray 'p' in an old
+journal fell through as nothing and now draws dice and moves coin, shame, and skill.
+Verified the established ways: 525 tests green (nine new SleightTests on pinned seeds,
+probed once and stable: the odds ladder, the clean lift with coin, secret, skill, and
+snapshot, the caught lift on the unified ladder with both facts, the one-try pocket, the
+repay in the same hand and the closed-both-ways pocket, short coin leaving the wrong
+standing, no mark and no turn, no pockets below ground, and the crossing regenerating
+pockets and shame; two existing tests updated honestly for the tenth skill); twins
+hash-identical; sim replay exact (cycle 13, 11750 turns, 1 death); and the baselines
+predicted byte-identical and confirmed on master and all four sweep seeds, because the
+pilot never presses 'p': the lift is honestly pilot-unexercised by design, the
+honest-bearer path, covered by tests (the D-100 stage 2 and D-106 precedent). Options set
+aside: lockpicking and fencing as the leading verb (above, both stay on the roadmap); a
+separate shame track for lifts (the user chose the unified ladder); riding the lift on
+Grab beside a villager (villagers stand beside their houses, so the two crime targets
+overlap constantly and a door-thief would lift by accident; a deliberate crime deserves
+its own deliberate key); a talk-menu lift digit (the herbwife's topics already fill eight
+of the nine shared digits, and a menu is a consented surface, the wrong place for a
+theft). Deferred: fencing once a fence exists; lockpicking with deep-site coffers as the
+guilt-free outlet; consumers for the confronted and secret facts (now with live fuel);
+Sleight knacks when the skill has settled; a lift-caught storylet if the confronted
+consumer wants a richer scene.
+
 ### D-106: The third faction: the long mound, and the grudge of the dead (2026-07-20)
 The twelfth faction increment, paying the pillar's oldest structural deferral: the relation
 matrix gets its second edge. The fork was who the third faction should be, and the mound won

@@ -163,8 +163,9 @@ public class BarrowTests
         Assert.True(barrow.ChestLooted);
         Assert.False(game.World.CampSite.ChestLooted);
         Assert.InRange(game.Player.Coin - coinBefore, 15, 26);
-        // The grab now also hands out the grave-iron blade (D-041), so the window is wider.
-        Assert.Contains(game.Log.Recent(8), e => e.Text.Contains("Grave-gold"));
+        // The grab also hands out the grave-iron blade (D-041) and, taken from
+        // under walking dead, starts the mound's grudge (D-106): wider window.
+        Assert.Contains(game.Log.Recent(12), e => e.Text.Contains("Grave-gold"));
     }
 
     /// <summary>

@@ -45,7 +45,7 @@ holes**: two of the four activity families (crime, town-life). Rough fill levels
 - Skills: **9 of ~18** (five combat, Hunting from D-070, Cooking from D-073, Survival from D-074, Spellcraft from D-091)
 - Activity families: **wilderness-living core built** (hunting, selling, cooking, foraging: D-070..D-074) and the **craft family opened** (cooking D-073; alchemy v1 D-090, the hale-draught); crime and town life unbuilt
 - Launch story templates: **2** built (of 3 named, 4-5 planned)
-- **Factions begun (D-076..D-089):** the local-reputation foundation is in (the home stead's
+- **Factions begun (D-076..D-089, D-105, D-106):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
   raider slain, dread softening their blows past its rung), the coarse tick began (D-079,
@@ -61,7 +61,8 @@ holes**: two of the four activity families (crime, town-life). Rough fill levels
   stores + boldness on the tick: raids embolden and take double, culls cow the dens, bared
   lofts end the raids, cleared worlds recover), and the stead now moves on the tick itself
   (D-105, the watch posted against greed and the levy called at the last measure, with the
-  levy answerable by the bearer for regard); a third faction remains
+  levy answerable by the bearer for regard), and the third faction stands (D-106, the long
+  mound's grudge: the relation matrix has its second edge)
 - Major vision pillars: all broken ground (magic opened D-091; the craft family
   opened D-073/D-090; character creation shipped both stages, D-092/D-093; companions
   shipped whole, D-097/D-099/D-100: guests, the shade, and the beast roster; the
@@ -93,8 +94,9 @@ holes**: two of the four activity families (crime, town-life). Rough fill levels
   faction facts have their first consumers (D-088: the thief confronted, the tale carried,
   the keeping shown), and the keystone clause itself landed (D-089: state vectors on the
   tick, stores and boldness, with recovery as the exit's aftermath), and the stead now
-  acts on it (D-105: the watch and the levy). Next in this phase: a third faction, and
-  consumers for the `confronted` and `secret` facts. **Magic, the alternative keystone, landed (D-091):** Mind and Will wake,
+  acts on it (D-105: the watch and the levy), and the third faction stands (D-106: the
+  mound's grudge, the relation matrix's second edge). Next in this phase: consumers for
+  the `confronted` and `secret` facts, and the Nemesis-style roster. **Magic, the alternative keystone, landed (D-091):** Mind and Will wake,
   the caster build exists (graven stones, four workings, Focus, Spellcraft), and the deep
   sites carry a prize beyond coin and gear.
 - **Phase 3: Remaining pillars & stakes.** Companions, the Death's-Toll/scar layer, the
@@ -258,7 +260,15 @@ holes**: two of the four activity families (crime, town-life). Rough fill levels
   storylet)
 - [ ] Levy and watch follow-ons (D-105): a pilot levy-answer rung if journeys show levies
   standing unanswered; the raids talk topic reading the watch and levy aloud
-- [ ] A third faction, giving the relation matrix its second edge (D-078, D-089)
+- [x] A third faction, giving the relation matrix its second edge (D-078, D-089; delivered
+  D-106, v54): the long mound's unquiet dead. Grave-goods taken while the dead still walk
+  start the grudge (one rung, "marked by the long mound"): riled wights strike a point
+  harder and the mound raises its slain again on the tick (capped at three, narrated,
+  mound_restless written); the stead speaks of the taller lights at its doors (the fear
+  edge: the mound stilled was already the regard's deed). The designed exit is the
+  stilling itself: dead laid to rest keep no ledgers
+- [ ] Mound follow-ons (D-106): the villagers' mound topic reading the grudge aloud; a
+  raiders-mound edge if one earns its keep; a desecration verb beyond the grave-goods
 - [ ] Bounded Nemesis-style leader/lieutenant roster with memory (D-023)
 - [ ] Designed conflict exit conditions (no eternal stalemates) (D-023)
 - [ ] (Unblocks: full-form story templates, institution/zealot/warden roles) (D-035)
@@ -370,6 +380,7 @@ holes**: two of the four activity families (crime, town-life). Rough fill levels
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-20: **D-106 the third faction: the long mound.** The relation matrix gets its second edge, and the mound won the fork over the old watch (every-world presence from tier 2, three systems already leaning on it; the watch waits for the Nemesis roster). The grudge is earned one way: grave-goods carried out of an unstilled barrow. One rung, and the weight is in the dead's hands: riled wights strike a point harder (the dark mirror of the raiders' dread) and the mound raises its own slain again on the tick, capped at three, never under the bearer's eye, each rising spoken up the lane and written (mound_restless). The stead perceives both directions of the edge: the stilling was already the regard's deed, and the riled lights are now feared at its doors (NearHouse storylet on the live grudge). The designed exit is the stilling itself: the one Infamy whose exit is completion, not payment. Save v53 -> v54. 516 tests green (9 new MoundTests). Twins identical; sim replay exact; the D-105 baselines predicted byte-identical and confirmed on master and all four sweep seeds (the pilot stills before it robs: the pious-delver path, the grudge honestly pilot-unexercised, test-covered). New tracked: the mound topic reading the grudge; a raiders-mound edge; a desecration verb.
 - 2026-07-20: **D-105 the stead moves: the watch posted and the levy called.** D-089's deferral paid: the home faction acts on the tick. The watch answers greed: posted the morning after a sackful raid, it turns the raiding nights away with nothing (no plunder, so the dens' greed stops compounding) at a measure of upkeep per tick, and can bare the lofts itself; it stands down at the cull (wrath's second faction-scale consequence), the camp-fall, or the empty loft. The levy answers the stores: called at the last measure, it closes the larder and turns the ration digit into the levy's answer (coin against a carted measure, +1 regard: the stores axis' first bearer-side input), lifted by answers or recovery, the ask voiced by a Talk storylet gated on live state. All narrated + written (watch_posted, levy_called, levy_met). Save v52 -> v53. 507 tests green (10 new SteadMovesTests, the bare-out test rewritten). Twins identical; sim replay exact (11750 turns/1 death); the watch shows live on every seed (master raids 33 -> 26, sweep 11/13/15/14 vs 14/23/16/18), deaths 0/3/2/3 held. New tracked: a pilot levy-answer rung if journeys show levies standing; the raids topic reading the watch and levy aloud.
 - 2026-07-19: **D-104 the pilot works the beasts.** Fourth and last lane of the pilot-policies batch, closing D-100's follow-on. Courser forward, mule banks: the steadholder's gift claimed the moment the camp breaks, the mule bought with surplus coin at the friend's rung, the purse banked into its bags on the working road (the spook hands it back at uncanny mouths and the bank reloads), the stable turned so the courser's stride leads and the laden mule stands as the raid-proof vault, and the bank brought home before the world-bound bags would forfeit at the arch. Runner grew the roads evidence line. Master: 9 mules, the courser in all 12 worlds, 1244 coin banked, 11886 turns/2 deaths, twins identical, sim replay exact. Sweep: courser in all 8 worlds on every seed, 384-573 banked, deaths 0/3/2/3. The companions pillar is now driven live by every journey; the fell pony's taming stays a tracked follow-on.
 - 2026-07-19: **D-103 the pilot says the words.** Third lane of the pilot-policies batch, closing the oldest tracked pilot gap (the D-091 stones-and-words line) and D-099's cast-policy follow-on in one doctrine: the warded delver. Every stone in a held site read before climbing out (chest-shaped rung), the ward said with live steel in the word's reach, and on wight/graven ground the calling said instead, the shade released by the second saying once that ground clears (at the base pool the two workings cannot coexist: D-099's designed trade live). Spark and levin stay unsaid; no word opened on an aimed cell. Runner grew the words/wards/shades evidence line. Master: all 5 words, 139 wards, 30 shades, 11302 turns/1 death, twins identical, sim replay exact. Sweep: every seed learns all five, deaths collapse to 0/0/2/3 (five-seed total 24 -> 6): the magic pillar demonstrably carries its weight.

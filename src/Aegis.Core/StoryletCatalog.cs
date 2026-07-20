@@ -220,6 +220,24 @@ public static class StoryletCatalog
             ],
         },
 
+        // The lights on the mound (D-106): the stead perceiving the third
+        // faction, the relation matrix's second edge spoken as content. The
+        // fear is gated on the live grudge, not the fact alone, so a stilled
+        // mound ends the talk of it the way restitution stills the reckoning.
+        new Storylet
+        {
+            Id = "the-lights-on-the-mound",
+            Trigger = StoryletTrigger.NearHouse,
+            Priority = 6,
+            Requires = [new FactPattern("event", "mound_restless")],
+            When = g => g.Grudge > 0,
+            Lines =
+            [
+                ("A man stands at his door looking east past you, at the long mound on its hill, and does not pretend otherwise. \"They burned taller again last night, those lights. My grandmother had a word for a mound that will not settle, and she would not say it after dark. We tar the posts against raiders, stranger. There is no tar for that.\"", LogTone.Info),
+                ("\"He is right to look east, bearer, and you know why the lights burn taller. Two ledgers now stand open against you in this valley, and only one of them can be paid in coin.\"", LogTone.Aegis),
+            ],
+        },
+
         // The telling carried (D-088): the rumor fact's first consumer, the
         // hearthtale mattering after the hour it was told. Nothing is gained
         // and nothing needs to be: the payoff is the lane reading differently

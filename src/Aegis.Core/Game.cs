@@ -228,6 +228,12 @@ public sealed class Game
     /// <summary>The stead's suspicion of the bearer (D-086): local Infamy, one rung per door pilfered.</summary>
     public int Shame => InfamyOf(FactionId.Stead);
 
+    /// <summary>The mound's grudge (D-106): the dead's count against the bearer, grave-goods taken while they walked.</summary>
+    public int Grudge => InfamyOf(FactionId.Mound);
+
+    /// <summary>How many of its slain this world's mound has raised again (D-106); capped, replay-rebuilt.</summary>
+    private int _risenCount;
+
     /// <summary>
     /// Raids the stead has suffered this world (D-079): the raiders acting on
     /// their coarse tick while their camp stands. Each raid thins the stores
@@ -1393,6 +1399,7 @@ public sealed class Game
         Stores = SteadStores.Max;
         LevyStands = false;
         WatchStands = false;
+        _risenCount = 0;
         _worldStartTurn = Turn;
         _friendsPriceNamed = false;
 
@@ -1626,6 +1633,18 @@ public sealed class Game
                         _ => "The master carver's maul lies here too, twin to the one you carry. You leave it to the pit.",
                     }, LogTone.Info);
                 }
+            }
+            // The grave-goods taken while the dead still walk (D-106): the
+            // third faction's one transgression. A stilled barrow keeps no
+            // ledger: dead laid to rest have no one left under the turf to
+            // count, so only the unquiet mound marks the taking.
+            if (CurrentSite.Kind == SiteKind.Barrow && !CurrentSite.Cleared)
+            {
+                _factionInfamy[FactionId.Mound] = Grudge + 1;
+                World.Facts.Add("grudge", "grave_goods", World.SettlementName,
+                    "The barrow's grave-gold was carried out while its dead still walked; the mound keeps the count.");
+                Log.Add(Turn, "The passage does not stir, but something in it turns its attention the way a door turns on a hinge. The dead here were set to keep this, and they have marked whose pack it left in.", LogTone.Danger);
+                Log.Add(Turn, "\"That was theirs to hold, bearer, and they are still holding everything else. The dead keep short ledgers: one entry, never smudged. Still it, or carry the mark.\"", LogTone.Aegis);
             }
             return true;
         }
@@ -4912,6 +4931,24 @@ public sealed class Game
         Log.Add(Turn, "\"A stead counting its last measure aloud is not asking for pity, bearer. It is asking for grain, and it will remember the hand that brings any.\"", LogTone.Aegis);
     }
 
+    /// <summary>
+    /// The mound raises its slain (D-106): the third faction acting on the
+    /// coarse tick. A wight cut down in an unstilled barrow stands its
+    /// passage again while the grudge burns, whole at its grave's own
+    /// strength, and the stead speaks of the lights by dusk (the mandatory
+    /// perceivability hook: the fact is written, the word comes up the lane).
+    /// </summary>
+    private void RaiseTheFallen(Site mound, Monster fallen)
+    {
+        _risenCount++;
+        fallen.Hp = mound.Spawns.First(s => s.Kind == MonsterKind.Wight).Hp;
+        fallen.Intent = null;
+        if (!World.Facts.Exists("event", "mound_restless"))
+            World.Facts.Add("event", "mound_restless", World.SettlementName,
+                "The lights over the long mound have burned taller since the grave-gold walked out; what is cut down there does not stay down.");
+        Log.Add(Turn, "Word comes up the lane at dusk: the lights over the long mound stand taller than they should, and a shape that was cut down in its passages walks them again. The dead remember what left in your pack.", LogTone.Danger);
+    }
+
     /// <summary>The levy lifts (D-105): the lofts climbed clear again, by answers or by the season's recovery.</summary>
     private void LiftLevy()
     {
@@ -5001,6 +5038,14 @@ public sealed class Game
                 $"The barrow's dead were put to rest. The lights on the mound above {World.SettlementName} have gone out.");
             Log.Add(Turn, "The passage is still. Whatever the dead here were set to hold, no one is holding it now.", LogTone.Reward);
             Log.Add(Turn, "\"They were given a task and no release. I remember the shape of that arrangement. It is counted, bearer, twice over.\"", LogTone.Aegis);
+            // The stilling settles all accounts (D-106): dead laid to rest
+            // keep no ledgers, so the grudge is the one Infamy in the game
+            // whose designed exit is the deed itself.
+            if (Grudge > 0)
+            {
+                _factionInfamy[FactionId.Mound] = 0;
+                Log.Add(Turn, "And the grudge goes out of the ground with them: what was carried off is carried off, and no one is left under the turf to count it.", LogTone.Reward);
+            }
             RaiseRegard(2, $"The lights on the mound above {World.SettlementName} are out tonight. The stead will sleep the easier, and know why.");
         }
         else if (site.Kind == SiteKind.Quarry)
@@ -5076,6 +5121,16 @@ public sealed class Game
             }
             else if (CampCleared && Stores < SteadStores.Max)
                 RecoverStores();
+
+            // The mound seethes (D-106): grave-goods in a living pack while
+            // the barrow stands unstilled do not go unanswered. On its tick
+            // the mound raises one of its own slain again, up to the cap, and
+            // never under the bearer's eye (a mound walked keeps its counsel,
+            // the camp-under-attack rule's mirror). The stilling settles it.
+            if (Grudge > 0 && _risenCount < MoundGrudge.RisenCap
+                && World.BarrowSite is { Cleared: false } mound && CurrentSite != mound
+                && Monsters.FirstOrDefault(m => !m.Alive && m.SiteId == mound.Id && m.Kind == MonsterKind.Wight) is { } fallen)
+                RaiseTheFallen(mound, fallen);
         }
 
         if (Mode == MapMode.Site)
@@ -5196,6 +5251,8 @@ public sealed class Game
                     // The dread stays the raider's hand (D-078): applied to the
                     // raw roll, after the dice, so the draw count never changes.
                     if (monster.Kind == MonsterKind.Goblin) roll = RaiderWrath.Steadied(Wrath, roll);
+                    // The grudge arms the dead's (D-106): the dark mirror.
+                    if (monster.Kind == MonsterKind.Wight) roll = MoundGrudge.Riled(Grudge, roll);
                     int damage = Absorb(roll, telegraphed: true);
                     Player.Hp -= damage;
                     Log.Add(Turn, intent.Kind switch
@@ -5236,6 +5293,7 @@ public sealed class Game
                     // guarded them.
                     int roll = RollFor(intent.Kind);
                     if (monster.Kind == MonsterKind.Goblin) roll = RaiderWrath.Steadied(Wrath, roll);
+                    if (monster.Kind == MonsterKind.Wight) roll = MoundGrudge.Riled(Grudge, roll);
                     struck.Hp -= roll;
                     Log.Add(Turn, struck.Alive
                         ? struck.Role == GuestRole.Shade
@@ -6400,6 +6458,8 @@ public sealed class Game
         WatchStands: WatchStands,
         Shame: Shame,
         ShameTitle: SteadShame.TitleOf(Shame),
+        Grudge: Grudge,
+        GrudgeTitle: MoundGrudge.TitleOf(Grudge),
         Rations: Player.Rations,
         Hide: Player.Hide,
         RawMeat: Player.RawMeat,
@@ -6554,6 +6614,8 @@ public sealed record Snapshot(
     bool WatchStands,
     int Shame,
     string ShameTitle,
+    int Grudge,
+    string GrudgeTitle,
     int Rations,
     int Hide,
     int RawMeat,

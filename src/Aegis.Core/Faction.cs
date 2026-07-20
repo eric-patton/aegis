@@ -2,13 +2,15 @@ namespace Aegis.Core;
 
 /// <summary>
 /// The ledgers kept on the bearer, keyed (D-078): D-023's per-faction dual
-/// reputation begins here. Two factions so far, and one relationship between
-/// them, the oldest one: the stead and the raiders that prey on it are standing
-/// enemies, so a blow to one is a favor to the other (the camp emptied raises
-/// the stead's regard and the raiders' wrath in the same stroke). A formal
-/// relation matrix waits until a third faction gives it two edges to hold.
+/// reputation begins here. Three factions now, and two edges between them.
+/// The oldest: the stead and the raiders that prey on it are standing enemies,
+/// so a blow to one is a favor to the other (the camp emptied raises the
+/// stead's regard and the raiders' wrath in the same stroke). The second
+/// (D-106): the stead and the long mound's unquiet dead, bound by fear rather
+/// than war: the mound stilled is a deed the stead counts (D-076), and the
+/// mound riled is a dread the stead speaks of at its doors.
 /// </summary>
-public enum FactionId { Stead, Raiders }
+public enum FactionId { Stead, Raiders, Mound }
 
 /// <summary>
 /// The home stead's regard for the bearer (D-076): the first rung of the faction
@@ -180,6 +182,41 @@ public static class SteadStores
 
     /// <summary>Bread's mark-up from thinned lofts: nothing while full, three coin at bare.</summary>
     public static int PriceBump(int stores) => (Max - stores + 1) / 2;
+}
+
+/// <summary>
+/// The mound's grudge (D-106): the third faction's ledger, kept by the long
+/// mound's unquiet dead. It is earned one way: grave-goods carried out of the
+/// barrow while its dead still walk. The dead do not price, bar, or bargain,
+/// so the ladder is the shortest in the game, one rung, and its weight is in
+/// their hands: riled wights strike a point the harder, and on the coarse
+/// tick the mound raises its own slain again, up to a cap, until the
+/// stilling. The designed exit is the stilling itself: dead laid to rest
+/// keep no ledgers, so the grudge is settled the moment the barrow goes
+/// quiet, and like every ledger it is this world's alone.
+/// </summary>
+public static class MoundGrudge
+{
+    public const int MaxRung = 1;
+
+    /// <summary>The rung at which the dead strike in anger: a point the harder.</summary>
+    public const int RiledAt = 1;
+
+    /// <summary>How many of its slain the mound will raise again in one world.</summary>
+    public const int RisenCap = 3;
+
+    public static int RungFor(int grudge) => grudge >= RiledAt ? 1 : 0;
+
+    /// <summary>What the mound holds the bearer for, so far as the living can tell.</summary>
+    public static string TitleOf(int grudge) => RungFor(grudge) >= 1 ? "marked by the long mound" : "";
+
+    /// <summary>
+    /// A wight's blow under the grudge (D-106): the dark mirror of the
+    /// raiders' dread (D-078). Wrath stays a raider's hand; the grudge arms
+    /// the dead's. Applied to the raw roll, after the dice, so the draw
+    /// count never changes and determinism holds.
+    /// </summary>
+    public static int Riled(int grudge, int roll) => grudge >= RiledAt ? roll + 1 : roll;
 }
 
 /// <summary>

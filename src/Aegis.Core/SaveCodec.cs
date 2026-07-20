@@ -190,10 +190,15 @@ namespace Aegis.Core;
 /// calls a levy that closes the larder and puts its answer on the larder
 /// digit, and the levy's ask enters the talk draws, so a v52 journal that
 /// lived past a bold raid or bought bread at a thin loft replays differently.
+/// v54 when D-106 raised the third faction: grave-goods taken from an
+/// unstilled barrow start the mound's grudge, riled wights strike a point
+/// harder, the mound raises its slain on the tick, and a new lane storylet
+/// enters the draws, so a v53 journal that robbed the barrow early replays
+/// differently from that grab on.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 53;
+    public const int Version = 54;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

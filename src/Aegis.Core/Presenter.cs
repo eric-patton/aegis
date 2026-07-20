@@ -747,6 +747,8 @@ public static class Presenter
         // The stead's suspicion (D-086): the home ledger's dark side, beside the
         // regard it never cancels: a friend and watched can both be true, and show.
         if (game.Shame > 0) Line($" {SteadShame.TitleOf(game.Shame)}", Hue.Red);
+        // The mound's grudge (D-106): the third faction's count, in the dead's color.
+        if (game.Grudge > 0) Line($" {MoundGrudge.TitleOf(game.Grudge)}", Hue.Cyan);
         if (p.Weapon is { } wpn) Line($"Wpn {wpn.Name}{(wpn.Worn ? "!" : "")}", wpn.Worn ? Hue.Red : Hue.Gray);
         if (p.Bow is { } bow) Line($"Bow {bow.Name}{(bow.Worn ? "!" : "")}", bow.Worn ? Hue.Red : Hue.Gray);
         if (p.Armor is { } arm) Line($"Arm {arm.Name}{(arm.Worn ? "!" : "")}", arm.Worn ? Hue.Red : Hue.Gray);

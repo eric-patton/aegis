@@ -180,10 +180,15 @@ namespace Aegis.Core;
 /// grew an always-listed entry, mounted overworld steps can cover two cells,
 /// and 'o' beside the beast means the saddlebags, so v50 journals that walked
 /// those keys replay differently.
+/// v52 when D-100 stage 2 gathered the roster: the wood's-edge bench grew the
+/// stable digit, the steadholder's talk draws the courser storylet, a wild
+/// pony stands the high ground and 'o' beside it feeds, and mortal beasts
+/// bolt from uncanny mouths, so v51 journals replay differently around all
+/// four.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 51;
+    public const int Version = 52;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

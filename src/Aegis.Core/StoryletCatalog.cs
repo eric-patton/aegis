@@ -1174,5 +1174,27 @@ public static class StoryletCatalog
                 ("\"They keep their own count of you, bearer. A rougher arithmetic than mine, and kinder.\"", LogTone.Aegis),
             ],
         },
+
+        // The raiders' courser (D-100 stage 2): the second road to a beast.
+        // The camp's breaking left the stolen animal loose on the land, and
+        // the stead gives it over to the deed's own hand, once per world.
+        new Storylet
+        {
+            Id = "the-raiders-courser",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.World,
+            Priority = 6,
+            Requires = [new FactPattern("deed", "camp_cleared")],
+            When = g => g.TalkNpc?.Id == "npc_steadholder"
+                && g.Mount?.Kind != MountKind.Courser
+                && g.Stable.All(m => m.Kind != MountKind.Courser),
+            Lines =
+            [
+                ("\"There is one more thing out of that camp with your name on it. The raiders kept a courser, stolen off some far road, and it has been loose on the land since the fires went out. None of us dares its teeth. By the deed, it is yours to dare.\"", LogTone.Info),
+                ("The courser is exactly where the steadholder said, and exactly as unimpressed. It considers you a long moment over the grass, files you under the same heading as the broken camp, and consents to be caught.", LogTone.Reward),
+                ("\"Fast, that one. Stolen things usually are. It is counted to you, bearer: the stead keeps no ledger line for what it was too afraid to hold.\"", LogTone.Aegis),
+            ],
+            Effect = g => g.GrantTheCourser(),
+        },
     ];
 }

@@ -212,6 +212,7 @@ public class MountTests
     public void TheCrossing_LeavesTheBeast_ItsLandKeepsIt()
     {
         var game = BuyTheMule();
+        game.Stable.Add(new Mount { Kind = MountKind.FellPony, Pos = game.Player.Pos });
         game.Debug_SetPlayerPos(game.World.GatePos);
 
         game.Apply(Command.Enter);
@@ -219,5 +220,162 @@ public class MountTests
 
         Assert.Equal(2, game.Cycle);
         Assert.Null(game.Mount);
+        Assert.Empty(game.Stable);
+    }
+
+    [Fact]
+    public void TheLeans_SplitTheRoster_RacerBankerDelver()
+    {
+        // The courser alone takes the hills and the wood at the doubled pace.
+        Assert.True(MountCatalog.Strides(MountKind.Courser, Terrain.Hills));
+        Assert.True(MountCatalog.Strides(MountKind.Courser, Terrain.Forest));
+        Assert.False(MountCatalog.Strides(MountKind.Mule, Terrain.Hills));
+        Assert.True(MountCatalog.Strides(MountKind.Mule, Terrain.Grass));
+        // Its bags are a racer's tack; the banker and the delver carry without end.
+        Assert.Equal(MountCatalog.CourserBagsCap, MountCatalog.BagsCap(MountKind.Courser));
+        Assert.Equal(int.MaxValue, MountCatalog.BagsCap(MountKind.Mule));
+        // Only the fell pony stands an uncanny mouth.
+        Assert.True(MountCatalog.Spooks(MountKind.Mule));
+        Assert.True(MountCatalog.Spooks(MountKind.Courser));
+        Assert.False(MountCatalog.Spooks(MountKind.FellPony));
+        Assert.True(MountCatalog.UncannyMouth(SiteKind.Barrow));
+        Assert.False(MountCatalog.UncannyMouth(SiteKind.GoblinCamp));
+    }
+
+    [Fact]
+    public void TheRaidersCourser_IsTheDeedsOwnPrize_OncePerWorld()
+    {
+        var game = new Game(42);
+        game.Debug_ClearCamp();
+        var holder = game.World.Npcs.First(n => n.Id == "npc_steadholder");
+
+        // Higher-priority one-shot talk beats may claim the first talks; they
+        // drain, and the courser keeps (the memorial's own retry pattern).
+        for (int i = 0; i < 5 && game.Mount is null; i++)
+        {
+            NpcTests.BumpNpc(game, holder);
+            game.ApplyKey(' ');
+        }
+
+        Assert.Equal(MountKind.Courser, game.Mount!.Kind);
+        Assert.True(game.World.Facts.Exists("beast", "courser"));
+    }
+
+    [Fact]
+    public void TheCourserBags_AreARacersTack_NotABankers()
+    {
+        var game = new Game(42);
+        var (start, _, _) = OpenRun(game);
+        game.Debug_SetPlayerPos(start);
+        game.Debug_SetMount(new Mount { Kind = MountKind.Courser, Pos = start });
+        LeadMuleTo(game, start);
+        game.Player.Coin = MountCatalog.CourserBagsCap + 15;
+
+        game.ApplyKey('o');
+
+        Assert.Equal(MountCatalog.CourserBagsCap, game.Mount!.Bags);
+        Assert.Equal(15, game.Player.Coin); // the rest stays the bearer's own risk
+    }
+
+    [Fact]
+    public void TheSpookedBeast_ShedsTheBags_AndBoltsForHome()
+    {
+        var game = new Game(42);
+        game.Debug_ClearCamp();
+        game.Debug_SetPlayerPos(game.World.GatePos);
+        game.Apply(Command.Enter);
+        game.Apply(Command.Enter);
+        var barrow = game.World.BarrowSite!;
+        game.Debug_SetPlayerPos(barrow.OverworldPos);
+        game.Debug_SetMount(new Mount { Kind = MountKind.Mule, Pos = game.Player.Pos, Bags = 20 });
+        game.Player.Coin = 0;
+
+        game.Apply(Command.Enter);
+
+        Assert.Null(game.Mount);
+        Assert.Single(game.Stable);
+        Assert.Equal(0, game.Stable[0].Bags); // nothing bolts to safety with the coin
+        Assert.Equal(20, game.Player.Coin);   // the risk handed back to the bearer
+        Assert.Contains(game.Log.Recent(6), e => e.Text.Contains("will not stand this ground"));
+    }
+
+    [Fact]
+    public void TheFellPony_StandsTheUncannyMouth()
+    {
+        var game = new Game(42);
+        game.Debug_ClearCamp();
+        game.Debug_SetPlayerPos(game.World.GatePos);
+        game.Apply(Command.Enter);
+        game.Apply(Command.Enter);
+        var barrow = game.World.BarrowSite!;
+        game.Debug_SetPlayerPos(barrow.OverworldPos);
+        game.Debug_SetMount(new Mount { Kind = MountKind.FellPony, Pos = game.Player.Pos, Bags = 20 });
+
+        game.Apply(Command.Enter);
+
+        Assert.NotNull(game.Mount);
+        Assert.Equal(20, game.Mount!.Bags); // nerve held, bags held
+        Assert.Empty(game.Stable);
+    }
+
+    [Fact]
+    public void TheWildPony_IsWonWithBread_AndPatience()
+    {
+        var game = new Game(42);
+        Assert.NotNull(game.World.WildPonyPos); // the high ground keeps one
+        var wild = game.World.WildPonyPos!.Value;
+        var beside = Directions.All8.Select(d => wild.Plus(d.dx, d.dy))
+            .First(p => game.World.Overworld.Walkable(p));
+        game.Debug_SetPlayerPos(beside);
+
+        // Empty hands move nothing.
+        game.Player.Rations = 0;
+        game.ApplyKey('o');
+        Assert.Equal(0, game.World.WildPonyFed);
+
+        game.Player.Rations = MountCatalog.PonyFeedings;
+        for (int i = 0; i < MountCatalog.PonyFeedings; i++) game.ApplyKey('o');
+
+        Assert.Null(game.World.WildPonyPos);
+        Assert.Equal(0, game.Player.Rations);
+        Assert.Equal(MountKind.FellPony, game.Mount!.Kind);
+        Assert.True(game.World.Facts.Exists("beast", "fell_pony"));
+    }
+
+    [Fact]
+    public void TheStable_SwapsOneBeast_ForAnother()
+    {
+        var game = BuyTheMule();
+        game.Stable.Add(new Mount { Kind = MountKind.Courser, Pos = game.Player.Pos });
+        var woodward = game.World.Npcs.First(n => n.Id == "npc_woodward");
+
+        NpcTests.BumpNpc(game, woodward);
+        game.ApplyKey(OfferKey(game, TradeGood.Trade));
+        game.ApplyKey(BenchKey(game, TradeGood.Stable));
+
+        Assert.Equal(MountKind.Courser, game.Mount!.Kind);
+        Assert.Single(game.Stable);
+        Assert.Equal(MountKind.Mule, game.Stable[0].Kind);
+
+        // Pressed again, the round cycles back.
+        game.ApplyKey(BenchKey(game, TradeGood.Stable));
+        Assert.Equal(MountKind.Mule, game.Mount!.Kind);
+    }
+
+    [Fact]
+    public void TheRaid_DoesNotReachIntoTheStable()
+    {
+        var game = BuyTheMule();
+        game.Mount!.Bags = 30;
+        var put = game.Mount;
+        game.Stable.Add(put);
+        game.Debug_SetMount(null);
+        game.Debug_SetMode(MapMode.Site);
+
+        game.Debug_Raid();
+
+        Assert.Single(game.Stable);
+        Assert.Equal(30, game.Stable[0].Bags);
+        Assert.False(game.World.Facts.Exists("event", "beast_taken"));
     }
 }

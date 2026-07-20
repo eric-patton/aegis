@@ -674,9 +674,12 @@ public static class Presenter
         if (game.Guest is { Alive: true } guest)
             PutWorld(guest.Pos, 'a', Hue.Green);
         // The beast of the road (D-100): overworld only; below ground it is
-        // exactly where it is drawn not to be.
+        // exactly where it is drawn not to be. The wild pony in the watcher's
+        // gray until it is won.
         if (game.Mode == MapMode.Overworld && game.Mount is { } steed)
             PutWorld(steed.Pos, 'm', Hue.DarkYellow);
+        if (game.Mode == MapMode.Overworld && game.World.WildPonyPos is { } wild)
+            PutWorld(wild, 'm', Hue.DarkGray);
 
         PutWorld(game.Player.Pos, '@', Hue.White);
     }

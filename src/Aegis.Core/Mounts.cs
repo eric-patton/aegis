@@ -33,4 +33,28 @@ public static class MountCatalog
 {
     /// <summary>The stead's asking for its own beast (D-100): dear on purpose, and only ever to a friend.</summary>
     public const int MuleCoin = 40;
+
+    /// <summary>The courser's saddlebags (D-100 stage 2): a racer's tack, not a banker's.</summary>
+    public const int CourserBagsCap = 25;
+
+    /// <summary>Bread it takes to win the wild fell pony (D-100 stage 2).</summary>
+    public const int PonyFeedings = 3;
+
+    /// <summary>What the bags will hold (D-100 stage 2): the mule and the pony carry without end; the courser travels light.</summary>
+    public static int BagsCap(MountKind kind) => kind == MountKind.Courser ? CourserBagsCap : int.MaxValue;
+
+    /// <summary>
+    /// Where the ridden stride doubles (D-100): open grass for every beast;
+    /// the courser takes the hills and the wood at the same pace, the
+    /// fastest road there is.
+    /// </summary>
+    public static bool Strides(MountKind kind, Terrain t) =>
+        t == Terrain.Grass || (kind == MountKind.Courser && t is Terrain.Hills or Terrain.Forest);
+
+    /// <summary>Only the fell pony keeps its nerve at an uncanny mouth (D-100 stage 2); the others bolt for home.</summary>
+    public static bool Spooks(MountKind kind) => kind != MountKind.FellPony;
+
+    /// <summary>The mouths whose tenants a mortal beast can smell (D-100): the barrow's dead, the quarry's stone men, the hall's iron pack, the mere's warders, the ring's keeper.</summary>
+    public static bool UncannyMouth(SiteKind kind) =>
+        kind is SiteKind.Barrow or SiteKind.Quarry or SiteKind.Hall or SiteKind.Leaguer or SiteKind.Hollow;
 }

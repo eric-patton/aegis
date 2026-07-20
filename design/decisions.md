@@ -267,8 +267,34 @@ afoot, the bags' one key, the fall sparing the bags while the remnant takes the
 carried coin, the raid taking the tethered beast below, the raid sparing it beside
 the bearer, the crossing leaving it). Twins hash-identical; sim replay exact; master
 and sweep held to the digit (the pilot neither buys nor rides: a pilot mule policy
-joins the follow-ons). STAGE 2, gated: the courser's arc, the wild fell pony's
-taming, the stable's pick-one, and per-beast leans.
+joins the follow-ons). **Stage 2 (same date): the roster gathered.** The gate approved,
+the other two roads open and the leans split the three: the MULE is the banker
+(bottomless bags, strides only on grass), the COURSER the racer (strides on grass,
+hills, AND forest: the fastest road there is, but a racer's tack: bags capped at 25),
+the FELL PONY the delver's beast (the only one that stands an uncanny mouth). The
+courser is the raiders' own stolen animal: once the camp breaks, a once-per-world
+storylet at the steadholder (the-raiders-courser, priority 6, fact-gated on the deed)
+gives it over to the deed's own hand, to the side or to the stable. The fell pony
+stands the high ground (one per world where hills allow, its own worldgen stream after
+every existing draw, named once when first seen, a fact); bread offered beside it
+('o', outranking every other meaning of the key) three times over wins it: no coin and
+no bench, the one road the stead has no hand in. The SPOOK: entering a barrow, quarry,
+hall, leaguer, or hollow with a mortal-nerved beast, it shakes the saddlebags off at
+the bearer's feet (the coin handed back: bolting is never free safety) and bolts for
+the stable; the pony keeps its nerve and its bags. The STABLE: one wood's-edge bench
+digit that cycles the roster (put-up / lead-out / swap read from the state, no
+submenu, the digit law kept); a stabled beast keeps its bags and the raid does not
+reach in: the deliberate parking the Q&A promised, priced by the walk to the woodward
+and a beast not at your side. All world-bound: the crossing clears stable and side
+alike. Save v51 -> v52 (a bench digit, a talk draw, a fed pony, and the spooks all
+move replay). 497 tests green (8 new: the leans, the courser once per world, the
+racer's tack, the spook shedding and bolting, the pony standing the mouth, the taming
+with its empty-handed refusal, the stable's swap cycling, the raid stopping at the
+stable door). Twins hash-identical; sim replay exact; master and sweep held to the
+digit: the pilot's steadholder errands all come before the camp deed, so the courser
+storylet never fires in journeys and the beast lane stays honestly pilot-unexercised
+(the pilot mule policy follow-on covers the roster). Deferred: predators at wild
+mouths (the rejected second threat), a beast noticing storylet, warmth.
 
 ### D-099: The calling: the fifth word, and the shade that walks while it is held (2026-07-19)
 The summon slot (D-024, vision sec 7) ships, where the guest engine (D-097) and the

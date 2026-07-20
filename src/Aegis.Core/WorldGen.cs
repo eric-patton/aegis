@@ -66,6 +66,16 @@ public sealed class World
     public required List<Pos> Herbs { get; init; }
 
     /// <summary>
+    /// The wild fell pony (D-100 stage 2): one to a world where the high
+    /// ground allows, standing its hill until it is won with bread or the
+    /// world ends. Null once tamed, or where no hills stand far enough out.
+    /// </summary>
+    public Pos? WildPonyPos { get; set; }
+
+    /// <summary>Bread given so far (D-100): the taming's count, journal-derived like everything else.</summary>
+    public int WildPonyFed { get; set; }
+
+    /// <summary>
     /// Doors already robbed this world (D-086): a house gives its ration's worth
     /// once. Runtime state like a looted chest, rebuilt by replay, regenerated
     /// whole (and innocent) with everything else at the crossing.
@@ -730,10 +740,24 @@ public static class WorldGen
         facts.Add("wanderer", unbinder.Id, $"{unbinderPos.X},{unbinderPos.Y}",
             $"A {guiseRole} called {guiseName} is camped to the {Game.Compass(shrine, unbinderPos)}. Mends what pinches, they say, and asks no coin for it.");
 
+        // The wild fell pony (D-100 stage 2): its own derived stream after
+        // every existing draw, so pinned worlds keep their layouts and only
+        // gain a shaggy silhouette on the high ground, well out from the stead.
+        var ponyRng = new Rng(SeedTree.Derive(worldSeed, "fellpony"));
+        var highGround = new List<Pos>();
+        for (int y = 0; y < overworld.Height; y++)
+            for (int x = 0; x < overworld.Width; x++)
+            {
+                var p = new Pos(x, y);
+                if (overworld[p] == Terrain.Hills && p.Chebyshev(settlement) > 6) highGround.Add(p);
+            }
+        Pos? wildPony = highGround.Count > 0 ? ponyRng.Pick(highGround) : null;
+
         return new World
         {
             Seed = worldSeed,
             Tier = tier,
+            WildPonyPos = wildPony,
             Name = worldName,
             SettlementName = settlementName,
             Facts = facts,

@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable }
 
 /// <summary>
 /// The deterministic game engine. No console, no I/O, no wall clock: state advances
@@ -62,6 +62,13 @@ public sealed class Game
     /// mouth through every delve, and carries what is loaded on it.
     /// </summary>
     public Mount? Mount { get; private set; }
+
+    /// <summary>
+    /// The stead's stable (D-100 stage 2): the beasts gathered and not at the
+    /// bearer's side, kept per world. A stabled beast is safe from the raiders'
+    /// night: deliberate parking is the saddlebags' honest counterplay.
+    /// </summary>
+    public List<Mount> Stable { get; } = [];
 
     /// <summary>The beast's cell counts only where the beast is (D-100): its coordinates live on the overworld alone.</summary>
     private bool MountAt(Pos p) => Mode == MapMode.Overworld && Mount is { } m && m.Pos == p;
@@ -981,6 +988,16 @@ public sealed class Game
                 map.InBounds(target.Plus(d.dx, d.dy)) && map[target.Plus(d.dx, d.dy)] == Terrain.House))
             _storylets.TryFire(this, StoryletTrigger.NearHouse);
 
+        // The high ground's watcher (D-100 stage 2): the wild pony named once,
+        // the first time the road brings the bearer close enough to see it see them.
+        if (Mode == MapMode.Overworld && World.WildPonyPos is { } watcher
+            && watcher.Chebyshev(target) <= 2 && !World.Facts.Exists("met", "fell_pony"))
+        {
+            World.Facts.Add("met", "fell_pony", World.SettlementName,
+                "A shaggy fell pony keeps the high ground near the stead, fed by no one and afraid of nothing.");
+            Log.Add(Turn, "A shaggy fell pony keeps this high ground, watching you with more patience than fear. It wears no halter and belongs to no one, and it does not leave. (bread, offered close, might change its mind)", LogTone.Info);
+        }
+
         // The ridden road (D-100): with the beast at your side, open grass
         // passes two strides to a key: the same clocks (toll, wounds, the
         // raiders' tick) count half the turns for the distance. The far cell
@@ -988,7 +1005,8 @@ public sealed class Game
         if (Mode == MapMode.Overworld && Mount is { } steed && steed.Pos.Chebyshev(Player.Pos) <= 2)
         {
             var far = target.Plus(dx, dy);
-            if (map.InBounds(far) && map[target] == Terrain.Grass && map[far] == Terrain.Grass
+            if (map.InBounds(far)
+                && MountCatalog.Strides(steed.Kind, map[target]) && MountCatalog.Strides(steed.Kind, map[far])
                 && far != steed.Pos && !FellowAt(far)
                 && !World.Npcs.Any(n => n.Pos == far))
             {
@@ -1184,6 +1202,24 @@ public sealed class Game
                 return false;
             }
 
+            // The mortal beasts smell what keeps an uncanny mouth (D-100 stage
+            // 2): they shake the saddlebags off at the bearer's feet (the risk
+            // handed back, never carried off free) and bolt for the stead's
+            // stable. Only the fell pony stands this ground.
+            if (Mount is { } spooked && MountCatalog.Spooks(spooked.Kind) && MountCatalog.UncannyMouth(site.Kind))
+            {
+                if (spooked.Bags > 0)
+                {
+                    Player.Coin += spooked.Bags;
+                    Log.Add(Turn, $"{Cap(spooked.Name)} will not stand this ground: it shakes the saddlebags off at your feet ({spooked.Bags} coin, yours to carry after all) and is gone for home.", LogTone.Danger);
+                    spooked.Bags = 0;
+                }
+                else
+                    Log.Add(Turn, $"{Cap(spooked.Name)} will not stand this ground: ears flat, it turns and is gone for home.", LogTone.Info);
+                Stable.Add(spooked);
+                Mount = null;
+            }
+
             Mode = MapMode.Site;
             CurrentSite = site;
             Player.Pos = site.EntryPos;
@@ -1294,9 +1330,11 @@ public sealed class Game
         // The called thing does not cross either (D-099): only the word does,
         // knowledge like every working, to be said again in the new dark.
         Shade = null;
-        // And the beast is world-bound like every mortal thing (D-100): its
-        // land keeps it, saddlebags and all. The waygate takes only the bearer.
+        // And the beasts are world-bound like every mortal thing (D-100): its
+        // land keeps them, saddlebags, stable, and all. The waygate takes
+        // only the bearer.
         Mount = null;
+        Stable.Clear();
         InShrineMenu = false;
         InTalkMenu = false;
         InUnbindMenu = false;
@@ -2124,6 +2162,9 @@ public sealed class Game
             // at the wood's edge on the stead's behalf. Appended and always
             // listed with a state-read label, so the older digits hold (D-041).
             offers.Add((TradeGood.Beast, "", MuleLabel()));
+            // The stable (D-100 stage 2): one digit that cycles the gathered
+            // beasts, put-up / lead-out / swap read from the state, no submenu.
+            offers.Add((TradeGood.Stable, "", StableLabel()));
         }
         // The stillroom (D-081): the simples at their true price, and the
         // wound-dressing at the table where that work was always done.
@@ -2284,6 +2325,64 @@ public sealed class Game
             $"The stead sold its mule to the bearer: {World.SettlementName}'s own beast walks a friend's road now.");
     }
 
+    /// <summary>The stable entry (D-100 stage 2): put-up, lead-out, or swap, read from the state (D-041).</summary>
+    private string StableLabel() =>
+        Stable.Count == 0
+            ? Mount is { } lone ? $"The stable: put {lone.Name} up" : "The stable (nothing of yours stands in it)"
+            : Mount is { } beside ? $"The stable: swap {beside.Name} for {Stable[0].Name} ({Stable.Count} stabled)"
+            : $"The stable: lead {Stable[0].Name} out ({Stable.Count} stabled)";
+
+    /// <summary>
+    /// The stable's one digit (D-100 stage 2): with beasts on both sides it
+    /// swaps, with one it puts up or leads out, and pressed again it cycles
+    /// the roster in a fixed round. A stabled beast keeps its bags and is
+    /// safe from the raiders' night: this is the parking the saddlebags' risk
+    /// was priced against.
+    /// </summary>
+    private void TryStableSwap()
+    {
+        if (Mount is null && Stable.Count == 0)
+        {
+            Log.Add(Turn, "The stable stands empty of anything that answers to you.");
+            return;
+        }
+        var incoming = Stable.Count > 0 ? Stable[0] : null;
+        if (incoming is not null) Stable.RemoveAt(0);
+        if (Mount is { } put)
+        {
+            Stable.Add(put);
+            Log.Add(Turn, incoming is null
+                ? $"{Cap(put.Name)} goes up in the stead's stable, bags and all. The raiders' night does not reach in here."
+                : $"{Cap(put.Name)} goes up, and {incoming.Name} is led out into the light.", LogTone.Info);
+        }
+        else if (incoming is not null)
+            Log.Add(Turn, $"{Cap(incoming.Name)} is led out into the light, and falls in at your side.", LogTone.Info);
+        Mount = incoming;
+        if (Mount is not null) PlaceMountBeside(Player.Pos);
+    }
+
+    /// <summary>
+    /// The raiders' courser (D-100 stage 2): the storylet's grant. The camp's
+    /// breaking left the stolen beast loose, and it answers to the deed's own
+    /// hand: to the bearer's side if the road is clear, else to the stable.
+    /// </summary>
+    internal void GrantTheCourser()
+    {
+        var courser = new Mount { Kind = MountKind.Courser, Pos = Player.Pos };
+        if (Mount is null)
+        {
+            Mount = courser;
+            PlaceMountBeside(Player.Pos);
+        }
+        else
+        {
+            Stable.Add(courser);
+            Log.Add(Turn, "With a beast at your side already, the courser is led up to the stead's stable to wait its turn.", LogTone.Info);
+        }
+        World.Facts.Add("beast", "courser", World.SettlementName,
+            $"The raiders' stolen courser was given over to the one who broke the camp above {World.SettlementName}.");
+    }
+
     /// <summary>The wound-dressing entry (D-081): priced when there is a wound to dress.</summary>
     private string MendLabel() => Player.WoundedTurns > 0
         ? $"Have the wound dressed ({MendPrice} coin)"
@@ -2325,6 +2424,7 @@ public sealed class Game
                 case TradeGood.Draught: TryDrawDraught(); break; // the steeping (D-090)
                 case TradeGood.Surgery: TryEyeSurgery(); break; // the eye's road back (D-098)
                 case TradeGood.Beast: TryBuyMule(); break;      // the stead's beast (D-100)
+                case TradeGood.Stable: TryStableSwap(); break;  // the gathered beasts (D-100 stage 2)
             }
             // The labels move with the state (hides sold, lesson taken); rebuild so the
             // bench reads true, and the digits keep their order under the buyer's hand.
@@ -3129,6 +3229,12 @@ public sealed class Game
         // The word goes to the mortal first (D-099): a hurt friend outranks a
         // held working. With no guest walking, the shade takes the ground-word,
         // and with no one walking at all, the beast's saddlebags answer (D-100).
+        // The wild fell pony (D-100 stage 2): bread offered on the high ground,
+        // before every other meaning of the key: a taming in progress is not
+        // interrupted by anyone's saddlebags.
+        if (Mode == MapMode.Overworld && World.WildPonyPos is { } wildPos && wildPos.Chebyshev(Player.Pos) == 1)
+            return DoFeedWildPony(wildPos);
+
         bool muleBeside = Mode == MapMode.Overworld && Mount is { } steed && steed.Pos.Chebyshev(Player.Pos) == 1;
         var fellow = Guest is { Alive: true } ? Guest : Shade;
         if (fellow is not { Alive: true } guest)
@@ -3171,6 +3277,48 @@ public sealed class Game
     }
 
     /// <summary>
+    /// Winning the wild pony (D-100 stage 2): bread, patience, and standing
+    /// still, three times over. No coin and no bench: the third road in is
+    /// the only one the stead has no hand in. Tamed with a beast already at
+    /// the bearer's side, it walks itself down to the stead's stable.
+    /// </summary>
+    private bool DoFeedWildPony(Pos wildPos)
+    {
+        if (Player.Rations == 0)
+        {
+            Log.Add(Turn, "The fell pony watches your empty hands with an expert's patience, and does not move. It knows exactly what you have not brought.");
+            return false;
+        }
+        Player.Rations--;
+        World.WildPonyFed++;
+        if (World.WildPonyFed < MountCatalog.PonyFeedings)
+        {
+            Log.Add(Turn, World.WildPonyFed == 1
+                ? "You hold the bread out and look at the hills instead of at it. A long while later it is taken from your palm, with lips soft as a whisper. (1 of a patience of 3)"
+                : "It comes two steps to meet the bread this time, and stands a moment after, breathing you in. (2 of a patience of 3)", LogTone.Reward);
+            return true;
+        }
+
+        World.WildPonyPos = null;
+        var pony = new Mount { Kind = MountKind.FellPony, Pos = wildPos };
+        Log.Add(Turn, "The third bread is eaten against your chest, and when you turn away the pony turns with you: shaggy, sure-footed, and done pretending it was not lonely. The fell pony is yours.", LogTone.Reward);
+        Log.Add(Turn, "It fears nothing it has already outlived: alone of the beasts, it will stand tethered at the uncanny mouths.", LogTone.Info);
+        if (Mount is null)
+        {
+            Mount = pony;
+            PlaceMountBeside(Player.Pos);
+        }
+        else
+        {
+            Stable.Add(pony);
+            Log.Add(Turn, "With a beast at your side already, it walks itself down to the stead's stable, unhurried, as if it always meant to.", LogTone.Info);
+        }
+        World.Facts.Add("beast", "fell_pony", World.SettlementName,
+            "A wild fell pony off the high ground gave itself over to the bearer, for bread and patience.");
+        return true;
+    }
+
+    /// <summary>
     /// The saddlebags (D-100): one key beside the beast, a turn of handwork.
     /// A full purse goes in whole; an empty one takes the bags back out.
     /// What rides the beast does not fall with the bearer; what the raiders'
@@ -3179,11 +3327,15 @@ public sealed class Game
     private bool DoSaddlebags()
     {
         var steed = Mount!;
-        if (Player.Coin > 0)
+        int room = MountCatalog.BagsCap(steed.Kind) - steed.Bags;
+        if (Player.Coin > 0 && room > 0)
         {
-            steed.Bags += Player.Coin;
-            Player.Coin = 0;
+            int loaded = Math.Min(Player.Coin, room);
+            steed.Bags += loaded;
+            Player.Coin -= loaded;
             Log.Add(Turn, $"You count your coin into the saddlebags: {steed.Bags} rides with {steed.Name} now. What the beast carries does not fall with you; what the beast risks, it risks whole.", LogTone.Info);
+            if (Player.Coin > 0)
+                Log.Add(Turn, $"The courser's bags are a racer's tack, not a banker's: they hold no more, and {Player.Coin} stays in your own purse.", LogTone.Info);
             return true;
         }
         if (steed.Bags > 0)
@@ -6032,6 +6184,7 @@ public sealed class Game
     }
     internal void Debug_ForceDeathCheck() { if (Player.Hp <= 0) HandleDeath(); }
     internal void Debug_Raid() => RaidTheStead();
+    internal void Debug_SetMount(Mount? mount) => Mount = mount;
     internal void Debug_ClearCamp() => Debug_ClearSite(SiteKind.GoblinCamp);
     internal void Debug_ClearSite(SiteKind kind)
     {

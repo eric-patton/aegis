@@ -95,9 +95,9 @@ public class StoryletTests
     [Fact]
     public void EchoBallad_OnlyExistsAfterACrossing()
     {
-        // Master 43: its second world tells the stead (repeat-weighting remap), so
-        // the NearHouse pool here stays the one this test was written against.
-        var game = new Game(43);
+        // Master 42: its second world tells the stead (D-112 remap), so the
+        // NearHouse pool here stays the one this test was written against.
+        var game = new Game(42);
         StepTowardHouses(game);
         Assert.False(LogContains(game, "hums a tune"));
 

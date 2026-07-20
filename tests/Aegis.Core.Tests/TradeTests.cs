@@ -116,10 +116,10 @@ public class TradeTests
     [Fact]
     public void RationPrice_RisesWhileTheBlightStands()
     {
-        var game = new Game(42);
+        var game = new Game(41);
         Assert.Equal(4, game.RationPrice);
 
-        // Master 42's second world tells the Creeping Blight (pinned by BlightTests).
+        // Master 41's second world tells the Creeping Blight (pinned by BlightTests).
         game.Debug_ClearCamp();
         game.Debug_SetPlayerPos(game.World.GatePos);
         game.Apply(Command.Enter);

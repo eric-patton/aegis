@@ -179,7 +179,8 @@ public class QuarryTests
             if (baselineStory == CreepingBlightTemplate.Id) repeatWithoutPrev++;
         }
 
-        // Halved weight in a two-template pool: repeats near one third, not one half.
+        // Halved weight in a three-template pool (D-112): repeats near one fifth,
+        // not one third.
         Assert.True(repeatWithPrev < repeatWithoutPrev,
             $"weighting changed nothing: {repeatWithPrev} repeats vs {repeatWithoutPrev} baseline");
         Assert.InRange(repeatWithPrev, 8, 30);
@@ -188,15 +189,15 @@ public class QuarryTests
     [Fact]
     public void Crossing_HandsThePreviousStory_ToTheNextDraw()
     {
-        // Master 43: world 2 tells the stead (pinned in TemplateTests). World 3's
+        // Master 42: world 2 tells the stead (pinned in TemplateTests). World 3's
         // draw must then be exactly what worldgen produces given that history.
-        var game = new Game(43);
+        var game = new Game(42);
         Cross(game);
         string world2Story = game.TakeSnapshot().StoryTemplate;
         Assert.Equal(RaidedSteadTemplate.Id, world2Story);
 
         Cross(game);
-        var expected = WorldGen.Generate(SeedTree.Derive(43, "cycle", 3), tier: 3, prevStory: world2Story);
+        var expected = WorldGen.Generate(SeedTree.Derive(42, "cycle", 3), tier: 3, prevStory: world2Story);
         Assert.Equal(expected.Facts.OfType("story").Single().Subject, game.TakeSnapshot().StoryTemplate);
     }
 

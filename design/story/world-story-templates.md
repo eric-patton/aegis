@@ -81,6 +81,8 @@ Slots any template may cast; each maps to techniques the study validated. Castin
 
 **Arc attachment.** Stinger docks on the new ruler's first decree; bottle episode, when this world is a milestone, uses the dynasty's crypts (old-line tombs suit recovered-memory content).
 
+*Landed at slice scale in D-112, cast on the goblin dens ("throne reads broadly"): the camp chief as ruler-by-lie, a D-110 lieutenant as the displaced line, the official telling blaming the taking on a stead arrow (the load-bearing lie that keeps the raids righteous), a cairn as the evidence with the complicating flip (the old chief was raising a war that would have burned the stead), endings branching on the truth found before the fall, and the restoration beats riding the live succession. Endings fire once per story: a truth dug up after the fall reaches the teller but never rewrites the ending (rule hardened in the blight too). Eligible tier 2+, keeping the first world's single crafted story.*
+
 ## 6. Template 2: The Creeping Blight
 
 **Logline.** Something is wrong with the land itself, it is spreading, and the story everyone tells about it is wrong. Dramatic question: what does the comfortable center owe the eaten edge?

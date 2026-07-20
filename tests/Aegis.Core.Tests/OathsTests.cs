@@ -387,7 +387,10 @@ public class OathsTests
 
         var sworn = CrossUnder(42, '1');
         Assert.True(Spoken(sworn, 30), "the hard season was never spoken in an oath-bound world");
-        Assert.False(Spoken(sworn, 30)); // world-scoped, once
+        // World-scoped, once: counted in the full log, because a quiet world can
+        // hold the line in the recent window across many steps.
+        for (int i = 0; i < 30; i++) sworn.ApplyKey(i % 2 == 0 ? 'k' : 'j');
+        Assert.Single(sworn.Log.Entries, e => e.Text.Contains("Lean, and long"));
 
         var plain = CrossUnder(42, ' ');
         Assert.False(Spoken(plain, 30));

@@ -11,8 +11,9 @@ namespace Aegis.Core.Tests;
 public class BlightTests
 {
     /// <summary>Master seed whose cycle-2 world selects the Creeping Blight.</summary>
-    // D-040's repeat-weighting remapped the cycle-2 draws: 42 and 43 swapped stories.
-    private const ulong BlightMaster = 42;
+    // D-112's third template remapped the cycle-2 draws: 42 now tells the stead
+    // again and 41 the blight.
+    private const ulong BlightMaster = 41;
 
     [Fact]
     public void Tier1_AlwaysTellsTheRaidedStead()
@@ -23,6 +24,7 @@ public class BlightTests
             Assert.Equal("raided-stead", world.Facts.OfType("story").Single().Subject);
             Assert.True(world.Facts.Exists("role", "plaintiff"));
             Assert.False(world.Facts.Exists("history", "mound_curse"));
+            Assert.False(world.Facts.Exists("history", "seat_taken"));
         }
     }
 
@@ -38,20 +40,30 @@ public class BlightTests
             Assert.Equal(story, b.Facts.OfType("story").Single().Subject);
             seen.Add(story);
 
-            // The chosen template's cast is present; the other's is absent.
+            // The chosen template's cast is present; the others' is absent.
             if (story == "creeping-blight")
             {
                 Assert.True(a.Facts.Exists("role", "afflicted"));
                 Assert.True(a.Facts.Exists("history", "mound_curse"));
                 Assert.False(a.Facts.Exists("role", "plaintiff"));
+                Assert.False(a.Facts.Exists("role", "claimant"));
+            }
+            else if (story == "usurped-throne")
+            {
+                Assert.True(a.Facts.Exists("role", "teller"));
+                Assert.True(a.Facts.Exists("role", "claimant"));
+                Assert.True(a.Facts.Exists("history", "seat_taken"));
+                Assert.False(a.Facts.Exists("role", "plaintiff"));
+                Assert.False(a.Facts.Exists("history", "mound_curse"));
             }
             else
             {
                 Assert.True(a.Facts.Exists("role", "plaintiff"));
                 Assert.False(a.Facts.Exists("history", "mound_curse"));
+                Assert.False(a.Facts.Exists("history", "seat_taken"));
             }
         }
-        Assert.Equal(["creeping-blight", "raided-stead"], seen.Order());
+        Assert.Equal(["creeping-blight", "raided-stead", "usurped-throne"], seen.Order());
     }
 
     [Fact]
@@ -101,6 +113,28 @@ public class BlightTests
         Assert.True(game.World.Facts.Exists("story_complete", "creeping-blight"));
         Assert.True(game.World.Facts.Exists("coda", "truth_published"));
         Assert.False(game.World.Facts.Exists("coda", "truth_buried"));
+    }
+
+    [Fact]
+    public void Blight_StoryEndsOnce_LateEvidence_DoesNotRewriteTheEnding()
+    {
+        // The throne surfaced this hole (D-112): evidence read only after the
+        // deed re-armed the truth ending on the next deed's hook. Same latent
+        // shape here: stones read after the stilling must not rewrite it.
+        var game = CrossedBlightGame();
+        game.Debug_ClearSite(SiteKind.Barrow);
+        Assert.True(game.World.Facts.Exists("coda", "truth_buried"));
+
+        game.Debug_SetPlayerPos(game.World.BarrowSite!.OverworldPos);
+        game.Apply(Command.Enter);
+        for (int i = 0; i < 20 && !game.World.Facts.Exists("evidence", "mound_truth"); i++)
+            game.ApplyKey('l');
+        Assert.True(game.World.Facts.Exists("evidence", "mound_truth"));
+        game.Debug_SetMode(MapMode.Overworld);
+
+        game.Debug_ClearCamp();
+        Assert.False(game.World.Facts.Exists("coda", "truth_published"));
+        Assert.DoesNotContain(game.Log.Entries, e => e.Text.Contains("debt found"));
     }
 
     [Fact]

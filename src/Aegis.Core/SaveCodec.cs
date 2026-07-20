@@ -205,10 +205,14 @@ namespace Aegis.Core;
 /// nothing and now stakes coin), the board is its own menu whose every key
 /// means something, each game draws six to twelve dice, and a winning streak
 /// puts a new storylet in the talk draws.
+/// v57 when D-112 put the Usurped Throne in the pool: tier 2+ worlds now
+/// draw their story among three templates instead of two, so a v56 journal
+/// that crossed the first gate replays into worlds telling different
+/// stories, with different casts and different facts, from cycle 2 on.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 56;
+    public const int Version = 57;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

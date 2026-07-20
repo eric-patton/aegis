@@ -32,6 +32,19 @@ public sealed class Site
 
     /// <summary>Whether the veil-word has been said on this floor (D-091): pretenders drawn for what they are.</summary>
     public bool Unveiled { get; set; }
+
+    /// <summary>
+    /// The locked coffer (D-122): one box of old iron in each fighting deep
+    /// whose makers were the locking kind, closed against everything but a
+    /// light hand. Null where none stands.
+    /// </summary>
+    public Pos? CofferPos { get; set; }
+
+    /// <summary>Whether the coffer gave (D-122): an opened lock is an emptied box.</summary>
+    public bool CofferOpened { get; set; }
+
+    /// <summary>Whether the lock has been tried (D-122): one sitting per lock per world, opened or held.</summary>
+    public bool CofferTried { get; set; }
 }
 
 public sealed class World
@@ -865,6 +878,31 @@ public static class WorldGen
             int deepest = floor.Max(p => p.Manhattan(site.EntryPos));
             var deep = floor.Where(p => p.Manhattan(site.EntryPos) >= Math.Max(1, deepest - 3)).ToList();
             site.StonePos = stoneRng.Pick(deep);
+        }
+
+        // The locked coffer (D-122): one box of old iron per fighting deep
+        // whose makers were the locking kind. The barrow is left out on
+        // purpose: the dead lock nothing, they watch (D-106 keeps that
+        // ledger). Own stream per site, drawn after every existing draw, so
+        // pinned worlds keep their layouts and only gain a shut lid.
+        foreach (var site in sites)
+        {
+            if (site.Kind is not (SiteKind.GoblinCamp or SiteKind.Quarry
+                or SiteKind.Hall or SiteKind.Ringfort or SiteKind.Leaguer)) continue;
+            var cofferRng = new Rng(SeedTree.Derive(worldSeed, "coffer-" + site.Id));
+            var floor = new List<Pos>();
+            for (int y = 0; y < site.Map.Height; y++)
+                for (int x = 0; x < site.Map.Width; x++)
+                {
+                    var p = new Pos(x, y);
+                    if (site.Map[p] != Terrain.Floor || p == site.ChestPos || p == site.StonePos) continue;
+                    if (site.Spawns.Any(s => s.Pos == p)) continue;
+                    floor.Add(p);
+                }
+            if (floor.Count == 0) continue;
+            int deepest = floor.Max(p => p.Manhattan(site.EntryPos));
+            var mid = floor.Where(p => p.Manhattan(site.EntryPos) >= deepest / 2).ToList();
+            site.CofferPos = cofferRng.Pick(mid.Count > 0 ? mid : floor);
         }
 
         facts.Add("world_name", worldName, "");

@@ -676,6 +676,11 @@ public static class Presenter
         if (game.CurrentSite is { ChestLooted: false } site)
             PutWorld(site.ChestPos, '$', Hue.Yellow);
 
+        // The locked coffer (D-122): drawn until it is opened, because a lock
+        // that held is still furniture; only an emptied box stops mattering.
+        if (game.CurrentSite is { CofferPos: { } cofferPos, CofferOpened: false })
+            PutWorld(cofferPos, '&', Hue.DarkYellow);
+
         // The gleanings (D-052): drawn only for a bearer taught to see them.
         if (game.Mode == MapMode.Overworld && game.Player.HasLesson(LessonId.Gleaning))
             foreach (var spot in game.World.Gleanings)

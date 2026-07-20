@@ -81,3 +81,21 @@ public static class Lifting
     /// <summary>Odds a lift comes away unseen: half for a green hand, a twentieth per Sleight level, capped short of certainty.</summary>
     public static double ChanceFor(int sleightLevel) => Math.Min(0.85, 0.5 + 0.05 * sleightLevel);
 }
+
+/// <summary>
+/// The lock itself (D-122): the crime family's third verb, and the first one
+/// with no wronged party breathing. Old iron in the fighting deeps answers
+/// the same light hand a pocket does, but argues harder: a green hand opens
+/// roughly a third of what it tries, and no hand opens everything, because
+/// the cap keeps old iron's last word real. One try per lock per world; a
+/// lock that has taken a hand's measure does not give a second sitting.
+/// </summary>
+public static class Locks
+{
+    /// <summary>What an opened coffer yields: uniform in [TakeMin, TakeMaxExclusive).</summary>
+    public const int TakeMin = 7;
+    public const int TakeMaxExclusive = 15;
+
+    /// <summary>Odds a lock gives: a third and change for a green hand, better per Sleight level, capped short of certainty.</summary>
+    public static double ChanceFor(int sleightLevel) => Math.Min(0.85, 0.35 + 0.06 * sleightLevel);
+}

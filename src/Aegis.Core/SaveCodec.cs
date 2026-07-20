@@ -232,10 +232,13 @@ namespace Aegis.Core;
 /// v64 when D-121 added the Gold Rush to the pool: tier-3+ worlds draw their
 /// story among five templates instead of four, so a v63 journal's later
 /// worlds re-deal their spines and every draw after the selection shifts.
+/// v65 when D-122 set the locked coffer in the fighting deeps: 'g' on the
+/// coffer's cell now draws lock dice and moves coin and the Sleight skill
+/// where a v64 journal's grab there fell through as nothing.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 64;
+    public const int Version = 65;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

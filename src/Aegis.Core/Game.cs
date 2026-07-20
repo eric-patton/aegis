@@ -1264,6 +1264,17 @@ public sealed class Game
                 }, LogTone.Reward);
             else if (CurrentSite is { StonePos: { } sp, StoneRead: false } && p == sp)
                 Log.Add(Turn, "A standing stone, man-high, one word cut deep in its face. The cuts have kept their edges an age. Press g to read it.", LogTone.Aegis);
+            else if (CurrentSite is { CofferPos: { } cp, CofferOpened: false } && p == cp)
+                Log.Add(Turn, CurrentSite.CofferTried
+                    ? "The locked coffer. It took your hand's measure once, and old iron does not give a second sitting."
+                    : CurrentSite.Kind switch
+                    {
+                        SiteKind.GoblinCamp => "A strongbox off some road-wagon, dragged here and abandoned whole: no goblin has the patience for iron that argues. The lock still argues. Press g to try it.",
+                        SiteKind.Quarry => "The tally-master's lockbox sits where the counting was done, iron-banded, its hasp set with a lock worth the wages inside. Press g to try it.",
+                        SiteKind.Hall => "Under the bench, a strong little chest, iron-banded and locked by someone who trusted the lock more than the neighbors. Press g to try it.",
+                        SiteKind.Ringfort => "The quartermaster's lockbox, bolted iron over oak, its keyhole worn bright by a key that left with its owner. Press g to try it.",
+                        _ => "A captain's iron box, dented by the siege and opened by none of it. Press g to try the lock.",
+                    }, LogTone.Info);
             else if (t == Terrain.ExitLadder)
                 Log.Add(Turn, "Daylight above. Press < to climb out.");
             else if (t == Terrain.Hearth && CurrentSite!.Kind == SiteKind.Threshold && Player.Resolution != Resolution.None)
@@ -1818,6 +1829,11 @@ public sealed class Game
             return true;
         }
 
+        // The locked coffer (D-122): the crime family's guilt-free outlet, the
+        // one lock in the world with no wronged party breathing behind it.
+        if (Mode == MapMode.Site && CurrentSite is { CofferPos: { } cofferPos, CofferOpened: false } && Player.Pos == cofferPos)
+            return TryCofferLock(CurrentSite);
+
         // The first transgression (D-086): a door with no one behind it, and a
         // hand that has learned to open things. Repayment outranks theft at a
         // shared corner: making right comes before more wrong, and a thief who
@@ -1880,6 +1896,46 @@ public sealed class Game
                 Player.SpellLineHeard = true;
                 Log.Add(Turn, "\"...That word is older than the stead, bearer. Older than me, it may be. I cannot hold what it does; only you can. Say it carefully.\"", LogTone.Aegis);
             }
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Trying the locked coffer (D-122): the crime family's third verb, and the
+    /// first with no ledger. The dice ride Sleight alone, harder than a pocket
+    /// because old iron argues; a lock that gives pays coin and feeds the hand,
+    /// a lock that holds teaches nothing and keeps its lid the rest of the
+    /// world, because one sitting is all a lock ever grants. No shame, no
+    /// facts, no witness: whoever owned this iron stopped needing it an age ago.
+    /// </summary>
+    private bool TryCofferLock(Site site)
+    {
+        if (site.CofferTried)
+        {
+            Log.Add(Turn, "The lock took your hand's measure once, and old iron does not give a second sitting. This lid keeps until the world does not.");
+            return false;
+        }
+
+        site.CofferTried = true;
+        if (_combatRng.Chance(Locks.ChanceFor(Player.Skills.Level(SkillId.Sleight))))
+        {
+            site.CofferOpened = true;
+            int coin = _combatRng.Range(Locks.TakeMin, Locks.TakeMaxExclusive);
+            Player.Coin += coin;
+            Log.Add(Turn, "You work the lock by feel, the way a pocket is worked: patience, and a light hand, and one small click that sounds like agreement.", LogTone.Reward);
+            Log.Add(Turn, site.Kind switch
+            {
+                SiteKind.GoblinCamp => $"The wagon-box gives up what the goblins never got at: {coin} coin under a false bottom even the road did not know about. ({Player.Coin} carried)",
+                SiteKind.Quarry => $"The tally-master's box, honest to the last: {coin} coin in wage-rolls, each one tied with the same knot. ({Player.Coin} carried)",
+                SiteKind.Hall => $"What the neighbors were not trusted with: {coin} coin, and a lock of hair pressed in wax you leave where it lay. ({Player.Coin} carried)",
+                SiteKind.Ringfort => $"The quartermaster's own arithmetic: {coin} coin held back from the pay-chest, against a retirement that never rode in. ({Player.Coin} carried)",
+                _ => $"The captain's box, kept through the whole siege: {coin} coin and a folded commission too proud to spend either. ({Player.Coin} carried)",
+            }, LogTone.Reward);
+            GainSkill(SkillId.Sleight);
+        }
+        else
+        {
+            Log.Add(Turn, "The lock takes your measure and gives nothing back: the wards inside sit shut against everything your fingers know. Old iron argues, and this one has won.", LogTone.Info);
         }
         return true;
     }

@@ -113,6 +113,21 @@ public sealed class World
     public List<string> RepaidLifts { get; } = [];
 
     /// <summary>
+    /// Doors whose dark has heard the bearer's step (D-127): one burglary try
+    /// per house per world, clean or caught, because a house that has been
+    /// entered listens harder after. Runtime state like the pilfered doors,
+    /// rebuilt by replay, regenerated innocent at the crossing. Independent of
+    /// PilferedHouses: the sill and the kist are two different distances in.
+    /// </summary>
+    public List<Pos> BurgledHouses { get; } = [];
+
+    /// <summary>Doors whose dark saw the bearer against the lane (D-127): each opens its own repay road until it is walked.</summary>
+    public List<Pos> CaughtBurglaries { get; } = [];
+
+    /// <summary>Crossed sills made right at the door (D-127): a repaid break-in is closed both ways.</summary>
+    public List<Pos> RepaidBurglaries { get; } = [];
+
+    /// <summary>
     /// The terms this world was crossed into under (D-047): oaths sworn at the
     /// previous world's waygate. A generation input like the tier; they lapse at
     /// this world's far gate. Empty for a first world and for a plain crossing.

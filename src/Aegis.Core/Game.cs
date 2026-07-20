@@ -1111,6 +1111,7 @@ public sealed class Game
             Command.Exit => DoExit(),
             Command.Grab => DoGrab(),
             Command.Lift => DoLift(),
+            Command.Burgle => DoBurgle(),
             Command.Rest => DoRest(),
             Command.Eat => DoEat(),
             Command.Drink => DoDrink(),
@@ -2133,6 +2134,103 @@ public sealed class Game
         World.RepaidLifts.Add(mark.Id);
         Log.Add(Turn, $"You put {SteadShame.RepayCoin} coin into {mark.Name}'s hand and name what it is for. They count it, twice, and nod once.", LogTone.Reward);
         LowerShame(1);
+        return true;
+    }
+
+    /// <summary>
+    /// Burglary proper (D-127): crime's last named verb, the whole distance
+    /// in. 's' beside one of the stead's doors slips the latch and crosses
+    /// the sill: come out unwoken and the kist's coin and an heirloom for the
+    /// road-cart are yours, with the stead none the wiser (a secret fact, the
+    /// third from a deed); be seen against the lane coming out and the shame
+    /// jumps two rungs at once, because a loaf off a sill is hunger and a
+    /// body in the dark of your house is something else. One try per door per
+    /// world, and the ledger is the house's own: a sill already pilfered says
+    /// nothing about the kist behind it.
+    /// </summary>
+    private bool DoBurgle()
+    {
+        if (Mode != MapMode.Overworld)
+        {
+            Log.Add(Turn, "No door down here has a hearth behind it. What the deep places keep, they keep openly.");
+            return false;
+        }
+
+        // Making right outranks more wrong (D-086's corner rule, carried
+        // over): a door whose dark saw you takes the key until it is paid.
+        foreach (var (dx, dy) in Directions.All8)
+        {
+            var q = Player.Pos.Plus(dx, dy);
+            if (CurrentMap.InBounds(q) && CurrentMap[q] == Terrain.House
+                && World.CaughtBurglaries.Contains(q) && !World.RepaidBurglaries.Contains(q))
+                return RepayBurglary(q);
+        }
+
+        bool anyDoor = false;
+        Pos? house = null;
+        foreach (var (dx, dy) in Directions.All8)
+        {
+            var q = Player.Pos.Plus(dx, dy);
+            if (CurrentMap.InBounds(q) && CurrentMap[q] == Terrain.House)
+            {
+                anyDoor = true;
+                if (!World.BurgledHouses.Contains(q)) { house = q; break; }
+            }
+        }
+        if (house is null)
+        {
+            Log.Add(Turn, anyDoor
+                ? "That dark has heard your step once, and a house listens harder after. This door keeps its nights."
+                : "No door stands near enough to slip.");
+            return false;
+        }
+
+        World.BurgledHouses.Add(house.Value);
+        if (_combatRng.Chance(Burglary.ChanceFor(Player.Skills.Level(SkillId.Sleight))))
+        {
+            int take = _combatRng.Range(Burglary.TakeMin, Burglary.TakeMaxExclusive);
+            Player.Coin += take;
+            Player.Trinket++;
+            Log.Add(Turn, "The latch gives to a light hand, and the dark inside is a room like any room: a banked fire, slow breathing from the loft, and a kist against the wall.", LogTone.Reward);
+            Log.Add(Turn, $"The kist gives up {take} coin, and an heirloom comes off the shelf beside it: the kind a stead knows on sight, and a road-cart never asks about. ({Player.Coin} coin, {Player.Trinket} with a past)", LogTone.Reward);
+            Log.Add(Turn, "Out, and the lane is empty. The house will know it was entered; it will never know by whom.", LogTone.Info);
+            if (!World.Facts.Exists("secret", "burgled_house"))
+                World.Facts.Add("secret", "burgled_house", World.SettlementName,
+                    $"A house in {World.SettlementName} was entered in the dark and lightened, and no one knows whose foot crossed the sill.");
+            GainSkill(SkillId.Sleight);
+        }
+        else
+        {
+            World.CaughtBurglaries.Add(house.Value);
+            Log.Add(Turn, "The latch gives, but a floorboard answers it, and a voice answers that. You are out the door with empty hands, and behind you someone stands in it, watching you against the lane.", LogTone.Danger);
+            if (!World.Facts.Exists("shame", "housebroken"))
+                World.Facts.Add("shame", "housebroken", World.SettlementName,
+                    $"The bearer was seen coming out of a doorway in {World.SettlementName} that was not theirs, and there is one word for what that makes them.");
+            if (World.CaughtBurglaries.Count == 1)
+                Log.Add(Turn, $"(A crossed sill is made right at that sill: {SteadShame.BreakInRepayCoin} coin, offered plainly, with the same key that crossed it.)", LogTone.Info);
+            RaiseShame(2);
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Restitution for a break-in (D-127): the unified ladder's exit, walked
+    /// at the door that was crossed, with the key that crossed it (D-086's
+    /// symmetry kept). Twice a sill's coin, because the stead prices trust by
+    /// how far in the hand went, and it brings both rungs back down.
+    /// </summary>
+    private bool RepayBurglary(Pos house)
+    {
+        if (Player.Coin < SteadShame.BreakInRepayCoin)
+        {
+            Log.Add(Turn, $"Making a crossed sill right costs {SteadShame.BreakInRepayCoin} coin, and you hold {Player.Coin}. The wrong keeps until you can pay for it.");
+            return false;
+        }
+
+        Player.Coin -= SteadShame.BreakInRepayCoin;
+        World.RepaidBurglaries.Add(house);
+        Log.Add(Turn, $"You stand at the door you crossed and put {SteadShame.BreakInRepayCoin} coin into the hands that live behind it, naming what it is for. The silence after is long, but the door does not close on you.", LogTone.Reward);
+        LowerShame(2);
         return true;
     }
 

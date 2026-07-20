@@ -251,10 +251,13 @@ namespace Aegis.Core;
 /// held commitment tilt the pressure, and at the brim the arms refuse two
 /// turns while every blow lands deeper (a v68 journal's hardest fights
 /// resolve differently, and a refused swing spends no turn where one spent).
+/// v70 when D-127 taught the hand to cross the sill: 's', once nothing, now
+/// slips a stead door's latch, draws Sleight dice, and moves coin, shame,
+/// heirlooms, and skill where a v69 key fell through as nothing.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 69;
+    public const int Version = 70;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

@@ -99,3 +99,22 @@ public static class Locks
     /// <summary>Odds a lock gives: a third and change for a green hand, better per Sleight level, capped short of certainty.</summary>
     public static double ChanceFor(int sleightLevel) => Math.Min(0.85, 0.35 + 0.06 * sleightLevel);
 }
+
+/// <summary>
+/// The crossed sill (D-127): burglary proper, crime's last named verb. The
+/// latch is kinder than old iron but the house behind it is lived in, so the
+/// odds sit between the pocket and the coffer, and the check is the whole of
+/// it: in, through the dark, and out again with nobody woken. The take beats
+/// the sill-reach and the pocket and stays under the guilt-free coffer,
+/// because a home's kist holds a home's savings, not a payroll. One try per
+/// door per world; a house that has heard the step listens harder after.
+/// </summary>
+public static class Burglary
+{
+    /// <summary>What a burgled kist yields: uniform in [TakeMin, TakeMaxExclusive).</summary>
+    public const int TakeMin = 4;
+    public const int TakeMaxExclusive = 10;
+
+    /// <summary>Odds the house stays asleep: two in five for a green hand, a twentieth per Sleight level, capped short of certainty.</summary>
+    public static double ChanceFor(int sleightLevel) => Math.Min(0.85, 0.4 + 0.05 * sleightLevel);
+}

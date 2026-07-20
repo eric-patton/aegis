@@ -124,6 +124,13 @@ public static class SteadShame
     /// <summary>What one door's restitution costs: the loaf, and the trust, both paid for.</summary>
     public const int RepayCoin = 6;
 
+    /// <summary>
+    /// What a crossed sill's restitution costs (D-127): twice the door's,
+    /// because the house was entered, not reached over, and the stead prices
+    /// trust by how far in the hand went.
+    /// </summary>
+    public const int BreakInRepayCoin = 12;
+
     /// <summary>Shame required for a rung: 1, 2, 3. Three doors, three rungs; the stead counts its own.</summary>
     public static int Threshold(int rung) => rung;
 

@@ -242,8 +242,14 @@ public static class CreepingBlightTemplate
                     "The mound's dead were not cursed; they were set as a paid watch, and the watch is failing."),
             },
 
-            // Act 3, ending A: stilled with the truth in hand. The stead gets its
-            // history back, whether it wants it or not.
+            // Act 3, ending A, now a held moment (D-119, on D-117's seam): stilled
+            // with the truth in hand, the walk down the hill is the bearer's to
+            // choose. The template's contract feature grows: the ending branched on
+            // whether the truth was found; found, it now branches on what the
+            // finder does with it. Without the truth there is nothing to choose,
+            // so cb-ending-story stays plain lines. No check: nothing on the hill
+            // resists, and dice against no resistance would be a roll wearing a
+            // choice's clothes.
             new Storylet
             {
                 Id = "cb-ending-truth",
@@ -258,16 +264,62 @@ public static class CreepingBlightTemplate
                 // must not fire the truth ending off some later deed's hook when
                 // the buried-truth ending has already closed the story.
                 Forbids = [new FactPattern("story_complete", Id)],
-                Lines =
+                Lines = [],
+                Scene = new Scene("what-comes-down-the-hill", "What comes down the hill",
                 [
-                    ($"By the time this reaches {settlementName}, it will not be a curse outlasted. It will be a debt found, called in, and paid, and the stead will have to learn what its founders bought.", LogTone.Info),
-                ],
-                Effect = g =>
-                {
-                    g.World.Facts.Add("story_complete", Id, settlementName);
-                    g.World.Facts.Add("coda", "truth_published", settlementName,
-                        "The stead learned the mound was a paid watch, not a curse. Its history is heavier now, and truer.");
-                },
+                    new SceneNode
+                    {
+                        Id = "open",
+                        Lines =
+                        [
+                            ($"Below the mound, {settlementName} is a scatter of lit doorways waiting on the morning. Some telling of this night will reach them, and you are the only one left on the hill to choose which.", LogTone.Info),
+                            ("\"You read the stones, bearer: a watch bought, wages sealed, and a stead that forgot it ever hired one. Carry that down and the curse becomes a debt. Leave it and the debt stays a curse. Truth does not spend itself. I only keep the count.\"", LogTone.Aegis),
+                        ],
+                        Choices =
+                        [
+                            new SceneChoice("Carry the paid watch's truth down", "told"),
+                            new SceneChoice("Leave the telling under the turf", "kept"),
+                        ],
+                    },
+
+                    // Publish: the old truth ending, exactly as it read before it
+                    // was a choice.
+                    new SceneNode
+                    {
+                        Id = "told",
+                        Lines =
+                        [
+                            ($"By the time this reaches {settlementName}, it will not be a curse outlasted. It will be a debt found, called in, and paid, and the stead will have to learn what its founders bought.", LogTone.Info),
+                            ("\"Heavier and truer, then. A stead that knows what its founders bought can choose to keep paying or choose to stop, but it chooses awake. That is the better ledger. It is counted.\"", LogTone.Aegis),
+                        ],
+                        OnEnter = g =>
+                        {
+                            g.World.Facts.Add("story_complete", Id, settlementName);
+                            g.World.Facts.Add("coda", "truth_published", settlementName,
+                                "The stead learned the mound was a paid watch, not a curse. Its history is heavier now, and truer.");
+                        },
+                    },
+
+                    // Suppress: the stead ends where the never-read ending lands,
+                    // and the graph knows the silence was chosen.
+                    new SceneNode
+                    {
+                        Id = "kept",
+                        Lines =
+                        [
+                            ($"You come down the hill carrying the only story {settlementName} has ever wanted from that mound: the old curse broken at last. It is a good story, and it is wrong, and the one living person who knows better has decided to keep it that way.", LogTone.Info),
+                            ("\"Kept, then. The dead are released either way; only the telling stays under the turf. A stead can live long on a wrong story. This one has. I keep the count of unsaid things too, bearer.\"", LogTone.Aegis),
+                        ],
+                        OnEnter = g =>
+                        {
+                            g.World.Facts.Add("story_complete", Id, settlementName);
+                            g.World.Facts.Add("coda", "truth_buried", settlementName,
+                                "The stead believes a curse was broken. The bearer read the truth of the paid watch and left it under the turf by choice.");
+                            g.World.Facts.Add("withheld", "mound_truth", settlementName,
+                                "At the stilling the bearer held the mound's true history and carried down the curse-story instead: the paid watch stayed unsaid by choice, not ignorance.");
+                        },
+                    },
+                ]),
             },
 
             // Act 3, ending B: stilled without ever reading the stones. The old story
@@ -457,8 +509,12 @@ public static class UsurpedThroneTemplate
                 ],
             },
 
-            // Act 3, ending A: the seat falls with the truth in hand. What comes
-            // down the hill is the ledger, not just the quiet.
+            // Act 3, ending A, now a held moment (D-119, on D-117's seam): the
+            // seat falls with the truth in hand, and what goes down the hill is
+            // the bearer's to choose: the ledger, or the quiet alone. Without the
+            // truth there is nothing to choose, so ut-ending-lie stays plain
+            // lines. No check: the dens are dead and nothing at the cairn
+            // resists, so the choice is bare.
             new Storylet
             {
                 Id = "ut-ending-truth",
@@ -474,16 +530,62 @@ public static class UsurpedThroneTemplate
                 // already closed the story. The late truth still reaches the
                 // teller through the settling; it does not rewrite the fall.
                 Forbids = [new FactPattern("story_complete", Id)],
-                Lines =
+                Lines = [],
+                Scene = new Scene("the-cairn-and-the-ledger", "The cairn and the ledger",
                 [
-                    ($"The fires above {settlementName} are out, and the true telling of the seat comes down the hill with you: a war killed with its maker, a death hung on a stead arrow, and a lie that held the dens together until nothing did.", LogTone.Info),
-                ],
-                Effect = g =>
-                {
-                    g.World.Facts.Add("story_complete", Id, settlementName);
-                    g.World.Facts.Add("coda", "seat_truth_carried", settlementName,
-                        $"The bearer carried the truth of the taken seat out of the dens: {chief}'s lie is on record where the tellings can find it.");
-                },
+                    new SceneNode
+                    {
+                        Id = "open",
+                        Lines =
+                        [
+                            ($"On the way down you pass the cairn once more: {old} under the stacked stones, the war-tokens sworn against {settlementName} sealed in beside the wound that stopped them. Everything the dens' telling hid, one arm's reach under turned earth, and no one left alive on this hill to keep it but you.", LogTone.Info),
+                            ($"\"The seat is empty, bearer, and its true story is loose. Carry the ledger down and the stead learns what its standing walls cost. Leave it and {chief} goes under as the avenger the telling made. Truth does not spend itself. I only keep the count.\"", LogTone.Aegis),
+                        ],
+                        Choices =
+                        [
+                            new SceneChoice("Carry the ledger down the hill", "carried"),
+                            new SceneChoice("Leave the truth under the cairn", "kept"),
+                        ],
+                    },
+
+                    // Publish: the old truth ending, exactly as it read before it
+                    // was a choice.
+                    new SceneNode
+                    {
+                        Id = "carried",
+                        Lines =
+                        [
+                            ($"The fires above {settlementName} are out, and the true telling of the seat comes down the hill with you: a war killed with its maker, a death hung on a stead arrow, and a lie that held the dens together until nothing did.", LogTone.Info),
+                            ("\"So the ledger comes home. It will comfort no one, bearer; ledgers are not for comfort. But every raid this valley remembers has a true price against it now, and that is more than most wars leave behind.\"", LogTone.Aegis),
+                        ],
+                        OnEnter = g =>
+                        {
+                            g.World.Facts.Add("story_complete", Id, settlementName);
+                            g.World.Facts.Add("coda", "seat_truth_carried", settlementName,
+                                $"The bearer carried the truth of the taken seat out of the dens: {chief}'s lie is on record where the tellings can find it.");
+                        },
+                    },
+
+                    // Suppress: the valley ends where the never-read ending lands,
+                    // and the graph knows the silence was chosen.
+                    new SceneNode
+                    {
+                        Id = "kept",
+                        Lines =
+                        [
+                            ($"You leave the stones unstirred and come down with the quiet alone. In the only telling anyone will keep, {chief} avenged {old} against the stead to the last, and the seat's true story goes cold under the cairn with the one person able to dig it up walking away downhill.", LogTone.Info),
+                            ("\"Kept, then. The stead sleeps behind walls a den-blade bought and calls the blade an arrow, and tonight it is none the worse for the error. I keep the count of unsaid things too, bearer.\"", LogTone.Aegis),
+                        ],
+                        OnEnter = g =>
+                        {
+                            g.World.Facts.Add("story_complete", Id, settlementName);
+                            g.World.Facts.Add("coda", "seat_lie_stands", settlementName,
+                                $"The dens fell with their telling intact: {old} dead to a stead arrow, {chief} the avenger. The bearer read the cairn and left the truth under it by choice.");
+                            g.World.Facts.Add("withheld", "seat_truth", settlementName,
+                                "At the fall the bearer held the cairn's whole telling, the den-blade and the war-tokens both, and carried none of it down: the seat's truth stayed under the stones by choice, not ignorance.");
+                        },
+                    },
+                ]),
             },
 
             // Act 3, ending B: the seat falls and the lie outlives it. A story can
@@ -521,6 +623,11 @@ public static class UsurpedThroneTemplate
                     new FactPattern("evidence", "seat_truth"),
                     new FactPattern("heard", "seat_story"),
                 ],
+                // Truth knowingly kept at the cairn is truth the teller never
+                // gets (D-119): the withheld fact routes the settling to the
+                // kept path below. Evidence read late (after the fall) carries
+                // no withheld fact, so the late truth still reaches the teller.
+                Forbids = [new FactPattern("withheld", "seat_truth")],
                 When = g => g.TalkNpc?.Id == tellerId,
                 Lines =
                 [
@@ -548,6 +655,31 @@ public static class UsurpedThroneTemplate
                 [
                     ($"{tellerName} nods slowly at the quiet hills. \"So {chief} goes under still owed a death by us, by the dens' own telling. Let the hill keep its stories. The nights are ours again, and that is the only telling I need.\"", LogTone.Reward),
                     ("\"The seat's truth goes under with its holders, unread. A story can be finished without ever being known, bearer. Most are.\"", LogTone.Aegis),
+                ],
+                Effect = g => g.Player.Essence += 3,
+            },
+
+            // The witnessed settling, truth knowingly kept (D-119): the first
+            // consumer of the withheld fact. The teller closes the book content,
+            // and the one reader in the valley stands by and lets it close.
+            // Same coin: the endings differ in what the world believes, never
+            // in the pay.
+            new Storylet
+            {
+                Id = "ut-telling-kept",
+                Trigger = StoryletTrigger.Talk,
+                Priority = 10,
+                Requires =
+                [
+                    new FactPattern("deed", "camp_cleared"),
+                    new FactPattern("heard", "seat_story"),
+                    new FactPattern("withheld", "seat_truth"),
+                ],
+                When = g => g.TalkNpc?.Id == tellerId,
+                Lines =
+                [
+                    ($"{tellerName} nods slowly at the quiet hills. \"So {chief} goes under still owed a death by us, by the dens' own telling. Let the hill keep its stories. The nights are ours again, and that is the only telling I need.\" The rest of it stands behind your teeth, and stays there.", LogTone.Reward),
+                    ("\"The book closes unread with its one reader standing by. That is a heavier quiet than not knowing, bearer. It pays the same.\"", LogTone.Aegis),
                 ],
                 Effect = g => g.Player.Essence += 3,
             },

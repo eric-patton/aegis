@@ -8,6 +8,8 @@ namespace Aegis.Core.Tests;
 /// outward (which is what keeps the raids righteous), evidence in the camp that
 /// complicates rather than inverts, endings that branch on whether the truth came
 /// down the hill, and restoration beats that ride D-110's live succession.
+/// D-119 grew the truth-in-hand fall into a scene: the ledger is carried or
+/// left by choice, and the settling follows the choice, not the evidence.
 /// </summary>
 public class ThroneTests
 {
@@ -23,7 +25,7 @@ public class ThroneTests
         // seed 7 before D-116's redeal).
         var world = WorldGen.Generate(2, tier: 2);
         Assert.Equal("usurped-throne", world.Facts.OfType("story").Single().Subject);
-        Assert.Equal(8, world.StoryStorylets.Count);
+        Assert.Equal(9, world.StoryStorylets.Count);
 
         var camp = world.Sites.First(s => s.Kind == SiteKind.GoblinCamp);
         var named = camp.Spawns.Where(s => s.Epithet is not null).ToList();
@@ -65,15 +67,55 @@ public class ThroneTests
     }
 
     [Fact]
-    public void Ending_WithTheTruth_CarriesTheLedgerDown()
+    public void Ending_WithTheTruth_OpensTheScene_Unchecked()
     {
         var game = EvidencedThroneGame();
         game.Debug_ClearCamp();
 
-        Assert.Contains(game.Log.Recent(8), e => e.Text.Contains("true telling of the seat"));
+        // The fall with the truth in hand holds the moment (D-119): two bare
+        // answers, no check, nothing decided yet.
+        Assert.True(game.InScene);
+        Assert.Equal("The cairn and the ledger", game.SceneTitle);
+        Assert.Equal(2, game.SceneChoices.Count);
+        Assert.All(game.SceneChoices, c => Assert.Equal("", c.Tag));
+        Assert.False(game.World.Facts.Exists("story_complete", "usurped-throne"));
+    }
+
+    [Fact]
+    public void Ending_WithTheTruth_CarriesTheLedgerDown()
+    {
+        var game = EvidencedThroneGame();
+        game.Debug_ClearCamp();
+        AnswerTheCairn(game, '1');
+
+        Assert.Contains(game.Log.Entries, e => e.Text.Contains("true telling of the seat"));
         Assert.True(game.World.Facts.Exists("story_complete", "usurped-throne"));
         Assert.True(game.World.Facts.Exists("coda", "seat_truth_carried"));
         Assert.False(game.World.Facts.Exists("coda", "seat_lie_stands"));
+        Assert.False(game.World.Facts.Exists("withheld", "seat_truth"));
+    }
+
+    [Fact]
+    public void Ending_TruthKept_LetsTheLieStand_AndRoutesTheSettling()
+    {
+        var game = EvidencedThroneGame();
+        TalkUntil(game, Teller(game), () => game.World.Facts.Exists("heard", "seat_story"));
+        game.Debug_ClearCamp();
+        AnswerTheCairn(game, '2');
+
+        Assert.Contains(game.Log.Entries, e => e.Text.Contains("unsaid things"));
+        Assert.True(game.World.Facts.Exists("story_complete", "usurped-throne"));
+        Assert.True(game.World.Facts.Exists("coda", "seat_lie_stands"));
+        Assert.False(game.World.Facts.Exists("coda", "seat_truth_carried"));
+        Assert.True(game.World.Facts.Exists("withheld", "seat_truth"));
+
+        // The settling follows the choice, not the evidence: the teller closes
+        // the book unread with its one reader standing by, and it pays the same.
+        int before = game.Player.Essence;
+        TalkUntil(game, Teller(game),
+            () => game.Log.Entries.Any(e => e.Text.Contains("heavier quiet")));
+        Assert.Equal(before + 3, game.Player.Essence);
+        Assert.DoesNotContain(game.Log.Entries, e => e.Text.Contains("given us back the ledger"));
     }
 
     [Fact]
@@ -82,10 +124,13 @@ public class ThroneTests
         var game = CrossedThroneGame();
         game.Debug_ClearCamp();
 
+        // With nothing read there is nothing to choose (D-119): plain lines.
+        Assert.False(game.InScene);
         Assert.Contains(game.Log.Recent(8), e => e.Text.Contains("goes cold under the cairn-stones"));
         Assert.True(game.World.Facts.Exists("story_complete", "usurped-throne"));
         Assert.True(game.World.Facts.Exists("coda", "seat_lie_stands"));
         Assert.False(game.World.Facts.Exists("coda", "seat_truth_carried"));
+        Assert.False(game.World.Facts.Exists("withheld", "seat_truth"));
     }
 
     [Fact]
@@ -103,6 +148,7 @@ public class ThroneTests
         Assert.True(game.World.Facts.Exists("evidence", "seat_truth"));
         game.Debug_ClearSite(SiteKind.Barrow);
 
+        Assert.False(game.InScene);
         Assert.False(game.World.Facts.Exists("coda", "seat_truth_carried"));
         Assert.DoesNotContain(game.Log.Entries, e => e.Text.Contains("true telling of the seat"));
 
@@ -129,6 +175,7 @@ public class ThroneTests
         var truth = EvidencedThroneGame();
         TalkUntil(truth, Teller(truth), () => truth.World.Facts.Exists("heard", "seat_story"));
         truth.Debug_ClearCamp();
+        AnswerTheCairn(truth, '1');
         before = truth.Player.Essence;
         TalkUntil(truth, Teller(truth),
             () => truth.Log.Entries.Any(e => e.Text.Contains("given us back the ledger")));
@@ -255,6 +302,16 @@ public class ThroneTests
             }
         Assert.True(game.World.Facts.Exists("evidence", "seat_truth"), "no deep step surfaced the cairn");
         game.Debug_SetMode(MapMode.Overworld);
+    }
+
+    /// <summary>Answers the open cairn-and-ledger scene and closes its leaf.</summary>
+    private static void AnswerTheCairn(Game game, char answer)
+    {
+        Assert.True(game.InScene, "the cairn scene never opened");
+        game.ApplyKey(answer);
+        Assert.True(game.InScene);
+        game.ApplyKey(' ');
+        Assert.False(game.InScene);
     }
 
     private static Npc Teller(Game game)

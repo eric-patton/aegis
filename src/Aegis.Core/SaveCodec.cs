@@ -223,10 +223,13 @@ namespace Aegis.Core;
 /// v61 when D-118 staged the faiths' claim-saying as a scene: a v60 journal
 /// that reached the truth-in-hand climax replays into a modal choice that
 /// did not exist, and the wielding's check draws on the combat stream.
+/// v62 when D-119 staged the blight's and the throne's truth-in-hand endings
+/// as scenes: a v61 journal that stilled the barrow or felled the camp with
+/// the evidence read replays into a modal choice that did not exist.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 61;
+    public const int Version = 62;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

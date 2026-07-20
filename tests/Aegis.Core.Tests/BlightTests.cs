@@ -6,7 +6,8 @@ namespace Aegis.Core.Tests;
 /// Template selection and the Creeping Blight (D-035): one story per world chosen
 /// among eligible templates, tier-1 worlds unchanged, and the blight's new contract
 /// features: an accepted-history fact flipped by found evidence, and endings that
-/// branch on whether the truth was found before the deed.
+/// branch on whether the truth was found before the deed. D-119 grew the found
+/// branch into a scene: what comes down the hill is the bearer's to choose.
 /// </summary>
 public class BlightTests
 {
@@ -98,34 +99,56 @@ public class BlightTests
         var game = CrossedBlightGame();
         game.Debug_ClearSite(SiteKind.Barrow);
 
+        // With nothing read there is nothing to choose (D-119): plain lines.
+        Assert.False(game.InScene);
         Assert.Contains(game.Log.Recent(8), e => e.Text.Contains("good story"));
         Assert.True(game.World.Facts.Exists("story_complete", "creeping-blight"));
         Assert.True(game.World.Facts.Exists("coda", "truth_buried"));
         Assert.False(game.World.Facts.Exists("coda", "truth_published"));
+        Assert.False(game.World.Facts.Exists("withheld", "mound_truth"));
     }
 
     [Fact]
-    public void Blight_EvidenceDeepInTheBarrow_FlipsTheEnding()
+    public void Blight_EndingWithTheTruth_OpensTheScene_Unchecked()
     {
-        var game = CrossedBlightGame();
-
-        // Still the wights without writing the deed, then walk the passage deep
-        // enough to read the stones.
-        foreach (var wight in game.Monsters.Where(m => m.SiteId == "barrow"))
-            wight.Hp = 0;
-        game.Debug_SetPlayerPos(game.World.BarrowSite!.OverworldPos);
-        game.Apply(Command.Enter);
-        for (int i = 0; i < 20 && !game.World.Facts.Exists("evidence", "mound_truth"); i++)
-            game.ApplyKey('l');
-
-        Assert.True(game.World.Facts.Exists("evidence", "mound_truth"), "walking the passage never surfaced the evidence");
-        Assert.Contains(game.Log.Recent(8), e => e.Text.Contains("They were hired"));
-
+        var game = EvidencedBlightGame();
         game.Debug_ClearSite(SiteKind.Barrow);
-        Assert.Contains(game.Log.Recent(8), e => e.Text.Contains("debt found"));
+
+        // The stilling with the truth in hand holds the moment (D-119): two
+        // bare answers, no check, nothing decided yet.
+        Assert.True(game.InScene);
+        Assert.Equal("What comes down the hill", game.SceneTitle);
+        Assert.Equal(2, game.SceneChoices.Count);
+        Assert.All(game.SceneChoices, c => Assert.Equal("", c.Tag));
+        Assert.False(game.World.Facts.Exists("story_complete", "creeping-blight"));
+    }
+
+    [Fact]
+    public void Blight_TruthCarriedDown_PublishesIt()
+    {
+        var game = EvidencedBlightGame();
+        game.Debug_ClearSite(SiteKind.Barrow);
+        AnswerTheHill(game, '1');
+
+        Assert.Contains(game.Log.Entries, e => e.Text.Contains("debt found"));
         Assert.True(game.World.Facts.Exists("story_complete", "creeping-blight"));
         Assert.True(game.World.Facts.Exists("coda", "truth_published"));
         Assert.False(game.World.Facts.Exists("coda", "truth_buried"));
+        Assert.False(game.World.Facts.Exists("withheld", "mound_truth"));
+    }
+
+    [Fact]
+    public void Blight_TruthKept_BuriesIt_AndTheGraphRemembersTheSilence()
+    {
+        var game = EvidencedBlightGame();
+        game.Debug_ClearSite(SiteKind.Barrow);
+        AnswerTheHill(game, '2');
+
+        Assert.Contains(game.Log.Entries, e => e.Text.Contains("unsaid things"));
+        Assert.True(game.World.Facts.Exists("story_complete", "creeping-blight"));
+        Assert.True(game.World.Facts.Exists("coda", "truth_buried"));
+        Assert.False(game.World.Facts.Exists("coda", "truth_published"));
+        Assert.True(game.World.Facts.Exists("withheld", "mound_truth"));
     }
 
     [Fact]
@@ -146,6 +169,7 @@ public class BlightTests
         game.Debug_SetMode(MapMode.Overworld);
 
         game.Debug_ClearCamp();
+        Assert.False(game.InScene);
         Assert.False(game.World.Facts.Exists("coda", "truth_published"));
         Assert.DoesNotContain(game.Log.Entries, e => e.Text.Contains("debt found"));
     }
@@ -190,6 +214,35 @@ public class BlightTests
         Assert.Equal(2, game.Cycle);
         Assert.Equal("creeping-blight", game.World.Facts.OfType("story").Single().Subject);
         return game;
+    }
+
+    /// <summary>A crossed blight game that has walked the passage deep enough to read the stones.</summary>
+    private static Game EvidencedBlightGame()
+    {
+        var game = CrossedBlightGame();
+
+        // Still the wights without writing the deed, then walk the passage deep
+        // enough to read the stones.
+        foreach (var wight in game.Monsters.Where(m => m.SiteId == "barrow"))
+            wight.Hp = 0;
+        game.Debug_SetPlayerPos(game.World.BarrowSite!.OverworldPos);
+        game.Apply(Command.Enter);
+        for (int i = 0; i < 20 && !game.World.Facts.Exists("evidence", "mound_truth"); i++)
+            game.ApplyKey('l');
+
+        Assert.True(game.World.Facts.Exists("evidence", "mound_truth"), "walking the passage never surfaced the evidence");
+        Assert.Contains(game.Log.Recent(8), e => e.Text.Contains("They were hired"));
+        return game;
+    }
+
+    /// <summary>Answers the open what-comes-down-the-hill scene and closes its leaf.</summary>
+    private static void AnswerTheHill(Game game, char answer)
+    {
+        Assert.True(game.InScene, "the walk-down scene never opened");
+        game.ApplyKey(answer);
+        Assert.True(game.InScene);
+        game.ApplyKey(' ');
+        Assert.False(game.InScene);
     }
 
     private static Npc Afflicted(Game game)

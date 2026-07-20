@@ -3,7 +3,7 @@ namespace Aegis.Core;
 public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort, Songhall, Leaguer, Wilds }
 
 /// <summary>A monster placed at generation time: kind, cell, and generated stats (D-011).</summary>
-public readonly record struct MonsterSpawn(MonsterKind Kind, Pos Pos, int Hp);
+public readonly record struct MonsterSpawn(MonsterKind Kind, Pos Pos, int Hp, string? Epithet = null, bool Chief = false);
 
 /// <summary>
 /// An enterable place on the overworld with its own map (D-033). Cleared/looted state
@@ -246,6 +246,13 @@ public static class WorldGen
         int goblinCount = Math.Min(3 + (tier - 1), 6) + crowd;
         int goblinHp = 8 + 2 * (tier - 1);
         var (campMap, entry, goblinSpawns, chest) = GenerateCamp(worldSeed, goblinCount);
+        // The named of the dens (D-110): the roster's names come from their own
+        // seed stream, so no existing draw moves, and the first spawns wear the
+        // rank: index 0 the chief, the next two its lieutenants, rank as hide.
+        var rosterRng = new Rng(SeedTree.Derive(worldSeed, "roster"));
+        var rosterNames = new List<string>();
+        for (int i = 0; i < RaiderRoster.Named; i++)
+            rosterNames.Add(NameGen.Raider(ref rosterRng, rosterNames));
         var sites = new List<Site>
         {
             new()
@@ -255,10 +262,15 @@ public static class WorldGen
                 Map = campMap,
                 OverworldPos = camp,
                 EntryPos = entry,
-                Spawns = [.. goblinSpawns.Select(p => new MonsterSpawn(MonsterKind.Goblin, p, goblinHp))],
+                Spawns = [.. goblinSpawns.Select((p, i) => new MonsterSpawn(MonsterKind.Goblin, p,
+                    goblinHp + (i == 0 ? RaiderRoster.ChiefHide : i < RaiderRoster.Named ? RaiderRoster.LieutenantHide : 0),
+                    i < RaiderRoster.Named ? rosterNames[i] : null,
+                    Chief: i == 0))],
                 ChestPos = chest,
             },
         };
+        facts.Add("nemesis", "chief", rosterNames[0],
+            $"The raiders above {settlementName} follow a chief the stead has a name for: {rosterNames[0]}.");
 
         if (tier >= 2)
         {

@@ -468,6 +468,33 @@ public sealed class Monster
     /// </summary>
     public int ExposedTurns { get; set; }
 
+    /// <summary>
+    /// The named of the dens (D-110): a roster raider's own name, null for the
+    /// unnamed. Set at spawn from the world seed, never serialized.
+    /// </summary>
+    public string? Epithet { get; init; }
+
+    /// <summary>Leads the camp (D-110). Mutable: a chief slain over a standing lieutenant hands the place on.</summary>
+    public bool Chief { get; set; }
+
+    /// <summary>The spawn's whole hide, so a wound left uncured can be seen for what it is. Zero on synthetic monsters; guard before reading.</summary>
+    public int MaxHp { get; set; }
+
+    /// <summary>Bloodied by the bearer and left alive (D-110): the scar remembered.</summary>
+    public bool Scarred { get; set; }
+
+    /// <summary>Authored the bearer's death (D-110): the boast kept.</summary>
+    public bool SlewBearer { get; set; }
+
+    /// <summary>Rose to chief over a slain one (D-110): the office came with the grudge.</summary>
+    public bool Rose { get; set; }
+
+    /// <summary>Whether the current grudge has been spoken to the bearer's face; cleared when a new memory lands.</summary>
+    public bool GrudgeSpoken { get; set; }
+
+    /// <summary>A memory held against the bearer (D-110): what arms the hand and fills the mouth.</summary>
+    public bool Grudge => Scarred || SlewBearer || Rose;
+
     public bool Alive => Hp > 0;
     public string Name => Kind switch
     {

@@ -256,6 +256,39 @@ public static class SteadWatch
 }
 
 /// <summary>
+/// The named of the dens (D-110): D-023's bounded Nemesis-style roster, begun
+/// where the fighting is. Every camp's world seed names a chief and two
+/// lieutenants; the stead's rumor carries the chief's name from the first
+/// morning, so the roster is perceivable before a blow is traded. The memory
+/// is the point (research/08: named-individual memory, not aggregate numbers,
+/// is what makes a faction feel alive): a named raider bloodied and left
+/// alive remembers the edge, one that authors the bearer's death keeps the
+/// boast, and a chief slain over a standing lieutenant hands the camp, and
+/// the grudge, to a named heir. Teeth stay light by design: rank is worn as
+/// hide (the chief a tougher goblin), and memory arms the hand a single
+/// point, the same coin the dread and the grudge already trade in. Like
+/// every ledger the roster is this world's alone: names from the seed,
+/// memory from the replay, nothing serialized.
+/// </summary>
+public static class RaiderRoster
+{
+    /// <summary>Named raiders per camp: one chief, and the lieutenants after.</summary>
+    public const int Named = 3;
+
+    /// <summary>Rank worn as hide: what leading a camp, or standing next to, adds to the spawn's Hp.</summary>
+    public const int ChiefHide = 4;
+    public const int LieutenantHide = 2;
+
+    /// <summary>
+    /// Memory arms the hand (D-110): a named raider carrying a grudge strikes
+    /// a point the harder. Applied to the raw roll, after the dice, the same
+    /// rail as the dread and the mound's grudge, so the draw count never
+    /// changes and determinism holds.
+    /// </summary>
+    public static int Armed(bool grudge, int roll) => grudge ? roll + 1 : roll;
+}
+
+/// <summary>
 /// The dens' boldness (D-089): the raider faction's internal state axis, and
 /// deliberately a derived one: nights of unanswered plunder embolden the dens
 /// and raiders slain cow them, so the axis is causal by construction and

@@ -45,7 +45,7 @@ holes**: none untouched; all four activity families have broken ground (crime op
 - Skills: **10 of ~18** (five combat, Hunting from D-070, Cooking from D-073, Survival from D-074, Spellcraft from D-091, Sleight from D-107)
 - Activity families: **wilderness-living core built** (hunting, selling, cooking, foraging: D-070..D-074), the **craft family opened** (cooking D-073; alchemy v1 D-090, the hale-draught), and the **crime family opened** (pilfering D-086; pickpocketing + Sleight D-107); **town life opened** (knucklebones D-108)
 - Launch story templates: **2** built (of 3 named, 4-5 planned)
-- **Factions begun (D-076..D-089, D-105, D-106):** the local-reputation foundation is in (the home stead's
+- **Factions begun (D-076..D-089, D-105, D-106, D-109, D-110):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
   raider slain, dread softening their blows past its rung), the coarse tick began (D-079,
@@ -62,7 +62,8 @@ holes**: none untouched; all four activity families have broken ground (crime op
   lofts end the raids, cleared worlds recover), and the stead now moves on the tick itself
   (D-105, the watch posted against greed and the levy called at the last measure, with the
   levy answerable by the bearer for regard), and the third faction stands (D-106, the long
-  mound's grudge: the relation matrix has its second edge)
+  mound's grudge: the relation matrix has its second edge), and the roster went named
+  (D-110, the camp's chief and lieutenants: the bounded Nemesis-style memory begun)
 - Major vision pillars: all broken ground (magic opened D-091; the craft family
   opened D-073/D-090; character creation shipped both stages, D-092/D-093; companions
   shipped whole, D-097/D-099/D-100: guests, the shade, and the beast roster; the
@@ -96,8 +97,11 @@ holes**: none untouched; all four activity families have broken ground (crime op
   tick, stores and boldness, with recovery as the exit's aftermath), and the stead now
   acts on it (D-105: the watch and the levy), and the third faction stands (D-106: the
   mound's grudge, the relation matrix's second edge), and every produced fact now has its
-  reader (D-109: the debt made right, the door that held, the two ledgers). Next in this
-  phase: the Nemesis-style roster. **Magic, the alternative keystone, landed (D-091):** Mind and Will wake,
+  reader (D-109: the debt made right, the door that held, the two ledgers), and the roster
+  went named (D-110: the camp's chief and lieutenants, the scar, the succession, and the
+  boast: D-023's bounded Nemesis-style memory begun). Next in this phase: the nemesis
+  facts' consumers and the exit-conditions audit; the roster unblocks the faction-hungry
+  story templates. **Magic, the alternative keystone, landed (D-091):** Mind and Will wake,
   the caster build exists (graven stones, four workings, Focus, Spellcraft), and the deep
   sites carry a prize beyond coin and gear.
 - **Phase 3: Remaining pillars & stakes.** Companions, the Death's-Toll/scar layer, the
@@ -286,7 +290,19 @@ holes**: none untouched; all four activity families have broken ground (crime op
   stilling itself: dead laid to rest keep no ledgers
 - [ ] Mound follow-ons (D-106): the villagers' mound topic reading the grudge aloud; a
   raiders-mound edge if one earns its keep; a desecration verb beyond the grave-goods
-- [ ] Bounded Nemesis-style leader/lieutenant roster with memory (D-023)
+- [x] Bounded Nemesis-style leader/lieutenant roster with memory (D-023; delivered D-110,
+  no save bump): the camp's chief and two lieutenants named from their own seed stream,
+  the stead's rumor and a nemesis/chief fact carrying the name from the first morning,
+  rank worn as hide (+4/+2 Hp). Memory rides the replay: a named raider bloodied and
+  left alive keeps the scar (nemesis/scarred), a chief slain over a standing lieutenant
+  hands the camp to a named heir with the grudge in the office (nemesis/risen, ending in
+  the no-heir silence), and the hand that authors the bearer's death keeps the boast
+  (nemesis/slew_bearer). A held grudge arms the hand one point on the dread's own rail,
+  and is spoken to the bearer's face at the next descent, once per memory
+- [ ] Roster follow-ons (D-110): talk topics reading the nemesis facts aloud (the risen
+  chief feared at the doors, the kept boast named at the hearth, the made_right thread
+  meeting the roster); the chief told apart on the map; a named figure for another
+  faction if one earns its keep
 - [ ] Designed conflict exit conditions (no eternal stalemates) (D-023)
 - [ ] (Unblocks: full-form story templates, institution/zealot/warden roles) (D-035)
 
@@ -397,6 +413,7 @@ holes**: none untouched; all four activity families have broken ground (crime op
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-20: **D-110 the named of the dens: the Nemesis-style roster begun.** D-023's roster clause lands where the fighting is: the camp's world seed names a chief and two lieutenants from their own stream (a new raider weave in NameGen, short and bitten off), the stead's rumor carries the chief's name from the first morning beside a nemesis/chief fact, and rank is worn as hide (+4/+2 Hp over the tier's base). Three memory beats ride the replay, nothing serialized, no save bump (v56 holds): the scar (a named raider bloodied and left alive keeps the wound's author, swept on leaving by ladder or by dying in the camp, nemesis/scarred), the succession (a chief slain over a standing lieutenant hands the camp on, the office coming with the grudge in it, nemesis/risen, the last named falling to the no-heir silence), and the slaying (the very hand that authors the bearer's death keeps the boast, nemesis/slew_bearer). Light teeth on the established rail: a held grudge arms the hand one point after the dice, the dread's mirror, and every grudge is spoken to the bearer's face at the next descent, once per memory. 550 tests green (8 new NemesisTests; one crossing assertion updated for rank-as-hide). Twins identical; sim replay exact. Baselines moved as designed (the tougher camp): master 11846 turns/1 death/26 raids, sweep completes on all four seeds. Pilot-exercise verified from the full sim log: the rumor, the announcement, the named falls, 9 successions and 12 no-heir silences fire live; the scar, the taunts, and the boast are pilot-unexercised (the pilot clears camps whole) and test-covered. New tracked: nemesis fact consumers; the chief told apart on the map; a named figure for another faction if one earns its keep.
 - 2026-07-20: **D-109 the facts answered in their turn: made right, the door that held, the two ledgers.** The graph's three produced-but-unread facts get their consumers, three storylets in the D-088 discipline (narrative and facts, no mechanics: the world reading differently is the payoff). The making-right beat at the well consumes `confronted`: both producers feed it (the reckoning D-088, the caught hand D-107, the unified ladder paying off), gated on live shame back at zero, once per world, writing `made_right`; deliberately no coin or regard, so restitution never turns a profit. The door that held consumes `stead_cellar` on the raid seam the tick already writes: the raid's morning read from inside the count, once per world. The two ledgers consumes `lifted_purse` where it collides with trust: the fence opened at the friend rung to a hand that has been inside it unseen; a clean lift has no restitution road, so the weight is the consequence. No new state, no save bump (v56 holds). 542 tests green (7 new FactConsumerTests). Twins identical; sim replay exact; baselines byte-identical on master and all four sweep seeds, verified honestly (the journey log grepped: none of the three beats fires under the pilot; all pilot-unexercised, test-covered). New tracked: the `made_right` consumer (Nemesis-roster memory fuel).
 - 2026-07-20: **D-108 knucklebones at the hearth: town life opens.** The last unopened family breaks ground with the vision's first-named town verb, kept at the skald's hearth (the songhall is where men game already, and the skald's digits had room where the villagers' shared nine did not). One always-listed digit after the deeds: 3 coin the throw, stake matched and spoken for, the bearer's cast face-up, one throw back if dared (standing is any key but the throw: a live board never traps a hand and never refunds), the skald standing at eleven or better and sweeping up anything under, announced: a readable house, so the reroll is a real decision. High board takes the pot; ties return the stakes; turn-free. Per-world net ledger, wiped at the crossing; at nine up the lucky_hand fact and a Talk storylet gated on the live net (the streak given back ends the talk, the fact stays history), at nine down the light_purse fact for a future consumer. Save v55 -> v56. 535 tests green (10 new BonesTests on pinned seeds). Twins identical; sim replay exact; baselines byte-identical on master and all four sweep seeds (no digit shifts; the pilot never gambles). New tracked: the light_purse consumer; carousing as a round-standing verb at the hearth.
 - 2026-07-20: **D-107 the light hand: pickpocketing and the Sleight skill.** The crime family opens in earnest, the fork won by the lift over lockpicking (furniture for what pilfering half-covers) and fencing (no plausible fence in a three-door stead; both stay tracked). 'p' (Command.Lift, a new journaled key) beside one of the stead's folk brushes the purse: one try per pocket per world. The dice ride the new Sleight skill alone (half green, a twentieth per level, capped at 0.85: no hand ever safe), the tenth skill, fed only by lifts that worked. Clean: 2-4 coin, the stead's first secret fact from a deed (secret/lifted_purse). Caught: the confronted fact with the catcher's name and the same unified shame ladder as pilfering (the user's pick: the stead keeps no separate books on flavors of thief), restitution in the wronged hand with the key that tried it, at the sill's price. The first-shame way-back hint moved from RaiseShame to the deed (a guest's fall no longer names the door road). Save v54 -> v55. 525 tests green (9 new SleightTests on pinned seeds; 2 updated for the tenth skill). Twins identical; sim replay exact; baselines byte-identical on master and all four sweep seeds (the pilot never presses 'p': the honest-bearer path, test-covered). New tracked: fencing wants a fence; Sleight knacks; the confronted/secret consumers now have live fuel.

@@ -32,6 +32,15 @@ public static class NameGen
     private static readonly string[] PersonClosers =
         ["da", "dric", "ga", "lin", "mund", "na", "ric", "rin", "sa", "wyn", "dis", "gar", "hild", "red", "ulf", "wen"];
 
+    // Raider pools (D-110): the dens keep their own tongue, short and bitten
+    // off. Vowel-final openers onto consonant closers, so every seam is clean
+    // and no den-name sounds like a stead or a steadholder.
+    private static readonly string[] RaiderOpeners =
+        ["Gna", "Skra", "Vre", "Zhu", "Sna", "Ghu", "Kri", "Bru", "Ska", "Dro", "Mau", "Tcha"];
+
+    private static readonly string[] RaiderClosers =
+        ["rg", "sh", "tch", "kk", "zz", "rk", "dz", "ng", "gg", "x"];
+
     /// <summary>Stead name: full weave mostly, a plain compound (Fenford) two times in five.</summary>
     public static string Settlement(ref Rng rng)
         => Weave(ref rng, Openers, Closers, shortInFive: 2);
@@ -47,6 +56,14 @@ public static class NameGen
     /// <summary>Person name: full weave mostly, a short call-name (Marwyn) one time in five.</summary>
     public static string Person(ref Rng rng)
         => Weave(ref rng, Openers, PersonClosers, shortInFive: 1);
+
+    /// <summary>
+    /// Raider name (D-110): always the short bitten weave, no middle syllable,
+    /// rerolled against the names already given so a camp's roster never
+    /// doubles a name.
+    /// </summary>
+    public static string Raider(ref Rng rng, IReadOnlyCollection<string>? taken = null)
+        => Weave(ref rng, RaiderOpeners, RaiderClosers, shortInFive: 5, taken);
 
     private static string Weave(ref Rng rng, string[] openers, string[] closers, int shortInFive, IReadOnlyCollection<string>? taken = null)
     {

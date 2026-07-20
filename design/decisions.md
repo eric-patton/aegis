@@ -231,6 +231,48 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-110: The named of the dens: the Nemesis-style roster begun (2026-07-20)
+D-023's last big structural clause lands where the fighting is. The research lesson
+(research/08, Shadow of Mordor) has waited since the factions were decided: named-individual
+memory, not aggregate numbers, is what makes a faction feel alive, and it is cheap at the
+scale of a handful of tracked individuals. So the raider camp gets a bounded roster: every
+world's seed names a chief and two lieutenants from a new roster stream (a raider weave in
+NameGen, vowel-final openers bitten off by consonant closers, so no den-name sounds like a
+stead), the stead's rumor carries the chief's name from the first morning beside a
+nemesis/chief fact, and rank is worn as hide (+4/+2 Hp over the tier's base), so the chief
+is a tougher goblin without a single new ability. The memory is the point, and it rides
+the replay with nothing serialized and no save bump (v56 holds). Three beats, all
+user-approved as recommended: the scar (a named raider bloodied under the bearer's visit
+and left alive keeps the wound's author, swept when the bearer leaves by ladder or by
+dying in the camp, nemesis/scarred written); the succession (a chief slain over a standing
+lieutenant hands the camp to a named heir, the office coming with the grudge already in
+it, nemesis/risen written, and the last named falling to the no-heir silence, so clearing
+a camp reads as an escalation ladder that ends in quiet); and the slaying (the very hand
+that authors the bearer's death, a new _deathHand beside D-098's _deathShape, keeps the
+boast, nemesis/slew_bearer written, so meeting your own killer is a scene the game can
+only have with names). Teeth stay light on the established rail: a held grudge arms the
+hand one point after the dice (RaiderRoster.Armed, the dread's mirror, draw count
+untouched), and every grudge is spoken to the bearer's face at the next descent, once per
+memory, the slaying's boast outranking the scar outranking the risen office. The roster is
+this world's alone, per the ledger doctrine: the next world's dens have not met the
+bearer. Verified: 550 tests green (8 new NemesisTests), twins byte-identical, sim replay
+exact; the baselines moved as designed (the tougher camp: master 11846 turns, deaths and
+raids held at 1/26, all four sweep seeds complete), and the pilot-exercise question was
+answered from the full sim log rather than the stats JSON: the rumor, the announcement,
+the named falls, nine successions, and twelve no-heir silences fire live under the pilot,
+while the scar, the taunts, and the boast are pilot-unexercised (the pilot clears camps
+whole and its one death was not to a named hand) and test-covered. Options set aside: a
+mound or stead extension in the same lane (the mound's whole doctrine is anonymity, one
+rung and no bargaining, and the stead already has role NPCs; the roster starts where live
+combat is); a cross-world echo of a slain chief's name in the songs (breaks the
+folk-are-this-world's line; deferred, not refused); heavy teeth, unique abilities per
+name (Shadow of War's own treadmill lesson, over-scale for one camp); succession bumping
+the dens' boldness (the axis is causal by construction and the kill already raises wrath;
+the risen grudge is the felt change of hands). Deferred: consumers reading the nemesis
+facts aloud (the risen chief feared at the doors, the kept boast at the hearth, the
+made_right thread meeting the roster); the chief told apart on the map; a named figure
+for another faction if one earns its keep.
+
 ### D-109: The facts answered: made right, the door that held, and the two ledgers (2026-07-20)
 The fact graph's oldest open promise is paid: the three facts standing produced but unread
 (the roadmap's named "next in this phase," and better fuel now than when it was written,

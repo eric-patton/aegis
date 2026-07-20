@@ -77,7 +77,9 @@ public class CrossingTests
         var goblins = game.Monsters.Where(m => m.Kind == MonsterKind.Goblin).ToList();
         var wights = game.Monsters.Where(m => m.Kind == MonsterKind.Wight).ToList();
         Assert.Equal(4, goblins.Count);
-        Assert.All(goblins, m => Assert.Equal(10, m.Hp));
+        // Rank worn as hide (D-110): the chief and lieutenants over the base 10.
+        Assert.All(goblins, m => Assert.Equal(
+            10 + (m.Chief ? RaiderRoster.ChiefHide : m.Epithet is not null ? RaiderRoster.LieutenantHide : 0), m.Hp));
         Assert.Equal(2, wights.Count);
         Assert.All(wights, m => Assert.Equal(12, m.Hp));
 

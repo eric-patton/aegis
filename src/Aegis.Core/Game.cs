@@ -446,13 +446,68 @@ public sealed class Game
         else
         {
             Log.Add(0, "A voice, close as your own pulse: \"Walk. I hold this place. I will catch you.\"", LogTone.Aegis);
-            Log.Add(0, $"Rumor: goblins from a cave to the {Compass(World.ShrinePos, World.CampPos)} raid {World.SettlementName}'s stores by night.");
+            Log.Add(0, CampRumor);
             _storylets.TryFire(this, StoryletTrigger.Arrival);
         }
     }
 
     /// <summary>Global authored content plus this world's compiled story (D-032).</summary>
     private List<Storylet> FullCatalog() => [.. StoryletCatalog.All, .. World.StoryStorylets];
+
+    /// <summary>The living chief of the camp's roster (D-110), while one still leads.</summary>
+    public Monster? CampChief => Monsters.FirstOrDefault(m => m.Alive && m.Chief);
+
+    /// <summary>
+    /// The stead's warning of the camp (D-110): the rumor has always carried
+    /// where the goblins den; now it carries who leads them, so the roster is
+    /// perceivable before a blow is traded.
+    /// </summary>
+    private string CampRumor => $"Rumor: goblins from a cave to the {Compass(World.ShrinePos, World.CampPos)} raid {World.SettlementName}'s stores by night."
+        + (CampChief is { Epithet: { } chief } ? $" The one that leads them down is called {chief}." : "");
+
+    /// <summary>
+    /// The camp knows the bearer (D-110): the first descent puts a voice to
+    /// the name the rumor carried, and every named raider owed a grudge speaks
+    /// it to the bearer's face, once per memory: the slaying's boast first,
+    /// then the scar, then the office that came with a grudge in it.
+    /// </summary>
+    private void GreetTheRoster()
+    {
+        if (!_rosterMet && CampChief is { Epithet: { } chief })
+        {
+            Log.Add(Turn, $"One voice deeper in cuts over the others, giving short orders and getting obedience: {chief}, if the stead has the name right.", LogTone.Danger);
+            _rosterMet = true;
+        }
+        foreach (var named in Monsters.Where(m => m.Alive && m.SiteId == CurrentSite!.Id
+            && m.Epithet is not null && m.Grudge && !m.GrudgeSpoken))
+        {
+            Log.Add(Turn, named.SlewBearer
+                ? $"{named.Epithet} sees you first, and grins wide enough to count teeth: it knows where you have been, because its own hand sent you there."
+                : named.Scarred
+                    ? $"Across the smoke, {named.Epithet} marks you and touches its scar once, the way another creature might touch an amulet."
+                    : $"{named.Epithet} wears the chief's place now, and wears it looking at you: the office came with a grudge in it.", LogTone.Danger);
+            named.GrudgeSpoken = true;
+        }
+    }
+
+    /// <summary>
+    /// The scar remembered (D-110): a named raider bloodied under the bearer's
+    /// visit and left alive keeps the wound's author. Swept when the bearer
+    /// leaves the camp, by the ladder or by dying in it: the memory needs the
+    /// bearer gone and the raider breathing.
+    /// </summary>
+    private void MarkTheScarred()
+    {
+        foreach (var named in Monsters.Where(m => m.Alive && m.SiteId == "goblin-camp"
+            && m.Epithet is not null && !m.Scarred && m.MaxHp > 0 && m.Hp < m.MaxHp))
+        {
+            named.Scarred = true;
+            named.GrudgeSpoken = false;
+            World.Facts.Add("nemesis", "scarred", named.Epithet!,
+                $"{named.Epithet} of the camp above {World.SettlementName} carries a wound with the bearer's shape on the edge of it, and was left alive to remember who put it there.");
+            Log.Add(Turn, $"Somewhere behind you, {named.Epithet} is still breathing around a wound with your shape on it. The dens remember that longer than they remember grain.", LogTone.Info);
+        }
+    }
 
     private void SpawnMonsters()
     {
@@ -464,6 +519,9 @@ public sealed class Game
                     Kind = spawn.Kind,
                     Pos = spawn.Pos,
                     Hp = spawn.Hp,
+                    MaxHp = spawn.Hp,
+                    Epithet = spawn.Epithet,
+                    Chief = spawn.Chief,
                     SiteId = site.Id,
                     Dormant = spawn.Kind is MonsterKind.Graven or MonsterKind.Warder,
                 });
@@ -776,7 +834,7 @@ public sealed class Game
         var past = CreationCatalog.PastOf(Player.Past!.Value);
         Log.Add(Turn, $"So it goes into the count: {Player.Name}, {folk.Name} by blood, once {past.Name}.", LogTone.Info);
         Log.Add(Turn, "\"Enough. I know you now, as far as knowing goes. Walk. I hold this place. I will catch you.\"", LogTone.Aegis);
-        Log.Add(Turn, $"Rumor: goblins from a cave to the {Compass(World.ShrinePos, World.CampPos)} raid {World.SettlementName}'s stores by night.");
+        Log.Add(Turn, CampRumor);
         // The scribe's-ward extra (D-092): the old writings say where old writing waits.
         if (Player.Past == PastId.ScribesWard
             && World.Sites.FirstOrDefault(s => s.StonePos is not null && s.Kind != SiteKind.GoblinCamp) is { } lettered)
@@ -1288,6 +1346,9 @@ public sealed class Game
                 Log.Add(Turn, "At the fire, a figure rises: neither old nor young, dressed out of no living fashion. It looks at your collarbone before it looks at your face.", LogTone.Danger);
                 Log.Add(Turn, "\"All is counted, little shield.\" Courteous, and wrong, like a bell with a hairline crack.", LogTone.Danger);
             }
+            // The camp knows the bearer (D-110): the chief put to a voice, and
+            // every grudge owed spoken to the face it is held against.
+            if (site.Kind == SiteKind.GoblinCamp) GreetTheRoster();
             return true;
         }
         if (Mode == MapMode.Overworld && Player.Pos == World.GatePos)
@@ -1424,6 +1485,9 @@ public sealed class Game
         BonesNet = 0;
         _worldStartTurn = Turn;
         _friendsPriceNamed = false;
+        // A fresh world's roster (D-110): these dens have not met the bearer.
+        _rosterMet = false;
+        _deathHand = null;
 
         Mode = MapMode.Overworld;
         Player.Pos = World.ShrinePos;
@@ -1539,7 +1603,7 @@ public sealed class Game
             Player.Rations += welcome;
             Log.Add(Turn, $"By the shrine stone, bread has been set out against your coming, wrapped in waxed cloth. ({Player.Rations} carried)", LogTone.Reward);
         }
-        Log.Add(Turn, $"Rumor: goblins from a cave to the {Compass(World.ShrinePos, World.CampPos)} raid {World.SettlementName}'s stores by night.");
+        Log.Add(Turn, CampRumor);
         if (World.BarrowSite is { } barrow)
             Log.Add(Turn, $"They speak lower of the long mound to the {Compass(World.ShrinePos, barrow.OverworldPos)}, where the dead do not lie easy.");
         if (World.HollowSite is { } hollow)
@@ -1561,10 +1625,14 @@ public sealed class Game
     {
         if (Mode == MapMode.Site && CurrentSite!.Map[Player.Pos] == Terrain.ExitLadder)
         {
+            bool leftTheCamp = CurrentSite.Kind == SiteKind.GoblinCamp;
             Mode = MapMode.Overworld;
             Player.Pos = CurrentSite.OverworldPos;
             CurrentSite = null;
             Log.Add(Turn, "You climb back into daylight.");
+            // The scar remembered (D-110): what was bloodied and left breathing
+            // behind you keeps the wound's author.
+            if (leftTheCamp) MarkTheScarred();
             // Whoever walks with you climbs out behind you (D-097, D-099),
             // held ground or no: no one is left standing alone in the dark.
             PlaceFellowsBeside(Player.Pos);
@@ -3966,6 +4034,25 @@ public sealed class Game
         // The dens count their dead (D-078): every raider felled deepens the
         // raiders' wrath, the enemy half of the ledger the stead's regard opened.
         if (target.Kind == MonsterKind.Goblin) RaiseWrath(1);
+        // The named fall by name (D-110), and a chief slain over a standing
+        // lieutenant hands the camp on: the succession is the roster's answer,
+        // and the office comes with the grudge already in it.
+        if (target.Epithet is { } fallen)
+        {
+            if (!target.Chief)
+                Log.Add(Turn, $"That was {fallen}. The dens will say the name differently now.", LogTone.Info);
+            else if (Monsters.FirstOrDefault(m => m.Alive && m.SiteId == target.SiteId && m.Epithet is not null) is { } heir)
+            {
+                heir.Chief = true;
+                heir.Rose = true;
+                heir.GrudgeSpoken = false;
+                World.Facts.Add("nemesis", "risen", heir.Epithet!,
+                    $"With {fallen} dead, {heir.Epithet} rose to chief of the camp above {World.SettlementName}, and the first thing the new chief owned was a grudge.");
+                Log.Add(Turn, $"That was {fallen}, who led this camp. A howl goes up somewhere deeper in: {heir.Epithet} has just risen to a place with a grudge already in it.", LogTone.Danger);
+            }
+            else
+                Log.Add(Turn, $"That was {fallen}, who led this camp, and no voice takes up the order after it. Whatever held this place together is bleeding out on the same ground.", LogTone.Reward);
+        }
         // The bond banks its beats (D-097 stage 2): blood shared within reach
         // of each other, and every raider felled toward the huntsman's debt.
         if (Guest is { Alive: true } fellow)
@@ -5359,7 +5446,10 @@ public sealed class Game
                 int hpBefore = Player.Hp;
                 ActMonster(monster);
                 if (hpBefore > 0 && Player.Hp <= 0)
+                {
                     _deathShape = (monster.Kind, windup);
+                    _deathHand = monster;
+                }
             }
 
         // Those who walk with you (D-097, D-099) take their own step after
@@ -5466,7 +5556,8 @@ public sealed class Game
                     int roll = RollFor(intent.Kind);
                     // The dread stays the raider's hand (D-078): applied to the
                     // raw roll, after the dice, so the draw count never changes.
-                    if (monster.Kind == MonsterKind.Goblin) roll = RaiderWrath.Steadied(Wrath, roll);
+                    // A named grudge arms it back a point (D-110), same rail.
+                    if (monster.Kind == MonsterKind.Goblin) roll = RaiderRoster.Armed(monster.Grudge, RaiderWrath.Steadied(Wrath, roll));
                     // The grudge arms the dead's (D-106): the dark mirror.
                     if (monster.Kind == MonsterKind.Wight) roll = MoundGrudge.Riled(Grudge, roll);
                     int damage = Absorb(roll, telegraphed: true);
@@ -5508,7 +5599,7 @@ public sealed class Game
                     // stance, no iron, no Aegis: what guards the bearer never
                     // guarded them.
                     int roll = RollFor(intent.Kind);
-                    if (monster.Kind == MonsterKind.Goblin) roll = RaiderWrath.Steadied(Wrath, roll);
+                    if (monster.Kind == MonsterKind.Goblin) roll = RaiderRoster.Armed(monster.Grudge, RaiderWrath.Steadied(Wrath, roll));
                     if (monster.Kind == MonsterKind.Wight) roll = MoundGrudge.Riled(Grudge, roll);
                     struck.Hp -= roll;
                     Log.Add(Turn, struck.Alive
@@ -5612,8 +5703,9 @@ public sealed class Game
                 else
                 {
                     // Only the raiders walk this generic path, so the dread
-                    // (D-078) weighs on the bite as it does on the club.
-                    int damage = Absorb(RaiderWrath.Steadied(Wrath, _combatRng.Range(1, 3)));
+                    // (D-078) weighs on the bite as it does on the club, and a
+                    // named grudge (D-110) arms it back.
+                    int damage = Absorb(RaiderRoster.Armed(monster.Grudge, RaiderWrath.Steadied(Wrath, _combatRng.Range(1, 3))));
                     Player.Hp -= damage;
                     Log.Add(Turn, $"The {monster.Name} bites you for {damage}.", LogTone.Combat);
                 }
@@ -5646,7 +5738,7 @@ public sealed class Game
         int dist = monster.Pos.Chebyshev(guest.Pos);
         if (dist == 1)
         {
-            int damage = RaiderWrath.Steadied(Wrath, _combatRng.Range(2, 5));
+            int damage = RaiderRoster.Armed(monster.Grudge, RaiderWrath.Steadied(Wrath, _combatRng.Range(2, 5)));
             guest.Hp -= damage;
             Log.Add(Turn, guest.Alive
                 ? $"The {monster.Name} turns its iron on {guest.Name}: a cut for {damage}."
@@ -6339,7 +6431,7 @@ public sealed class Game
             Player.Hp -= damage;
             // The counter kills on the bearer's own turn, outside the monster
             // loop, so the death's shape (D-098) is written here.
-            if (Player.Hp <= 0) _deathShape = (monster.Kind, null);
+            if (Player.Hp <= 0) { _deathShape = (monster.Kind, null); _deathHand = monster; }
             monster.ExposedTurns = 1;
             Log.Add(Turn, $"The sword-thegn was waiting for exactly this. It steps inside the winding blow: your heave dies half-drawn as the point comes back and finds you for {damage}.", LogTone.Danger);
             Log.Add(Turn, "Its counter spent, the sword-thegn stands a breath out of its guard.", LogTone.Combat);
@@ -6457,6 +6549,12 @@ public sealed class Game
     /// <summary>The hand and wind-up that dropped the bearer this turn (D-098), so the scar can match the death. Replay-derived, never serialized.</summary>
     private (MonsterKind Kind, IntentKind? Windup)? _deathShape;
 
+    /// <summary>The very hand that dropped the bearer (D-110), so the boast can find its owner. Replay-derived, never serialized.</summary>
+    private Monster? _deathHand;
+
+    /// <summary>Whether this world's camp has put a voice to its chief's name (D-110): the first descent's announcement.</summary>
+    private bool _rosterMet;
+
     /// <summary>
     /// A death above the line converts (D-098): the scar the death's shape asks
     /// for where it can, then the fixed order among the marks not yet carried,
@@ -6529,6 +6627,22 @@ public sealed class Game
             monster.Intent = null;
 
         Log.Add(Turn, "You fall.", LogTone.Danger);
+        // The boast kept (D-110): a named hand that authors the fall owns the
+        // telling of it, and will still own it the next time you meet.
+        if (_deathHand is { Alive: true, Kind: MonsterKind.Goblin, Epithet: { } slayer } hand)
+        {
+            if (!hand.SlewBearer)
+            {
+                hand.SlewBearer = true;
+                hand.GrudgeSpoken = false;
+                World.Facts.Add("nemesis", "slew_bearer", slayer,
+                    $"{slayer} of the camp above {World.SettlementName} struck the blow that put the bearer down, and holds the boast.");
+            }
+            Log.Add(Turn, $"The last face over you is {slayer}'s, and the face is pleased. That telling belongs to the dens tonight.", LogTone.Danger);
+        }
+        // Dying in the camp leaves the bloodied breathing (D-110): the scars
+        // are remembered on this exit like any other.
+        if (CurrentSite is { Kind: SiteKind.GoblinCamp }) MarkTheScarred();
         // Death lines carry register, never plot (arc sec 4): worried once the
         // ledger is known, candid between equals once the threshold is answered.
         int register = Player.Resolution != Resolution.None ? 3 : Player.LedgerHeard ? 2 : 1;
@@ -6562,6 +6676,7 @@ public sealed class Game
         Player.Toll += DeathsToll.FillFor(heavy, Player.Attributes[Attr.Will]);
         if (scarring) LandScar();
         _deathShape = null;
+        _deathHand = null;
         Log.Add(Turn, $"The toll stands at {Player.Toll}. Fall again before it drains under {DeathsToll.Line} and the count will keep something.", LogTone.Danger);
     }
 

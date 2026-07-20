@@ -123,16 +123,68 @@ Slots any template may cast; each maps to techniques the study validated. Castin
 
 **Arc attachment.** Stinger docks at the site the night after the settlement. The believer material gives the arc's own question (what is owed to a guiding power that is not what it claims) its sharpest local echo; as always, the echo is flavor, not dependency.
 
-## 8. Casting, eligibility, and variation
+## 8. Template 4: The Gold Rush
+
+**Logline.** A strike promises everyone a new life, and the ground it lies in was closed
+on purpose. Dramatic question: what do you owe a lie that was built to protect?
+
+**Worldgen preconditions.** A closed or abandoned extraction site (mine, quarry, delving)
+with generated history of a working that stopped; a settlement economically adjacent that
+remembers the closing as a moral, not a survey; something in the site worth rushing for.
+
+**Accepted-history fact.** Why the ground is shut: the crew was punished for greed, the
+delving woke something, the vein was cursed. A moral that keeps folk out, told as a fence
+is told: casually, to children, by people who never checked.
+
+**Roles.** The prospector who wants it open (banked-ordinary companion register: their
+wanting is a whole life's wanting, not villainy); the surveyor-founder in the evidence
+(dead, speaks only through marks: the template's complicit authority is a corpse whose
+complicity was kindness); optionally a buyer or factor arriving with the rush
+(one-note fixed-axis rival, ledger-eyed); the settlement itself as the debunked believer:
+its faith in the moral is disproved while the *value* the moral produced (the stead still
+standing) is affirmed.
+
+**Threads.** (a) The wanting: the pressure to open, voiced personally; (b) The survey:
+fieldwork toward what the closers actually knew; (c) The rush: what arrives when word of
+an open pit travels.
+
+**Mid-turn.** The closers were not punished and did not fail: they struck it rich, read
+the ground, and shut the site themselves, authoring the moral as a fence because a story
+holds a fence line better than a survey does. The flip complicates twice: the wrong story
+is a kind one, and the wealth is real: reopening is a true trade, not a temptation.
+
+**Climax.** At the site with the truth in hand, the old fence broken. Endings: publish
+the survey and rebuild the fence on the truth (the rush dies awake, the stead chooses
+with its own fields on the scale); keep the founders' lie and let it stand alone against
+the strike (the game's only suppression that is also an act of faith in the dead);
+without the truth, the rush simply comes, and no one knows what the founders knew.
+
+**Coda writes.** The fence's new footing (truth, lie, or nothing); the prospector's fate;
+a strike fact with price/scarcity hooks (D-025); the kept lie feeds the withheld/silence
+pipe (D-118/D-120) like every knowingly kept truth.
+
+**Arc attachment.** The stinger docks on the first cart up or the fence's remaking; a
+bottle episode, when this world is a milestone, uses the sealed deep face itself.
+
+*Landed at slice scale in D-121, bound to the old quarry (tier 3+), cashing D-040's
+template-driven-dressing deferral: the graven figures cast as the punished crew in the
+stead's greed-tale, the survey-marks at the working face as the evidence (the crew struck
+the seam, read that it runs through the stone that holds the valley's slope, and told the
+greed-tale on themselves), the hushing with the truth in hand held as a scene (mend the
+fence with the survey, or leave the founders' kind lie standing alone against silver),
+and the kept truth crossing as a pit_truth silence. The buyer/factor role and the live
+rush thread (arrivals, prices) are deferred with D-025's economy hooks.*
+
+## 9. Casting, eligibility, and variation
 
 - **Eligibility filtering.** The generator scores each template against the world's fact graph and picks among eligible templates (weighted against recent repeats across the player's cycles). Every template's preconditions are deliberately modest; a world that fails all three should be effectively impossible at launch counts. *Landed as v1 in D-035: templates declare eligibility over a worldgen context, one is drawn per world from the world-story stream, and the Creeping Blight compiles at slice scale against the barrow (accepted-history flip and branching endings both proven). Repeat-weighting landed in D-040: the crossing passes the finished world's template id into the next draw as a generation input, and an eligible repeat carries half the weight of every other candidate (weighted, never excluded, so back-to-back repeats stay possible and strict alternation never sets in).*
 - **Fallback casting.** Every role slot defines a fallback chain (e.g. Claimant: surviving heir, then cadet-line cousin, then chartered pretender-institution). If a slot's whole chain fails, the template is ineligible; slots are never filled by inventing an unrooted stranger (D-018's traceability rule).
 - **Variation axes.** Per template, the axes procgen legitimately varies: scale (village to empire), institution skin (crown, guild, temple), tone tilt (tragic, hopeful, sardonic, set by the world's history), geography binding, and which optional roles cast. The spine's beats never vary; that is what "authored structure" means.
 - **Repeat encounters across cycles.** A player will eventually replay a template. Defenses: variation axes above, the accepted-history fact's *content* always comes from this world's unique history, endings branch on this world's facts, and the pool grows post-launch (D-020: launch 3, growing).
 
-## 9. Open questions for a future session
+## 10. Open questions for a future session
 
 - Storylet counts per act need real numbers once average storylet length is known (contract sets ratios, not totals).
 - Whether template selection is ever player-visible (a covenant that pins or excludes a template?) or always silent.
-- The fourth and fifth templates for the post-launch pool (candidates from the research: the long siege, the succession of a dying god, the gold rush).
+- The sixth and later templates for the post-launch pool (remaining candidates from the research: the long siege, the succession of a dying god; the gold rush landed in D-121).
 - How hostility tiers tilt templates (higher tiers might unlock harsher template variants or grimmer default tones) without violating "harder by generation, not by multiplier."

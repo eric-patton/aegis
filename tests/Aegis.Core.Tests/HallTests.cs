@@ -187,8 +187,13 @@ public class HallTests
         Assert.True(game.World.Facts.Exists("deed", "pack_broken"));
         Assert.Contains(game.Log.Entries, e => e.Text.Contains("They were not wicked"));
 
+        // The NearHouse draw can open the shuttered-window scene instead (the
+        // camp stands unbroken here); leave them to their evening and walk on.
         for (int i = 0; i < 12 && !game.Log.Entries.Any(e => e.Text.Contains("Quiet at dusk")); i++)
+        {
             StepNearHouse(game);
+            if (game.InScene) game.ApplyKey('3');
+        }
         Assert.Contains(game.Log.Entries, e => e.Text.Contains("Quiet at dusk"));
     }
 

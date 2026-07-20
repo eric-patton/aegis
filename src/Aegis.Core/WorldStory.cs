@@ -35,6 +35,7 @@ public static class WorldStories
         CreepingBlightTemplate.Template,
         UsurpedThroneTemplate.Template,
         WarOfFaithsTemplate.Template,
+        GoldRushTemplate.Template,
     ];
 
     /// <summary>
@@ -1086,6 +1087,222 @@ public static class WarOfFaithsTemplate
                 [
                     ($"{straddlerName} does not find your hand. \"My mother's shrine keeps its stone, and my grandmother's fire is a beaten fire now. I prayed at both stones this morning and it was two prayers, further apart than I have ever carried them. You stood where I asked you to stand, and I watched what you did there, and I have not decided what I watched.\"", LogTone.Reward),
                     ("\"A morning asked for, stood, and answered with an edge. It weighs like a deed all the same, bearer. Deeds are not sorted kind from keen before they are weighed.\"", LogTone.Aegis),
+                ],
+                Effect = g => g.Player.Essence += 3,
+            },
+        ];
+    }
+}
+
+/// <summary>
+/// The Gold Rush at slice scale (template 4 of
+/// design/story/world-story-templates.md sec 8, the pool's fifth spine): a strike
+/// promises everyone a new life, and the ground it lies in was closed on purpose.
+/// Bound to the old quarry (tier 3+), cashing D-040's template-driven-dressing
+/// deferral. The stead's telling has the graven figures as the old crew, turned
+/// to stone for digging too greedy: a moral that keeps the pit shut. The survey
+/// marks at the deep face flip it: the crew struck the seam, read what it runs
+/// through (the stone that holds the valley's slope), and authored the greed-tale
+/// on themselves as a fence. The complication is that the wrong story is a kind
+/// one, and with the graven watch down it stands alone against silver.
+/// </summary>
+public static class GoldRushTemplate
+{
+    public const string Id = "gold-rush";
+
+    public static readonly StoryTemplate Template = new(
+        Id,
+        ctx => ctx.Tier >= 3 && ctx.Villagers.Count > 0
+            && ctx.Sites.Any(s => s.Kind == SiteKind.Quarry),
+        Compile);
+
+    /// <summary>At the working face: past the chest-depth of the pit.</summary>
+    private const int DeepX = 24;
+
+    public static List<Storylet> Compile(ref Rng rng, StoryTemplateContext ctx)
+    {
+        var prospector = rng.Pick(ctx.Villagers);
+        ctx.Facts.Add("role", "prospector", prospector.Id,
+            $"{prospector.Name} wants the old pit open and has wanted it their whole life.");
+
+        // The accepted history: the greed-moral that keeps the pit shut. Planted
+        // at compile, voiced by a beat, flipped by the survey at the deep face.
+        ctx.Facts.Add("history", "pit_left", ctx.SettlementName,
+            "The old crew dug the pit too greedy, and the hill closed its hand on them: kept men, stone to the elbows and then stone through, each one caught mid-stroke over the seam he would not leave. So it has always been told, and the pit has stayed shut on the strength of it.");
+
+        string prospectorId = prospector.Id;
+        string name = prospector.Name;
+        string settlementName = ctx.SettlementName;
+
+        return
+        [
+            // Act 1: the wanting, personally. Only from the prospector, only
+            // while the watch still stands.
+            new Storylet
+            {
+                Id = "gr-plea",
+                Trigger = StoryletTrigger.Talk,
+                Priority = 10,
+                Forbids = [new FactPattern("deed", "quarry_hushed")],
+                When = g => g.TalkNpc?.Id == prospectorId,
+                Lines =
+                [
+                    ($"{name} turns a chisel over and over in their hands. \"Good stone up in the old pit, and better under it, if the tales mean anything at all. My whole life that hill has stood there being rich at us.\"", LogTone.Info),
+                    ("\"But nothing swings a pick with those figures standing. Put the watch down, whatever you are, and the pit is anyone's. Mine first.\"", LogTone.Info),
+                ],
+                Effect = g => g.World.Facts.Add("promise", "open_the_pit", prospectorId,
+                    $"{name} asked the bearer to put the graven watch down and open the old pit."),
+            },
+
+            // The accepted history gets a mouth: the greed-moral, told the way a
+            // stead tells its fences.
+            new Storylet
+            {
+                Id = "gr-accepted-history",
+                Trigger = StoryletTrigger.NearHouse,
+                Requires = [new FactPattern("history", "pit_left")],
+                Forbids = [new FactPattern("deed", "quarry_hushed")],
+                Lines =
+                [
+                    ("A mason chalks a line along a sill and does not look up at the hills. \"{r0.detail}\"", LogTone.Info),
+                    ("\"Greedy hands, closed hand. Cheap stone costs the most, my father said, and his came down off that hill before it shut.\"", LogTone.Info),
+                ],
+            },
+
+            // The mid-turn: the survey, read by walking to the working face. The
+            // flip complicates: not punished for greed, but stopped by their own
+            // reading, and the moral that keeps folk out was built by the very
+            // hands it slanders.
+            new Storylet
+            {
+                Id = "gr-evidence",
+                Trigger = StoryletTrigger.EnterTile,
+                Tile = Terrain.Floor,
+                Priority = 10,
+                When = g => g.CurrentSite?.Kind == SiteKind.Quarry && g.Player.Pos.X >= DeepX,
+                Lines =
+                [
+                    ("At the working face the cuts stop in a line no rockfall drew, and above the line the rock is scored with survey-marks: depths, spans, and loads, a season of careful reading in an old mason's hand.", LogTone.Info),
+                    ($"The marks say what the tales do not. The seam is there, silver-bright where the last cut opened it, rich as the day it was left. And past the stopping-line it runs down into the hill's own knitting: the standing stone that holds the slope, and {settlementName}'s fields on the slope's shoulder.", LogTone.Info),
+                    ("\"No one was punished here, bearer. They struck it rich, read the ground, wiped their tools, and told a greed-tale on themselves to fence it. A wrong story built to keep a stead standing. That is rarer than you would think. It is counted.\"", LogTone.Aegis),
+                ],
+                Effect = g => g.World.Facts.Add("evidence", "pit_truth", settlementName,
+                    "The old crew was not punished for greed: they struck the seam, read that it runs through the stone that holds the valley's slope, and fenced the pit with a greed-tale told on themselves."),
+            },
+
+            // Act 3, ending A: hushed with the truth in hand, a held moment on
+            // D-117's seam. The founders' fence was the tale and the watch
+            // together; the watch is down, and what stands at the brink now is
+            // the bearer's to choose. No check: nothing in the pit resists.
+            new Storylet
+            {
+                Id = "gr-ending-truth",
+                Trigger = StoryletTrigger.DeedWritten,
+                Priority = 10,
+                Requires =
+                [
+                    new FactPattern("deed", "quarry_hushed"),
+                    new FactPattern("evidence", "pit_truth"),
+                ],
+                // A story ends once (D-112): a survey read only after the hushing
+                // must not fire this off some later deed's hook.
+                Forbids = [new FactPattern("story_complete", Id)],
+                Lines = [],
+                Scene = new Scene("the-fence-and-the-seam", "The fence and the seam",
+                [
+                    new SceneNode
+                    {
+                        Id = "open",
+                        Lines =
+                        [
+                            ($"The pit is quiet behind you and the watch is down. By nightfall {settlementName} will know the figures are broken, and after that it is carts and crowbars: half a fence is no fence, and the greed-tale never kept anyone out that the graven men did not.", LogTone.Info),
+                            ("\"You read the marks, bearer: a seam worth a stead's ransom, and the hill's knitting it runs through. Carry the survey down and the fence stands on the truth, which does not fall over. Leave it, and the tale stands alone against silver, which it will lose. Truth does not spend itself. I only keep the count.\"", LogTone.Aegis),
+                        ],
+                        Choices =
+                        [
+                            new SceneChoice("Carry the survey down the hill", "told"),
+                            new SceneChoice("Leave the fence as the founders built it", "kept"),
+                        ],
+                    },
+
+                    // Publish: the fence rebuilt on the truth, and the windfall
+                    // dies awake.
+                    new SceneNode
+                    {
+                        Id = "told",
+                        Lines =
+                        [
+                            ($"By the time this reaches {settlementName}, the pit will not be a punishment outlasted. It will be a ledger: a seam, a slope, and a crew that chose the stead over the strike and lied to make the choosing stick.", LogTone.Info),
+                            ("\"So the fence gets its true posts. A stead that knows what the seam runs through can still choose to dig, but it chooses awake, with its own fields on the scale. That is the better ledger. It is counted.\"", LogTone.Aegis),
+                        ],
+                        OnEnter = g =>
+                        {
+                            g.World.Facts.Add("story_complete", Id, settlementName);
+                            g.World.Facts.Add("coda", "pit_fenced_true", settlementName,
+                                "The stead learned the greed-tale was a built fence and what it fences: the seam runs through the stone that holds the slope. The pit stays shut on the truth now, or opens awake.");
+                        },
+                    },
+
+                    // Suppress: the founders' kind lie stands alone, and the graph
+                    // knows the silence was chosen.
+                    new SceneNode
+                    {
+                        Id = "kept",
+                        Lines =
+                        [
+                            ($"You come down the hill with the only story {settlementName} has ever had about that pit: greedy hands, closed hand. It kept the stead off the seam for lifetimes, and it is wrong, and the one living person who has read the true fence walks away leaving the old one to hold.", LogTone.Info),
+                            ("\"Kept, then. The founders' tale stood alone against silver once before, bearer; that is why they set the watch too. I keep the count of unsaid things, and this one is heavier than most: it was somebody's kindness first.\"", LogTone.Aegis),
+                        ],
+                        OnEnter = g =>
+                        {
+                            g.World.Facts.Add("story_complete", Id, settlementName);
+                            g.World.Facts.Add("coda", "fence_alone", settlementName,
+                                "The graven watch is down and the founders' greed-tale stands alone against the seam. The bearer read the survey and left the fence unmended by choice.");
+                            g.World.Facts.Add("withheld", "pit_truth", settlementName,
+                                "At the pit's hushing the bearer held the survey's whole reading, the seam and the knitting both, and left the founders' greed-tale standing alone: the fence stayed unmended by choice, not ignorance.");
+                        },
+                    },
+                ]),
+            },
+
+            // Act 3, ending B: hushed without ever reading the face. The watch
+            // falls, the tale weakens, and no one knows what the founders knew.
+            new Storylet
+            {
+                Id = "gr-ending-rush",
+                Trigger = StoryletTrigger.DeedWritten,
+                Priority = 10,
+                Requires = [new FactPattern("deed", "quarry_hushed")],
+                Forbids = [new FactPattern("evidence", "pit_truth")],
+                Lines =
+                [
+                    ($"In {settlementName} they will say the figures were only stone after all, and a greed-tale with its teeth pulled will not hold a pit that silver-rumor has its eye on. Whatever the founders knew, it is still up there, unread at the working face.", LogTone.Info),
+                ],
+                Effect = g =>
+                {
+                    g.World.Facts.Add("story_complete", Id, settlementName);
+                    g.World.Facts.Add("coda", "fence_alone", settlementName,
+                        "The graven watch is down and the founders' greed-tale stands alone against the seam. What the founders knew went unread.");
+                },
+            },
+
+            // Act 3, the kept promise: the asking was the opening, not the
+            // digging, so the settling reads true on every path.
+            new Storylet
+            {
+                Id = "gr-kept-promise",
+                Trigger = StoryletTrigger.Talk,
+                Priority = 10,
+                Requires =
+                [
+                    new FactPattern("deed", "quarry_hushed"),
+                    new FactPattern("promise", "open_the_pit"),
+                ],
+                When = g => g.TalkNpc?.Id == prospectorId,
+                Lines =
+                [
+                    ($"{name} meets you at the well with a pick over one shoulder. \"The watch is down and the pit stands open. Whatever the stead decides about the digging, that door was shut my whole life, and you are the one who opened it.\"", LogTone.Reward),
+                    ("\"A promise asked, kept, and witnessed. What comes out of the pit now is the stead's own story to quarry.\"", LogTone.Aegis),
                 ],
                 Effect = g => g.Player.Essence += 3,
             },

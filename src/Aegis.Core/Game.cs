@@ -1594,6 +1594,7 @@ public sealed class Game
             {
                 "mound_truth" => $"Out of a world called {prevWorld}, a story: {prevSettlement}, the stead that outlasted a barrow's grudge, and the hill that finally lay still. Every teller has it the same way.",
                 "seat_truth" => $"Out of a world called {prevWorld}, a story: the seat at {prevSettlement} avenged, the dens' camp broken above the cairn, and a chief gone under with the debt paid. Every teller has it the same way.",
+                "pit_truth" => $"Out of a world called {prevWorld}, a story: the old pit above {prevSettlement} that ate its greedy crew stone by stone, and the stead wise enough to leave the seam in the hill. Every teller has it the same way.",
                 _ => $"Out of a world called {prevWorld}, a story: the shrine-stone at {prevSettlement} that came down as a gift in a hard year, and the hill folk who grudged the giving. Every teller has it the same way.",
             });
 

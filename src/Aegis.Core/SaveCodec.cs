@@ -229,10 +229,13 @@ namespace Aegis.Core;
 /// v63 when D-120 let the unsaid cross: a crossing out of a world with a kept
 /// truth presses silence facts the later worlds carry and retell, and the
 /// retelling's draw shifts the storylet stream a v62 journal never saw.
+/// v64 when D-121 added the Gold Rush to the pool: tier-3+ worlds draw their
+/// story among five templates instead of four, so a v63 journal's later
+/// worlds re-deal their spines and every draw after the selection shifts.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 63;
+    public const int Version = 64;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

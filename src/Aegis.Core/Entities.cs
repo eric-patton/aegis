@@ -108,6 +108,9 @@ public sealed class Player
     /// <summary>The Aegis speaks once at the first word taken up; never again.</summary>
     public bool SpellLineHeard { get; set; }
 
+    /// <summary>The Aegis speaks once over the first shade ever called (D-099); never again.</summary>
+    public bool CallingLineHeard { get; set; }
+
     /// <summary>
     /// A heavy blow wound up and not yet loosed (D-058): commitment runs both
     /// ways (D-004). 'w' and a line set the cell; the wind-up costs its stamina
@@ -537,7 +540,7 @@ public sealed class Npc
 /// know the work of killing, a crofter's do not, and the game does not
 /// pretend otherwise.
 /// </summary>
-public enum GuestRole { Huntsman, Crofter }
+public enum GuestRole { Huntsman, Crofter, Shade }
 
 /// <summary>
 /// A guest companion (D-097, the mortal heart of D-024): a world NPC who has
@@ -573,12 +576,22 @@ public sealed class Guest
     /// <summary>Whether these hands were raised to a killing trade.</summary>
     public bool Fighter => Role is GuestRole.Huntsman;
 
-    /// <summary>The measure of their blow: a fighter's is worth fearing, anyone else's is not.</summary>
-    public (int Lo, int HiExclusive) Blow => Fighter ? (2, 6) : (1, 3);
+    /// <summary>
+    /// The measure of their blow: a fighter's is worth fearing, anyone else's
+    /// is not. The shade's (D-099) is modest against mortal foes; its weight
+    /// against the uncanny kinds is the calling's own business (see ActFellow).
+    /// </summary>
+    public (int Lo, int HiExclusive) Blow => Role switch
+    {
+        GuestRole.Huntsman => (2, 6),
+        GuestRole.Shade => (1, 4),
+        _ => (1, 3),
+    };
 
     public string RoleName => Role switch
     {
         GuestRole.Huntsman => "huntsman",
+        GuestRole.Shade => "shade",
         _ => "crofter",
     };
 }

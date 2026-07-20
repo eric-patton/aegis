@@ -47,6 +47,9 @@ public static class AegisVoice
     /// <summary>Spoken when a scar's cure road is walked to its end (D-098 stage 2).</summary>
     public const string ScarMendedLine = "Parity. All is counted, and this once, the count gives back.";
 
+    /// <summary>Spoken once, over the first shade ever called (D-099).</summary>
+    public const string CallingLine = "Counted, but not among the living. Keep it where you can see it, bearer: what was never whole is nothing I can catch.";
+
     public static string DeathLine(int deathCount, int register = 1)
     {
         if (deathCount <= 1) return FirstDeathLine;

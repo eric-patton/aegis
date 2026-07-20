@@ -347,14 +347,19 @@ public static class Presenter
 
         DrawBox(frame, x0, y0, boxW, boxH);
         frame.Write(x0 + 2, y0 + 1, "The workings you carry", Hue.White);
-        frame.Write(x0 + 2, y0 + 2, $"Focus {game.Player.Focus}/{game.Player.MaxFocus}", Hue.Cyan);
+        frame.Write(x0 + 2, y0 + 2,
+            $"Focus {game.Player.Focus}/{game.Player.MaxFocus}{(game.Shade is not null ? $" ({Game.CallingHold} held on the calling)" : "")}", Hue.Cyan);
 
         for (int i = 0; i < spells.Count; i++)
         {
             var def = SpellCatalog.Def(spells[i]);
-            frame.Write(x0 + 2, y0 + 4 + i,
-                $"{i + 1}) {def.Name,-14} {def.Focus} focus{(def.WindUp ? "  (wind-up)" : "")}",
-                game.Player.Focus >= def.Focus ? Hue.White : Hue.DarkGray);
+            // The calling reads its own state (D-099): held while the shade
+            // walks, and its digit then means release, always sayable.
+            string cost = def.Id == SpellId.Calling
+                ? game.Shade is not null ? "walks; say again to release" : $"{def.Focus} focus, held while it walks"
+                : $"{def.Focus} focus{(def.WindUp ? "  (wind-up)" : "")}";
+            bool sayable = (def.Id == SpellId.Calling && game.Shade is not null) || game.SpendableFocus >= def.Focus;
+            frame.Write(x0 + 2, y0 + 4 + i, $"{i + 1}) {def.Name,-14} {cost}", sayable ? Hue.White : Hue.DarkGray);
         }
 
         frame.Write(x0 + 2, y0 + boxH - 2,
@@ -661,8 +666,11 @@ public static class Presenter
                 monster.Intent is null ? Hue.Black : Hue.DarkRed);
         }
 
-        // The one who walks with you (D-097): drawn in the living green, last
-        // before the bearer, so a crowd never swallows them.
+        // Those who walk with you (D-097, D-099): drawn last before the
+        // bearer, so a crowd never swallows them. The guest in the living
+        // green; the shade in the focus's own cyan, because it is made of it.
+        if (game.Shade is { Alive: true } shade)
+            PutWorld(shade.Pos, 's', Hue.Cyan);
         if (game.Guest is { Alive: true } guest)
             PutWorld(guest.Pos, 'a', Hue.Green);
 
@@ -711,8 +719,9 @@ public static class Presenter
         Line($"HP  {Bar(p.Hp, p.EffectiveMaxHp, 10)} {p.Hp}/{p.EffectiveMaxHp}", p.Hp * 3 <= p.EffectiveMaxHp ? Hue.Red : Hue.Gray);
         Line($"ST  {Bar(p.Stamina, p.MaxStamina, 10)} {p.Stamina}/{p.MaxStamina}", Hue.Gray);
         // The pool (D-091): unveiled with the first word, and never before.
+        // The calling's hold shown beside it (D-099): bound, not spent.
         if (p.Spells.Count > 0)
-            Line($"FO  {Bar(p.Focus, p.MaxFocus, 10)} {p.Focus}/{p.MaxFocus}", Hue.Cyan);
+            Line($"FO  {Bar(p.Focus, p.MaxFocus, 10)} {p.Focus}/{p.MaxFocus}{(game.Shade is not null ? $" ({Game.CallingHold} held)" : "")}", Hue.Cyan);
         // The footing (D-094): named only when it leaves the measured default.
         if (p.Stance != Stance.Measured)
             Line($"Stance  {(p.Stance == Stance.Pressing ? "pressing" : "guarded")}", Hue.DarkYellow);
@@ -749,6 +758,10 @@ public static class Presenter
         if (game.Guest is { Alive: true } guest)
             Line($"{guest.Name} {guest.Hp}/{guest.MaxHp}{(guest.Holding ? " (holds)" : "")}",
                 guest.Hp * 3 <= guest.MaxHp ? Hue.Red : Hue.Green);
+        // The called shade (D-099): the same rail, the pool's own color.
+        if (game.Shade is { Alive: true } walker)
+            Line($"{walker.Name} {walker.Hp}/{walker.MaxHp}{(walker.Holding ? " (holds)" : "")}",
+                walker.Hp * 3 <= walker.MaxHp ? Hue.Red : Hue.Cyan);
         y++;
 
         if (game.Mode == MapMode.Site)

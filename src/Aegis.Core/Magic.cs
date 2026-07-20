@@ -8,7 +8,7 @@ namespace Aegis.Core;
 /// a wound-up word through a wound). Workings are knowledge, like lessons:
 /// death never takes them and they cross the waygate whole.
 /// </summary>
-public enum SpellId { Spark, Levin, Ward, Veilsight }
+public enum SpellId { Spark, Levin, Ward, Veilsight, Calling }
 
 /// <summary>One working's shape: what it is called, what it asks, and whether it is held a turn before it lands.</summary>
 public sealed record SpellDef(SpellId Id, string Name, string Short, int Focus, bool WindUp, string FoundLine);
@@ -26,6 +26,8 @@ public static class SpellCatalog
             "A patient word: the air about the speaker thickens against blows, a while."),
         new(SpellId.Veilsight, "the veilsight", "veilsight", 2, WindUp: false,
             "A quiet word: the dark forgets how to hold its shapes, and what lives on a floor is known for what it is."),
+        new(SpellId.Calling, "the calling", "calling", 2, WindUp: false,
+            "A held word, not a spent one: something of the quiet dark answers it and walks at your shoulder for as long as you keep it half-said."),
     ];
 
     public static SpellDef Def(SpellId id) => All[(int)id];
@@ -40,11 +42,14 @@ public static class SpellCatalog
     /// </summary>
     public static IReadOnlyList<SpellId> StonePreference(SiteKind kind) => kind switch
     {
-        SiteKind.GoblinCamp => [SpellId.Spark, SpellId.Ward, SpellId.Veilsight, SpellId.Levin],
-        SiteKind.Barrow => [SpellId.Veilsight, SpellId.Ward, SpellId.Levin, SpellId.Spark],
-        SiteKind.Quarry => [SpellId.Levin, SpellId.Spark, SpellId.Ward, SpellId.Veilsight],
-        SiteKind.Hall => [SpellId.Ward, SpellId.Levin, SpellId.Veilsight, SpellId.Spark],
-        SiteKind.Ringfort => [SpellId.Levin, SpellId.Ward, SpellId.Spark, SpellId.Veilsight],
-        _ => [SpellId.Veilsight, SpellId.Levin, SpellId.Ward, SpellId.Spark],
+        // The barrow leans hardest toward the calling (D-099): the most
+        // soul-touched fabric offers the word that gives soul-stuff a while
+        // of shape. Everywhere else it waits at the leaning's far end.
+        SiteKind.GoblinCamp => [SpellId.Spark, SpellId.Ward, SpellId.Veilsight, SpellId.Levin, SpellId.Calling],
+        SiteKind.Barrow => [SpellId.Veilsight, SpellId.Calling, SpellId.Ward, SpellId.Levin, SpellId.Spark],
+        SiteKind.Quarry => [SpellId.Levin, SpellId.Spark, SpellId.Ward, SpellId.Veilsight, SpellId.Calling],
+        SiteKind.Hall => [SpellId.Ward, SpellId.Levin, SpellId.Veilsight, SpellId.Spark, SpellId.Calling],
+        SiteKind.Ringfort => [SpellId.Levin, SpellId.Ward, SpellId.Spark, SpellId.Veilsight, SpellId.Calling],
+        _ => [SpellId.Veilsight, SpellId.Levin, SpellId.Ward, SpellId.Spark, SpellId.Calling],
     };
 }

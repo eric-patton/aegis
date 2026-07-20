@@ -231,6 +231,50 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-099: The calling: the fifth word, and the shade that walks while it is held (2026-07-19)
+The summon slot (D-024, vision sec 7) ships, where the guest engine (D-097) and the
+remnant craft (D-091) shake hands. Q&A-settled shape, every answer the recommendation:
+the summon is a called remnant (a shade of soul-stuff given a while of shape, square in
+the world's existing register, no new fiction); the word is a fifth entry on the graven
+stones (SpellId.Calling, every site kind's leaning grew it, the barrow leaning toward it
+second as the most soul-touched fabric, so regenerating stones offer it naturally and a
+bearer carrying all four old words no longer finds only company); the gate is reserved
+Focus (CallingHold = 2 of the pool stay bound and unspendable while the shade walks:
+held, never spent, freed the moment it ends: a constant legible conjurer tradeoff with
+zero upkeep bookkeeping, SpendableFocus the one seam every other working now checks);
+its own slot beside a mortal guest (both may walk, the fragility and the hold keep the
+pair honest); it walks until it falls or is released (no clock; saying the word again is
+the dismissal, allowed anywhere since releasing is not saying); modest of blow but
+touching the uncanny; and full guest physics (occupies, place-trades, body-blocks marked
+ground, takes real blows and intent rolls, raiders turn on the nearer body). Build: the
+shade IS a Guest (GuestRole.Shade, 10 HP, blow 1-3) and the guest engine generalized to
+fellows (ActGuest -> ActFellow, PlaceFellowsBeside, FellowAt in every occupancy seam:
+shove, slip, hound-drag, pathing, place-trade), so one machine walks both bodies. The
+uncanny niche landed as a DOUBLED blow on the wight and graven kinds (soul-stuff
+answering soul-stuff), not as striking the severed: mid-build the severed check showed
+the laying is a bearer-choice surface (D-038/D-045), so the shade refuses them exactly
+as guests do (it is kin), and auto-striking one would foreclose the bearer's own choice.
+Not mortal, the deliberate contrast with D-097: a broken shade unravels (no grave fact,
+no shame, no empty bench, "nothing here mourns"), the bearer's death lets the half-said
+word slip, the waygate leaves the called thing and carries only the knowledge, and the
+one order key falls to the shade only when no mortal walks (hold/with-me; it is never
+tended: bread is not what it is short of). A rest re-knits it whole at the fire's edge.
+One once-ever Aegis line over the first shade (CallingLine: counted, but not among the
+living). Presenter: cyan 's' glyph, the blood-rail line in the pool's own color, the FO
+bar and cast menu reading the hold ("2 held", "walks; say again to release"). Save v49
+-> v50 (the stones' leanings grew a fifth word, so a v49 journal's stone readings can
+grant a different working). 480 tests green (13 new ShadeTests: the leanings, the full
+head finding the stone still giving, the call binding the hold and spending nothing,
+the hold refusing the ward until release, release under open sky, the modest hand, the
+doubled uncanny hand, the severed refused, the unraveling without grief, the fall
+letting the word slip, the crossing keeping only the word, both fellows walking, the
+ground-word falling to the shade). Twin journeys hash-identical; sim replay exact; the
+master baseline (2024 x12: 10313 turns, 2 deaths, 10705 keys) and full sweep held to
+the digit: the pilot reads stones but never casts, so no journey stands a shade yet.
+Deferred: a pilot cast policy (the calling unexercised in journeys, same honest gap as
+the cure roads); a villager noticing the shade (storylet); the warder's kinship with
+the uncanny kinds; ranged shafts passing through fellows.
+
 ### D-098: The Death's Toll: the deterministic ledger, and the scars matched to their deaths (2026-07-19)
 The last untouched vision pillar (D-009, vision sec 8) breaks ground, shaped by Q&A and split
 in two stages at the user's gate: stage 1 is the meter, the landing, and the weight; stage 2

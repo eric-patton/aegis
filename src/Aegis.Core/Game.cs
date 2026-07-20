@@ -36,6 +36,33 @@ public sealed class Game
     /// </summary>
     public Guest? Guest { get; private set; }
 
+    /// <summary>
+    /// The called shade (D-099): the calling's word given a while of shape,
+    /// walking on the guest engine in its own slot beside the mortal one. Not
+    /// mortal: it unravels (fall, dismissal, the bearer's death, the waygate)
+    /// and nothing grieves; the price is the focus held, never the mourning.
+    /// </summary>
+    public Guest? Shade { get; private set; }
+
+    /// <summary>Whoever walks with the bearer right now (D-097, D-099): the mortal guest first, then the shade.</summary>
+    private IEnumerable<Guest> Fellows
+    {
+        get
+        {
+            if (Guest is { Alive: true } guest) yield return guest;
+            if (Shade is { Alive: true } shade) yield return shade;
+        }
+    }
+
+    private bool FellowAt(Pos p) => Fellows.Any(f => f.Pos == p);
+
+    /// <summary>
+    /// What the pool will actually answer with (D-099): the calling is held,
+    /// not spent, so while the shade walks part of the focus stays bound to
+    /// the word and no other working can draw on it.
+    /// </summary>
+    public int SpendableFocus => Player.Focus - (Shade is not null ? CallingHold : 0);
+
     /// <summary>The cast NPC held aside while they walk (D-097): re-added at the arc's end, never after a death.</summary>
     private Npc? _guestNpc;
 
@@ -910,9 +937,9 @@ public sealed class Game
             if (npc is not null) return StartTalk(npc);
         }
 
-        // Stepping into the one who walks with you (D-097) trades places: a
-        // doorway is never a standoff between friends.
-        if (Guest is { Alive: true } fellow && fellow.Pos == target)
+        // Stepping into one who walks with you (D-097, D-099) trades places:
+        // a doorway is never a standoff between friends.
+        if (Fellows.FirstOrDefault(f => f.Pos == target) is { } fellow)
         {
             (fellow.Pos, Player.Pos) = (Player.Pos, target);
             Player.Stamina = Math.Min(Player.MaxStamina, Player.Stamina + 1);
@@ -1122,8 +1149,8 @@ public sealed class Game
             Mode = MapMode.Site;
             CurrentSite = site;
             Player.Pos = site.EntryPos;
-            // The guest comes through the same door (D-097), at the shoulder.
-            PlaceGuestBeside(site.EntryPos);
+            // Whoever walks with you comes through the same door (D-097, D-099), at the shoulder.
+            PlaceFellowsBeside(site.EntryPos);
             if (site.Kind == SiteKind.Threshold)
                 Log.Add(Turn, Player.Resolution == Resolution.None
                     ? "You go down. The door of shrine-stone stands open, and the warmth beyond it is a kitchen's, not a forge's. Somewhere ahead, a fire is burning that has never once gone out."
@@ -1226,6 +1253,9 @@ public sealed class Game
         // World-bound (D-097): a living guest never crosses; their world keeps
         // them. The farewell and the portfolio fact are stage 2's work.
         Guest = null;
+        // The called thing does not cross either (D-099): only the word does,
+        // knowledge like every working, to be said again in the new dark.
+        Shade = null;
         InShrineMenu = false;
         InTalkMenu = false;
         InUnbindMenu = false;
@@ -1411,9 +1441,9 @@ public sealed class Game
             Player.Pos = CurrentSite.OverworldPos;
             CurrentSite = null;
             Log.Add(Turn, "You climb back into daylight.");
-            // The guest climbs out behind you (D-097), held ground or no: no
-            // one is left standing alone in the dark.
-            PlaceGuestBeside(Player.Pos);
+            // Whoever walks with you climbs out behind you (D-097, D-099),
+            // held ground or no: no one is left standing alone in the dark.
+            PlaceFellowsBeside(Player.Pos);
             return true;
         }
         Log.Add(Turn, "There is no way out here.");
@@ -3009,13 +3039,17 @@ public sealed class Game
     /// </summary>
     private bool DoOrder()
     {
-        if (Guest is not { Alive: true } guest)
+        // The word goes to the mortal first (D-099): a hurt friend outranks a
+        // held working. With no guest walking, the shade takes the ground-word.
+        var fellow = Guest is { Alive: true } ? Guest : Shade;
+        if (fellow is not { Alive: true } guest)
         {
             Log.Add(Turn, "No one walks with you.");
             return false;
         }
 
-        if (guest.Pos.Chebyshev(Player.Pos) == 1 && guest.Hp < guest.MaxHp
+        if (guest.Role != GuestRole.Shade
+            && guest.Pos.Chebyshev(Player.Pos) == 1 && guest.Hp < guest.MaxHp
             && (Player.Draughts > 0 || Player.Herb > 0 || Player.Rations > 0))
         {
             // The best of the satchel goes first: the stillroom's vial, the
@@ -3032,9 +3066,13 @@ public sealed class Game
         }
 
         guest.Holding = !guest.Holding;
-        Log.Add(Turn, guest.Holding
-            ? $"\"Hold here.\" {guest.Name} plants their feet where they stand."
-            : $"\"With me.\" {guest.Name} falls in at your shoulder.", LogTone.Info);
+        Log.Add(Turn, (guest.Role, guest.Holding) switch
+        {
+            (GuestRole.Shade, true) => "\"Hold here.\" The shade stills where it stands, patient as the stone its word was cut in.",
+            (GuestRole.Shade, false) => "\"With me.\" The shade drifts back to your shoulder.",
+            (_, true) => $"\"Hold here.\" {guest.Name} plants their feet where they stand.",
+            _ => $"\"With me.\" {guest.Name} falls in at your shoulder.",
+        }, LogTone.Info);
         return LiveMonstersHere.Any();
     }
 
@@ -3091,6 +3129,14 @@ public sealed class Game
                 "When this is done I will go back to the bench and weigh hides, and no one will believe a word of it. That is fine. I will know.",
             ];
             Log.Add(Turn, $"{friend.Name}, at the fire: \"{fireside[(friend.Beats - 1) % fireside.Length]}\"", LogTone.Info);
+        }
+
+        // The held word rests too (D-099): soul-stuff re-knits where the
+        // calling is kept, and says nothing at the fire. It has nothing to say.
+        if (Shade is { } restingShade && restingShade.Hp < restingShade.MaxHp)
+        {
+            restingShade.Hp = restingShade.MaxHp;
+            Log.Add(Turn, "At the fire's edge the shade fills back in, the way a shadow does when the light steadies.", LogTone.Info);
         }
 
         InShrineMenu = true;
@@ -3224,7 +3270,7 @@ public sealed class Game
                 int sx = Math.Sign(target.Pos.X - Player.Pos.X), sy = Math.Sign(target.Pos.Y - Player.Pos.Y);
                 var back = target.Pos.Plus(sx, sy);
                 if (CurrentMap.Walkable(back)
-                    && !(Guest is { Alive: true } g && g.Pos == back)
+                    && !FellowAt(back)
                     && !Monsters.Any(m => m.Alive && m.SiteId == target.SiteId && m.Pos == back))
                 {
                     target.Pos = back;
@@ -3289,7 +3335,7 @@ public sealed class Game
         {
             var p = Player.Pos.Plus(dx, dy);
             if (!CurrentMap.Walkable(p)) continue;
-            if (Guest is { Alive: true } g && g.Pos == p) continue;
+            if (FellowAt(p)) continue;
             if (Monsters.Any(m => m.Alive && m.SiteId == target.SiteId && m.Pos == p)) continue;
             if (p.Chebyshev(target.Pos) == 1) return p;
             fallback ??= p;
@@ -3758,6 +3804,9 @@ public sealed class Game
     /// <summary>Turns between the pool gathering a point back on the road (D-091).</summary>
     public const int FocusRegenTurns = 8;
 
+    /// <summary>How much of the pool the calling keeps bound while the shade walks (D-099): held, never spent.</summary>
+    public const int CallingHold = 2;
+
     /// <summary>
     /// The workings ('z', D-091): opens what the bearer carries. Costs no turn;
     /// an empty head costs nothing either, only the telling of where words wait.
@@ -3784,14 +3833,24 @@ public sealed class Game
         }
 
         var def = SpellCatalog.Def(known[key - '1']);
+        // Releasing is not saying (D-099): a walking shade is let go anywhere,
+        // open sky or old dark, and the letting-go asks nothing of the pool.
+        if (def.Id == SpellId.Calling && Shade is not null)
+        {
+            DismissShade();
+            AdvanceTurn();
+            return;
+        }
         if (Mode != MapMode.Site)
         {
             Log.Add(Turn, "The words want the old dark they were cut in; under this open sky nothing answers them.");
             return;
         }
-        if (Player.Focus < def.Focus)
+        if (SpendableFocus < def.Focus)
         {
-            Log.Add(Turn, $"{Cap(def.Name)} asks {def.Focus} focus of the {Player.Focus} you hold. It gathers back with the turns, and whole at a rest.");
+            Log.Add(Turn, Shade is not null
+                ? $"{Cap(def.Name)} asks {def.Focus} focus, and of the {Player.Focus} you hold, {CallingHold} stay bound to the calling. Let the shade go, or wait on the turns."
+                : $"{Cap(def.Name)} asks {def.Focus} focus of the {Player.Focus} you hold. It gathers back with the turns, and whole at a rest.");
             return;
         }
 
@@ -3809,6 +3868,10 @@ public sealed class Game
                 return;
             case SpellId.Ward:
                 CastWard();
+                AdvanceTurn();
+                return;
+            case SpellId.Calling:
+                CastCalling();
                 AdvanceTurn();
                 return;
             default:
@@ -4018,6 +4081,53 @@ public sealed class Game
             Log.Add(Turn, "Their shapes settle into your reading: you will know their blows before they are thrown.", LogTone.Reward);
             GainSkill(SkillId.Spellcraft);
         }
+    }
+
+    /// <summary>
+    /// The calling (D-099): the held word. Nothing is spent; while the shade
+    /// walks, part of the pool stays bound to keeping it half-said (see
+    /// SpendableFocus). The shade takes the guest engine whole: it follows,
+    /// fights to its own measure, takes real blows, and trades places, and
+    /// none of it is mortal: what ends it is an unraveling, never a death.
+    /// </summary>
+    private void CastCalling()
+    {
+        Shade = new Guest
+        {
+            Id = "shade",
+            Name = "the shade",
+            Role = GuestRole.Shade,
+            Pos = Player.Pos,
+            MaxHp = 10,
+            Hp = 10,
+        };
+        PlaceFellowBeside(Shade, Player.Pos);
+        Log.Add(Turn, "You say the calling, and stop it half-said. The dark beside you gathers, borrows a stance from you, and keeps it: a shade, standing, waiting on your road.", LogTone.Reward);
+        Log.Add(Turn, $"While the word is held, {CallingHold} of your focus stay bound to it. Saying it again lets the shade go.", LogTone.Info);
+        if (!Player.CallingLineHeard)
+        {
+            Player.CallingLineHeard = true;
+            Log.Add(Turn, $"\"{AegisVoice.CallingLine}\"", LogTone.Aegis);
+        }
+        GainSkill(SkillId.Spellcraft);
+    }
+
+    /// <summary>The word released on purpose (D-099): no wound, no sound, the held focus loosened.</summary>
+    private void DismissShade()
+    {
+        Shade = null;
+        Log.Add(Turn, "You let the calling finish itself. The shade goes out of the world the way a breath goes, and the focus it held loosens in your chest.", LogTone.Info);
+    }
+
+    /// <summary>
+    /// The shade broken by the field (D-099): the deliberate opposite of a
+    /// guest's fall. No grave fact, no shame, no empty bench: soul-stuff given
+    /// shape by a word owes the world nothing when the shape fails.
+    /// </summary>
+    private void ShadeUnravels()
+    {
+        Shade = null;
+        Log.Add(Turn, "The shade frays to a smoke the dark takes back, and is gone. The focus it held loosens; nothing here mourns.", LogTone.Combat);
     }
 
     /// <summary>
@@ -4570,9 +4680,13 @@ public sealed class Game
                     _deathShape = (monster.Kind, windup);
             }
 
-        // The one who walks with you (D-097) takes their own step after the
-        // field has moved, so what they answer is what actually stands.
-        if (Player.Hp > 0) ActGuest();
+        // Those who walk with you (D-097, D-099) take their own step after
+        // the field has moved, so what they answer is what actually stands.
+        if (Player.Hp > 0)
+        {
+            ActFellow(Guest);
+            ActFellow(Shade);
+        }
 
         // The ward-word runs out with the turns (D-091), and the pool gathers
         // itself back a point at a time on the road, once any word is carried.
@@ -4694,7 +4808,7 @@ public sealed class Game
                     {
                         var pull = Player.Pos.Plus(Math.Sign(pack.Pos.X - Player.Pos.X), Math.Sign(pack.Pos.Y - Player.Pos.Y));
                         if (pull != Player.Pos && CurrentMap.Walkable(pull)
-                            && !(Guest is { Alive: true } gg && gg.Pos == pull)
+                            && !FellowAt(pull)
                             && !Monsters.Any(m => m.Alive && m.SiteId == monster.SiteId && m.Pos == pull))
                         {
                             Player.Pos = pull;
@@ -4702,18 +4816,21 @@ public sealed class Game
                         }
                     }
                 }
-                else if (Guest is { Alive: true } struck && struck.Pos == struckCell)
+                else if (Fellows.FirstOrDefault(f => f.Pos == struckCell) is { } struck)
                 {
-                    // The second body (D-097): a guest standing on the marked
-                    // ground takes the blow meant for it, whole. No stance, no
-                    // iron, no Aegis: what guards the bearer never guarded them.
+                    // The second body (D-097, D-099): a fellow standing on the
+                    // marked ground takes the blow meant for it, whole. No
+                    // stance, no iron, no Aegis: what guards the bearer never
+                    // guarded them.
                     int roll = RollFor(intent.Kind);
                     if (monster.Kind == MonsterKind.Goblin) roll = RaiderWrath.Steadied(Wrath, roll);
                     struck.Hp -= roll;
                     Log.Add(Turn, struck.Alive
-                        ? $"The blow finds {struck.Name} on the marked ground: they are opened for {roll}!"
+                        ? struck.Role == GuestRole.Shade
+                            ? $"The blow finds the shade on the marked ground: it is torn for {roll}!"
+                            : $"The blow finds {struck.Name} on the marked ground: they are opened for {roll}!"
                         : $"The blow comes down on {struck.Name}, full weight.", LogTone.Danger);
-                    if (!struck.Alive) GuestFalls(struck);
+                    if (!struck.Alive) FellowFalls(struck);
                 }
                 else
                 {
@@ -4780,11 +4897,12 @@ public sealed class Game
         if (monster.Kind == MonsterKind.Warder) { ActWarder(monster); return; }
         if (monster.Kind == MonsterKind.Thegn) { ActThegn(monster); return; }
 
-        // The second body (D-097): a raider the guest stands nearer than the
-        // bearer turns on the guest. The old kinds keep their old eyes for
-        // now; blood is blood to a den.
-        if (Guest is { Alive: true } quarry
-            && monster.Pos.Chebyshev(quarry.Pos) < monster.Pos.Chebyshev(Player.Pos))
+        // The second body (D-097, D-099): a raider that one of the fellows
+        // stands nearer than the bearer turns on that fellow. The old kinds
+        // keep their old eyes for now; blood is blood to a den, and a den
+        // does not ask whether what it cuts at bleeds.
+        if (Fellows.Where(f => monster.Pos.Chebyshev(f.Pos) < monster.Pos.Chebyshev(Player.Pos))
+            .OrderBy(f => monster.Pos.Chebyshev(f.Pos)).FirstOrDefault() is { } quarry)
         {
             ActAgainstGuest(monster, quarry);
             return;
@@ -4846,8 +4964,10 @@ public sealed class Game
             guest.Hp -= damage;
             Log.Add(Turn, guest.Alive
                 ? $"The {monster.Name} turns its iron on {guest.Name}: a cut for {damage}."
-                : $"The {monster.Name}'s iron goes into {guest.Name}, and stays a heartbeat too long.", LogTone.Danger);
-            if (!guest.Alive) GuestFalls(guest);
+                : guest.Role == GuestRole.Shade
+                    ? $"The {monster.Name}'s iron goes through what it struck and meets nothing that holds it."
+                    : $"The {monster.Name}'s iron goes into {guest.Name}, and stays a heartbeat too long.", LogTone.Danger);
+            if (!guest.Alive) FellowFalls(guest);
             return;
         }
         if (dist <= 8) StepTowardPos(monster, guest.Pos);
@@ -4863,17 +4983,19 @@ public sealed class Game
     }
 
     /// <summary>
-    /// The guest's turn (D-097): held ground is held; otherwise a foe in reach
-    /// is fought, and then the road back to the bearer's shoulder. They fight
-    /// to their own measure, never the bearer's: a huntsman's blow is worth
-    /// having, a crofter's is a gesture with a knife in it. They never raise a
-    /// hand to a severed one (not fightable, D-038), a hart (not a foe), or
-    /// anything still dormant (waking the stone is the bearer's own mistake to
-    /// make).
+    /// A fellow's turn (D-097, D-099): held ground is held; otherwise a foe in
+    /// reach is fought, and then the road back to the bearer's shoulder. They
+    /// fight to their own measure, never the bearer's: a huntsman's blow is
+    /// worth having, a crofter's is a gesture with a knife in it, and the
+    /// shade's modest hand falls double on the uncanny kinds, soul-stuff
+    /// answering soul-stuff. None of them raise a hand to a severed one (the
+    /// laying is the bearer's own choice to make, D-038 and D-045, and the
+    /// shade least of all: it is kin), a hart (not a foe), or anything still
+    /// dormant (waking the stone is the bearer's own mistake to make).
     /// </summary>
-    private void ActGuest()
+    private void ActFellow(Guest? fellow)
     {
-        if (Guest is not { Alive: true } guest) return;
+        if (fellow is not { Alive: true } guest) return;
 
         if (Mode == MapMode.Site)
         {
@@ -4885,17 +5007,26 @@ public sealed class Game
             {
                 var (lo, hi) = guest.Blow;
                 int blow = _combatRng.Range(lo, hi);
+                bool uncanny = guest.Role == GuestRole.Shade
+                    && foe.Kind is MonsterKind.Wight or MonsterKind.Graven;
+                if (uncanny) blow *= 2;
                 foe.Hp -= blow;
                 if (foe.Alive)
-                    Log.Add(Turn, guest.Fighter
-                        ? $"{guest.Name} cuts at the {foe.Name}, workmanlike, for {blow}."
-                        : $"{guest.Name} jabs at the {foe.Name} for {blow}, holding the knife the way a knife is not held.", LogTone.Combat);
+                    Log.Add(Turn, guest.Role switch
+                    {
+                        GuestRole.Shade when uncanny => $"The shade puts its hands into the {foe.Name}, and what it takes hold of is not the body: {blow}, and the {foe.Name} knows itself gripped.",
+                        GuestRole.Shade => $"The shade passes a hand through the {foe.Name}, and something under the hide tears, for {blow}.",
+                        GuestRole.Huntsman => $"{guest.Name} cuts at the {foe.Name}, workmanlike, for {blow}.",
+                        _ => $"{guest.Name} jabs at the {foe.Name} for {blow}, holding the knife the way a knife is not held.",
+                    }, LogTone.Combat);
                 else
                 {
-                    Log.Add(Turn, $"{guest.Name} drops the {foe.Name} where it stands.", LogTone.Combat);
+                    Log.Add(Turn, guest.Role == GuestRole.Shade
+                        ? $"The {foe.Name} goes down under the shade's hands without a mark on it."
+                        : $"{guest.Name} drops the {foe.Name} where it stands.", LogTone.Combat);
                     // The spoils and the counts run through the one place every
                     // kill-path meets: the dens still tally their dead, and a
-                    // site a guest's hand finishes still clears.
+                    // site a fellow's hand finishes still clears.
                     HarvestRemains(foe);
                 }
                 return;
@@ -4917,6 +5048,7 @@ public sealed class Game
             var next = guest.Pos.Plus(dx, dy);
             if (!map.Walkable(next)) continue;
             if (next == Player.Pos) continue;
+            if (Fellows.Any(f => f != guest && f.Pos == next)) continue;
             if (LiveMonstersHere.Any(m => m.Pos == next)) continue;
             int d = next.Manhattan(Player.Pos);
             if (d < bestDist) { bestDist = d; best = next; }
@@ -4925,24 +5057,38 @@ public sealed class Game
     }
 
     /// <summary>
-    /// The guest set down beside an anchor (D-097): the first open cell in the
-    /// fixed compass order, so doorways, exits, and wakings at the shrine put
-    /// them deterministically at the bearer's shoulder.
+    /// Every fellow set down beside an anchor (D-097, D-099): the mortal guest
+    /// takes the first open cell, the shade the next, in the fixed compass
+    /// order, so doorways, exits, and wakings at the shrine put them
+    /// deterministically at the bearer's shoulder.
     /// </summary>
-    private void PlaceGuestBeside(Pos anchor)
+    private void PlaceFellowsBeside(Pos anchor)
     {
-        if (Guest is not { Alive: true } guest) return;
-        guest.Holding = false;
+        if (Guest is { Alive: true } guest) PlaceFellowBeside(guest, anchor);
+        if (Shade is { Alive: true } shade) PlaceFellowBeside(shade, anchor);
+    }
+
+    private void PlaceFellowBeside(Guest fellow, Pos anchor)
+    {
+        fellow.Holding = false;
         var map = CurrentMap;
         foreach (var (dx, dy) in Directions.All8)
         {
             var cell = anchor.Plus(dx, dy);
             if (!map.Walkable(cell) || cell == Player.Pos) continue;
+            if (Fellows.Any(f => f != fellow && f.Pos == cell)) continue;
             if (LiveMonstersHere.Any(m => m.Pos == cell)) continue;
-            guest.Pos = cell;
+            fellow.Pos = cell;
             return;
         }
-        guest.Pos = anchor;
+        fellow.Pos = anchor;
+    }
+
+    /// <summary>What ends depends on what walked (D-099): a mortal fall has weight, an unraveling has none.</summary>
+    private void FellowFalls(Guest fellow)
+    {
+        if (fellow.Role == GuestRole.Shade) ShadeUnravels();
+        else GuestFalls(fellow);
     }
 
     /// <summary>
@@ -5543,7 +5689,7 @@ public sealed class Game
                 var next = p.Plus(dx, dy);
                 bool open = next == Player.Pos
                     || (map.Walkable(next)
-                        && !(Guest is { Alive: true } g && g.Pos == next)
+                        && !FellowAt(next)
                         && !Monsters.Any(m => m.Alive && m != monster && m.SiteId == monster.SiteId && m.Pos == next));
                 if (open && !cameFrom.ContainsKey(next))
                 {
@@ -5571,7 +5717,7 @@ public sealed class Game
             var next = monster.Pos.Plus(dx, dy);
             if (!map.Walkable(next)) continue;
             if (next == Player.Pos) continue;
-            if (Guest is { Alive: true } g && g.Pos == next) continue;
+            if (FellowAt(next)) continue;
             if (Monsters.Any(m => m.Alive && m != monster && m.Pos == next)) continue;
             int d = next.Manhattan(goal);
             if (d < bestDist) { bestDist = d; best = next; }
@@ -5629,6 +5775,14 @@ public sealed class Game
         Player.LevinTarget = null;
         Player.WardTurns = 0;
         Player.ChilledTurns = 0;
+        // The calling slips with everything else held (D-099): whatever kept
+        // the shade in the world was in the bearer's keeping, and the keeping
+        // failed. It is gone before the bearer is.
+        if (Shade is not null)
+        {
+            Shade = null;
+            Log.Add(Turn, "The half-said word goes out of your mouth with everything else: the shade is gone before you are.", LogTone.Info);
+        }
 
         bool forfeited = Remnant is not null;
         if (forfeited)
@@ -5656,7 +5810,9 @@ public sealed class Game
         Player.Pos = World.ShrinePos;
         // Whoever still walked with you kept the road home (D-097): the guest
         // is at the shrine when you wake, and says nothing about the carrying.
-        PlaceGuestBeside(World.ShrinePos);
+        // The shade is not: it unraveled with the fall (above), and the word
+        // waits to be said again.
+        PlaceFellowsBeside(World.ShrinePos);
         // The slow mending (D-047): the death consequence scales in magnitude,
         // never in shape (D-011): the same wound, held twice as long.
         Player.WoundedTurns = World.Oaths.Contains(OathId.SlowMending) ? 160 : 80;

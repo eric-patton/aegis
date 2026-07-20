@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-098); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-099); the research behind it lives in `../research/`.
 
 ---
 
@@ -101,7 +101,7 @@ Coin is fully separate from Essence and must matter all game:
 ## 7. Companions
 
 Three niches, no permanent party; combat is balanced around one character:
-- **A summon slot**: one autonomous Spirit-Ash-style ally, resource-gated against your own pool. Conjurer builds, zero management.
+- **A summon slot**: one autonomous Spirit-Ash-style ally, resource-gated against your own pool. Conjurer builds, zero management. **Shipped (D-099)**: the calling, a fifth word on the graven stones (the barrow leans toward it second), held rather than spent: 2 Focus stay bound while the called shade walks. The shade rides the guest engine whole in its own slot beside a mortal guest: full body, modest blow doubled on the uncanny kinds, refusing the severed (the laying stays the bearer's choice). Not mortal, on purpose: it unravels without weight (fall, release anywhere, the bearer's death, the waygate), the deliberate contrast with the guest's full-weight mortality.
 - **Guest companions**: story-scoped, role-cast from world NPCs, a command verb or two, and *they can permanently die*. Guests carry the mortal stakes you cannot. **Shipped whole (D-097)**: the guest engine walks at your shoulder, holds ground or comes on one contextual key ('o'), fights to their own measure (competence read from who they are), takes real blows and body-blocks marked ground, is tended from your own satchel, and dies for real. The first arc is the huntsman's debt: the woodward walks once the stead has bled, until the camp breaks; loyalty beats bank from blood, care, firesides, and deeds; a death writes the grave and beloved facts, costs stead standing, empties the bench for the whole world, and is remembered aloud; the paid arc ends in a portfolio fact and the walk home.
 - **A pack animal or mount**: logistics and warmth.
 

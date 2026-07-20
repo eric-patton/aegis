@@ -173,10 +173,13 @@ namespace Aegis.Core;
 /// v49 when D-098 stage 2 opened the cure roads: the stillroom, the smith,
 /// and the skald each grew a bench entry, and a scarred talk draws a new
 /// storylet, so a v48 journal's digits at those counters land differently.
+/// v50 when D-099 added the calling: the stones' leanings grew a fifth word
+/// (the barrow leans toward it second), so a v49 journal's stone readings can
+/// grant a different working, and the cast menu carries a fifth digit.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 49;
+    public const int Version = 50;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

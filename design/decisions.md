@@ -231,6 +231,34 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-101: The pilot walks the cure roads (2026-07-19)
+First lane of the pilot-policies batch (D-101 through D-104, one commit each), paying the
+follow-on D-098 stage 2 named: no journey had ever walked a cure road, so the scar economy's
+deepest surface was verified only by unit tests and hand play. The autopilot now treats a
+carried mark as a debt to pay off the moment the price is in hand, three rungs cut to the
+three roads. The crushed hand rides the existing smith errand: the walk to the forge now
+fires when the brace is affordable too, and in the menu the gear buys keep their priority
+with the brace digit behind them. The taken eye rides the stillroom: the herbwife errand and
+her bench driver both learned the surgery digit, herbs sold first so the sprig-coin counts
+toward her own price. The haunted look is the pilgrimage: a new overworld rung walks to the
+skald at the hall door and a new talk driver presses the laying digit, and because the laying
+is paid in essence, the pilot holds the laying's 8 essence back from the shrine's raising
+while the mark is carried (SpendableEssence, the same shape as D-099's held Focus; safe
+because a hall keeper stands in every world, so the hold is never wasted). Rung placement:
+the cure walks sit after the smith errand and before the next site, so a scarred, funded
+bearer mends before ground that asks for the body whole. Cli-only, no engine or save touch,
+all 497 tests green. Verification landed exactly on the prediction: the master seed never
+scars, so its baseline held to the byte (twins hash-identical, sim replay exact at cycle
+13, turn 10313, deaths 2), sweep seeds 7 and 99 held to the digit, and the two haunted
+seeds diverged precisely at the cure: seed 1 now 6952 turns, 7 deaths, 13 raids and seed
+88888 now 6592 turns, 6 deaths, 17 raids, both finishing scar-free where the haunted look
+used to ride to the report line. Seed 1's two extra deaths are the doctrine's honest cost
+(the laying's essence is growth not taken, and the walk is real), which is the point: the
+cure roads are now load-bearing in the live proof, not just present in the code. Options
+set aside: curing only between worlds (the mark's drag is per-turn, so waiting is strictly
+worse); skipping the essence hold (the shrine loop would starve the laying forever on any
+world where the raise cost sits under 8).
+
 ### D-100: The beasts of the road: the stead's mule, the ridden stride, and the saddlebags (2026-07-19)
 The pack animal (D-024's last niche) opens, Q&A-shaped with one custom answer that
 grew the lane: not one beast but a roster (the user's own call: all three acquisition

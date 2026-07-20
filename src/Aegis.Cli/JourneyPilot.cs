@@ -35,6 +35,10 @@ namespace Aegis.Cli;
 /// makes nearly free (the hungry road, the spent edge, the hushed name), lighting each with
 /// its digit and then crossing, so it carries a real, honored burden the whole ladder down
 /// for the Legend it buys, while refusing the four that would cost this bot blood or growth.
+/// And when the Toll leaves a mark on it (D-098), it walks the mark's own cure road as soon
+/// as the price is in hand: the hand braced at the forge, the eye seen to at the stillroom,
+/// and what haunts sung to rest at the hall door, the laying's essence held back from the
+/// shrine's raising until it is paid.
 ///
 /// It is a pure function of game state (and the runner's skip-set, which is itself
 /// derived deterministically), so a seeded run is perfectly reproducible: the same seed
@@ -64,12 +68,12 @@ public static class JourneyPilot
         // Vigor and Might, the survivability the deep sites demand) and the arch's terms
         // (handled below). Any other menu that trapped it gets stepped back out of.
         if (g.InShrineMenu)
-            return p.Essence >= g.NextRaiseCost ? RaiseDigit(p, wits) : 'z';
+            return SpendableEssence(p) >= g.NextRaiseCost ? RaiseDigit(p, wits) : 'z';
         // The smith's trade is a talk menu we drive on purpose: buy what a bare slot and
         // the purse both allow, then leave (D-064). The aim is the bow's second key
         // (D-050), sent along whatever line bears a target.
         if (g.InTalkMenu && g.TalkNpc?.Kind == NpcKind.Smith)
-            return SmithBuyDigit(g) ?? 'z';
+            return SmithBuyDigit(g) ?? SmithBraceDigit(g) ?? 'z';
         // The woodward's bench is a talk menu we drive on purpose too (D-072, D-073): with
         // hides cured or raw meat in hand, open the wood's edge, sell the lot and cook the
         // meat down to rations, then step back. The trade menu sits behind one talk digit
@@ -77,10 +81,14 @@ public static class JourneyPilot
         if (g.InTradeMenu) return BenchDigit(g);
         if (g.InTalkMenu && g.TalkNpc?.Id == "npc_woodward" && BenchErrand(g))
             return TradeOpenDigit(g) ?? 'z';
-        // The stillroom (D-081, D-082): with sprigs in the satchel, open the
-        // herbwife's bench the same way and sell at the apothecary's price.
-        if (g.InTalkMenu && g.TalkNpc?.Id == "npc_herbwife" && g.Player.Herb > 0)
+        // The stillroom (D-081, D-082): with sprigs in the satchel, or an eye to be
+        // seen to (D-098), open the herbwife's bench the same way and do the business.
+        if (g.InTalkMenu && g.TalkNpc?.Id == "npc_herbwife" && (g.Player.Herb > 0 || EyeCureWanted(g)))
             return TradeOpenDigit(g) ?? 'z';
+        // The hall door (D-098): what followed the bearer home is sung to rest the
+        // moment the soul can pay for it; with nothing to lay, step back out.
+        if (g.InTalkMenu && g.TalkNpc?.Kind == NpcKind.Skald)
+            return (LayingWanted(g) ? LayingOfferDigit(g) : null) ?? 'z';
         if (g.InAim) return AimDirection(g) ?? 'z';
         // The pack is a menu we drive on purpose too (D-066): wear the best piece
         // owned, one digit at a time, then close. Chest loot lands here unworn
@@ -158,7 +166,7 @@ public static class JourneyPilot
         // Standing on the shrine with essence to spend or wounds to mend: rest and raise
         // before setting out (this also catches the shrine you wake on after a death).
         if (p.Pos == g.World.ShrinePos
-            && (needVision || p.Essence >= g.NextRaiseCost || p.Hp < p.EffectiveMaxHp))
+            && (needVision || SpendableEssence(p) >= g.NextRaiseCost || p.Hp < p.EffectiveMaxHp))
             return 'r';
 
         // Walk back to the shrine to spend essence on attributes whenever a raise is in
@@ -166,7 +174,7 @@ public static class JourneyPilot
         // on the shrine for free, so the raising has to be sought out now, or the bearer
         // crosses under-grown and the deep sites (the leaguer above all) ask more than it
         // can give. Returning between sites means it meets each in better skin than the last.
-        if (needVision || p.Essence >= g.NextRaiseCost)
+        if (needVision || SpendableEssence(p) >= g.NextRaiseCost)
         {
             var toShrine = NavKey(g, g.World.Overworld, p.Pos, g.World.ShrinePos, OverworldBlocked(g));
             if (toShrine is not null) return toShrine;
@@ -209,10 +217,25 @@ public static class JourneyPilot
         // and the coin is in hand (D-064). Buying fills the empty slot on the spot, and
         // the iron rides on the bearer through death and every crossing, so a world or
         // two of the dark's coin leaves us shod for the deep tiers.
-        if (SmithBestBuy(g) is not null)
+        if (SmithBestBuy(g) is not null || BraceWanted(g))
         {
             var toSmith = NavKey(g, g.World.Overworld, p.Pos, g.World.Smith.Pos, OverworldBlocked(g));
             if (toSmith is not null) return toSmith;
+        }
+
+        // The cure roads (D-098): a mark is lived with until the purse or the soul can
+        // pay it off, then walked off before the next site asks for the body whole. The
+        // hand rides the smith rung above (the brace is his work); the haunting is sung
+        // to rest at the hall door, and the eye is the stillroom's longest afternoon.
+        if (LayingWanted(g))
+        {
+            var toSkald = NavKey(g, g.World.Overworld, p.Pos, g.World.Skald.Pos, OverworldBlocked(g));
+            if (toSkald is not null) return toSkald;
+        }
+        if (EyeCureWanted(g) && Herbwife(g) is { } healer)
+        {
+            var toHealer = NavKey(g, g.World.Overworld, p.Pos, healer.Pos, OverworldBlocked(g));
+            if (toHealer is not null) return toHealer;
         }
 
         // Take the nearest site still worth entering before the arch.
@@ -629,9 +652,15 @@ public static class JourneyPilot
     /// </summary>
     private static char BenchDigit(Game g)
     {
-        // The stillroom (D-082): only the simples are ours to sell across her table.
+        // The stillroom (D-082): the simples are ours to sell across her table, and
+        // with the sale banked the taken eye is seen to on the same visit (D-098),
+        // the sprig-coin counting toward her own price.
         if (g.TalkNpc?.Id == "npc_herbwife")
-            return g.Player.Herb > 0 ? TradeDigit(g, TradeGood.Herb) : 'z';
+        {
+            if (g.Player.Herb > 0) return TradeDigit(g, TradeGood.Herb);
+            if (EyeCureWanted(g)) return TradeDigit(g, TradeGood.Surgery);
+            return 'z';
+        }
         if (g.Player.Hide > 0) return TradeDigit(g, TradeGood.Hide);
         if (g.Player.RawMeat > 0 && g.Player.Rations < Game.RationCap) return TradeDigit(g, TradeGood.Cook);
         return 'z';
@@ -644,6 +673,48 @@ public static class JourneyPilot
             if (g.TradeOffers[i].Good == good)
                 return (char)('1' + i);
         return 'z';
+    }
+
+    // ---- the cure roads (D-098): a mark carried until it can be paid off ----
+
+    /// <summary>The stillroom's longest work: the taken eye, bought back the moment the purse can meet it.</summary>
+    private static bool EyeCureWanted(Game g) =>
+        g.Player.HasScar(ScarId.TakenEye) && g.Player.Coin >= DeathsToll.EyeCureCoin;
+
+    /// <summary>The smith's jointed work: the crushed hand braced when the coin is in hand.</summary>
+    private static bool BraceWanted(Game g) =>
+        g.Player.HasScar(ScarId.CrushedHand) && g.Player.Coin >= DeathsToll.BraceCoin;
+
+    /// <summary>The pilgrimage: what haunts is sung to rest at the hall door, paid in essence.</summary>
+    private static bool LayingWanted(Game g) =>
+        g.Player.HasScar(ScarId.HauntedLook) && g.Player.Essence >= DeathsToll.LayingEssence;
+
+    /// <summary>
+    /// The essence free to spend at the shrine: the laying's price is held back while the
+    /// haunted look is carried (a hall keeper stands in every world, so the hold is never
+    /// wasted), the same shape as the calling's held Focus (D-099). Without the mark this
+    /// is the whole pool, so an unscarred run raises exactly as it always did.
+    /// </summary>
+    private static int SpendableEssence(Player p) =>
+        p.Essence - (p.HasScar(ScarId.HauntedLook) ? DeathsToll.LayingEssence : 0);
+
+    /// <summary>The talk digit for the skald's laying entry (D-098): the topic count plus the offer's place.</summary>
+    private static char? LayingOfferDigit(Game g)
+    {
+        for (int i = 0; i < g.Offers.Count; i++)
+            if (g.Offers[i].Good == TradeGood.Laying)
+                return (char)('1' + g.Topics.Count + i);
+        return null;
+    }
+
+    /// <summary>The talk digit for the smith's brace entry (D-098), wanted or null: the gear buys above go first.</summary>
+    private static char? SmithBraceDigit(Game g)
+    {
+        if (!BraceWanted(g)) return null;
+        for (int i = 0; i < g.Offers.Count; i++)
+            if (g.Offers[i].Good == TradeGood.Brace)
+                return (char)('1' + g.Topics.Count + i);
+        return null;
     }
 
     // ---- the reclaim (D-065): what a death drops, a life gets one chance to take back ----

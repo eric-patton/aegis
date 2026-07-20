@@ -129,6 +129,11 @@ public static class JourneyRunner
         // drunk where the road hurt, watched by the satchel's own count.
         int draughtsDrawn = 0;
         int draughtsDrunk = 0;
+        // The words (D-091, D-099): graven words taken, wards said, shades called,
+        // watched by the learn-list, the ward clock rising, and the slot filling.
+        int wordsLearned = 0;
+        int wardsSaid = 0;
+        int shadesCalled = 0;
         // The stead's regard at its height (D-076): a per-world Fame, reset at every
         // crossing, so the run's peak is the warmest any one stead came to hold the
         // bearer, watched by the counter's high-water mark on every key.
@@ -199,6 +204,9 @@ public static class JourneyRunner
             int rationsBefore = game.Player.Rations;
             int herbBefore = game.Player.Herb;
             int draughtsBefore = game.Player.Draughts;
+            int spellsBefore = game.Player.Spells.Count;
+            int wardBefore = game.Player.WardTurns;
+            bool shadeBefore = game.Shade is not null;
             game.ApplyKey(key.Value);
             keys.Append(key.Value);
             totalKeys++;
@@ -269,6 +277,11 @@ public static class JourneyRunner
             // swallow only ever falls out on the road.
             if (game.Player.Draughts > draughtsBefore) draughtsDrawn += game.Player.Draughts - draughtsBefore;
             else if (game.Player.Draughts < draughtsBefore) draughtsDrunk += draughtsBefore - game.Player.Draughts;
+            // The words (D-091, D-099): the learn-list only ever grows (a stone read),
+            // the ward clock only rises on the saying, the shade slot fills on the call.
+            wordsLearned += Math.Max(0, game.Player.Spells.Count - spellsBefore);
+            if (game.Player.WardTurns > wardBefore) wardsSaid++;
+            if (game.Shade is not null && !shadeBefore) shadesCalled++;
             // The stead's regard, at its high-water mark (D-076): it resets at each
             // crossing, so the peak is the warmest one stead ever came to hold the bearer.
             maxRegard = Math.Max(maxRegard, game.Regard);
@@ -349,6 +362,9 @@ public static class JourneyRunner
                 CoinFromHerbs: coinFromHerbs,
                 DraughtsDrawn: draughtsDrawn,
                 DraughtsDrunk: draughtsDrunk,
+                WordsLearned: wordsLearned,
+                WardsSaid: wardsSaid,
+                ShadesCalled: shadesCalled,
                 MaxRegard: maxRegard,
                 RegardTitle: SteadRegard.TitleOf(maxRegard),
                 MaxWrath: maxWrath,
@@ -380,6 +396,7 @@ public static class JourneyRunner
             resolvedAs, resolvedCycle, laidCycle, mendedCycle, legendFromBurden,
             hidesTaken, hidesSold, coinFromHides, meatCooked, rationsCooked,
             herbsForaged, herbsSold, coinFromHerbs, draughtsDrawn, draughtsDrunk,
+            wordsLearned, wardsSaid, shadesCalled,
             maxRegard, maxWrath, raidsSuffered);
         return 0;
     }
@@ -451,6 +468,7 @@ public static class JourneyRunner
         int legendFromBurden, int hidesTaken, int hidesSold, int coinFromHides,
         int meatCooked, int rationsCooked, int herbsForaged, int herbsSold, int coinFromHerbs,
         int draughtsDrawn, int draughtsDrunk,
+        int wordsLearned, int wardsSaid, int shadesCalled,
         int maxRegard, int maxWrath, int raidsSuffered)
     {
         var w = Console.Out;
@@ -528,6 +546,8 @@ public static class JourneyRunner
             w.WriteLine($"         the forage: picked {herbsForaged} sprig(s) of herb; sold {herbsSold} for {coinFromHerbs} coin at the stillroom's price (D-074/D-075, D-082).");
         if (draughtsDrawn > 0)
             w.WriteLine($"         the steeping: drew {draughtsDrawn} hale-draught(s) from the satchel's own sprigs; drank {draughtsDrunk} where the road hurt (D-090).");
+        if (wordsLearned > 0)
+            w.WriteLine($"         the words: took {wordsLearned} graven word(s) off the stones; said the ward {wardsSaid} time(s); the shade answered the calling {shadesCalled} time(s) (D-091, D-099).");
         w.WriteLine($"         the stead: came to hold the bearer as {(maxRegard > 0 ? SteadRegard.TitleOf(maxRegard) : "a stranger")} at its warmest "
                     + $"(peak regard {maxRegard}, reset at every crossing) (D-076).");
         w.WriteLine($"         the dens: came to hold the bearer as {(maxWrath > 0 ? RaiderWrath.TitleOf(maxWrath) : "no one at all")} at their most fearful "
@@ -577,6 +597,7 @@ internal sealed record JourneyReport(
     int MeatCooked, int RationsCooked,
     int HerbsForaged, int HerbsSold, int CoinFromHerbs,
     int DraughtsDrawn, int DraughtsDrunk,
+    int WordsLearned, int WardsSaid, int ShadesCalled,
     int MaxRegard, string RegardTitle, int MaxWrath, string WrathTitle, int RaidsSuffered,
     string? Keys,
     List<JourneyCrossingDto> Crossings);

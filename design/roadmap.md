@@ -209,7 +209,7 @@ holes**: two of the four activity families (crime, town-life). Rough fill levels
 - [ ] More workings as the deep bands grow (a word against the dark, a mender's word) (D-091)
 - [ ] Enemy casters, and Will's resist role against them (D-091)
 - [ ] Spellcraft knacks once the craft has a curve worth questioning (D-091)
-- [ ] The pilot learning to read stones and say words (policy increment, D-072/D-082 line) (D-091)
+- [x] The pilot learning to read stones and say words (policy increment, D-072/D-082 line) (D-091) (D-103)
 - [x] Character creation hook: a known word as one possible precious starting thing (D-091 -> D-092)
 - [ ] Spell list / school content design (◇ parking lot)
 
@@ -264,8 +264,10 @@ holes**: two of the four activity families (crime, town-life). Rough fill levels
   and graven kinds, refusing the severed (the laying stays the bearer's choice); full
   guest physics; unravels without weight on fall, release, the bearer's death, and the
   waygate (D-024, D-099, vision §7)
-- [ ] Calling follow-ons: a pilot cast policy (no journey stands a shade yet), a villager
-  noticing the shade, the warder's kinship with the uncanny kinds (D-099)
+- [x] Pilot cast policy: the warded delver + shade doctrine, every journey now reads the
+  stones, says the ward, and stands a shade on uncanny ground (D-103)
+- [ ] Calling follow-ons: a villager noticing the shade, the warder's kinship with the
+  uncanny kinds (D-099)
 - [x] Guest companions: role-cast from world NPCs, can permanently die (D-024, D-097):
   the guest engine (follow, fight to their measure, body-block, 'o' contextual order
   key, tending from the satchel, doors/death-wake shared) plus the first full arc:
@@ -359,6 +361,7 @@ holes**: two of the four activity families (crime, town-life). Rough fill levels
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-19: **D-103 the pilot says the words.** Third lane of the pilot-policies batch, closing the oldest tracked pilot gap (the D-091 stones-and-words line) and D-099's cast-policy follow-on in one doctrine: the warded delver. Every stone in a held site read before climbing out (chest-shaped rung), the ward said with live steel in the word's reach, and on wight/graven ground the calling said instead, the shade released by the second saying once that ground clears (at the base pool the two workings cannot coexist: D-099's designed trade live). Spark and levin stay unsaid; no word opened on an aimed cell. Runner grew the words/wards/shades evidence line. Master: all 5 words, 139 wards, 30 shades, 11302 turns/1 death, twins identical, sim replay exact. Sweep: every seed learns all five, deaths collapse to 0/0/2/3 (five-seed total 24 -> 6): the magic pillar demonstrably carries its weight.
 - 2026-07-19: **D-102 the pilot keeps its feet and its medicine.** Second lane of the pilot-policies batch: stance (D-094) and the steeping (D-090) pressed live for the first time. Footing read off the blood (pressing at two thirds and up, guarded under a third), set free on quiet ground, exactly one bought mid-fight downshift (pressing to guarded, never on an aimed cell, never in the wilds); vials steeped before the herb sale and drunk below a third, the dodge outranking the stopper. The runner's herb ledger untangled (a steeping is not a sale) and the report grew the steeping line. Master seed: two deaths became zero (10105 turns, 11 drawn/9 drunk); twins identical, sim replay exact; sweep re-recorded (6690/5, 6941/7, 7198/6, 6529/6), five-seed death total 27 -> 24.
 - 2026-07-19: **D-101 the pilot walks the cure roads.** First lane of the pilot-policies batch (D-101..D-104). The autopilot pays a carried mark off the moment the price is in hand: the brace folded into the smith errand (gear buys first), the eye into the stillroom errand and bench driver (herbs sold first, the sprig-coin counting toward her price), and the haunted look walked to the skald at the hall door, its 8 essence held back from the shrine's raising while the mark is carried (SpendableEssence, D-099's held-Focus shape; a hall keeper stands in every world so the hold is never wasted). Cli-only, 497 tests green. Master never scars so its baseline held to the byte; seeds 7/99 held to the digit; the two haunted seeds diverged exactly at the cure (seed 1: 6952 turns/7 deaths/13 raids, seed 88888: 6592/6/17, both ending scar-free). New sweep baselines recorded.
 - 2026-07-19: **D-100 stage 2: the roster gathered.** The other two roads open and the leans split the three: mule the banker (bottomless bags, grass stride), courser the racer (grass/hills/forest stride, bags capped 25), fell pony the delver's beast (alone stands the uncanny mouths). The courser is the raiders' stolen animal, given over by a once-per-world steadholder storylet after the camp deed; the fell pony stands the high ground (own worldgen stream, named when first seen) and three breads win it: the one road the stead has no hand in. Mortal-nerved beasts bolt from uncanny mouths and shed the bags at the bearer's feet (bolting is never free coin-safety); the stable is one cycling wood's-edge digit (put-up/lead-out/swap, digit law kept), keeps bags, and the raid does not reach in: the promised deliberate parking. All world-bound; the crossing clears the stable. Save v51 -> v52. 497 tests green (8 new, first-run); twins identical; sim replay exact; every baseline held to the digit (the pilot's steadholder errands predate the camp deed, so no journey meets the courser: the beast lane is honestly pilot-unexercised, covered by the tracked pilot mule policy). The companions pillar stands complete.

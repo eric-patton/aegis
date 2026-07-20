@@ -231,6 +231,35 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-103: The pilot says the words: the warded delver and the called shade (2026-07-19)
+Third lane of the pilot-policies batch, and the one that closes the oldest tracked gap
+(the D-091 roadmap line, plus D-099's own follow-on): no journey had ever read a graven
+stone, said a word, or stood a shade. The doctrine is the warded delver. Every stone in a
+held site is read before climbing out, the same shape as the chest (cleared ground only,
+'g' on the cell, the deep walk the only price), so the learn order falls out of each
+site kind's own leaning and the whole five-word head assembles by the mid tiers. The ward
+is said when live steel stands within the word's reach (SpellRange) in an uncleared site,
+never in the wilds and never re-said over a running clock. On wight and graven ground the
+calling is said instead: the shade walks while the uncanny bodies stand (its doubled blow
+is made for exactly them) and is released by the second saying once that ground clears,
+freeing the held focus back to the ward; at the base pool of 3 the two workings cannot
+coexist (the calling holds 2, the ward asks 2), which is D-099's designed trade playing
+out live rather than a bug. Spark and levin stay unsaid: the fist and bow already answer
+what they would, and a doctrine that casts everything would just be noise. All sayings
+respect the dodge: no word is opened while a wind-up marks the bearer's cell. The driver
+is one 'z' trigger plus a cast-menu digit function that recomputes the same desire, so the
+menu can never wedge. The runner grew the evidence line (words taken, wards said, shades
+answered). Cli-only, 497 tests green, twins hash-identical, sim replay exact (11302 turns,
+1 death, the final head reading spark, veilsight, ward, calling, levin). The results are
+the strongest of the batch: every seed learns all five words, the master says the ward
+139 times and stands 30 shades, and the sweep's deaths collapse (seed 1: 0, seed 7: 0,
+seed 99: 2, seed 88888: 3, the five-seed total falling from 24 to 6): the magic pillar is
+not just exercised now, it demonstrably carries its weight. Turns rise (master 10105 to
+11302) as the honest price of the stone walks and the sayings. Options set aside: casting
+spark or levin (redundant with the bow and fist); keeping the shade walking between sites
+(the release exercises D-099's second-saying path and the focus is worth more in the ward
+on mortal ground).
+
 ### D-102: The pilot keeps its feet and its medicine (2026-07-19)
 Second lane of the pilot-policies batch: the footing (D-094) and the steeping (D-090) were
 both shipped surfaces no journey had ever pressed. The stance doctrine reads the blood:

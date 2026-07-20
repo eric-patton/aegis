@@ -44,6 +44,12 @@ namespace Aegis.Cli;
 /// on quiet ground, and mid-fight only the one-press drop from pressing to guarded is ever
 /// bought at the price of the turn), and a vial or two steeped from its own sprigs at the
 /// stillroom before the rest are sold, drunk where the road hurts.
+/// And it says the words now (D-091, D-099), the warded delver's doctrine: every graven
+/// stone in a held site is read before climbing out (the word goes in for good), the ward
+/// is said when live steel stands within the word's reach, and on wight and graven ground
+/// the calling is said instead, a shade walking the uncanny halls where its doubled blow
+/// pays, released once that ground is cleared so the held focus comes back to the ward.
+/// Spark and levin stay unsaid: the fist and the bow already answer what they would.
 ///
 /// It is a pure function of game state (and the runner's skip-set, which is itself
 /// derived deterministically), so a seeded run is perfectly reproducible: the same seed
@@ -95,6 +101,9 @@ public static class JourneyPilot
         if (g.InTalkMenu && g.TalkNpc?.Kind == NpcKind.Skald)
             return (LayingWanted(g) ? LayingOfferDigit(g) : null) ?? 'z';
         if (g.InAim) return AimDirection(g) ?? 'z';
+        // The words (D-091, D-099): the open cast menu is driven toward the one
+        // working wanted now (release, calling, or ward); anything else closes it.
+        if (g.InCastMenu) return CastMenuDigit(g) ?? 'z';
         // The pack is a menu we drive on purpose too (D-066): wear the best piece
         // owned, one digit at a time, then close. Chest loot lands here unworn
         // whenever the slot it wants was already filled at the forge.
@@ -131,6 +140,11 @@ public static class JourneyPilot
         if (DrinkKey(g) is { } vial) return vial;
         if (StanceKey(g) is { } foot) return foot;
 
+        // The saying (D-091, D-099): open the cast menu when a working is wanted,
+        // never while standing on an aimed cell (the saying costs the turn the
+        // stone would land on; the dodge outranks the word).
+        if (CastKey(g) is { } word) return word;
+
         if (g.Mode == MapMode.Site)
         {
             var site = g.CurrentSite!;
@@ -150,6 +164,9 @@ public static class JourneyPilot
             // holds coin and, in the deep sites, a piece of iron better than any the
             // smith draws, and it costs only the walk back over ground already won.
             if (site.Cleared && LootHere(g) is { } take) return take;
+            // The descent's own prize (D-091): a stone still unread in a held
+            // site is read before climbing out, the word going in for good.
+            if (site.Cleared && StoneKey(g) is { } graven) return graven;
             // Take back a remnant a death left here before climbing out (D-065). Only
             // when the site is cleared, never one we gave up on: chasing coin through
             // the foes that beat us only courts the death that would forfeit it.
@@ -688,6 +705,84 @@ public static class JourneyPilot
             if (g.TradeOffers[i].Good == good)
                 return (char)('1' + i);
         return 'z';
+    }
+
+    // ---- the words (D-091, D-099): the stones read, the ward said, the shade called ----
+
+    /// <summary>A wind-up stands aimed at the bearer's own cell: the one read that outranks everything spendable.</summary>
+    private static bool Aimed(Game g) =>
+        g.LiveMonstersHere.Any(m => m.Intent is { } it && it.TargetCell == g.Player.Pos);
+
+    /// <summary>
+    /// Walk onto a held site's graven stone and set a palm on it (D-091): the word goes
+    /// in for good, knowledge death never takes. Called only on cleared ground, like the
+    /// chest, so the deep cell it waits in costs only the walk.
+    /// </summary>
+    private static char? StoneKey(Game g)
+    {
+        if (g.CurrentSite is not { StonePos: { } stone, StoneRead: false }) return null;
+        var p = g.Player;
+        if (p.Pos == stone) return 'g';
+        return NavKey(g, g.CurrentMap, p.Pos, stone, LiveFoeCells(g))
+            ?? NavKey(g, g.CurrentMap, p.Pos, stone, Empty);
+    }
+
+    /// <summary>
+    /// The shade is wanted (D-099) on the ground its doubled blow is made for: an
+    /// uncleared site still holding a live wight or graven man, the calling carried,
+    /// no shade already walking, and the pool free to bind the hold.
+    /// </summary>
+    private static bool WantShade(Game g) =>
+        g.Shade is null && g.Player.HasSpell(SpellId.Calling)
+        && g.Mode == MapMode.Site && g.CurrentSite is { Cleared: false }
+        && g.LiveMonstersHere.Any(m => m.Kind is MonsterKind.Wight or MonsterKind.Graven)
+        && g.SpendableFocus >= SpellCatalog.Def(SpellId.Calling).Focus;
+
+    /// <summary>
+    /// A walking shade whose ground is done with it (D-099): the uncanny bodies down or
+    /// the bearer back under open sky. Released by saying the word again (works anywhere),
+    /// which frees the held focus back to the ward.
+    /// </summary>
+    private static bool ShadeDone(Game g) =>
+        g.Shade is not null
+        && (g.Mode != MapMode.Site || g.CurrentSite!.Cleared
+            || !g.LiveMonstersHere.Any(m => m.Kind is MonsterKind.Wight or MonsterKind.Graven));
+
+    /// <summary>
+    /// The ward is wanted (D-091) with live steel inside the word's own reach in an
+    /// uncleared site and no ward already holding. Not in the wilds (a hart lands no
+    /// blow worth thickening the air against), and the spendable pool must meet it,
+    /// which while a shade walks it cannot at the base pool: the doctrine's real trade.
+    /// </summary>
+    private static bool WantWard(Game g)
+    {
+        if (g.Mode != MapMode.Site || g.CurrentSite is not { Cleared: false, Kind: not SiteKind.Wilds }) return false;
+        var p = g.Player;
+        if (!p.HasSpell(SpellId.Ward) || p.WardTurns > 0) return false;
+        if (g.SpendableFocus < SpellCatalog.Def(SpellId.Ward).Focus) return false;
+        return g.LiveMonstersHere.Any(m => Chebyshev(p.Pos, m.Pos) <= Game.SpellRange);
+    }
+
+    /// <summary>'z' when a working (or a release) is wanted now and no stone is due on this cell; the menu driver picks the digit.</summary>
+    private static char? CastKey(Game g)
+    {
+        if (g.Player.Spells.Count == 0 || Aimed(g)) return null;
+        return ShadeDone(g) || WantShade(g) || WantWard(g) ? 'z' : null;
+    }
+
+    /// <summary>The digit for the working wanted in the open cast menu: the release and the calling before the ward, null closes.</summary>
+    private static char? CastMenuDigit(Game g)
+    {
+        if (ShadeDone(g) || WantShade(g)) return SpellDigit(g, SpellId.Calling);
+        if (WantWard(g)) return SpellDigit(g, SpellId.Ward);
+        return null;
+    }
+
+    /// <summary>The cast menu's digit for a carried word: its place in the learn order, which is what the menu lists.</summary>
+    private static char? SpellDigit(Game g, SpellId id)
+    {
+        int i = g.Player.Spells.IndexOf(id);
+        return i >= 0 ? (char)('1' + i) : null;
     }
 
     // ---- the vial and the footing (D-090, D-094): medicine, and the feet ----

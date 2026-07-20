@@ -461,6 +461,42 @@ public static class StoryletCatalog
             ],
         },
 
+        // The light purse (D-123): the loss ledger's consumer, the one D-108
+        // wrote the fact for. Gated on the live net like the luck's talk, so
+        // coin won back across the board ends the reading; the fact stays
+        // history either way. Dry sympathy, no mechanics: the stead prices a
+        // stranger's season aloud, which is all a stead this small ever does.
+        new Storylet
+        {
+            Id = "the-light-purse",
+            Trigger = StoryletTrigger.Talk,
+            Priority = 8,
+            Requires = [new FactPattern("game", "light_purse")],
+            When = g => g.BonesNet <= -Knucklebones.TalkedAboutAt && g.TalkNpc?.Kind == NpcKind.Villager,
+            Lines =
+            [
+                ("They look at your belt before your face, the way stead folk price a stranger's season. \"You are the one feeding the skald's board, then. He plays fair and wins anyway; that is what a house is. My mother said the bones only ever teach the one lesson, and it costs what it costs.\"", LogTone.Info),
+                ("\"No ledger of mine, bearer, and no wrong done. But a stead this small counts what crosses a table aloud, and it has counted yours going one way. Coin spent on a lesson is only wasted if the lesson is.\"", LogTone.Aegis),
+            ],
+        },
+
+        // The round remembered (D-123): the stood round's reader, in the
+        // D-088 discipline: nothing gained and nothing needing to be. The
+        // evening mattered because the lane says so the next day.
+        new Storylet
+        {
+            Id = "the-round-remembered",
+            Trigger = StoryletTrigger.Talk,
+            Priority = 6,
+            Requires = [new FactPattern("game", "round_stood")],
+            When = g => g.TalkNpc?.Kind == NpcKind.Villager,
+            Lines =
+            [
+                ("\"You were at the hall when the horns went round.\" It is not a question. \"My husband came home singing the miller's fence with the verses in the wrong order, and woke up kind about it. A stead remembers who poured, walker. It is a short list, and you are on it.\"", LogTone.Info),
+                ("\"Mark the arithmetic, bearer: five coin, and the lane greets you before you speak. No rung moved and no ledger opened. Some of what a stead keeps is not kept in books.\"", LogTone.Aegis),
+            ],
+        },
+
         // The telling carried (D-088): the rumor fact's first consumer, the
         // hearthtale mattering after the hour it was told. Nothing is gained
         // and nothing needs to be: the payoff is the lane reading differently

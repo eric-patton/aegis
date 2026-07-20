@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round }
 
 /// <summary>
 /// The deterministic game engine. No console, no I/O, no wall clock: state advances
@@ -135,6 +135,9 @@ public sealed class Game
 
     /// <summary>The world's ledger on the hearth game (D-108): net coin won or lost. Per-world, replay-rebuilt.</summary>
     public int BonesNet { get; private set; }
+
+    /// <summary>The stood round (D-123): once per world, because one round an evening is generosity and two is campaigning.</summary>
+    public bool RoundStood { get; private set; }
 
     /// <summary>The keeping's choice menu (D-039), open only at the Hearth itself.</summary>
     public bool InThresholdMenu { get; private set; }
@@ -1556,6 +1559,7 @@ public sealed class Game
         WatchStands = false;
         _risenCount = 0;
         BonesNet = 0;
+        RoundStood = false; // the next hearth has met no one's generosity
         _worldStartTurn = Turn;
         _friendsPriceNamed = false;
         // A fresh world's roster (D-110): these dens have not met the bearer.
@@ -2452,6 +2456,12 @@ public sealed class Game
             // men drink and game already. Always listed, after the deeds, so
             // no digit shifts (D-041).
             offers.Add((TradeGood.Bones, "", $"A cast of knucklebones ({Knucklebones.Stake} coin the throw)"));
+            // The standing round (D-123): carousing's small verb, at the same
+            // hearth. Always listed with a state-read label, so no digit
+            // shifts (D-041).
+            offers.Add((TradeGood.Round, "", RoundStood
+                ? "Stand the room a round (the room drank your health tonight)"
+                : $"Stand the room a round ({Carousing.Price} coin)"));
         }
         return offers;
     }
@@ -3203,6 +3213,39 @@ public sealed class Game
         InTalkMenu = true; // the hearth stays warm: another throw is one digit away
     }
 
+    /// <summary>
+    /// Standing the room a round (D-123): carousing's small verb, an evening's
+    /// warmth bought once per world. Deliberately no rung and no ledger: D-108
+    /// set carousing aside precisely because a coin-for-regard dial cheapens
+    /// the honest roads, so what the round buys is a fact and a warmer lane,
+    /// the stead remembering who poured. Turn-free like every menu.
+    /// </summary>
+    private void TryStandRound()
+    {
+        if (RoundStood)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name} shakes their head, smiling. \"The room has drunk your health once tonight. One round an evening is generosity; two is campaigning.\"");
+            return;
+        }
+        if (Player.Coin < Carousing.Price)
+        {
+            Log.Add(Turn, $"A round for the room is {Carousing.Price} coin, and you hold {Player.Coin}. {TalkNpc!.Name}: \"The hall pours on coin, walker. Goodwill is what the coin buys, not what it takes instead.\"");
+            return;
+        }
+
+        Player.Coin -= Carousing.Price;
+        RoundStood = true;
+        Log.Add(Turn, $"You put {Carousing.Price} coin on the board and stand the room a round. ({Player.Coin} carried)", LogTone.Reward);
+        Log.Add(Turn, "The horns go down the benches hand to hand, and the room warms by one clean measure: the talk loosens, somebody starts the old song about the miller's fence, and for a while the dark outside is only weather.", LogTone.Reward);
+        Log.Add(Turn, BonesNet <= -Knucklebones.TalkedAboutAt
+            ? $"{TalkNpc!.Name} pours yours last and grins. \"Stood on a purse my board has been emptying all evening. That is either character or stubbornness, and the room will drink to both.\""
+            : $"{TalkNpc!.Name} pours yours last. \"A stood round is remembered here longer than the ale lasts. That is the whole trick of it.\"");
+        World.Facts.Add("game", "round_stood", World.SettlementName,
+            $"At the songhall in {World.SettlementName} the bearer stood the room a round, and the evening went warmer for it.");
+        _offers.Clear();
+        _offers.AddRange(BuildOffers(TalkNpc!)); // the label reads the stood round now
+    }
+
     private void HandleTalkMenuKey(char key)
     {
         if (key >= '1' && key <= '0' + _topics.Count)
@@ -3229,6 +3272,7 @@ public sealed class Game
                 case TradeGood.Brace: TryForgeBrace(); break;   // the hand's road back (D-098)
                 case TradeGood.Laying: TryLayHaunting(); break; // the look's road back (D-098)
                 case TradeGood.Bones: TryPlayBones(); break;    // the hearth game (D-108)
+                case TradeGood.Round: TryStandRound(); break;   // the standing round (D-123)
             }
             return;
         }

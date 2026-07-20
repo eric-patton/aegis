@@ -21,3 +21,16 @@ public static class Knucklebones
     /// <summary>Net winnings (either sign) at which a stead this small starts talking.</summary>
     public const int TalkedAboutAt = 9;
 }
+
+/// <summary>
+/// The standing round (D-123): carousing's small verb, kept at the same
+/// hearth the bones are. One round an evening, coin for warmth: no rung
+/// moves and no ledger opens, which is the point. What a stood round buys
+/// is being remembered as the one who poured, and the stead keeps that
+/// where it keeps things not kept in books.
+/// </summary>
+public static class Carousing
+{
+    /// <summary>What a round for the room costs: dearer than a throw, cheaper than a name.</summary>
+    public const int Price = 5;
+}

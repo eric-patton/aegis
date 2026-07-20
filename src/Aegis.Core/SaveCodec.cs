@@ -235,10 +235,14 @@ namespace Aegis.Core;
 /// v65 when D-122 set the locked coffer in the fighting deeps: 'g' on the
 /// coffer's cell now draws lock dice and moves coin and the Sleight skill
 /// where a v64 journal's grab there fell through as nothing.
+/// v66 when D-123 stood the room a round: a new always-listed digit after
+/// the bones (a v65 key there fell through as nothing and now spends coin
+/// and writes a fact), and the stood round and the light purse each put a
+/// new storylet in the talk draws.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 65;
+    public const int Version = 66;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

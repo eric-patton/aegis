@@ -226,10 +226,13 @@ namespace Aegis.Core;
 /// v62 when D-119 staged the blight's and the throne's truth-in-hand endings
 /// as scenes: a v61 journal that stilled the barrow or felled the camp with
 /// the evidence read replays into a modal choice that did not exist.
+/// v63 when D-120 let the unsaid cross: a crossing out of a world with a kept
+/// truth presses silence facts the later worlds carry and retell, and the
+/// retelling's draw shifts the storylet stream a v62 journal never saw.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 62;
+    public const int Version = 63;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

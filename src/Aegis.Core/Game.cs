@@ -1473,6 +1473,12 @@ public sealed class Game
         // lineage, so worldgen stays deterministic per master seed.
         string? prevStory = World.Facts.OfType("story").FirstOrDefault()?.Subject;
 
+        // The unsaid crosses on its own legs (D-120): every truth the bearer
+        // kept at its saying-moment left a wrong story standing, and the whole
+        // count so far is captured here to be pressed into the next world.
+        var carriedSilences = World.Facts.OfType("silence").ToList();
+        var keptTruths = World.Facts.OfType("withheld").ToList();
+
         Cycle++;
         // The walked list already carries this world's name (added above), so the
         // next world's weave avoids every verse of the long song (D-049).
@@ -1574,6 +1580,22 @@ public sealed class Game
                     _ => $"On {World.SettlementName}'s verse-wall one verse is cut deeper than the rest, in the walker's own words, and the singers do not change it.",
                 });
         }
+
+        // The unsaid crosses on its own legs (D-120): a hushed name stills the
+        // songs about the bearer, but the story a kept truth left standing was
+        // never the bearer's song, so it travels through every arch, hushed or
+        // not: you cannot hush what was never said. Old silences carry whole;
+        // each freshly kept truth crosses as the story that stood in its place,
+        // told for true, so the count of unsaid things only ever grows.
+        foreach (var s in carriedSilences)
+            World.Facts.Add("silence", s.Subject, s.Object, s.Detail);
+        foreach (var kept in keptTruths)
+            World.Facts.Add("silence", kept.Subject, kept.Object, kept.Subject switch
+            {
+                "mound_truth" => $"Out of a world called {prevWorld}, a story: {prevSettlement}, the stead that outlasted a barrow's grudge, and the hill that finally lay still. Every teller has it the same way.",
+                "seat_truth" => $"Out of a world called {prevWorld}, a story: the seat at {prevSettlement} avenged, the dens' camp broken above the cairn, and a chief gone under with the debt paid. Every teller has it the same way.",
+                _ => $"Out of a world called {prevWorld}, a story: the shrine-stone at {prevSettlement} that came down as a gift in a hard year, and the hill folk who grudged the giving. Every teller has it the same way.",
+            });
 
         // The long song (D-045): from the third world on, the walked worlds are one
         // song, compounding a verse per crossing, and every stead sings it wrong.

@@ -150,6 +150,25 @@ public static class StoryletCatalog
             ],
         },
 
+        // The unsaid travels too (D-120): a truth kept at its saying-moment left
+        // a wrong story standing, and the wrong story crosses arches the way any
+        // good story does. Once per world, near the houses, the bearer hears it
+        // retold for true by folk with no way to know better, because the one
+        // way to know better stayed unsaid. Deliberately not hushed-gated: the
+        // hushed name stills the songs about the bearer, and this was never one
+        // of those. r0 is the oldest silence in the count.
+        new Storylet
+        {
+            Id = "silence-retold",
+            Trigger = StoryletTrigger.NearHouse,
+            Requires = [new FactPattern("silence")],
+            Lines =
+            [
+                ("By a doorway, a walker off the trade-road is telling a story from over the arch, and the stead leans in, because it is a good one. \"{r0.detail}\"", LogTone.Info),
+                ("\"Told for true, and no one under this sky can say otherwise but you. It crossed on its own legs, bearer: what was never said cannot be hushed. I keep the count of unsaid things, and the count travels.\"", LogTone.Aegis),
+            ],
+        },
+
         // The burden made visible (D-051): the stead lives one season under terms
         // it never swore, and only the Aegis can say whose they are.
         new Storylet

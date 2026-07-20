@@ -77,7 +77,9 @@ and waits for the next moment.
   `world_name`, `settlement`, `rest_point`, `site`, `grievance`, `deed`, `echo`,
   `person`, `wanderer`, `bearer_myth` (D-037); from storylets: `met`, `boon`,
   `noticed`, `counsel` (D-117), `withheld` (D-118, D-119: the bearer knowingly kept a
-  found truth silent at its saying-moment); from templates (D-032, D-035): `story`,
+  found truth silent at its saying-moment), `silence` (D-120: the wrong story a kept
+  truth left standing, pressed across every crossing, hushed or not, and retold in
+  later worlds); from templates (D-032, D-035): `story`,
   `role`, `promise`, `story_complete`, `history`, `evidence`, `coda`.
 - `Subject` is the thing the fact is about (a site id, a settlement name, a storylet id).
 - `Object` is the other party or a coordinate pair, `""` when unary.

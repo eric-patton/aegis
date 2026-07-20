@@ -231,6 +231,37 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-120: The count travels: the unsaid crosses as a silence (2026-07-20)
+The deferral D-118 named and D-119 left with three writers waiting: the withheld
+fact gets its cross-world consumer, and the design rule is that the unsaid crosses
+on its own legs. A truth kept at its saying-moment (the faiths' claim, the blight's
+stilling, the throne's fall) left a wrong story standing, and a standing story
+travels the way any good story does: the crossing captures every withheld fact and
+presses it into the next world as a silence fact whose detail is the wrong story
+told for true (the barrow outlasted, the seat avenged, the stone given), and every
+later crossing carries the whole count forward, so the silences accumulate for the
+rest of the run. Deliberately not hushed-gated, on both the pipe and the surfacing:
+the hushed name stills the songs about the bearer, and the story a kept truth left
+standing was never one of those; you cannot hush what was never said (also the
+mechanical honesty call: an oath must not be a guilt-eraser). One consumer ships:
+silence-retold, a NearHouse storylet, once per world, a walker off the trade-road
+telling the story from over the arch while the stead leans in, and the Aegis naming
+the one person under the sky who could say otherwise ("I keep the count of unsaid
+things, and the count travels"). r0 is the oldest silence in the count. Save v62 ->
+v63 (the retelling shifts the storylet draw a v62 journal never saw). 603 tests
+green (SilenceTests new with five: the pressing, the clean crossing, accumulation
+across arches, the hushed arch carrying it anyway, and the retelling once per
+world; BlightTests +1 end to end: the kept truth answered in the scene crosses as
+a silence). The pilot always answers scenes first-choice and so never keeps a
+truth: journey baselines byte-identical to v62 on all five sweep seeds, twins
+byte-identical, sim replay exact, all reaching cycle 13. Options set aside: gating
+the pipe on the hushed name (rejected above); a talk-topic or songhall surfacing
+(the verse-wall sings the bearer's deeds; this story is nobody's deed, it belongs
+in a stranger's mouth at a doorway); pressing codas generally across worlds (the
+silences are the one thread the bearer chose to own; a general coda pipe is
+mythology-weight work, still deferred from D-116). Deferred: a fifth template;
+the war-profiteer and escalation beats; deeper silence consumers (the count read
+back at the arc's late rungs would be the natural place, when the arc gets there).
 ### D-119: The hill and the cairn: the blight's and the throne's climaxes staged as scenes (2026-07-20)
 The lane D-118 opened, finished: the two remaining plot-beat climaxes convert to
 scenes, so every template's truth-in-hand ending is now a held moment instead of

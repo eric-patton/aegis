@@ -152,6 +152,27 @@ public class BlightTests
     }
 
     [Fact]
+    public void Blight_TruthKept_CrossesAsASilence()
+    {
+        // The unsaid crosses on its own legs (D-120): the curse-story left
+        // standing at the stilling travels through the arch as a silence fact.
+        var game = EvidencedBlightGame();
+        game.Debug_ClearSite(SiteKind.Barrow);
+        AnswerTheHill(game, '2');
+        string blightWorld = game.World.Name;
+
+        game.Debug_SetMode(MapMode.Overworld);
+        game.Debug_ClearCamp();
+        game.Debug_SetPlayerPos(game.World.GatePos);
+        game.Apply(Command.Enter);
+        game.Apply(Command.Enter);
+
+        var silence = Assert.Single(game.World.Facts.OfType("silence"));
+        Assert.Equal("mound_truth", silence.Subject);
+        Assert.Contains(blightWorld, silence.Detail);
+    }
+
+    [Fact]
     public void Blight_StoryEndsOnce_LateEvidence_DoesNotRewriteTheEnding()
     {
         // The throne surfaced this hole (D-112): evidence read only after the

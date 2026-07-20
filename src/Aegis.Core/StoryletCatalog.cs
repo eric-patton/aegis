@@ -272,6 +272,27 @@ public static class StoryletCatalog
             ],
         },
 
+        // The boast come home (D-111): the slew_bearer fact's consumer on the
+        // stead's side. The dens howled a kill the night the bearer fell, and
+        // the stead heard the name in the howling; now the killed stands at
+        // the well. The stead's epistemology holds: den-talk is not believed
+        // at the doors, so the truest boast the dens ever made is the one the
+        // stead laughs off, and only the Aegis and the bearer hold the joke's
+        // other half. Once per world, under the hearthtale's priority.
+        new Storylet
+        {
+            Id = "the-boast-come-home",
+            Trigger = StoryletTrigger.Talk,
+            Priority = 7,
+            Requires = [new FactPattern("nemesis", "slew_bearer")],
+            When = g => g.TalkNpc?.Kind == NpcKind.Villager,
+            Lines =
+            [
+                ("\"There was howling off the hills one night, the long kind they keep for a kill they are proud of, and the name in it was {r0.object}'s, boasting a body by the fires. And the roads still carry you, so that is what a den's word is worth.\" They say it lightly, and watch you a beat too long to mean it lightly.", LogTone.Info),
+                ("\"The stead has the joke backward, bearer, and only we two are in on it. The boast was honest. What it could not count was you getting up.\"", LogTone.Aegis),
+            ],
+        },
+
         // The levy's ask (D-105): the stead's move on the tick given a voice.
         // While the levy stands a villager says what the closed larder means
         // and where its answer is taken; the mechanical answer stays on the

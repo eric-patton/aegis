@@ -146,6 +146,64 @@ public class NemesisTests
         Assert.True(raider.Grudge);
     }
 
+    [Fact]
+    public void TheRaidsTopic_CarriesTheRisenVoice()
+    {
+        var game = new Game(1);
+        EnterCamp(game);
+        var chief = game.Monsters.Single(m => m.Chief);
+        chief.Hp = 1;
+        StrikeDown(game, chief);
+        var heir = game.Monsters.Single(m => m.Alive && m.Chief);
+        game.Apply(Command.Exit);
+
+        NpcTests.BumpNpc(game, game.World.Npcs.First(n => n.Kind == NpcKind.Villager));
+        string answer = game.Topics.Single(t => t.Label == "The goblin raids").Answer;
+        Assert.Contains("a new voice over them", answer);
+        Assert.Contains(heir.Epithet!, answer);
+    }
+
+    [Fact]
+    public void TheRaidsTopic_ReadsTheLeaderlessDens()
+    {
+        var game = new Game(1);
+        foreach (var named in game.Monsters.Where(m => m.Epithet is not null))
+            named.Hp = 0;
+        Assert.False(game.CampCleared);
+
+        NpcTests.BumpNpc(game, game.World.Npcs.First(n => n.Kind == NpcKind.Villager));
+        string answer = game.Topics.Single(t => t.Label == "The goblin raids").Answer;
+        Assert.Contains("no voice leads them now", answer);
+    }
+
+    [Fact]
+    public void TheBoast_ReachesTheWell_AndIsLaughedOffOnce()
+    {
+        var game = new Game(1);
+        EnterCamp(game);
+        var chief = game.Monsters.Single(m => m.Chief);
+        foreach (var other in game.Monsters.Where(m => m.Alive && m != chief && m.SiteId == "goblin-camp"))
+            other.Hp = 0;
+        chief.Pos = OpenAt(game, game.Player.Pos, 1);
+        game.Player.Hp = 1;
+        for (int i = 0; i < 20 && game.Player.Deaths == 0; i++) game.Apply(Command.Wait);
+        Assert.True(chief.SlewBearer);
+
+        var villagers = game.World.Npcs.Where(n => n.Kind == NpcKind.Villager).Take(2).ToList();
+        for (int i = 0; i < 5 && !game.Log.Entries.Any(e => e.Text.Contains("what a den's word is worth")); i++)
+        {
+            NpcTests.BumpNpc(game, villagers[i % villagers.Count]);
+            game.ApplyKey(' ');
+        }
+        Assert.Contains(game.Log.Entries,
+            e => e.Text.Contains("what a den's word is worth") && e.Text.Contains($"{chief.Epithet}'s"));
+
+        // Once per world: the well does not repeat the joke.
+        NpcTests.BumpNpc(game, villagers[1]);
+        game.ApplyKey(' ');
+        Assert.Single(game.Log.Entries, e => e.Text.Contains("what a den's word is worth"));
+    }
+
     private static void EnterCamp(Game game)
     {
         game.Debug_SetPlayerPos(game.World.CampSite.OverworldPos);

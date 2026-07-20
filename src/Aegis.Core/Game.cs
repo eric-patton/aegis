@@ -2038,7 +2038,15 @@ public sealed class Game
                 1 => " And once since you walked in they have come again by night. The grain gone prices what is left.",
                 _ => $" And {Raids} times since you walked in they have come by night. Every raid prices the bread the dearer.",
             };
-            topics.Add(("The goblin raids", $"\"{grievance.Detail} We have fed them to keep the peace. It has not bought much peace.{raided}{crowded}\""));
+            // The roster read from the doors (D-111): the stead speaks what it
+            // can perceive of the dens' order, a risen voice over the fires or
+            // none at all. The scar stays off this list; no stead can see it.
+            string order = CampChief is { Rose: true, Epithet: { } risen }
+                ? $" And the fires have a new voice over them since the old one fell: {risen}, the talk says now. A change of voice up there has never yet meant a change of appetite."
+                : CampChief is null && World.Facts.Exists("nemesis", "chief")
+                    ? " And no voice leads them now, if the night-fires are read right. Leaderless is not gone; it is only quieter about its plans."
+                    : "";
+            topics.Add(("The goblin raids", $"\"{grievance.Detail} We have fed them to keep the peace. It has not bought much peace.{raided}{crowded}{order}\""));
         }
 
         if (World.Facts.Find("rest_point", "shrine") is { } shrine)

@@ -257,6 +257,7 @@ public static class Presenter
             NpcKind.Unbinder => $"{npc.Name}, a wandering {npc.Role}",
             NpcKind.Severed => $"{npc.Name}, {npc.Role} of no stead at all",
             NpcKind.Harrower => $"{npc.Name}, {npc.Role} of the harrow",
+            NpcKind.Peddler => $"{npc.Name}, a peddler on the road",
             _ => $"{npc.Name}, {npc.Role} of {game.World.SettlementName}",
         }, Hue.White);
 
@@ -693,7 +694,14 @@ public static class Presenter
 
         if (game.Mode == MapMode.Overworld)
             foreach (var npc in game.World.Npcs)
-                PutWorld(npc.Pos, 'p', npc.Kind == NpcKind.Severed ? Hue.Magenta : Hue.Green);
+                PutWorld(npc.Pos, 'p', npc.Kind switch
+                {
+                    NpcKind.Severed => Hue.Magenta,
+                    // The cart on the road (D-124): the same folk-glyph, but the
+                    // trader's own color, so the wanderers read apart at a glance.
+                    NpcKind.Peddler => Hue.Yellow,
+                    _ => Hue.Green,
+                });
 
         foreach (var monster in game.LiveMonstersHere)
         {

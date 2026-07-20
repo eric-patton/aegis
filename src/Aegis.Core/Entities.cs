@@ -160,6 +160,14 @@ public sealed class Player
     /// </summary>
     public int Draughts { get; set; }
 
+    /// <summary>
+    /// Small things with a past (D-124): what pilfering pockets off the mantel
+    /// beside the loaf. No one in the stead buys back its own heirlooms; the
+    /// peddler's cart is not curious. On your person like the hides, surviving
+    /// death and the crossing.
+    /// </summary>
+    public int Trinket { get; set; }
+
     // Gear (D-041): the other half of the build. Banked like attributes: the
     // remnant never takes it, and it crosses waygates untouched (vision secs 8, 10).
 
@@ -549,7 +557,7 @@ public enum ReadTier { Blur, Read, Keen }
 /// Harrowers keep the order's house up the valley: the two faiths' folk,
 /// each with their own menu for the same reason the Smith has one.
 /// </summary>
-public enum NpcKind { Villager, Unbinder, Severed, Smith, Skald, Keeper, Harrower }
+public enum NpcKind { Villager, Unbinder, Severed, Smith, Skald, Keeper, Harrower, Peddler }
 
 /// <summary>
 /// A named, placed person (D-031). Static in v1: they stand near their homes and

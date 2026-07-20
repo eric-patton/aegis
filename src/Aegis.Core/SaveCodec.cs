@@ -239,10 +239,14 @@ namespace Aegis.Core;
 /// the bones (a v65 key there fell through as nothing and now spends coin
 /// and writes a fact), and the stood round and the light purse each put a
 /// new storylet in the talk draws.
+/// v67 when D-124 camped the peddler on the road: a new person stands on
+/// the overworld (a v66 journal's step onto that tile now bumps to talk),
+/// pilfering pockets a trinket beside the loaf, and the cart's three
+/// digits (bread, hides, the fence) answer where nothing did.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 66;
+    public const int Version = 67;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

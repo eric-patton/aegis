@@ -8,7 +8,21 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence }
+
+/// <summary>
+/// The cart's counter (D-124): the road's prices. The ration a coin or two
+/// over the stead's board, because carrying bread to the middle of nowhere
+/// is work; the trinket at a fence's honest rate, no questions asked; the
+/// hide a coin over the wood's-edge bench, the arbitrage's first stone
+/// (D-025): the cart resells where hides are wanted.
+/// </summary>
+public static class Peddling
+{
+    public const int RationPrice = 6;
+    public const int TrinketPrice = 7;
+    public const int HideBonus = 1;
+}
 
 /// <summary>
 /// The deterministic game engine. No console, no I/O, no wall clock: state advances
@@ -288,6 +302,9 @@ public sealed class Game
     /// <summary>Whether this world's steadholder has named the friend's price aloud (D-080); once per stead.</summary>
     private bool _friendsPriceNamed;
 
+    /// <summary>Whether this world's peddler has named the cart's indifference to the barred larder (D-124); once per world.</summary>
+    private bool _cartsBreadNamed;
+
     public Npc? TalkNpc { get; private set; }
 
     /// <summary>
@@ -433,6 +450,9 @@ public sealed class Game
 
     /// <summary>The price the current buyer pays for herbs: the stillroom's if the herbwife is across the bench.</summary>
     private int HerbPriceHere => TalkNpc?.Id == "npc_herbwife" ? StillroomHerbPrice : HerbPrice;
+
+    /// <summary>The price the current buyer pays for hides (D-124): the cart's coin over the bench, since the cart resells where hides are wanted.</summary>
+    private int HidePriceHere => TalkNpc?.Kind == NpcKind.Peddler ? HidePrice + Peddling.HideBonus : HidePrice;
 
     /// <summary>
     /// Fired for every key that reached the engine while running (including menu keys
@@ -1562,6 +1582,7 @@ public sealed class Game
         RoundStood = false; // the next hearth has met no one's generosity
         _worldStartTurn = Turn;
         _friendsPriceNamed = false;
+        _cartsBreadNamed = false; // a fresh world's cart has said nothing yet
         // A fresh world's roster (D-110): these dens have not met the bearer.
         _rosterMet = false;
         _deathHand = null;
@@ -1962,6 +1983,11 @@ public sealed class Game
         World.PilferedHouses.Add(house);
         Player.Rations++;
         Log.Add(Turn, $"The latch lifts under your thumb. A loaf and a heel of cheese, wrapped rough, and out again before the fire notices. ({Player.Rations} carried)", LogTone.Reward);
+        // The small thing off the mantel (D-124): the take the stead would know
+        // on sight, which is why no one in it will ever buy the thing back.
+        // Stolen goods finally exist; the peddler's cart is their buyer.
+        Player.Trinket++;
+        Log.Add(Turn, $"A small thing follows from the mantel, cold in the palm: the kind a stead knows on sight, and a road-cart never asks about. ({Player.Trinket} with a past)", LogTone.Reward);
 
         var witness = World.Npcs.FirstOrDefault(n =>
             Math.Max(Math.Abs(n.Pos.X - Player.Pos.X), Math.Abs(n.Pos.Y - Player.Pos.Y)) <= 4);
@@ -2106,10 +2132,11 @@ public sealed class Game
             NpcKind.Skald => BuildSkaldTopics(),
             NpcKind.Keeper => BuildKeeperTopics(),
             NpcKind.Harrower => BuildHarrowTopics(npc),
+            NpcKind.Peddler => BuildPeddlerTopics(),
             _ => BuildTopics(npc),
         });
         _offers.Clear();
-        if (npc.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald) _offers.AddRange(BuildOffers(npc));
+        if (npc.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald or NpcKind.Peddler) _offers.AddRange(BuildOffers(npc));
 
         if (npc.Kind == NpcKind.Severed)
         {
@@ -2133,6 +2160,18 @@ public sealed class Game
             // First-meeting cycle is recorded before the trigger fires, so recognition
             // content can gate on "met one in an EARLIER world" (D-034).
             if (Player.FirstUnbinderCycle == 0) Player.FirstUnbinderCycle = Cycle;
+        }
+        else if (npc.Kind == NpcKind.Peddler)
+        {
+            // The road's trader (D-124) is of no stead: the greeting formula
+            // that names one would put the cart in the wrong house.
+            Log.Add(Turn, $"{npc.Name} the peddler looks up from the cart, and weighs your pack before your face.");
+            if (!World.Facts.Exists("met", npc.Id))
+            {
+                World.Facts.Add("met", npc.Id, World.SettlementName,
+                    $"{npc.Name}, the peddler camped on the road outside {World.SettlementName}, has spoken with the bearer.");
+                Log.Add(Turn, "\"Buying or selling? Both is best. Stand easy; the mule minds no one.\"");
+            }
         }
         else if (npc.Kind == NpcKind.Harrower)
         {
@@ -2384,6 +2423,16 @@ public sealed class Game
     }
 
     /// <summary>
+    /// The cart's talk (D-124): a trader's topics, short and uncurious, because
+    /// the peddler's whole trade stands on not asking where things come from.
+    /// </summary>
+    private static List<(string Label, string Answer)> BuildPeddlerTopics() =>
+        [
+            ("The road", "\"Longer every year, and the tolls no kinder. I walk it because a stead pays best for what it cannot make and a cart is the only thing that brings it. Ask me what I carry, not where I have been.\""),
+            ("The cart", "\"Everything in it is for sale and nothing in it has a story, and that second part is a service I provide free with the first. You would be surprised what folk pay to have a thing become merely a thing.\""),
+        ];
+
+    /// <summary>
     /// The stead's trade surface (D-036): each seller offers what their role would
     /// actually have. Purchases are talk-menu entries, not a separate mode, and the
     /// menu stays open so buying twice is two key presses. The smith (D-041) sells
@@ -2463,8 +2512,23 @@ public sealed class Game
                 ? "Stand the room a round (the room drank your health tonight)"
                 : $"Stand the room a round ({Carousing.Price} coin)"));
         }
+        // The cart's counter (D-124): the road's three digits. Bread at the
+        // road's price (sold to anyone; the cart keeps no stead's books), the
+        // hides a coin over the wood's-edge bench (D-025's arbitrage, first
+        // stone), and the fence's digit, the one no counter in the stead has.
+        if (npc.Kind == NpcKind.Peddler)
+        {
+            offers.Add((TradeGood.Ration, "", $"Buy a ration ({Peddling.RationPrice} coin, the road's price)"));
+            offers.Add((TradeGood.Hide, "", HideSaleLabel()));
+            offers.Add((TradeGood.Fence, "", FenceLabel()));
+        }
         return offers;
     }
+
+    /// <summary>The fence's entry (D-124): what the pack holds with a past, at the cart's uncurious rate.</summary>
+    private string FenceLabel() => Player.Trinket > 0
+        ? $"Sell what has a past ({Player.Trinket} at {Peddling.TrinketPrice}c, {Player.Trinket * Peddling.TrinketPrice} coin)"
+        : "Sell what has a past (nothing in your pack has one)";
 
     /// <summary>A deed's offer label (D-054): the asking, the waiting, or the standing.</summary>
     private string PledgeLabel(PatronDeedDef def)
@@ -2834,7 +2898,7 @@ public sealed class Game
 
     /// <summary>The hide-sale entry (D-071): what the bench will weigh, and for how much.</summary>
     private string HideSaleLabel() => Player.Hide > 0
-        ? $"Sell your hides ({Player.Hide} at {HidePrice}c, {Player.Hide * HidePrice} coin)"
+        ? $"Sell your hides ({Player.Hide} at {HidePriceHere}c, {Player.Hide * HidePriceHere} coin)"
         : "Sell hides (none cured yet)";
 
     /// <summary>The herb-sale entry (D-074): what the satchel holds, at this buyer's price (D-081).</summary>
@@ -2897,7 +2961,7 @@ public sealed class Game
             return;
         }
         int hides = Player.Hide;
-        int paid = hides * HidePrice;
+        int paid = hides * HidePriceHere;
         Player.Hide = 0;
         Player.Coin += paid;
         Log.Add(Turn, $"You lay {hides} hide{(hides == 1 ? "" : "s")} across the bench. {TalkNpc!.Name} runs a thumb over each, counts, and pays {paid} coin. ({Player.Coin} now)", LogTone.Reward);
@@ -2978,6 +3042,13 @@ public sealed class Game
 
     private void TryBuyRation()
     {
+        // The cart sells bread too (D-124), at the road's price, and to anyone:
+        // the larder's bars and the levy are the stead's books, not the cart's.
+        if (TalkNpc!.Kind == NpcKind.Peddler)
+        {
+            TryBuyRoadRation();
+            return;
+        }
         // The barred larder (D-086): a named thief is not sold bread. The refusal
         // is the rung's own currency, distinct from the price the raids move.
         if (LarderBarred)
@@ -3025,6 +3096,63 @@ public sealed class Game
             _friendsPriceNamed = true;
             Log.Add(Turn, $"{TalkNpc!.Name}: \"A coin off for you, and no argument. The stead does not forget whose hand ended the raids.\"");
         }
+    }
+
+    /// <summary>
+    /// Bread off the cart (D-124): the road's price, flat, and sold to anyone
+    /// with the coin. To a bearer the larder has barred (D-086) this is the
+    /// outcast's grocer, and the cart says so once, plainly: it prices bread,
+    /// not conduct.
+    /// </summary>
+    private void TryBuyRoadRation()
+    {
+        if (Player.Rations >= RationCap)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Your pack says no, whatever your mouth says. Eat some of it first.\"");
+            return;
+        }
+        if (Player.Coin < Peddling.RationPrice)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"{Peddling.RationPrice} coin on the road, and you hold {Player.Coin}. The cart does not run a slate.\"");
+            return;
+        }
+
+        Player.Coin -= Peddling.RationPrice;
+        Player.Rations++;
+        Log.Add(Turn, $"Twice-baked bread and a knot of sausage off the cart's board, dear as road food always is. ({Player.Rations} carried)", LogTone.Reward);
+        if (LarderBarred && !_cartsBreadNamed)
+        {
+            _cartsBreadNamed = true;
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The stead bars its larder to whom it likes. A cart keeps no such books; it prices bread, not conduct.\"");
+        }
+    }
+
+    /// <summary>
+    /// The fence (D-124): the crime family's missing buyer. The cart takes what
+    /// has a past at a flat uncurious rate, all of it in one motion, and asks
+    /// nothing, which is the whole service. The sale writes the stead's second
+    /// secret fact from a deed (beside D-107's lifted purse): its heirlooms
+    /// have gone away down the road, and no one knows whose hand sent them.
+    /// </summary>
+    private void TryFenceTrinkets()
+    {
+        if (Player.Trinket == 0)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Show me a thing that cannot give an account of itself, and I will price the silence in. Your pack holds nothing of the kind today.\"");
+            return;
+        }
+
+        int sold = Player.Trinket;
+        int paid = sold * Peddling.TrinketPrice;
+        Player.Trinket = 0;
+        Player.Coin += paid;
+        Log.Add(Turn, $"You set {sold} small thing{(sold == 1 ? "" : "s")} on the cart's board. {TalkNpc!.Name} turns each once in the light, asks nothing, and counts out {paid} coin. ({Player.Coin} now)", LogTone.Reward);
+        Log.Add(Turn, "\"And now they are merely things. Whatever they were is between you and a mantel somewhere, and I was never part of it.\"");
+        if (!World.Facts.Exists("secret", "fenced_goods"))
+            World.Facts.Add("secret", "fenced_goods", World.SettlementName,
+                $"Small things that once stood on mantels in {World.SettlementName} have gone away down the road in a peddler's cart, and no one knows whose hand sent them.");
+        _offers.Clear();
+        _offers.AddRange(BuildOffers(TalkNpc!)); // the fence's label counts the pack
     }
 
     private void TryBuyMending()
@@ -3256,7 +3384,7 @@ public sealed class Game
             return;
         }
 
-        if (TalkNpc!.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald
+        if (TalkNpc!.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald or NpcKind.Peddler
             && key > '0' + _topics.Count && key <= '0' + _topics.Count + _offers.Count)
         {
             var (good, arg, _) = _offers[key - '1' - _topics.Count];
@@ -3273,6 +3401,15 @@ public sealed class Game
                 case TradeGood.Laying: TryLayHaunting(); break; // the look's road back (D-098)
                 case TradeGood.Bones: TryPlayBones(); break;    // the hearth game (D-108)
                 case TradeGood.Round: TryStandRound(); break;   // the standing round (D-123)
+                // The cart's counter (D-124): hides at the road's coin, and the
+                // fence's digit. The hide sale refreshes the menu itself here,
+                // since the label counts the pack (the D-041 read-true rule).
+                case TradeGood.Hide:
+                    TrySellHides();
+                    _offers.Clear();
+                    _offers.AddRange(BuildOffers(TalkNpc!));
+                    break;
+                case TradeGood.Fence: TryFenceTrinkets(); break;
             }
             return;
         }

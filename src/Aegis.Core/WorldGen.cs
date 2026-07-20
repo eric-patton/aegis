@@ -159,6 +159,9 @@ public sealed class World
     /// <summary>The songhall's keeper (D-054): stands at the hall door, reads the songs' weighing, takes the pledges.</summary>
     public Npc Skald => Npcs.First(n => n.Kind == NpcKind.Skald);
 
+    /// <summary>The road's trader (D-124): camped with a cart outside the stead. The crime family's fence, and the economy's first traveling vendor.</summary>
+    public Npc Peddler => Npcs.First(n => n.Kind == NpcKind.Peddler);
+
     /// <summary>The order's house at the valley's old holy ground (D-114): every world, every tier. The second faith's roof.</summary>
     public Site HarrowSite => Sites.First(s => s.Kind == SiteKind.Harrow);
 
@@ -937,6 +940,42 @@ public static class WorldGen
                 if (overworld[p] == Terrain.Hills && p.Chebyshev(settlement) > 6) highGround.Add(p);
             }
         Pos? wildPony = highGround.Count > 0 ? ponyRng.Pick(highGround) : null;
+
+        // The peddler (D-124): the road's own trader, camped with a cart near
+        // enough the stead to work it and far enough to keep no one's books.
+        // Every world, every tier: the crime family's fence and the economy's
+        // first traveling vendor. Own stream, drawn after every existing draw,
+        // so pinned worlds keep their layouts and only gain a cart by the way.
+        var peddlerRng = new Rng(SeedTree.Derive(worldSeed, "peddler"));
+        string peddlerName = NameGen.Person(ref peddlerRng);
+        var roadside = new List<Pos>();
+        for (int y = 2; y < overworld.Height - 2; y++)
+            for (int x = 2; x < overworld.Width - 2; x++)
+            {
+                var p = new Pos(x, y);
+                if (overworld[p] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills)) continue;
+                int d = p.Manhattan(settlement);
+                if (d < 7 || d > 14) continue;
+                if (npcs.Any(n => n.Pos == p) || gleanings.Contains(p) || herbs.Contains(p)
+                    || p == wildPony || p.Manhattan(unbinderPos) < 5) continue;
+                roadside.Add(p);
+            }
+        Pos peddlerPos = roadside.Count > 0
+            ? peddlerRng.Pick(roadside)
+            : FindDistantSpot(overworld, ref peddlerRng, settlement, minDistance: 7);
+        CarvePathIfDisconnected(overworld, shrine, peddlerPos);
+        npcs.Add(new Npc
+        {
+            Id = "npc_peddler",
+            Name = peddlerName,
+            Role = "peddler",
+            Pos = peddlerPos,
+            Kind = NpcKind.Peddler,
+        });
+        facts.Add("person", "npc_peddler", peddlerName,
+            $"{peddlerName}, a peddler camped with a cart on the road outside {settlementName}.");
+        facts.Add("wanderer", "npc_peddler", $"{peddlerPos.X},{peddlerPos.Y}",
+            $"A peddler called {peddlerName} keeps a cart to the {Game.Compass(shrine, peddlerPos)}. Buys and sells, and is not curious.");
 
         return new World
         {

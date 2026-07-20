@@ -246,10 +246,15 @@ namespace Aegis.Core;
 /// v68 when D-125 gave every foe a second bar: paid blows, the heave, and
 /// the wall now rock a guard that breaks into a stagger (a v67 journal's
 /// long fights resolve differently), and 'a', once nothing, sets a parry.
+/// v69 when D-126 gave the bearer the second bar back: the field's landed
+/// committed blows rock the bearer's guard against Will's brim, stance and
+/// held commitment tilt the pressure, and at the brim the arms refuse two
+/// turns while every blow lands deeper (a v68 journal's hardest fights
+/// resolve differently, and a refused swing spends no turn where one spent).
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 68;
+    public const int Version = 69;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

@@ -40,6 +40,19 @@ public static class GuardBreak
     public const int ParryPressure = 4;
     public const int ParryCost = 2;
     public const int RiposteBonus = 4;
+
+    // The field's pressure on the bearer's own guard (D-126): only a committed,
+    // telegraphed blow that lands rocks it; a nip or an untelegraphed trade is
+    // the field's winded tap. The charge is sheer mass, the heave's mirror.
+    public const int BearerLight = 1;
+    public const int BearerHeavy = 2;
+    public const int BearerCharge = 3;
+
+    // The bearer's break (D-126): the stagger's count (lands as two full turns
+    // without arms; the setting turn's own tick takes the first count), and how
+    // much deeper every blow finds a beaten-open guard.
+    public const int BearerStagger = 3;
+    public const int OpenGuardDeeper = 2;
 }
 
 /// <summary>
@@ -1580,6 +1593,10 @@ public sealed class Game
         Player.LevinTarget = null;
         Player.WardTurns = 0;
         Player.ChilledTurns = 0;
+        // The guard crosses whole (D-126): worn is not wounded, and the far
+        // side of the arch has thrown no blows yet.
+        Player.PostureDmg = 0;
+        Player.StaggerTurns = 0;
         Player.Focus = Player.MaxFocus;
         // The menders' honor (D-048): a world's Unbinder will loosen one more
         // raise for a bearer the songs carry high. The hushed name (D-051)
@@ -4080,6 +4097,12 @@ public sealed class Game
     /// </summary>
     private bool DoParry()
     {
+        // The beaten-open guard (D-126): there is no guard left to set.
+        if (Player.StaggerTurns > 0)
+        {
+            Log.Add(Turn, "Your guard is beaten open and your arms will not answer; your feet still will.", LogTone.Combat);
+            return false;
+        }
         if (ParryMark() is not { } foe)
         {
             Log.Add(Turn, "No blow is shown at your ground; there is nothing for a guard to meet.");
@@ -4125,6 +4148,47 @@ public sealed class Game
         target.GuardBroken = false;
         Log.Add(Turn, $"Your blow goes through the door the broken guard left open.", LogTone.Combat);
         return GuardBreak.RiposteBonus;
+    }
+
+    /// <summary>
+    /// What a landed telegraphed blow puts on the bearer's own guard (D-126).
+    /// Stones are thrown weight against the body, not force through the
+    /// guard's line, so they rock nothing; the cry and the cold are not blows.
+    /// </summary>
+    private static int BearerPressure(IntentKind kind) => kind switch
+    {
+        IntentKind.SunderingCut or IntentKind.GravenFist or IntentKind.ThroatLunge => GuardBreak.BearerHeavy,
+        IntentKind.CrushingBlow or IntentKind.BarrowBlade or IntentKind.SeaxStab
+            or IntentKind.MeasuredCut => GuardBreak.BearerLight,
+        _ => 0,
+    };
+
+    /// <summary>
+    /// The field reads the bearer (D-126, the other half of D-004's contract):
+    /// committed force works a pressing bearer's thinner guard a point harder
+    /// and a set guard a point less (a guarded stance can shrug a light blow
+    /// whole), and a body holding its own wind-up is a body whose guard is
+    /// already down, so the blow that finds it rocks a point deeper. At the
+    /// brim the bearer's guard breaks: the held heave dies in the hands, the
+    /// arms refuse for two turns, and every blow finds the open guard deeper.
+    /// The feet keep working: retreat is the staggered bearer's whole answer.
+    /// </summary>
+    private void RockBearer(int pressure)
+    {
+        if (pressure <= 0 || Player.StaggerTurns > 0 || Player.Hp <= 0) return;
+        pressure += Player.Stance switch { Stance.Pressing => 1, Stance.Guarded => -1, _ => 0 };
+        if (Player.HeaveTarget is not null || Player.LevinTarget is not null) pressure += 1;
+        if (pressure <= 0) return;
+        Player.PostureDmg += pressure;
+        if (Player.PostureDmg < Player.MaxPosture) return;
+        Player.PostureDmg = 0;
+        Player.StaggerTurns = GuardBreak.BearerStagger;
+        if (Player.HeaveTarget is not null)
+        {
+            Player.HeaveTarget = null;
+            Log.Add(Turn, "The wound-up blow dies in your own hands.", LogTone.Danger);
+        }
+        Log.Add(Turn, "Your guard is beaten open: your arms will not answer, and every blow will find you deeper. Your feet still will.", LogTone.Danger);
     }
 
     /// <summary>
@@ -4365,6 +4429,13 @@ public sealed class Game
 
     private bool AttackMonster(Monster target)
     {
+        // The beaten-open guard (D-126): the arms refuse, turn-free. The feet
+        // still work, and the feet are the answer.
+        if (Player.StaggerTurns > 0)
+        {
+            Log.Add(Turn, "Your guard is beaten open and your arms will not answer; your feet still will.", LogTone.Combat);
+            return false;
+        }
         // Under-requirement gear is usable, badly (D-015): the swing costs extra
         // wind on top of the halved edge the item itself reports.
         var weapon = Player.Weapon;
@@ -4718,6 +4789,12 @@ public sealed class Game
     /// </summary>
     private bool DoThrust()
     {
+        // The beaten-open guard (D-126): the arms refuse, turn-free.
+        if (Player.StaggerTurns > 0)
+        {
+            Log.Add(Turn, "Your guard is beaten open and your arms will not answer; your feet still will.", LogTone.Combat);
+            return false;
+        }
         if (Player.Weapon is not { Move: MoveVerb.Reach })
         {
             Log.Add(Turn, "You hold nothing with that kind of reach.");
@@ -4875,6 +4952,12 @@ public sealed class Game
     /// </summary>
     private bool DoHeave()
     {
+        // The beaten-open guard (D-126): the arms refuse, turn-free.
+        if (Player.StaggerTurns > 0)
+        {
+            Log.Add(Turn, "Your guard is beaten open and your arms will not answer; your feet still will.", LogTone.Combat);
+            return false;
+        }
         if (Player.Weapon is null)
         {
             Log.Add(Turn, "A heave wants iron in the hand; bare fists have their own quickness, not this weight.");
@@ -5498,6 +5581,10 @@ public sealed class Game
         // The old blood (D-051): every tenant of the world strikes 1 deeper.
         // On the raw blow, before iron, so armor still earns its keep.
         if (World.Oaths.Contains(OathId.OldBlood)) raw += 1;
+        // The beaten-open guard (D-126): while the stagger runs, every blow
+        // finds the bearer deeper. On the raw blow, before iron, like the
+        // footing: an open guard is the body's failure, not the armor's.
+        if (Player.StaggerTurns > 0) raw += GuardBreak.OpenGuardDeeper;
         // The footing (D-094): guarded turns every landing blow 2 further, and
         // pressing bleeds 2 through. On the raw blow, iron or no iron: footing
         // is the body's own craft, and it guards the unarmored too.
@@ -6079,6 +6166,19 @@ public sealed class Game
         if (Player.ChilledTurns > 0 && --Player.ChilledTurns == 0)
             Log.Add(Turn, "The grave-cold works out of your arms at last.", LogTone.Info);
 
+        // The bearer's stagger (D-126) walks off the same way.
+        if (Player.StaggerTurns > 0 && --Player.StaggerTurns == 0)
+            Log.Add(Turn, "Your feet find their line again, and the guard comes back up whole.", LogTone.Info);
+
+        // Quiet ground settles the guard (D-126): the second bar is fight
+        // pressure, not a wound. Out from under the blows it regathers whole,
+        // the mirror of a foe's bar dying with the foe.
+        if (Player.PostureDmg > 0 && !LiveMonstersHere.Any(m => !m.Dormant))
+        {
+            Player.PostureDmg = 0;
+            Log.Add(Turn, "Out from under the blows, your guard settles whole.", LogTone.Info);
+        }
+
         if (Mode == MapMode.Overworld && Player.Hp > 0)
             _storylets.TryFire(this, StoryletTrigger.AmbientTurn);
 
@@ -6169,6 +6269,14 @@ public sealed class Game
                     if (monster.Kind == MonsterKind.Goblin) roll = RaiderRoster.Armed(monster.Grudge, RaiderWrath.Steadied(Wrath, roll));
                     // The grudge arms the dead's (D-106): the dark mirror.
                     if (monster.Kind == MonsterKind.Wight) roll = MoundGrudge.Riled(Grudge, roll);
+                    // The reader (D-126): the thegn alone knows the door a
+                    // beaten-open guard leaves, and gives the point its whole
+                    // arm through it: the riposte's mirror, drilled an age.
+                    if (monster.Kind == MonsterKind.Thegn && Player.StaggerTurns > 0)
+                    {
+                        roll += 2;
+                        Log.Add(Turn, "The sword-thegn sees the beaten-open guard for exactly what it is.", LogTone.Danger);
+                    }
                     int damage = Absorb(roll, telegraphed: true);
                     Player.Hp -= damage;
                     Log.Add(Turn, intent.Kind switch
@@ -6184,6 +6292,9 @@ public sealed class Game
                             : $"The sword-thegn's measured cut falls true for {damage}!",
                         _ => $"The {monster.Name}'s crushing blow lands for {damage}!",
                     }, LogTone.Danger);
+                    // The landed committed blow rocks the bearer's own guard
+                    // (D-126): force through the guard's line, not the blood.
+                    RockBearer(BearerPressure(intent.Kind));
                     // The drag (D-096): the hound's lunge that lands does not
                     // let go: jaws lock and haul the bearer a stride toward
                     // whatever of the pack still stands.
@@ -6873,6 +6984,9 @@ public sealed class Game
                 int damage = Absorb(_combatRng.Range(7, 11), telegraphed: true);
                 Player.Hp -= damage;
                 Log.Add(Turn, $"The war-boar takes you full on the tusks for {damage}: the lane was its whole argument!", LogTone.Danger);
+                // Sheer mass (D-126): the charge rocks the guard the way the
+                // heave rocks a foe's, by weight alone.
+                RockBearer(GuardBreak.BearerCharge);
                 return;
             }
             if (!map.Walkable(next) || Monsters.Any(m => m.Alive && m != monster && m.SiteId == monster.SiteId && m.Pos == next))
@@ -7215,6 +7329,10 @@ public sealed class Game
         Player.LevinTarget = null;
         Player.WardTurns = 0;
         Player.ChilledTurns = 0;
+        // The fall clears the guard with everything else (D-126): the shrine
+        // hands the bearer back standing, feet under them.
+        Player.PostureDmg = 0;
+        Player.StaggerTurns = 0;
         // The calling slips with everything else held (D-099): whatever kept
         // the shade in the world was in the bearer's keeping, and the keeping
         // failed. It is gone before the bearer is.
@@ -7478,6 +7596,8 @@ public sealed class Game
         LevinLoaded: Player.LevinTarget is not null,
         TalkNpc: TalkNpc?.Name ?? "",
         WoundedTurns: Player.WoundedTurns,
+        GuardWorn: Player.PostureDmg,
+        StaggerTurns: Player.StaggerTurns,
         Deaths: Player.Deaths,
         Toll: Player.Toll,
         Scars: string.Join(",", Player.Scars.Select(s => s.ToString().ToLowerInvariant())),
@@ -7633,6 +7753,8 @@ public sealed record Snapshot(
     bool LevinLoaded,
     string TalkNpc,
     int WoundedTurns,
+    int GuardWorn,
+    int StaggerTurns,
     int Deaths,
     int Toll,
     string Scars,

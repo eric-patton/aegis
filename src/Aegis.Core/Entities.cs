@@ -55,6 +55,21 @@ public sealed class Player
     /// <summary>The grave-cold in the arms (D-096): while it runs, melee blows land 2 softer.</summary>
     public int ChilledTurns { get; set; }
 
+    /// <summary>The bearer's own second bar (D-126): the guard, worn by the field's committed blows.</summary>
+    public int PostureDmg { get; set; }
+
+    /// <summary>The bearer's brim (D-126): Will's posture clause (D-015). The humble baseline of 5 gives 8, a carl's discipline; each point of Will above it adds one.</summary>
+    public int MaxPosture => 8 + Math.Max(0, Attributes[Attr.Will] - AttributeSet.Baseline);
+
+    /// <summary>
+    /// The bearer's guard beaten open (D-126): while it runs, the arms refuse
+    /// (no swing, thrust, heave, or parry) and every blow finds the bearer
+    /// deeper. The feet keep working, on purpose: a staggered bearer retreats
+    /// or pays. Set at 3 so the count survives its own turn's tick as two
+    /// full turns without arms, the mirror of a foe's two-turn stagger.
+    /// </summary>
+    public int StaggerTurns { get; set; }
+
     /// <summary>What the footing adds to a struck blow (D-094): melee only, the body's own fight.</summary>
     public int StanceBlow => Stance switch { Stance.Pressing => 2, Stance.Guarded => -2, _ => 0 };
 

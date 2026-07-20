@@ -809,6 +809,11 @@ public static class Presenter
         // The footing (D-094): named only when it leaves the measured default.
         if (p.Stance != Stance.Measured)
             Line($"Stance  {(p.Stance == Stance.Pressing ? "pressing" : "guarded")}", Hue.DarkYellow);
+        // The bearer's own second bar (D-126): shown only while worn or open.
+        if (p.StaggerTurns > 0)
+            Line($"GUARD OPEN ({p.StaggerTurns})", Hue.Red);
+        else if (p.PostureDmg > 0)
+            Line($"Guard   worn {p.PostureDmg}/{p.MaxPosture}", Hue.DarkYellow);
         Line($"Coin    {p.Coin}", Hue.Yellow);
         Line($"Essence {p.Essence}", Hue.Cyan);
         if (p.Rations > 0) Line($"Rations {p.Rations}", Hue.Green);

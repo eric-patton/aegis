@@ -669,6 +669,10 @@ public static class Presenter
                 MonsterKind.Thegn => 't',
                 _ => 'g',
             };
+            // The chief told apart on the map (D-113): the roster's leader is a
+            // named figure with rank worn as hide, so the eye gets what the ear
+            // already has. Capital letter, same colors: rank, not a new kind.
+            if (monster.Chief) ch = char.ToUpperInvariant(ch);
             var calm = monster.Kind switch
             {
                 MonsterKind.Wight => Hue.Cyan,

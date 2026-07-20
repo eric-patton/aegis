@@ -224,6 +224,51 @@ public static class StoryletCatalog
                 "The debt was paid down to nothing and the stead marked it at the well: the naming ended, the book kept open at both lines."),
         },
 
+        // The mended page (D-113): the made_right fact's consumer in its turn,
+        // the roadmap's "stead remembering the one who made right." Not a
+        // clean slate: the stead keeps the mend where it shows, deliberately,
+        // because a stead's memory is its only wall. Fires on a later talk
+        // than the making-right itself (it requires the fact that beat writes),
+        // so the remembering reads as remembering, not as the event.
+        new Storylet
+        {
+            Id = "the-mended-page",
+            Trigger = StoryletTrigger.Talk,
+            Priority = 8,
+            Requires = [new FactPattern("shame", "made_right")],
+            When = g => g.TalkNpc?.Kind == NpcKind.Villager,
+            Lines =
+            [
+                ("There is a beat, when you come up the lane, where the talk does not change around you, and that quiet was bought. \"We tell it now, you should know. Not the taking, or not only that. The paying back, every door of it, into the right hands. A stead needs one story where the road back stayed open and somebody walked it the whole way.\"", LogTone.Info),
+                ("\"Hear what the stead has made of you, bearer: not a clean page. A mended one, and it keeps the mend where the young can see the stitching. Of every wall this place has raised, that is the one that works.\"", LogTone.Aegis),
+            ],
+        },
+
+        // The two memories (D-113): the made_right thread meeting the roster's
+        // memory. The valley keeps books on both its hillsides: the stead's,
+        // closed by payment at the well, and the dens', opened by a death and
+        // handed down the roster with the office. The villager speaks only
+        // what a stead can perceive (the fires' new voice, the hill's habit
+        // of keeping tallies); the Aegis reads the far book's owner aloud.
+        // Above the mended page while both stand, so the meeting lands first.
+        new Storylet
+        {
+            Id = "the-two-memories",
+            Trigger = StoryletTrigger.Talk,
+            Priority = 9,
+            Requires =
+            [
+                new FactPattern("shame", "made_right"),
+                new FactPattern("nemesis", "risen"),
+            ],
+            When = g => g.TalkNpc?.Kind == NpcKind.Villager,
+            Lines =
+            [
+                ("\"Two sides of this valley keep books, bearer. Ours we closed the day you paid yours out at the well; it is told as a mend now, not a hole. The hill keeps its own, if the old folk are right, and {r1.object} sits over the fires with the old voice's whole tally in hand. No one has ever come down that hill to settle one.\"", LogTone.Info),
+                ("\"The stead cannot read that far, so I will. Your name is in the hill's book, in the hand of the one who inherited it. You have stood in both of this valley's memories now: the kind that can be paid, and the kind that can only be outlived.\"", LogTone.Aegis),
+            ],
+        },
+
         // The door that held (D-109): the cellar secret's consumer, the
         // roadmap's "cellar mattering in a later raid." Gated on both facts,
         // so it can only fire for a bearer the stead's own showed the door

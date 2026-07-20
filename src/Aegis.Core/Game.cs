@@ -2058,9 +2058,19 @@ public sealed class Game
                 : " \"Shut as long as any here remember. Best left so.\"")));
 
         if (World.BarrowSite is { } barrowSite && World.Facts.Find("site", "barrow") is { } barrow)
-            topics.Add(("The long mound", barrow.Detail + (barrowSite.Cleared
+        {
+            // The mound topic reads the grudge aloud (D-106 follow-on, D-113):
+            // while the mark stands, the stead speaks what it can perceive of
+            // it, the lights grown taller and walking, and its own lore about
+            // why a mound stirs. It never names the bearer; the dogs know more
+            // than the stead does, and say as much.
+            string mound = barrowSite.Cleared
                 ? " \"Quiet up there now, first time in living memory. Whoever settled them, the stead owes a debt it cannot name.\""
-                : " \"None go up. Of late there are lights along the mound at night, and the dogs will not face that way.\"")));
+                : Grudge > 0
+                    ? " \"None go up, and of late none need telling. The lights along the crest stand taller than they did, and they walk now, end to end, like something pacing a fence line. The old folk say a mound only stirs when something was carried off it, and that it keeps the count better than any steward. The dogs will not face that way at all any more. They start growling before you reach the gate.\""
+                    : " \"None go up. Of late there are lights along the mound at night, and the dogs will not face that way.\"";
+            topics.Add(("The long mound", barrow.Detail + mound));
+        }
 
         if (World.HollowSite is { } hollowSite && World.Facts.Find("site", "hollow") is { } hollowFact)
             topics.Add(("The stone ring", hollowFact.Detail + (hollowSite.Cleared

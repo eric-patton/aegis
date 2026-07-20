@@ -108,7 +108,9 @@ holes**: none untouched; all four activity families have broken ground (crime op
   exit, the D-023 box closed), and the first faction-hungry story template stands
   (D-112: the Usurped Throne at slice scale, the dens' seat as the taken throne, with
   the roster as its cast and the endings-fire-once rule hardened in both evidence
-  templates). Next in this phase: the War of Faiths, or the roster follow-ons. **Magic, the alternative keystone, landed (D-091):** Mind and Will wake,
+  templates), and the follow-on consumers are cashed (D-113: the mended page, the two
+  memories, the mound topic's grudge, the chief drawn apart). Next in this phase: the
+  War of Faiths (wants a second faith-bearing institution first). **Magic, the alternative keystone, landed (D-091):** Mind and Will wake,
   the caster build exists (graven stones, four workings, Focus, Spellcraft), and the deep
   sites carry a prize beyond coin and gear.
 - **Phase 3: Remaining pillars & stakes.** Companions, the Death's-Toll/scar layer, the
@@ -270,8 +272,9 @@ holes**: none untouched; all four activity families have broken ground (crime op
   in a raid (the door that held: gated on the showing and the raid fact, the raid's morning
   read from inside the count), and the lifted purse colliding with trust (the two ledgers:
   the fence opened at the friend rung to a hand that has been inside it unseen)
-- [ ] Content consuming the `made_right` fact in its turn (D-109): the stead remembering
-  the one who made right, natural fuel for the Nemesis roster's memory
+- [x] Content consuming the `made_right` fact in its turn (D-109; delivered D-113): the
+  mended page, the stead remembering the one who made right, kept where the stitching
+  shows; no coin, no regard, being well-remembered is the reward
 - [x] Faction state-vectors on a coarse tick, transitions write facts + narration hooks (D-023,
   vision §2, D-079; delivered D-089, v39): two causal axes ride the tick: the stead's stores
   (raids drain it, bread's price rides it, bared lofts are the raids' own dark exit, and a
@@ -295,8 +298,10 @@ holes**: none untouched; all four activity families have broken ground (crime op
   mound_restless written); the stead speaks of the taller lights at its doors (the fear
   edge: the mound stilled was already the regard's deed). The designed exit is the
   stilling itself: dead laid to rest keep no ledgers
-- [ ] Mound follow-ons (D-106): the villagers' mound topic reading the grudge aloud; a
-  raiders-mound edge if one earns its keep; a desecration verb beyond the grave-goods
+- [~] Mound follow-ons (D-106): the villagers' mound topic reads the grudge aloud
+  (D-113: the pacing lights and the mound's tally, the bearer never named, the dogs
+  knowing more). Still open: a raiders-mound edge if one earns its keep; a
+  desecration verb beyond the grave-goods
 - [x] Bounded Nemesis-style leader/lieutenant roster with memory (D-023; delivered D-110,
   no save bump): the camp's chief and two lieutenants named from their own seed stream,
   the stead's rumor and a nemesis/chief fact carrying the name from the first morning,
@@ -312,9 +317,13 @@ holes**: none untouched; all four activity families have broken ground (crime op
   as a Talk storylet, laughed off to the standing bearer's face (den-talk is not
   believed, so the stead's epistemology holds). The scar deliberately has no stead-side
   reader: no stead can see it
-- [ ] Roster follow-ons (D-110/D-111): the made_right thread meeting the roster's
-  memory; the chief told apart on the map; a named figure for another faction if one
-  earns its keep
+- [x] Roster follow-ons (D-110/D-111; delivered D-113): the two memories, the
+  made_right thread meeting the roster's memory (the valley's two ledgers read side
+  by side, the risen heir named, one closed by payment and one only outlived); and
+  the chief told apart on the map (capital G among its lowercase raiders)
+- [ ] A named figure for another faction if one earns its keep (D-110, deferred
+  again by D-113: no current faction has an individual to name; the next candidate
+  is whatever institution the War of Faiths brings)
 - [x] Designed conflict exit conditions (no eternal stalemates) (D-023; audited D-111):
   every live conflict has its exit: raids end at the camp-fall or the bared loft, the
   watch stands down three ways, the levy lifts by answers or recovery, shame exits by
@@ -431,6 +440,7 @@ holes**: none untouched; all four activity families have broken ground (crime op
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-20: **D-113 the valley's memories read aloud: the roster follow-ons batch.** Four deferred consumers cashed in one small lane, all perception and stead-voice, no new state, no save bump (v57 holds). The mended page consumes made_right in its turn: the stead remembers the one who made right as a story it keeps on purpose, the mend left where the young can see the stitching; no coin, no regard, the D-109 discipline held. The two memories is the made_right thread meeting the roster's memory: made_right plus nemesis/risen reads the valley's two ledgers side by side, the risen heir named, the villager speaking only what a stead can perceive and the Aegis reading the far book's owner aloud (one book could be paid; the other can only be outlived). The long-mound topic reads the grudge aloud while the mark stands (the pacing lights, the mound's tally, the bearer never named, the dogs growling first), settling back at the stilling. And the chief is told apart on the map: capital G among its lowercase raiders, same colors, rank not a new kind. The conditional named-figure-for-another-faction stays tracked (no current faction has an individual to name). 568 tests green (4 new). Twins identical; master keys bit-identical to the D-112 baseline and the replay exact (the honest expectation: nothing mechanical moved; the two talk beats sit behind shame roads the pilot never walks, pilot-unexercised and test-covered per the D-109/D-111 precedent). Next: the War of Faiths (wants a second faith-bearing institution).
 - 2026-07-20: **D-112 the Usurped Throne: the first faction-hungry template.** The roster's unblock cashed: the third compiled world-story, and the throne reads broadly as designed, because at slice scale the only polity with a personal ruler and live succession is the dens themselves. The seat was taken, not given: the world seed names a dead chief from the story's own stream, the dens' official telling hangs the death on a stead arrow (the lie is load-bearing: every raid since is collected as that debt), a lieutenant is cast as the old blood standing under the usurper, and a stead teller carries the account to the doors. The cairn behind the fires is the evidence, and the flip complicates: the old chief was raising one night of fire against the stead, so the usurper's knife bought the stead its walls and the lie that hides it keeps the raids coming. Endings branch on whether the truth came down before the fall (codas seat_truth_carried / seat_lie_stands); the restoration beats ride D-110's live succession (the old blood back on the seat, or passed over, a story that will keep); the settling with the teller pays the same 3 essence truth or quiet (endings never differ in coin), and never opens if the story was never heard. Eligible tier 2+, so the first world keeps its single crafted story; selection now draws among three, so tier-2+ worlds redeal (save v56 -> v57). The pilot surfaced a real hole: a cairn read after the fall re-armed the truth ending on the next deed's hook, both endings firing in one world; endings now fire once, and the same latent hole is closed in the Creeping Blight. 564 tests green (10 new ThroneTests, 1 new blight regression; fixture masters remapped 42/41/40). Twins identical on master and all four sweep seeds; master keys bit-identical to D-111's journal (the pilot's course is story-agnostic on that seed) and its replay exact, with the throne confirmed firing live in all five of its worlds (5 cairns, 3 truth endings, 2 lie endings, no doubles); the talk beats are pilot-unexercised and test-covered. Still tracked: the War of Faiths (needs a second faith-bearing institution); the roster follow-ons.
 - 2026-07-20: **D-111 the roster read aloud, and the exits audited.** D-110's deferral paid and D-023's last open box closed in one small lane. The goblin-raids topic reads the dens' order live: a risen chief named at the doors ("a new voice over them since the old one fell"), a camp whose named have all fallen read as leaderless, both gated on the live roster; the scar deliberately gets no stead-side reader (the stead speaks only what it can perceive). The kept boast comes home as a Talk storylet, once per world: the stead heard the name in the howling the night the bearer fell and laughs the boast off to the standing bearer's face, den-talk not being believed, so the stead's epistemology holds and only the Aegis says the joke's other half. The exit-conditions audit walked every live conflict against the tick code and found each holds a designed exit (raids/watch/levy/shame/mound/wrath/boldness/nemesis, plus the crossing reset as doctrine backstop): the D-023 box is checked. No new state, no save bump (v56 holds). 553 tests green (3 new NemesisTests). Twins identical; sim replay exact; master and seeds 1/7/88888 byte-identical, seed 99 moved as designed (10056 -> 9918 turns, deaths held): its pilot dies to a named raider and the boast then fires live at the well, confirmed from the full sim log; the topic branches are pilot-unexercised (the pilot never presses the raids digit) and test-covered. Still tracked: the made_right thread meeting the roster; the chief told apart on the map; a named figure for another faction.
 - 2026-07-20: **D-110 the named of the dens: the Nemesis-style roster begun.** D-023's roster clause lands where the fighting is: the camp's world seed names a chief and two lieutenants from their own stream (a new raider weave in NameGen, short and bitten off), the stead's rumor carries the chief's name from the first morning beside a nemesis/chief fact, and rank is worn as hide (+4/+2 Hp over the tier's base). Three memory beats ride the replay, nothing serialized, no save bump (v56 holds): the scar (a named raider bloodied and left alive keeps the wound's author, swept on leaving by ladder or by dying in the camp, nemesis/scarred), the succession (a chief slain over a standing lieutenant hands the camp on, the office coming with the grudge in it, nemesis/risen, the last named falling to the no-heir silence), and the slaying (the very hand that authors the bearer's death keeps the boast, nemesis/slew_bearer). Light teeth on the established rail: a held grudge arms the hand one point after the dice, the dread's mirror, and every grudge is spoken to the bearer's face at the next descent, once per memory. 550 tests green (8 new NemesisTests; one crossing assertion updated for rank-as-hide). Twins identical; sim replay exact. Baselines moved as designed (the tougher camp): master 11846 turns/1 death/26 raids, sweep completes on all four seeds. Pilot-exercise verified from the full sim log: the rumor, the announcement, the named falls, 9 successions and 12 no-heir silences fire live; the scar, the taunts, and the boast are pilot-unexercised (the pilot clears camps whole) and test-covered. New tracked: nemesis fact consumers; the chief told apart on the map; a named figure for another faction if one earns its keep.

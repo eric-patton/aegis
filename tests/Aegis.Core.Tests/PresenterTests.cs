@@ -38,6 +38,46 @@ public class PresenterTests
     }
 
     [Fact]
+    public void TheChief_IsToldApart_OnTheMap()
+    {
+        // The roster follow-on (D-110, delivered D-113): the named leader is
+        // drawn capital among its lowercase raiders, same kind, same colors.
+        var game = new Game(1);
+        game.Debug_SetPlayerPos(game.World.CampSite.OverworldPos);
+        game.Apply(Command.Enter);
+
+        // Stand the chief beside the bearer so both are surely in frame.
+        var chief = game.Monsters.Single(m => m.Chief);
+        chief.Pos = OpenBeside(game, game.Player.Pos);
+
+        var lines = Presenter.Render(game, 120, 40).ToTextLines();
+        int Count(char c)
+        {
+            int n = 0;
+            for (int y = 1; y < 32; y++)
+                foreach (char ch in lines[y].PadRight(120)[..95])
+                    if (ch == c) n++;
+            return n;
+        }
+        Assert.Equal(1, Count('G'));
+        Assert.True(Count('g') > 0, "the unnamed raiders still draw lowercase");
+    }
+
+    private static Pos OpenBeside(Game game, Pos origin)
+    {
+        var map = game.CurrentMap;
+        for (int dx = -1; dx <= 1; dx++)
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                var p = origin.Plus(dx, dy);
+                if (p == origin || !map.Walkable(p)) continue;
+                if (game.Monsters.Any(m => m.Alive && m.Pos == p)) continue;
+                return p;
+            }
+        throw new InvalidOperationException("no open cell beside the bearer");
+    }
+
+    [Fact]
     public void WiderFrame_ShowsMoreMap()
     {
         var game = new Game(42);

@@ -153,6 +153,42 @@ public class MoundTests
     }
 
     [Fact]
+    public void TheMoundTopic_ReadsTheGrudgeAloud()
+    {
+        // The mound follow-on (D-106, delivered D-113): while the mark stands,
+        // the villagers' long-mound topic escalates from the old unease to the
+        // pacing lights and the mound's tally. The bearer is never named; the
+        // dogs are the only ones in the stead who know more.
+        var game = CrossedGame(42);
+        var villager = game.World.Npcs.First(n => n.Kind == NpcKind.Villager);
+
+        NpcTests.BumpNpc(game, villager);
+        string before = game.Topics.Single(t => t.Label == "The long mound").Answer;
+        Assert.Contains("Of late there are lights", before);
+        Assert.DoesNotContain("pacing a fence line", before);
+        game.ApplyKey(' ');
+
+        var barrow = EnterBarrow(game);
+        game.Debug_SetPlayerPos(barrow.ChestPos);
+        game.Apply(Command.Grab);
+        Assert.Equal(1, game.Grudge);
+        game.Debug_SetMode(MapMode.Overworld);
+
+        NpcTests.BumpNpc(game, villager);
+        string during = game.Topics.Single(t => t.Label == "The long mound").Answer;
+        Assert.Contains("pacing a fence line", during);
+        Assert.Contains("keeps the count", during);
+        game.ApplyKey(' ');
+
+        // The stilling settles the grudge, and the talk goes back to a debt owed.
+        game.Debug_ClearSite(SiteKind.Barrow);
+        NpcTests.BumpNpc(game, villager);
+        string after = game.Topics.Single(t => t.Label == "The long mound").Answer;
+        Assert.Contains("Quiet up there now", after);
+        Assert.DoesNotContain("pacing a fence line", after);
+    }
+
+    [Fact]
     public void TheCrossing_LeavesTheGrudgeBehind()
     {
         var game = CrossedGame(42);

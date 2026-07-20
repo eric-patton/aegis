@@ -231,6 +231,45 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-113: The valley's memories read aloud: the roster follow-ons batch (2026-07-20)
+A small consolidation lane after two template-scale sessions, cashing the deferred
+follow-ons of D-106, D-109, D-110 and D-111 in one pass. Four pieces, all perception
+and stead-voice, no new state, no save bump (v57 holds):
+- **The mended page** (Talk, priority 8): the made_right fact's consumer in its turn,
+  the roadmap's "stead remembering the one who made right." Deliberately not a clean
+  slate: the stead keeps the mend where the young can see the stitching, because a
+  stead's memory is its only wall. Fires on a later talk than the well's nod (it
+  requires the fact that beat writes), so remembering reads as remembering. No coin,
+  no regard: the D-109 discipline holds, restitution never turns a profit, and being
+  well-remembered is the whole reward.
+- **The two memories** (Talk, priority 9, above the mended page while both stand):
+  the made_right thread meeting the roster's memory. Requires made_right AND
+  nemesis/risen: a bearer who paid the stead's book shut while the dens' book passed
+  open to a risen heir hears the valley's two ledgers read side by side, the heir
+  named ({r1.object}). Epistemology kept: the villager speaks only what a stead can
+  perceive (the fires' new voice, the hill's habit of keeping tallies); the Aegis is
+  the one who reads the far book's owner aloud.
+- **The mound topic reads the grudge aloud** (D-106 follow-on): while the mark
+  stands, the long-mound topic escalates from the old unease to the pacing lights
+  and the mound's tally ("a mound only stirs when something was carried off it").
+  The bearer is never named; the dogs, who growl before the bearer reaches the
+  gate, are the only ones in the stead who know more. Settles back through the
+  cleared branch at the stilling.
+- **The chief told apart on the map** (D-110 follow-on): the roster's leader draws
+  capital among its lowercase raiders (G among g), same kind, same colors: rank,
+  not a new monster. The eye gets what the ear already had from the rumor.
+The conditional third roster item (a named figure for another faction "if one earns
+its keep") was judged not yet earned and stays tracked: the mound has no individuals
+to name (its dead are a condition, not a cast) and the stead's names are the NPCs
+themselves; the next candidate is whatever institution the War of Faiths brings.
+Verification: 568 tests green (2 new FactConsumerTests, 1 new MoundTests, 1 new
+PresenterTests). Twins identical; the master key journal came out bit-identical to
+the D-112 baseline and its sim replay exact (13 cycles / 11846 turns / 1 death /
+12560 keys), which is the honest expectation: every piece is presentation or
+stead-voice, and the two talk beats are shame-gated roads the pilot never walks
+(it robs no doors), so they are pilot-unexercised and test-covered, the D-109/D-111
+precedent.
+
 ### D-112: The Usurped Throne: the first faction-hungry template, cast on the dens (2026-07-20)
 The roster's unblock cashed: the third compiled world-story (template 1 of
 design/story/world-story-templates.md sec 5), and the spec's own clause that "throne

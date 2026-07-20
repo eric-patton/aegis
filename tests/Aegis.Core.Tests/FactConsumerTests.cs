@@ -154,6 +154,95 @@ public class FactConsumerTests
         Assert.DoesNotContain(game.Log.Entries, e => e.Text.Contains("line theirs is missing"));
     }
 
+    [Fact]
+    public void TheMendedPage_IsHowTheSteadRemembers()
+    {
+        // The made_right fact's consumer in its turn (D-113): on a later talk
+        // than the well's nod, the stead is heard telling the paying-back as
+        // a story it keeps on purpose.
+        var game = MadeRightGame();
+        var villagers = game.World.Npcs.Where(n => n.Kind == NpcKind.Villager).Take(2).ToList();
+        TalkUntil(game, villagers, "see the stitching");
+
+        // Without a risen chief, the valley's far book stays unread.
+        Assert.DoesNotContain(game.Log.Entries, e => e.Text.Contains("valley's memories"));
+
+        // Once per world: the stead tells it, it does not recite it.
+        game.ApplyKey(' ');
+        NpcTests.BumpNpc(game, villagers[1]);
+        game.ApplyKey(' ');
+        Assert.Single(game.Log.Entries, e => e.Text.Contains("see the stitching"));
+    }
+
+    [Fact]
+    public void TheTwoMemories_SetTheValleysBooksSideBySide()
+    {
+        // The made_right thread meeting the roster's memory (D-113): a bearer
+        // who paid the stead's book shut while the dens' book passed, open,
+        // to a risen heir, hears both read side by side, the heir named.
+        var game = MadeRightGame();
+
+        game.Debug_SetPlayerPos(game.World.CampSite.OverworldPos);
+        game.Apply(Command.Enter);
+        var chief = game.Monsters.Single(m => m.Chief);
+        chief.Hp = 1;
+        StrikeDown(game, chief);
+        var heir = game.Monsters.Single(m => m.Alive && m.Chief);
+        Assert.True(game.World.Facts.Exists("nemesis", "risen"));
+        game.Apply(Command.Exit);
+
+        var villagers = game.World.Npcs.Where(n => n.Kind == NpcKind.Villager).Take(2).ToList();
+        TalkUntil(game, villagers, "valley's memories");
+        Assert.Contains(game.Log.Entries,
+            e => e.Text.Contains("come down that hill to settle one") && e.Text.Contains(heir.Epithet!));
+    }
+
+    /// <summary>A bearer named, confronted, and paid down to nothing: made_right stands.</summary>
+    private static Game MadeRightGame()
+    {
+        var game = new Game(42);
+        game.Player.Coin = 0;
+        ShameTests.RobDoors(game, 3);
+        var villagers = game.World.Npcs.Where(n => n.Kind == NpcKind.Villager).Take(2).ToList();
+        NpcTests.BumpNpc(game, villagers[0]);
+        game.ApplyKey(' ');
+
+        game.Player.Coin = SteadShame.RepayCoin * 3;
+        game.Debug_SetPlayerPos(game.World.ShrinePos.Plus(0, -2));
+        for (int i = 0; i < 3; i++) game.Apply(Command.Grab);
+        Assert.Equal(0, game.Shame);
+
+        TalkUntil(game, villagers, "a nod is a document");
+        Assert.True(game.World.Facts.Exists("shame", "made_right"));
+        return game;
+    }
+
+    /// <summary>One killing blow: steps into the adjacent target's cell.</summary>
+    private static void StrikeDown(Game game, Monster target)
+    {
+        if (target.Pos.Chebyshev(game.Player.Pos) != 1) target.Pos = OpenAt(game, game.Player.Pos);
+        game.ApplyKey((Math.Sign(target.Pos.X - game.Player.Pos.X), Math.Sign(target.Pos.Y - game.Player.Pos.Y)) switch
+        {
+            (-1, -1) => 'y', (0, -1) => 'k', (1, -1) => 'u',
+            (-1, 0) => 'h', (1, 0) => 'l',
+            (-1, 1) => 'b', (0, 1) => 'j', _ => 'n',
+        });
+    }
+
+    private static Pos OpenAt(Game game, Pos origin)
+    {
+        var map = game.CurrentMap;
+        for (int dx = -1; dx <= 1; dx++)
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                var p = origin.Plus(dx, dy);
+                if (p == origin || !map.Walkable(p)) continue;
+                if (game.Monsters.Any(m => m.Alive && m.Pos == p)) continue;
+                return p;
+            }
+        throw new InvalidOperationException("no open cell beside the bearer");
+    }
+
     /// <summary>
     /// Bumps villagers in turn until the marker line lands. Talk beats take
     /// their turns by priority, one per conversation, so the beat under test
@@ -161,7 +250,7 @@ public class FactConsumerTests
     /// </summary>
     private static void TalkUntil(Game game, IReadOnlyList<Npc> villagers, string marker)
     {
-        for (int i = 0; i < 5 && !game.Log.Entries.Any(e => e.Text.Contains(marker)); i++)
+        for (int i = 0; i < 8 && !game.Log.Entries.Any(e => e.Text.Contains(marker)); i++)
         {
             NpcTests.BumpNpc(game, villagers[i % villagers.Count]);
             game.ApplyKey(' ');

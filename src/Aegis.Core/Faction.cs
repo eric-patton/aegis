@@ -183,6 +183,42 @@ public static class SteadStores
 }
 
 /// <summary>
+/// The stead's levy (D-105): the home faction's first move of its own on the
+/// tick. When the lofts run down to the last measure the stead calls a levy:
+/// what grain is left is spoken for, the larder sells no bread while it
+/// stands, and the steadholder takes the levy's answer instead: coin against
+/// a measure carted in from whoever will sell to a hungry stead. Answering
+/// is a deed the stead perceives, so it earns regard; the levy lifts when
+/// the lofts climb clear again, by answers or by the season's own recovery.
+/// </summary>
+public static class SteadLevy
+{
+    /// <summary>Stores at or below this call the levy: the last measure is spoken for.</summary>
+    public const int CalledAt = 1;
+
+    /// <summary>Stores at or above this lift it: the larder opens again.</summary>
+    public const int LiftedAt = 2;
+
+    /// <summary>What one answered measure costs the bearer: grain bought dear and carted far.</summary>
+    public const int AnswerCoin = 12;
+}
+
+/// <summary>
+/// The stead's watch (D-105): the home faction's second move, posted the
+/// morning after a raid comes greedy. While it stands the raiding nights are
+/// met at the fold walls and turned away with nothing, but watchers must
+/// eat, so the watch costs the lofts a measure a tick: protection now,
+/// hunger later, and left standing long enough it can eat the stead bare
+/// itself. It stands down when the dens' greed breaks (the cull), when the
+/// camp falls, or when there is nothing left to feed it.
+/// </summary>
+public static class SteadWatch
+{
+    /// <summary>What a tick of standing watch eats from the lofts.</summary>
+    public const int Upkeep = 1;
+}
+
+/// <summary>
 /// The dens' boldness (D-089): the raider faction's internal state axis, and
 /// deliberately a derived one: nights of unanswered plunder embolden the dens
 /// and raiders slain cow them, so the axis is causal by construction and

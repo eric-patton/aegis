@@ -45,16 +45,20 @@ public class RaidsTests
     [Fact]
     public void TheRaids_EndWhenTheLoftsBareOut()
     {
+        // Since D-105 the stead is not passive on the way down: the second
+        // raid comes greedy and posts the watch, so the later nights are
+        // turned away, and it is the watch's own upkeep that walks the lofts
+        // to the boards. The dark exit still closes the tick, by the stead's
+        // own move now rather than the raiders' last ride.
         var game = new Game(42);
         int priceBefore = game.RationPrice;
         Wait(game, SteadRaids.TickTurns * 6);
 
-        // Four raids (one plain, three greedy) bare the lofts; the dark exit closes the tick.
-        Assert.Equal(4, game.Raids);
+        Assert.Equal(2, game.Raids); // one plain, one greedy; the rest turned
         Assert.Equal(0, game.Stores);
         Assert.Equal(priceBefore + 3, game.RationPrice);
         Assert.True(game.World.Facts.Exists("event", "lofts_bare"));
-        Assert.Contains(game.Log.Entries, e => e.Text.Contains("nothing left in this stead worth a night's ride"));
+        Assert.Contains(game.Log.Entries, e => e.Text.Contains("eaten the stead bare"));
     }
 
     [Fact]

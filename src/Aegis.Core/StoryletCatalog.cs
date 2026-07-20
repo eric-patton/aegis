@@ -200,6 +200,26 @@ public static class StoryletCatalog
                 "The stead said its piece to the bearer's face: three sills robbed, the name given at the well, the road named as theirs to keep to."),
         },
 
+        // The levy's ask (D-105): the stead's move on the tick given a voice.
+        // While the levy stands a villager says what the closed larder means
+        // and where its answer is taken; the mechanical answer stays on the
+        // steadholder's own digit, a deliberate press, never a storylet's
+        // silent hand in the bearer's purse. Gated on the live state, so a
+        // lifted levy ends the asking, and not said to a barred thief: the
+        // stead does not ask alms of the hand it named.
+        new Storylet
+        {
+            Id = "the-steads-levy",
+            Trigger = StoryletTrigger.Talk,
+            Priority = 11,
+            When = g => g.LevyStands && g.TalkNpc?.Kind == NpcKind.Villager && !g.LarderBarred,
+            Lines =
+            [
+                ("They glance at the empty sack hanging by their door before they speak. \"You have seen the tally at the well. The lofts are on their last measure, so the stead has called it in: every door gives what it can, and the holder's board takes coin against carted grain, if any is minded to give it. No one here will ask you twice. But no one would forget it, either.\"", LogTone.Info),
+                ("\"Mark this, bearer: the stead is acting now, not only being acted on. A levy is a small move as factions go. It is still a move, and it has left a space in it shaped like your hand.\"", LogTone.Aegis),
+            ],
+        },
+
         // The telling carried (D-088): the rumor fact's first consumer, the
         // hearthtale mattering after the hour it was told. Nothing is gained
         // and nothing needs to be: the payoff is the lane reading differently

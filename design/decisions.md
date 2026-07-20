@@ -231,6 +231,40 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-105: The stead moves: the watch posted and the levy called (2026-07-20)
+The eleventh faction increment, paying D-089's own named deferral: the home faction stops
+only suffering and recovering and makes its first moves on the tick. Two moves, one per
+axis it can read. The WATCH answers the dens' greed: the morning after a raid comes greedy
+(boldness at the bold line), the stead posts a watch on its lofts, and from that tick the
+raiding nights are met at the fold walls and turned away with nothing, so no plunder lands
+and the dens' greed stops compounding; but watchers must eat, a measure of upkeep per tick
+from the very lofts they guard, so the move is a real trade (protection now, hunger later)
+and never a free damper. Left standing long enough the watch bares the lofts itself, the
+stead's own move walking into D-089's dark exit by another road ("eaten the stead bare",
+the lofts_bare fact by a new cause). It stands down when the greed breaks (the cull now
+sends the watch home as well as cowing the dens: wrath's second faction-scale consequence),
+when the camp falls, or when there is nothing left to feed it. The LEVY answers the stores:
+at the last measure the stead calls it, the larder sells no bread while it stands, and the
+steadholder's ration digit becomes the levy's answer (label text only, the same slot,
+D-041's law): coin against a carted measure, stores +1 per answer, a deed the stead
+perceives (+1 regard), the stores axis' first bearer-side input beside the camp-clear. The
+levy lifts at two measures, by answers or by the season's recovery, and the ask is given a
+voice through the storylet channel (Talk, priority 11, gated on the live state and not
+said to a barred thief); the mechanical answer deliberately stays on the steadholder's own
+digit, a consented press, never a storylet's silent hand in the bearer's purse. Every move
+narrated as it lands and written to the graph (watch_posted, levy_called, levy_met). Save
+v52 to v53: raid pacing, sizes, and the larder's meaning all change replayed state past a
+bold raid. Verified the established ways: 507 tests green (ten new in SteadMovesTests plus
+the bare-out test rewritten: two raids and the watch's upkeep close the exit now, not four
+raids); twins hash-identical; sim replay exact (11750 turns, 1 death); the watch shows
+live on every seed (master raids 33 to 26, sweep 11/13/15/14 against 14/23/16/18), deaths
+0/3/2/3 holding. Options set aside: the watch blunting greedy raids to the plain take
+(nets zero against upkeep; turned-away-entirely is the version with a real trade); a
+per-tick levy tax on the bearer (unconsented and unperceivable in advance); posting the
+watch by stored flag in the save (per-world, replay-rebuilt like every ledger). Deferred:
+the levy answer as a pilot policy rung if journeys show levies standing unanswered; the
+raids talk topic reading the watch and levy aloud; a third faction (next).
+
 ### D-104: The pilot works the beasts: courser forward, mule banks (2026-07-19)
 Fourth and last lane of the pilot-policies batch, closing D-100's own follow-on (no journey
 had ever bought, ridden, banked, or met the courser: the steadholder errands all predated

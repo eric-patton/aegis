@@ -246,6 +246,20 @@ public sealed class Game
     /// <summary>The dens' boldness (D-089): derived, causal, replay-free. Plunder emboldens; dead raiders cow.</summary>
     public int Boldness => RaiderBoldness.Of(Raids, Wrath);
 
+    /// <summary>
+    /// Whether the stead's levy stands (D-105): the lofts down to the last
+    /// measure, the larder closed, the steadholder taking coin against carted
+    /// grain instead. Per-world, replay-rebuilt, never serialized.
+    /// </summary>
+    public bool LevyStands { get; private set; }
+
+    /// <summary>
+    /// Whether the stead's watch stands (D-105): posted after a greedy raid,
+    /// turning the raiding nights away at a measure a tick in upkeep.
+    /// Per-world, replay-rebuilt, never serialized.
+    /// </summary>
+    public bool WatchStands { get; private set; }
+
     /// <summary>The turn this world began: the raid tick counts from here, not from cycle 1.</summary>
     private int _worldStartTurn;
 
@@ -1377,6 +1391,8 @@ public sealed class Game
         // tick counts from this arrival, not from the far side of the arch.
         Raids = 0;
         Stores = SteadStores.Max;
+        LevyStands = false;
+        WatchStands = false;
         _worldStartTurn = Turn;
         _friendsPriceNamed = false;
 
@@ -1962,10 +1978,14 @@ public sealed class Game
     private List<(TradeGood, string, string)> BuildOffers(Npc npc)
     {
         var offers = new List<(TradeGood, string, string)>();
+        // While the levy stands (D-105) the larder's digit becomes the levy's
+        // answer: label text only, the same slot, so no digit shifts (D-041).
         if (npc.Id == "npc_steadholder")
             offers.Add((TradeGood.Ration, "", LarderBarred
                 ? "Buy a ration (the larder is barred to you)"
-                : $"Buy a ration ({RationPrice} coin{(FriendsPrice ? ", a friend's price" : "")})"));
+                : LevyStands
+                    ? $"Answer the stead's levy ({SteadLevy.AnswerCoin} coin against a carted measure)"
+                    : $"Buy a ration ({RationPrice} coin{(FriendsPrice ? ", a friend's price" : "")})"));
         // The herbwife keeps a stillroom (D-081): the second bench, proving the
         // wood's-edge pattern (D-071) generalizes. She is the simples' true
         // buyer, and pays the apothecary's price where the woodward pays a
@@ -2539,6 +2559,23 @@ public sealed class Game
         if (LarderBarred)
         {
             Log.Add(Turn, $"{TalkNpc!.Name}: \"Not to you. The stead knows where its loaves went, and my larder is not for the hand that took them.\"");
+            return;
+        }
+        // The levy's answer (D-105): while it stands the larder sells no bread
+        // and takes the levy instead, coin against a carted measure. Answering
+        // is a deed the stead perceives; enough answers lift the levy.
+        if (LevyStands)
+        {
+            if (Player.Coin < SteadLevy.AnswerCoin)
+            {
+                Log.Add(Turn, $"{TalkNpc!.Name}: \"The levy stands, and no bread leaves this board while it does. {SteadLevy.AnswerCoin} coin answers it a measure; less buys nothing here tonight.\"");
+                return;
+            }
+            Player.Coin -= SteadLevy.AnswerCoin;
+            Stores = Math.Min(SteadStores.Max, Stores + 1);
+            Log.Add(Turn, $"You count {SteadLevy.AnswerCoin} coin onto the larder board, and by the next cart it is grain: a measure carried up to {World.SettlementName}'s lofts under your name.", LogTone.Reward);
+            RaiseRegard(1, $"The tally at the well gains a mark, and the mark has your name by it. {World.SettlementName} knows who answered its levy.");
+            if (Stores >= SteadLevy.LiftedAt) LiftLevy();
             return;
         }
         int price = RationPrice;
@@ -4813,6 +4850,76 @@ public sealed class Game
                 $"Raiders led the bearer's beast off {World.SettlementName}'s land by night.");
             Mount = null;
         }
+
+        // The stead moves on its own tick at last (D-105): a sackful night
+        // posts the watch, and the last measure calls the levy.
+        if (bold && !WatchStands && Stores > 0) PostWatch();
+        if (!LevyStands && Stores <= SteadLevy.CalledAt) CallLevy();
+    }
+
+    /// <summary>
+    /// The watch is posted (D-105): the stead's answer to a raid come greedy,
+    /// the home faction acting on the tick instead of only suffering it. From
+    /// this tick the raiding nights are met at the fold walls, and the lofts
+    /// feed the watchers: protection bought with the very grain it guards.
+    /// </summary>
+    private void PostWatch()
+    {
+        WatchStands = true;
+        if (!World.Facts.Exists("event", "watch_posted"))
+            World.Facts.Add("event", "watch_posted", World.SettlementName,
+                $"{World.SettlementName} posted a watch on its lofts after the raiders came greedy.");
+        Log.Add(Turn, $"By morning {World.SettlementName} has had enough of sackful nights: a watch is posted on the lofts, scythes and boar-spears under the eaves. Watchers must eat, and it is the lofts that will feed them.", LogTone.Info);
+    }
+
+    /// <summary>
+    /// The watch holds the raiding night (D-105): the raiders are turned away
+    /// with nothing, so no plunder lands and the dens' greed stops compounding,
+    /// but the watchers eat a measure of the grain they guard. Left standing
+    /// long enough, the watch can bare the lofts itself: the stead's own move
+    /// walking into the raids' dark exit by another road.
+    /// </summary>
+    private void WatchHoldsTheNight()
+    {
+        Stores -= SteadWatch.Upkeep;
+        Log.Add(Turn, $"By night torches stand along {World.SettlementName}'s fold walls, and the raiders find the lofts watched: shouts, one thrown spear, and they melt back into the hills with nothing.", LogTone.Reward);
+        Log.Add(Turn, "The watch must eat, though, and it is the lofts that feed it. Bread stays dear while the spears stand under the eaves.", LogTone.Info);
+        if (Stores == 0)
+        {
+            if (!World.Facts.Exists("event", "lofts_bare"))
+                World.Facts.Add("event", "lofts_bare", World.SettlementName,
+                    $"{World.SettlementName}'s lofts went to the boards feeding its own watch; there is nothing left worth a night's ride.");
+            WatchStands = false;
+            Log.Add(Turn, $"And with that measure the lofts are down to the boards: {World.SettlementName}'s watch has eaten the stead bare guarding it, and the spears go back under the eaves for want of bread. There is nothing left here worth a night's ride.", LogTone.Danger);
+        }
+        if (!LevyStands && Stores <= SteadLevy.CalledAt) CallLevy();
+    }
+
+    /// <summary>
+    /// The levy is called (D-105): the lofts down to the last measure, the
+    /// stead's other move on the tick. What grain is left is spoken for, the
+    /// larder sells no bread while the levy stands, and the steadholder takes
+    /// the levy's answer instead: the bearer's coin against a carted measure,
+    /// the stores axis' first bearer-side input beside the camp-clear.
+    /// </summary>
+    private void CallLevy()
+    {
+        LevyStands = true;
+        if (!World.Facts.Exists("event", "levy_called"))
+            World.Facts.Add("event", "levy_called", World.SettlementName,
+                $"{World.SettlementName} called a levy: the lofts down to the last measure, and what is left spoken for.");
+        Log.Add(Turn, $"Word goes door to door in {World.SettlementName}: the lofts are down to the last measure, and the stead calls a levy. What grain is left is spoken for, and the larder sells no bread while it stands.", LogTone.Danger);
+        Log.Add(Turn, "\"A stead counting its last measure aloud is not asking for pity, bearer. It is asking for grain, and it will remember the hand that brings any.\"", LogTone.Aegis);
+    }
+
+    /// <summary>The levy lifts (D-105): the lofts climbed clear again, by answers or by the season's recovery.</summary>
+    private void LiftLevy()
+    {
+        LevyStands = false;
+        if (!World.Facts.Exists("event", "levy_met"))
+            World.Facts.Add("event", "levy_met", World.SettlementName,
+                $"{World.SettlementName}'s levy was met; the larder opened its board again.");
+        Log.Add(Turn, $"The tally at the well is rubbed out: {World.SettlementName}'s levy is met, and the larder opens its board again.", LogTone.Reward);
     }
 
     /// <summary>
@@ -4842,6 +4949,9 @@ public sealed class Game
         Stores++;
         if (SteadStores.PriceBump(Stores) < bumpBefore)
             Log.Add(Turn, $"Carts creak in from the far fields: {World.SettlementName}'s lofts fill a little, and bread comes a coin back down.", LogTone.Reward);
+        // The season's own recovery lifts a standing levy (D-105) the moment
+        // the lofts climb clear of the last measure.
+        if (LevyStands && Stores >= SteadLevy.LiftedAt) LiftLevy();
         if (Stores == SteadStores.Max)
         {
             World.Facts.Add("event", "lofts_full", World.SettlementName,
@@ -4860,6 +4970,12 @@ public sealed class Game
             World.Facts.Add("deed", "camp_cleared", World.SettlementName,
                 $"The goblin cave was emptied. {World.SettlementName}'s stores are safe.");
             Log.Add(Turn, "The camp falls silent. The raids on " + World.SettlementName + " are ended.", LogTone.Reward);
+            // The watch stands down with the war it was posted for (D-105).
+            if (WatchStands)
+            {
+                WatchStands = false;
+                Log.Add(Turn, $"Word of it will stand {World.SettlementName}'s watch down by nightfall: there is nothing left in the hills to watch for, and the lofts can stop feeding spears.", LogTone.Info);
+            }
             Log.Add(Turn, "\"A deed with weight. It is counted.\"", LogTone.Aegis);
             Log.Add(Turn, $"\"And far to the {Compass(World.CampPos, World.GatePos)} of this cave, something old has unlocked. I feel it the way you feel a door open in a dark house.\"", LogTone.Aegis);
             RaiseRegard(3, $"Word of the ended raids will reach {World.SettlementName} before you do. The stead knows whose hand it was.");
@@ -4937,17 +5053,25 @@ public sealed class Game
     {
         Turn++;
 
-        // The factions act on the coarse tick (D-079, D-089). While the camp
-        // stands and the lofts hold grain, a bold den raids and a cowed one
+        // The factions act on the coarse tick (D-079, D-089, D-105). While the
+        // camp stands and the lofts hold grain, a bold den raids and a cowed one
         // keeps to its dens; not while the bearer is inside the camp itself (a
-        // den under attack defends its own). Once the camp falls the stead
-        // recovers, a measure per tick, until the lofts stand full. Bared
-        // lofts are the raids' own dark exit: nothing left worth a night's ride.
+        // den under attack defends its own). A posted watch meets the raiding
+        // night instead, at a measure of upkeep, and stands down the tick the
+        // dens' greed breaks. Once the camp falls the stead recovers, a measure
+        // per tick, until the lofts stand full. Bared lofts are the raids' own
+        // dark exit: nothing left worth a night's ride.
         if (Turn > _worldStartTurn && (Turn - _worldStartTurn) % SteadRaids.TickTurns == 0)
         {
             if (!CampCleared && Stores > 0 && CurrentSite?.Kind != SiteKind.GoblinCamp)
             {
-                if (Boldness >= RaiderBoldness.RaidingAt) RaidTheStead();
+                if (WatchStands && Boldness < RaiderBoldness.BoldAt)
+                {
+                    WatchStands = false;
+                    Log.Add(Turn, $"The greed has gone out of the hills, and {World.SettlementName} stands its watch down: the fields want the hands back more than the fold walls do.", LogTone.Info);
+                }
+                if (WatchStands) WatchHoldsTheNight();
+                else if (Boldness >= RaiderBoldness.RaidingAt) RaidTheStead();
                 else NoteCowedDens();
             }
             else if (CampCleared && Stores < SteadStores.Max)
@@ -6272,6 +6396,8 @@ public sealed class Game
         Raids: Raids,
         Stores: Stores,
         Boldness: Boldness,
+        LevyStands: LevyStands,
+        WatchStands: WatchStands,
         Shame: Shame,
         ShameTitle: SteadShame.TitleOf(Shame),
         Rations: Player.Rations,
@@ -6424,6 +6550,8 @@ public sealed record Snapshot(
     int Raids,
     int Stores,
     int Boldness,
+    bool LevyStands,
+    bool WatchStands,
     int Shame,
     string ShameTitle,
     int Rations,

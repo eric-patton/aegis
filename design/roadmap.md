@@ -59,8 +59,9 @@ holes**: two of the four activity families (crime, town-life). Rough fill levels
   consumers (D-088, three storylets: the named thief confronted, the hearthtale carried on
   the lane, the deep cellar shown to the stead's own), and the state vectors landed (D-089,
   stores + boldness on the tick: raids embolden and take double, culls cow the dens, bared
-  lofts end the raids, cleared worlds recover); the stead's own tick moves and a third
-  faction remain
+  lofts end the raids, cleared worlds recover), and the stead now moves on the tick itself
+  (D-105, the watch posted against greed and the levy called at the last measure, with the
+  levy answerable by the bearer for regard); a third faction remains
 - Major vision pillars: all broken ground (magic opened D-091; the craft family
   opened D-073/D-090; character creation shipped both stages, D-092/D-093; companions
   shipped whole, D-097/D-099/D-100: guests, the shade, and the beast roster; the
@@ -91,9 +92,9 @@ holes**: two of the four activity families (crime, town-life). Rough fill levels
   The bright ladder is fully paid (D-087, the stead's teaching at the own rung), and the
   faction facts have their first consumers (D-088: the thief confronted, the tale carried,
   the keeping shown), and the keystone clause itself landed (D-089: state vectors on the
-  tick, stores and boldness, with recovery as the exit's aftermath). Next in this phase:
-  the stead acting on the tick, a third faction, and consumers for the `confronted` and
-  `secret` facts. **Magic, the alternative keystone, landed (D-091):** Mind and Will wake,
+  tick, stores and boldness, with recovery as the exit's aftermath), and the stead now
+  acts on it (D-105: the watch and the levy). Next in this phase: a third faction, and
+  consumers for the `confronted` and `secret` facts. **Magic, the alternative keystone, landed (D-091):** Mind and Will wake,
   the caster build exists (graven stones, four workings, Focus, Spellcraft), and the deep
   sites carry a prize beyond coin and gear.
 - **Phase 3: Remaining pillars & stakes.** Companions, the Death's-Toll/scar layer, the
@@ -248,8 +249,15 @@ holes**: two of the four activity families (crime, town-life). Rough fill levels
   (derived: plunder emboldens toward greedy double-raids, raiders slain cow a tick to nothing:
   wrath's first faction-scale consequence). Every transition narrated + written (lofts_bare,
   dens_cowed, lofts_full); Snapshot carries both axes
-- [ ] The stead acting on the tick (D-089): the home faction still only suffers and recovers;
-  its own moves (a levy at low stores, a watch posted at high wrath) are future transitions
+- [x] The stead acting on the tick (D-089; delivered D-105, v53): both named moves landed:
+  the watch posted the morning after a greedy raid (raiding nights turned away with nothing,
+  a measure of upkeep per tick, standing down at the cull, the camp-fall, or the bare loft it
+  can cause itself) and the levy called at the last measure (larder closed, the ration digit
+  becoming the levy's answer: coin against a carted measure, +1 regard, the stores axis'
+  first bearer-side input; lifted by answers or the season's recovery, the ask voiced by
+  storylet)
+- [ ] Levy and watch follow-ons (D-105): a pilot levy-answer rung if journeys show levies
+  standing unanswered; the raids talk topic reading the watch and levy aloud
 - [ ] A third faction, giving the relation matrix its second edge (D-078, D-089)
 - [ ] Bounded Nemesis-style leader/lieutenant roster with memory (D-023)
 - [ ] Designed conflict exit conditions (no eternal stalemates) (D-023)
@@ -362,6 +370,7 @@ holes**: two of the four activity families (crime, town-life). Rough fill levels
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-20: **D-105 the stead moves: the watch posted and the levy called.** D-089's deferral paid: the home faction acts on the tick. The watch answers greed: posted the morning after a sackful raid, it turns the raiding nights away with nothing (no plunder, so the dens' greed stops compounding) at a measure of upkeep per tick, and can bare the lofts itself; it stands down at the cull (wrath's second faction-scale consequence), the camp-fall, or the empty loft. The levy answers the stores: called at the last measure, it closes the larder and turns the ration digit into the levy's answer (coin against a carted measure, +1 regard: the stores axis' first bearer-side input), lifted by answers or recovery, the ask voiced by a Talk storylet gated on live state. All narrated + written (watch_posted, levy_called, levy_met). Save v52 -> v53. 507 tests green (10 new SteadMovesTests, the bare-out test rewritten). Twins identical; sim replay exact (11750 turns/1 death); the watch shows live on every seed (master raids 33 -> 26, sweep 11/13/15/14 vs 14/23/16/18), deaths 0/3/2/3 held. New tracked: a pilot levy-answer rung if journeys show levies standing; the raids topic reading the watch and levy aloud.
 - 2026-07-19: **D-104 the pilot works the beasts.** Fourth and last lane of the pilot-policies batch, closing D-100's follow-on. Courser forward, mule banks: the steadholder's gift claimed the moment the camp breaks, the mule bought with surplus coin at the friend's rung, the purse banked into its bags on the working road (the spook hands it back at uncanny mouths and the bank reloads), the stable turned so the courser's stride leads and the laden mule stands as the raid-proof vault, and the bank brought home before the world-bound bags would forfeit at the arch. Runner grew the roads evidence line. Master: 9 mules, the courser in all 12 worlds, 1244 coin banked, 11886 turns/2 deaths, twins identical, sim replay exact. Sweep: courser in all 8 worlds on every seed, 384-573 banked, deaths 0/3/2/3. The companions pillar is now driven live by every journey; the fell pony's taming stays a tracked follow-on.
 - 2026-07-19: **D-103 the pilot says the words.** Third lane of the pilot-policies batch, closing the oldest tracked pilot gap (the D-091 stones-and-words line) and D-099's cast-policy follow-on in one doctrine: the warded delver. Every stone in a held site read before climbing out (chest-shaped rung), the ward said with live steel in the word's reach, and on wight/graven ground the calling said instead, the shade released by the second saying once that ground clears (at the base pool the two workings cannot coexist: D-099's designed trade live). Spark and levin stay unsaid; no word opened on an aimed cell. Runner grew the words/wards/shades evidence line. Master: all 5 words, 139 wards, 30 shades, 11302 turns/1 death, twins identical, sim replay exact. Sweep: every seed learns all five, deaths collapse to 0/0/2/3 (five-seed total 24 -> 6): the magic pillar demonstrably carries its weight.
 - 2026-07-19: **D-102 the pilot keeps its feet and its medicine.** Second lane of the pilot-policies batch: stance (D-094) and the steeping (D-090) pressed live for the first time. Footing read off the blood (pressing at two thirds and up, guarded under a third), set free on quiet ground, exactly one bought mid-fight downshift (pressing to guarded, never on an aimed cell, never in the wilds); vials steeped before the herb sale and drunk below a third, the dodge outranking the stopper. The runner's herb ledger untangled (a steeping is not a sale) and the report grew the steeping line. Master seed: two deaths became zero (10105 turns, 11 drawn/9 drunk); twins identical, sim replay exact; sweep re-recorded (6690/5, 6941/7, 7198/6, 6529/6), five-seed death total 27 -> 24.

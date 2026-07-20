@@ -185,10 +185,15 @@ namespace Aegis.Core;
 /// pony stands the high ground and 'o' beside it feeds, and mortal beasts
 /// bolt from uncanny mouths, so v51 journals replay differently around all
 /// four.
+/// v53 when D-105 gave the stead its own moves on the tick: a greedy raid
+/// posts a watch that turns later raids and eats the lofts, the last measure
+/// calls a levy that closes the larder and puts its answer on the larder
+/// digit, and the levy's ask enters the talk draws, so a v52 journal that
+/// lived past a bold raid or bought bread at a thin loft replays differently.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 52;
+    public const int Version = 53;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

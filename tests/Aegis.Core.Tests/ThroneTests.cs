@@ -12,13 +12,16 @@ namespace Aegis.Core.Tests;
 public class ThroneTests
 {
     /// <summary>Master seed whose cycle-2 world selects the Usurped Throne.</summary>
-    private const ulong ThroneMaster = 40;
+    // D-116's fourth template redealt the cycle-2 draws: 40 now tells the blight
+    // and 7 the throne.
+    private const ulong ThroneMaster = 7;
 
     [Fact]
     public void Casting_NamesTheOldChief_AndTheClaimantLieutenant()
     {
-        // Tier-2 seed 7 tells the throne directly (probe-pinned, deterministic).
-        var world = WorldGen.Generate(7, tier: 2);
+        // Tier-2 seed 2 tells the throne directly (probe-pinned, deterministic;
+        // seed 7 before D-116's redeal).
+        var world = WorldGen.Generate(2, tier: 2);
         Assert.Equal("usurped-throne", world.Facts.OfType("story").Single().Subject);
         Assert.Equal(8, world.StoryStorylets.Count);
 

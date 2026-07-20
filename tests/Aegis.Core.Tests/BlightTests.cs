@@ -12,7 +12,8 @@ public class BlightTests
 {
     /// <summary>Master seed whose cycle-2 world selects the Creeping Blight.</summary>
     // D-112's third template remapped the cycle-2 draws: 42 now tells the stead
-    // again and 41 the blight.
+    // again and 41 the blight. D-116's fourth template redealt the draws again
+    // and 41 happened to keep telling the blight.
     private const ulong BlightMaster = 41;
 
     [Fact]
@@ -25,6 +26,7 @@ public class BlightTests
             Assert.True(world.Facts.Exists("role", "plaintiff"));
             Assert.False(world.Facts.Exists("history", "mound_curse"));
             Assert.False(world.Facts.Exists("history", "seat_taken"));
+            Assert.False(world.Facts.Exists("history", "schism_stead"));
         }
     }
 
@@ -56,14 +58,25 @@ public class BlightTests
                 Assert.False(a.Facts.Exists("role", "plaintiff"));
                 Assert.False(a.Facts.Exists("history", "mound_curse"));
             }
+            else if (story == "war-of-faiths")
+            {
+                Assert.True(a.Facts.Exists("role", "straddler"));
+                Assert.True(a.Facts.Exists("history", "schism_stead"));
+                Assert.True(a.Facts.Exists("history", "schism_harrow"));
+                Assert.True(a.Facts.OfType("aggressor").Any());
+                Assert.False(a.Facts.Exists("role", "plaintiff"));
+                Assert.False(a.Facts.Exists("history", "mound_curse"));
+                Assert.False(a.Facts.Exists("history", "seat_taken"));
+            }
             else
             {
                 Assert.True(a.Facts.Exists("role", "plaintiff"));
                 Assert.False(a.Facts.Exists("history", "mound_curse"));
                 Assert.False(a.Facts.Exists("history", "seat_taken"));
+                Assert.False(a.Facts.Exists("history", "schism_stead"));
             }
         }
-        Assert.Equal(["creeping-blight", "raided-stead", "usurped-throne"], seen.Order());
+        Assert.Equal(["creeping-blight", "raided-stead", "usurped-throne", "war-of-faiths"], seen.Order());
     }
 
     [Fact]

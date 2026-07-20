@@ -44,7 +44,7 @@ holes**: none untouched; all four activity families have broken ground (crime op
 - Attributes: **6 of 7** mechanically active (D-091 wakes Mind and Will; Presence is the last inert one)
 - Skills: **10 of ~18** (five combat, Hunting from D-070, Cooking from D-073, Survival from D-074, Spellcraft from D-091, Sleight from D-107)
 - Activity families: **wilderness-living core built** (hunting, selling, cooking, foraging: D-070..D-074), the **craft family opened** (cooking D-073; alchemy v1 D-090, the hale-draught), and the **crime family opened** (pilfering D-086; pickpocketing + Sleight D-107); **town life opened** (knucklebones D-108)
-- Launch story templates: **3** built (Raided Stead plus 2 of the 3 named; War of Faiths remains, 4-5 planned)
+- Launch story templates: **4** built (Raided Stead plus all 3 named: Blight, Throne, Faiths; 4-5 planned)
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
@@ -109,10 +109,12 @@ holes**: none untouched; all four activity families have broken ground (crime op
   (D-112: the Usurped Throne at slice scale, the dens' seat as the taken throne, with
   the roster as its cast and the endings-fire-once rule hardened in both evidence
   templates), and the follow-on consumers are cashed (D-113: the mended page, the two
-  memories, the mound topic's grudge, the chief drawn apart). The War of Faiths is
-  scoped (D-114) and its institutions stand (D-115: the order at the harrow, the
-  keeper at the stead's shrine, the founding in history); next in this phase is the
-  template itself, through the compiler seam. **Magic, the alternative keystone, landed (D-091):** Mind and Will wake,
+  memories, the mound topic's grudge, the chief drawn apart). The War of Faiths
+  shipped whole across three sessions: scoped (D-114), its institutions raised
+  (D-115: the order at the harrow, the keeper at the stead's shrine, the founding
+  in history), and the template built (D-116: the whole cast by office, the drawn
+  aggressor, the paired schism accounts, the socket's truth, and the claim said at
+  the shrine), closing the named launch-template list. **Magic, the alternative keystone, landed (D-091):** Mind and Will wake,
   the caster build exists (graven stones, four workings, Focus, Spellcraft), and the deep
   sites carry a prize beyond coin and gear.
 - **Phase 3: Remaining pillars & stakes.** Companions, the Death's-Toll/scar layer, the
@@ -323,9 +325,10 @@ holes**: none untouched; all four activity families have broken ground (crime op
   made_right thread meeting the roster's memory (the valley's two ledgers read side
   by side, the risen heir named, one closed by payment and one only outlived); and
   the chief told apart on the map (capital G among its lowercase raiders)
-- [ ] A named figure for another faction if one earns its keep (D-110, deferred
-  again by D-113; D-115 raised the natural candidate: the harrow's elder, if the
-  War of Faiths template gives the name something to carry)
+- [x] A named figure for another faction if one earns its keep (D-110, deferred
+  again by D-113; answered D-116: the harrow's elder carries the order's claim as
+  its champion, a role fact the whole template hangs on, and the keeper stands as
+  the stead's opposite number)
 - [x] Designed conflict exit conditions (no eternal stalemates) (D-023; audited D-111):
   every live conflict has its exit: raids end at the camp-fall or the bared loft, the
   watch stands down three ways, the levy lifts by answers or recovery, shame exits by
@@ -396,10 +399,10 @@ holes**: none untouched; all four activity families have broken ground (crime op
 - [x] Storylet engine: fact-gated beats, 7 triggers, ~50 storylets (D-030)
 - [x] NPCs: 5 kinds, bump-to-talk, ask-about menus from the fact graph (D-031)
 - [x] World-story template compiler + selection (D-032, D-035, D-040)
-- [~] World-story templates: 3 built (Raided Stead, Creeping Blight, Usurped Throne) (D-032, D-035, D-112)
+- [x] World-story templates: 4 built (Raided Stead, Creeping Blight, Usurped Throne, War of Faiths) (D-032, D-035, D-112, D-116)
 - [x] Story template: Usurped Throne at slice scale (dens' seat, roster-cast, tier 2+) (D-020, D-112)
 - [x] The two-faiths worldgen lane: the order's site (the harrow) and its folk, the keeper cast at the stead's shrine, the founding planted in history, topics both sides (D-114, built D-115)
-- [ ] Story template: War of Faiths (scoped D-114; its institutions now stand, D-115) (D-020)
+- [x] Story template: War of Faiths at slice scale (cast by office on D-115's institutions, tier 2+) (D-020, scoped D-114, built D-116)
 - [ ] Story templates 4-5 (◇ parking lot)
 - [ ] Dialogue-tree scenes with visible skill checks (D-021; storylets are log lines today)
 - [ ] NPC depth: per-role voices, schedules, movement (D-031)
@@ -443,6 +446,7 @@ holes**: none untouched; all four activity families have broken ground (crime op
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-20: **D-116 the War of Faiths: the fourth template, cast by office.** D-114's second lane lands and the named launch-template list closes. The template compiles through the D-032/D-035 seam on D-115's institutions, with a casting principle new to the pool: the whole cast holds offices, not lots (the shrinekeeper and the harrow's elder are the believer-champions, the doorward the silent keeper-of-the-founding-site); only the straddler (a villager of harrow kin who prays both ways) and the aggressor side are drawn. The war at slice scale is a feud not yet bled: one side has stopped arguing and started taking (kerb-stones off the ring, or the offerings off the shrine-stone), the two schism accounts are planted against each other and voiced by their own champions, the evidence reads off the mother-stone's empty socket (two keepers of one rite, a burying winter: the truth complicates both books), and the climax cashes D-115's rumor line on the Rest hook: the elder comes down and says the claim at the shrine, dissolving into shared keeping with the truth in hand (the war that never starts) or shelved on the old answers without it. Ten storylets; endings fire once; the settlings pay 3 essence either way and never open unasked. The compile context grew the full cast (Villagers stays the only drawable pool) and the story compile moved below the faiths in worldgen; save v58 -> v59, tier-2+ worlds re-deal, fixture masters remapped (blight 41 held, throne 7, stead 43, faiths 44). 583 tests green (9 new FaithsTests). Twins byte-identical and journals replay exact through sim on all five sweep seeds, all reaching cycle 13; the doors beat fired live three times in the master's twelve worlds, the rest pilot-unexercised and test-covered. Deferred: the war-profiteer optional role; escalation beats on a longer fuse; codas feeding cross-world mythology weight.
 - 2026-07-20: **D-115 the two-faiths worldgen lane: the harrow raised, the keeper cast.** D-114's first lane built to spec: the harrow (new SiteKind and terrain, glyph 'A') stands up the valley in every world at every tier, an authored peaceful room in the songhall's mold holding the tended fire and the mother-stone beside its empty socket, the founding fact planted in generated history (the shrine-stone came down off the harrow's ring: lent by their telling, given by ours). Cast: the elder and the doorward at the harrow's door on plain ground, the shrinekeeper at the shrine's diagonal shoulder (never a cardinal, so the rest point's approaches stay clear). Both sides speak: the keeper carries the stead's reading and the rumor line (the villagers' nine digits are full in a deep world, so the stead's side lives where it institutionally belongs), the elder the debt reading and the custody claim, the doorward the shorter answers. War, aggressor, and schism accounts deliberately absent (template-time). Save v57 -> v58, worlds re-deal. 574 tests green (5 new HarrowTests). Twins byte-identical and journals replay exact through sim on all five sweep seeds, all reaching cycle 13. Two live finds fixed: harrow folk could be cast onto another site's mouth (now plain ground only, regression-tested), and a latent D-100/D-104 pilot bug (the ridden stride orbiting a pinned laden mule at Chebyshev 2 forever; the pilot gained a stride-aware sidle, engine untouched). Next: the War of Faiths template through the compiler seam.
 - 2026-07-20: **D-114 the valley's two faiths: the War of Faiths scoped.** Design-only session, no code. The template's precondition (two organized faiths) turned out to need more than the roadmap clause said: the Aegis-shrine is a faith-anchor but not an institution, so the lane firms up the first faith while adding the second. Chosen: a new order with its own site whose doctrine differs from the stead's folk practice over what the shrine-power is and what it is owed (same power, read differently), which buys the arc resonance the template doc asks for while keeping the debunking machinery fully template-owned. Rejected: a Severed faith (echo risks becoming dependency) and a mound dead-faith (D-113: condition, not cast). Three calls: same power read differently; a dedicated keeper NPC at the stead's shrine; light ambient coloring only in non-template worlds. Two lanes tracked: the worldgen lane first (the harrow as the elder site with the stead's shrine its daughter, the order's elder and folk, the keeper, the founding fact, topics both sides; save v57 to v58 expected, baselines re-deal), then the template through the D-032/D-035 compiler seam. The war, the aggressor, and the schism accounts stay template-time per the spec.
 - 2026-07-20: **D-113 the valley's memories read aloud: the roster follow-ons batch.** Four deferred consumers cashed in one small lane, all perception and stead-voice, no new state, no save bump (v57 holds). The mended page consumes made_right in its turn: the stead remembers the one who made right as a story it keeps on purpose, the mend left where the young can see the stitching; no coin, no regard, the D-109 discipline held. The two memories is the made_right thread meeting the roster's memory: made_right plus nemesis/risen reads the valley's two ledgers side by side, the risen heir named, the villager speaking only what a stead can perceive and the Aegis reading the far book's owner aloud (one book could be paid; the other can only be outlived). The long-mound topic reads the grudge aloud while the mark stands (the pacing lights, the mound's tally, the bearer never named, the dogs growling first), settling back at the stilling. And the chief is told apart on the map: capital G among its lowercase raiders, same colors, rank not a new kind. The conditional named-figure-for-another-faction stays tracked (no current faction has an individual to name). 568 tests green (4 new). Twins identical; master keys bit-identical to the D-112 baseline and the replay exact (the honest expectation: nothing mechanical moved; the two talk beats sit behind shame roads the pilot never walks, pilot-unexercised and test-covered per the D-109/D-111 precedent). Next: the War of Faiths (wants a second faith-bearing institution).

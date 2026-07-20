@@ -231,6 +231,64 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-116: The War of Faiths: the fourth template, cast by office on D-115's institutions (2026-07-20)
+D-114's second lane lands and the named launch-template list closes: the War of
+Faiths compiles at slice scale through the D-032/D-035 compiler seam (template 3 of
+design/story/world-story-templates.md sec 7), on the institutions D-115 raised. The
+casting principle is new to the pool and now named in the context's contract: the
+whole cast holds offices, not lots. The shrinekeeper and the harrow's elder are the
+two believer-champions, the doorward is the keeper-of-the-founding-site who knows
+and has kept silent, and only two draws happen at compile, the straddler (a villager
+of harrow kin who prays both ways, the spec's war-orphan/convert at stead scale) and
+which side did this season's wrong. The compile context grew a full-cast list to
+make that possible (Villagers stays the only drawable pool), and the story compile
+moved below the faiths' casting in worldgen so the templates see the whole standing
+cast; it draws only from its own stream and the villagers-only pool is unchanged, so
+every cast-by-lot role lands where it always did.
+
+**The war at slice scale is a feud not yet bled, per the spec's own preconditions.**
+The aggressor designation (the spec's cure for both-sides mush) is a compile draw:
+one side has stopped arguing and started taking (kerb-stones carted off the ring, or
+the year's offerings taken off the shrine-stone), and the wrong is voiced by the
+straddler and at the doors. The two schism accounts are the paired accepted-history:
+the same parting told against each other (jealousy swearing a loan into the record,
+versus a theft dressed in thanks), each champion voicing its own and the elder,
+honest to the bone, asking the bearer to bring a reason to doubt it. The evidence
+sits where D-115 built the room to hold it: stepping onto the mother-stone reads the
+empty socket's cuts, and the truth complicates both books instead of crowning either
+(two keepers of one rite, a burying winter, the stone carried down to stand over the
+stead's dying; lent and given both invented after). The climax cashes D-115's rumor
+line literally: the elder comes down and says the claim at the shrine, staged on the
+Rest hook (rest is shrine-only, so the stage is free), gated on having heard both
+accounts. Truth in hand, the claim dissolves into shared keeping (coda
+one_grief_shared, the war that never starts); without it the claim is met with the
+old answers and shelved (coda claim_shelved, both wrong books standing). Endings
+fire once per the D-112 rule; the settlings with the straddler pay the same 3
+essence either way and never open unasked. Ten storylets in all.
+
+**Save v58 to v59** (tier-2+ selection now draws among four, deep worlds re-deal),
+and the bar held: 583 tests green (9 new FaithsTests: casting by office, both
+aggressor sides occurring, the promise, the separate accounts, the socket with the
+doorward's confession, both climaxes, ends-once, and the settlings with the cold
+path paying nothing). Twins byte-identical and journals replaying exact through the
+independent sim on all five sweep seeds (1, 7, 99, 2024, 88888), all reaching cycle
+13. The redeal remapped the pinned fixture masters: blight 41 held, throne 40 to 7
+(direct tier-2 seed 7 to 2), the stead's cycle-2 master 42 to 43, and the faiths
+pinned at 44 (crossed and direct both). The repeat-weighting range widened for a
+four-template pool (repeats near one seventh). The talk and rest beats are
+pilot-unexercised and test-covered per the D-109/D-111 precedent, except the
+doors beat, which fired live three times in the master's twelve worlds. Options set
+aside: drawing the champions by lot (an office carries doctrine; a lottery would
+cast a woodward as a faith's voice); a combat-deed climax (this template owns no
+hostile site, and borrowing the camp's deed would hang a faith's ending on the
+raids' story); waiting for player-choice machinery to stage the three-way ending
+the full-scale spec sketches (the slice branches on found truth, the same honest
+axis as the Blight and the Throne, and the choice-staged endings can join when
+dialogue scenes exist). Deferred: the war-profiteer optional role; escalation
+beats between the wrong and the claim-saying if the feud ever wants a longer fuse;
+the coda facts feeding a future world's mythology weight once cross-world echoes
+read codas.
+
 ### D-115: The two-faiths worldgen lane: the harrow raised, the keeper cast (2026-07-20)
 D-114's first lane lands, built to its spec: the valley now holds both faiths as
 institutions, in every world at every tier, ahead of the War of Faiths template.

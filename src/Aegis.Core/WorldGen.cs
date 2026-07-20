@@ -300,12 +300,6 @@ public static class WorldGen
 
         var npcs = CastNpcs(overworld, ref placeRng, ref nameRng, settlement, shrine);
 
-        // The story template selects and compiles against the villagers only: the
-        // Unbinder (cast below) must never be picked for a world-story role.
-        var storyRng = new Rng(SeedTree.Derive(worldSeed, "world-story"));
-        var storyStorylets = WorldStories.CompileForWorld(ref storyRng,
-            new StoryTemplateContext(npcs, settlementName, facts, sites, tier), prevStory);
-
         // The Unbinder (D-034): a fresh guise every world, its own seed stream, placed
         // well away from the stead. Their tile stays plain ground: nothing on the map
         // marks them as anything but a camped wanderer.
@@ -801,6 +795,18 @@ public static class WorldGen
         // daughter-stone; whether it was lent or given is the live seam.
         facts.Add("founding", "harrow_shrine", settlementName,
             $"The harrow held this valley's holy ground before {settlementName} laid its first course. When the stead was raised, a stone came down off the harrow's ring and was set up as its shrine: a daughter-stone, lent, the harrow still says; a gift outright, the stead has always answered.");
+
+        // The world's story (D-032, D-035), compiled once the whole standing cast
+        // is on the board (moved below the faiths for D-116: the War of Faiths
+        // casts by office, so the compile must see the keeper and the harrowers).
+        // Draws only from its own stream, and the drawable pool is the villagers
+        // alone, exactly the list the compile saw when it ran earlier, so every
+        // cast-by-lot role lands where it always did: the Unbinder, the smith,
+        // the skald, and the faiths' offices are never picked by lot.
+        var storyRng = new Rng(SeedTree.Derive(worldSeed, "world-story"));
+        var storyStorylets = WorldStories.CompileForWorld(ref storyRng,
+            new StoryTemplateContext([.. npcs.Where(n => n.Kind == NpcKind.Villager)],
+                settlementName, facts, sites, tier, npcs), prevStory);
 
         // The gleanings (D-052): what the wood sets out for taught eyes. Placed in
         // every world on their own stream, after every other draw, so pinned worlds

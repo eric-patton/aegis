@@ -1,12 +1,19 @@
 namespace Aegis.Core;
 
-/// <summary>What a template sees when judging eligibility and compiling (D-035).</summary>
+/// <summary>
+/// What a template sees when judging eligibility and compiling (D-035). Villagers
+/// is the drawable pool for cast-by-lot roles; Npcs is the world's whole standing
+/// cast (smith, skald, keeper, harrowers...), for roles that belong to an office
+/// rather than a lottery (D-116). Never draw from Npcs: an office is cast by what
+/// it is, not by chance.
+/// </summary>
 public sealed record StoryTemplateContext(
     List<Npc> Villagers,
     string SettlementName,
     FactGraph Facts,
     List<Site> Sites,
-    int Tier);
+    int Tier,
+    List<Npc> Npcs);
 
 /// <summary>Compiles a template against a world; draws only from the world-story stream.</summary>
 public delegate List<Storylet> CompileTemplate(ref Rng rng, StoryTemplateContext ctx);
@@ -27,6 +34,7 @@ public static class WorldStories
         RaidedSteadTemplate.Template,
         CreepingBlightTemplate.Template,
         UsurpedThroneTemplate.Template,
+        WarOfFaithsTemplate.Template,
     ];
 
     /// <summary>
@@ -540,6 +548,299 @@ public static class UsurpedThroneTemplate
                 [
                     ($"{tellerName} nods slowly at the quiet hills. \"So {chief} goes under still owed a death by us, by the dens' own telling. Let the hill keep its stories. The nights are ours again, and that is the only telling I need.\"", LogTone.Reward),
                     ("\"The seat's truth goes under with its holders, unread. A story can be finished without ever being known, bearer. Most are.\"", LogTone.Aegis),
+                ],
+                Effect = g => g.Player.Essence += 3,
+            },
+        ];
+    }
+}
+
+/// <summary>
+/// The War of Faiths at slice scale (D-116, template 3 of
+/// design/story/world-story-templates.md sec 7): two faiths quarreling over an
+/// origin both misremember. D-115's institutions supply the whole cast by office:
+/// the shrinekeeper and the harrow's elder are the two believer-champions, the
+/// doorward is the keeper-of-the-founding-site who knows and has kept silent, and
+/// a drawn villager of harrow kin straddles both books. The aggressor is drawn at
+/// compile (the spec forbids both-sides mush: the season has a present-tense
+/// wrong, done by one side), the two schism accounts are planted against each
+/// other, the evidence waits in the harrow at the mother-stone's empty socket, and
+/// the climax is the confrontation D-115's rumor line has been promising: the
+/// elder coming down to say the claim at the shrine itself, met with the founding
+/// truth or with the old answers. At this scale the war is a feud not yet bled,
+/// and the best ending is the war that never starts. Eligible tier 2+ so the
+/// first world keeps its single crafted story.
+/// </summary>
+public static class WarOfFaithsTemplate
+{
+    public const string Id = "war-of-faiths";
+
+    public static readonly StoryTemplate Template = new(
+        Id,
+        ctx => ctx.Tier >= 2 && ctx.Villagers.Count > 0
+            && ctx.Sites.Any(s => s.Kind == SiteKind.Harrow),
+        Compile);
+
+    public static List<Storylet> Compile(ref Rng rng, StoryTemplateContext ctx)
+    {
+        // The champions and the silent keeper hold offices, not lots: only the
+        // straddler and the aggressor side are drawn, in that order.
+        var keeper = ctx.Npcs.First(n => n.Kind == NpcKind.Keeper);
+        var elder = ctx.Npcs.First(n => n.Id == "npc_harrow_elder");
+        var doorward = ctx.Npcs.First(n => n.Id == "npc_harrow_doorward");
+        var straddler = rng.Pick(ctx.Villagers);
+        bool steadDidTheWrong = rng.Next(2) == 0;
+
+        ctx.Facts.Add("role", "stead_champion", keeper.Id,
+            $"{keeper.Name}, shrinekeeper, holds the stead's book against the harrow's claim.");
+        ctx.Facts.Add("role", "harrow_champion", elder.Id,
+            $"{elder.Name}, elder of the harrow, carries the order's claim down the hill.");
+        ctx.Facts.Add("role", "straddler", straddler.Id,
+            $"{straddler.Name} of {ctx.SettlementName} was born of harrow kin and prays both ways, and the quarrel runs straight through their house.");
+
+        // The present-tense wrong: one side has stopped arguing and started
+        // taking. This is what turns two readings into a war.
+        if (steadDidTheWrong)
+            ctx.Facts.Add("aggressor", "stead", ctx.SettlementName,
+                $"This season men of {ctx.SettlementName} went up by night and carted off loose kerb-stones from the harrow's ring: interest, they called it, on a gift the harrow never admits was given.");
+        else
+            ctx.Facts.Add("aggressor", "harrow", ctx.SettlementName,
+                $"This season folk of the harrow came down by night and took the year's offerings off the shrine-stone: collection, they called it, on an account the stead never admits it owes.");
+
+        // The two schism accounts (the spec's paired accepted-history): the same
+        // parting, told against each other, one per side of the valley. Both are
+        // wrong, and not innocently alike: each makes the other side's founder
+        // the liar.
+        ctx.Facts.Add("history", "schism_stead", ctx.SettlementName,
+            "The stead's account of the parting: the stone was given outright in the founders' day, and when the power settled at the daughter-stone instead of the ring, the harrow's elder of that day could not bear it and swore a loan into the record. A false claim, kept warm ever since for jealousy's sake.");
+        ctx.Facts.Add("history", "schism_harrow", "harrow",
+            "The harrow's account of the parting: the stead's founder was harrow-raised, asked for the stone, was refused, and carried it down by night, then called the theft a gift so often the valley learned it as one. A theft dressed in thanks, and thanked ever since.");
+
+        string keeperId = keeper.Id;
+        string keeperName = keeper.Name;
+        string elderId = elder.Id;
+        string elderName = elder.Name;
+        string doorwardId = doorward.Id;
+        string doorwardName = doorward.Name;
+        string straddlerId = straddler.Id;
+        string straddlerName = straddler.Name;
+        string settlementName = ctx.SettlementName;
+
+        return
+        [
+            // Act 1: the quarrel, personally. The straddler names the season's
+            // wrong ({r0.detail} is the aggressor fact) and asks the bearer to
+            // stand at the shrine for the claim-saying. A morning never asked
+            // for cannot later be settled: the promise gates the settlings.
+            new Storylet
+            {
+                Id = "wf-the-quarrel",
+                Trigger = StoryletTrigger.Talk,
+                Priority = 10,
+                Requires = [new FactPattern("aggressor")],
+                Forbids = [new FactPattern("story_complete", Id)],
+                When = g => g.TalkNpc?.Id == straddlerId,
+                Lines =
+                [
+                    ($"{straddlerName} looks up the valley before speaking, which everyone does now. \"{{r0.detail}}\"", LogTone.Info),
+                    ("\"My grandmother keeps the ring's fire and my mother swept this shrine, so the quarrel runs straight through my house. The elder means to come down and say the claim at the shrine itself. Be standing there that morning, bearer. Someone should be who owes neither book anything.\"", LogTone.Info),
+                ],
+                Effect = g => g.World.Facts.Add("promise", "see_it_settled", straddlerId,
+                    $"{straddlerName} asked the bearer to stand at the shrine when the harrow's claim is said."),
+            },
+
+            // The quarrel at the doors: the wrong voiced where people live, the
+            // blight's accepted-history pattern. Ambient priority: a plot beat
+            // should still outrank it.
+            new Storylet
+            {
+                Id = "wf-the-talk-of-it",
+                Trigger = StoryletTrigger.NearHouse,
+                Requires = [new FactPattern("aggressor")],
+                Forbids = [new FactPattern("story_complete", Id)],
+                Lines =
+                [
+                    ("Two women split kindling at a door, not talking, until one says, to the wood: \"{r0.detail}\"", LogTone.Info),
+                    ("\"And nobody will say sorry for it, because sorry picks a book. You cannot even grieve in this valley now without choosing where to kneel.\"", LogTone.Info),
+                ],
+            },
+
+            // The stead's schism account, from its champion's own mouth.
+            new Storylet
+            {
+                Id = "wf-stead-account",
+                Trigger = StoryletTrigger.Talk,
+                Priority = 10,
+                Requires = [new FactPattern("history", "schism_stead")],
+                Forbids = [new FactPattern("story_complete", Id)],
+                When = g => g.TalkNpc?.Id == keeperId,
+                Lines =
+                [
+                    ($"{keeperName} leans the broom against the stone before answering, which means a long answer. \"{{r0.detail}}\"", LogTone.Info),
+                    ("\"That is the account I was handed with the broom. I will not swear to the jealousy; I never met the woman. I will swear the stone has been ours to keep as long as keeping has had a name here.\"", LogTone.Info),
+                ],
+                Effect = g => g.World.Facts.Add("heard", "stead_account", keeperId,
+                    $"{keeperName} told the bearer the stead's account of the parting."),
+            },
+
+            // The harrow's schism account, from its champion: and the elder,
+            // honest to the bone, asks for the one thing that could unmake it.
+            new Storylet
+            {
+                Id = "wf-harrow-account",
+                Trigger = StoryletTrigger.Talk,
+                Priority = 10,
+                Requires = [new FactPattern("history", "schism_harrow")],
+                Forbids = [new FactPattern("story_complete", Id)],
+                When = g => g.TalkNpc?.Id == elderId,
+                Lines =
+                [
+                    ($"{elderName} says it the way the rite is said, without hurry and without doubt. \"{{r0.detail}}\"", LogTone.Info),
+                    ("\"I knew the elder who taught me it, who knew the one before. None of them lied. Whether the first telling was true is a question I was not raised to ask. So I ask you, to my shame: if this valley holds a reason to ask it, bring it to me.\"", LogTone.Info),
+                ],
+                Effect = g => g.World.Facts.Add("heard", "harrow_account", elderId,
+                    $"{elderName} told the bearer the harrow's account of the parting."),
+            },
+
+            // The mid-turn: the founding truth, cut where only a kneeling keeper
+            // would ever read it. Grief, not doctrine, and both tellings invented
+            // after: the flip complicates both books instead of crowning either.
+            new Storylet
+            {
+                Id = "wf-evidence",
+                Trigger = StoryletTrigger.EnterTile,
+                Tile = Terrain.Plinth,
+                Priority = 10,
+                When = g => g.CurrentSite?.Kind == SiteKind.Harrow,
+                Lines =
+                [
+                    ("The empty socket beside the mother-stone is swept, but the sweeping has kept it, not erased it. Low on the inner face, where a kneeling keeper's eye would fall, old cuts are still legible.", LogTone.Info),
+                    ("Two names, cut twice: once side by side over a single rite-mark, and once apart, the second name recut alone under a grave-tally in a winter's count. The stone did not go down the hill over doctrine. It went down in a burying winter, carried by one keeper of two, to stand over the stead's dying while the other stayed and kept the ring.", LogTone.Info),
+                    ("No loan is cut here, and no gift either. Two who kept one rite, a winter that took too much, and a parting neither wrote down true. Lent and given were both invented afterward, because the real telling was too heavy to keep.", LogTone.Info),
+                    ("\"Two houses, bearer, built on the two halves of one grief. Neither lie is wicked. Both are load-bearing. Mind where you set your feet.\"", LogTone.Aegis),
+                ],
+                Effect = g => g.World.Facts.Add("evidence", "founding_truth", settlementName,
+                    "The shrine-stone went down the hill in a burying winter, carried by one of the harrow's own two rite-keepers to stand over the stead's dying. Neither lent nor given: one grief parted in two, and both tellings invented after."),
+            },
+
+            // The complicit authority: the doorward has read that socket for a
+            // whole office and said nothing. Silence, not malice, per the spec.
+            new Storylet
+            {
+                Id = "wf-doorward-silence",
+                Trigger = StoryletTrigger.Talk,
+                Priority = 10,
+                Requires = [new FactPattern("evidence", "founding_truth")],
+                When = g => g.TalkNpc?.Id == doorwardId,
+                Lines =
+                [
+                    ($"{doorwardName} does not ask what you found. Door-keeping is knowing what has been walked past. \"You read the socket, then.\"", LogTone.Info),
+                    ("\"I rake that floor. I have read those cuts my whole office and said nothing, because a door's work is keeping weather out, and that telling is weather. Most years I would say so still. Now it is out of my keeping, and I find I am glad.\"", LogTone.Info),
+                ],
+            },
+
+            // The climax, truth in hand: the elder comes down at dawn, the claim
+            // is said over the daughter-stone with both champions standing, and
+            // the bearer answers it with the socket's cuts. The best ending this
+            // template owns: the war that never starts.
+            new Storylet
+            {
+                Id = "wf-claim-truth",
+                Trigger = StoryletTrigger.Rest,
+                Priority = 10,
+                Requires =
+                [
+                    new FactPattern("heard", "stead_account"),
+                    new FactPattern("heard", "harrow_account"),
+                    new FactPattern("evidence", "founding_truth"),
+                ],
+                Forbids = [new FactPattern("story_complete", Id)],
+                Lines =
+                [
+                    ($"At dawn, as the well has had it for weeks, {elderName} comes down the hill and stands before the shrine, and says the harrow's claim over the daughter-stone, formally, like a debt read out. {keeperName} does not sweep while it is said.", LogTone.Info),
+                    ("Then, once, in the open, you say what is cut low in the socket: the two names, the one rite, the burying winter. Neither of them stops you. It lands the way truth lands on people who have spent their lives arguing the wrong question.", LogTone.Info),
+                    ($"By full light something has been agreed that neither book has a word for yet: the rite said at both stones, hearth to hearth, and the stone's keeping left where the grief left it, shared. The harrow's folk walk back up the hill unarmed of their claim, and {settlementName} watches them go with nothing to forgive.", LogTone.Reward),
+                    ("\"A war ended before it fed, bearer. The claim was a question, and you were carrying the answer. Few walks end that cleanly. Mark this one.\"", LogTone.Aegis),
+                ],
+                Effect = g =>
+                {
+                    g.World.Facts.Add("story_complete", Id, settlementName);
+                    g.World.Facts.Add("coda", "one_grief_shared", settlementName,
+                        "The founding truth was said at the shrine with both champions standing, and the claim dissolved in it: one rite now, said at both stones, the keeping shared as the grief was.");
+                },
+            },
+
+            // The climax, cold: the claim said and met with the old answers,
+            // because no one present has anything new to say. The quarrel is
+            // shelved, not settled, and both wrong books stand.
+            new Storylet
+            {
+                Id = "wf-claim-cold",
+                Trigger = StoryletTrigger.Rest,
+                Priority = 10,
+                Requires =
+                [
+                    new FactPattern("heard", "stead_account"),
+                    new FactPattern("heard", "harrow_account"),
+                ],
+                Forbids =
+                [
+                    new FactPattern("evidence", "founding_truth"),
+                    new FactPattern("story_complete", Id),
+                ],
+                Lines =
+                [
+                    ($"At dawn, as the well has had it for weeks, {elderName} comes down the hill and says the harrow's claim over the daughter-stone, formally, like a debt read out. {keeperName} answers it with the gift's own catechism, unhurried, word-perfect, and nothing new is said, because no one standing there has anything new to say.", LogTone.Info),
+                    ("The claim is spoken, answered, refused, and folded away, the way it was in the last generation and the one before. The season's wrong is not paid back; it is shelved. The stead calls it peace by supper, and it will hold the way shelved things hold.", LogTone.Info),
+                    ("\"Both of them argued their books, bearer, and both books are wrong, and neither knows it. Not a war this year. But a quarrel standing on a false floor never quite closes. It waits.\"", LogTone.Aegis),
+                ],
+                Effect = g =>
+                {
+                    g.World.Facts.Add("story_complete", Id, settlementName);
+                    g.World.Facts.Add("coda", "claim_shelved", settlementName,
+                        "The claim was said at the shrine and met with the old answers. No truth was on hand; the quarrel folded away unspent, and both wrong tellings stand.");
+                },
+            },
+
+            // The witnessed settling, truth said: the straddler's two houses are
+            // one house this morning. Pays what every settled story pays.
+            new Storylet
+            {
+                Id = "wf-settling-truth",
+                Trigger = StoryletTrigger.Talk,
+                Priority = 10,
+                Requires =
+                [
+                    new FactPattern("coda", "one_grief_shared"),
+                    new FactPattern("promise", "see_it_settled"),
+                ],
+                When = g => g.TalkNpc?.Id == straddlerId,
+                Lines =
+                [
+                    ($"{straddlerName} finds your hand before any greeting. \"I prayed at both stones this morning, and for the first time in my life it was one prayer. My grandmother's fire and my mother's broom in one house. I asked you to stand there, and you stood there carrying the one thing worth saying.\"", LogTone.Reward),
+                    ("\"A morning asked for, stood, and answered. That weighs like a deed, bearer, though no blow was struck in it. The best ones weigh exactly like that.\"", LogTone.Aegis),
+                ],
+                Effect = g => g.Player.Essence += 3,
+            },
+
+            // The witnessed settling, cold: shelved is not nothing, to someone
+            // whose whole life has been lived under the shelf. Same coin: the
+            // endings differ in what the valley believes, never in the pay.
+            new Storylet
+            {
+                Id = "wf-settling-cold",
+                Trigger = StoryletTrigger.Talk,
+                Priority = 10,
+                Requires =
+                [
+                    new FactPattern("coda", "claim_shelved"),
+                    new FactPattern("promise", "see_it_settled"),
+                ],
+                When = g => g.TalkNpc?.Id == straddlerId,
+                Lines =
+                [
+                    ($"{straddlerName} lets out a breath they have plainly held for a season. \"Shelved, then. I have lived my whole life under shelved, and I can live the rest of it there too. My kin walked back up the hill still owed or still owing, depending which of my doors you ask. But nobody bled, and you stood where I asked you to stand.\"", LogTone.Reward),
+                    ("\"A morning asked for and stood, even empty-handed. The claim will come down the hill again in some other lifetime, bearer. It will not be your weather then.\"", LogTone.Aegis),
                 ],
                 Effect = g => g.Player.Essence += 3,
             },

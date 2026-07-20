@@ -213,10 +213,13 @@ namespace Aegis.Core;
 /// valley with an elder and a doorward at its door, a shrinekeeper stands at
 /// the stead's shrine, and the founding joins the facts, so every world
 /// re-deals and a v57 journal replays differently from the first turn.
+/// v59 when D-116 put the War of Faiths in the pool: tier 2+ worlds draw
+/// their story among four templates instead of three, so a v58 journal that
+/// crossed the first gate replays into worlds telling different stories.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 58;
+    public const int Version = 59;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

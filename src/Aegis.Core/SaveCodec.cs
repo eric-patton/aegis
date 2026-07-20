@@ -209,10 +209,14 @@ namespace Aegis.Core;
 /// draw their story among three templates instead of two, so a v56 journal
 /// that crossed the first gate replays into worlds telling different
 /// stories, with different casts and different facts, from cycle 2 on.
+/// v58 when D-114 raised the valley's second faith: the harrow stands up the
+/// valley with an elder and a doorward at its door, a shrinekeeper stands at
+/// the stead's shrine, and the founding joins the facts, so every world
+/// re-deals and a v57 journal replays differently from the first turn.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 57;
+    public const int Version = 58;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

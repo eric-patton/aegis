@@ -1,6 +1,6 @@
 namespace Aegis.Core;
 
-public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort, Songhall, Leaguer, Wilds }
+public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort, Songhall, Leaguer, Wilds, Harrow }
 
 /// <summary>A monster placed at generation time: kind, cell, and generated stats (D-011).</summary>
 public readonly record struct MonsterSpawn(MonsterKind Kind, Pos Pos, int Hp, string? Epithet = null, bool Chief = false);
@@ -145,6 +145,15 @@ public sealed class World
 
     /// <summary>The songhall's keeper (D-054): stands at the hall door, reads the songs' weighing, takes the pledges.</summary>
     public Npc Skald => Npcs.First(n => n.Kind == NpcKind.Skald);
+
+    /// <summary>The order's house at the valley's old holy ground (D-114): every world, every tier. The second faith's roof.</summary>
+    public Site HarrowSite => Sites.First(s => s.Kind == SiteKind.Harrow);
+
+    /// <summary>The stead's shrinekeeper (D-114): every world, every tier. The first faith made a vocation.</summary>
+    public Npc Keeper => Npcs.First(n => n.Kind == NpcKind.Keeper);
+
+    /// <summary>The harrow's elder (D-114): the second faith's voice, at the order's door.</summary>
+    public Npc HarrowElder => Npcs.First(n => n.Id == "npc_harrow_elder");
 
     // Convenience views of the camp, the site every world has (and tests lean on).
     public GameMap Camp => CampSite.Map;
@@ -688,6 +697,111 @@ public static class WorldGen
                 "A break in the tree-line where the deer come down to graze. The stead calls it good hunting, and dangerous walking after dark.");
         }
 
+        // The valley's two faiths (D-114). First, the first faith made an
+        // institution: the shrine gains a keeper the way the forge has its
+        // smith and the songhall its skald, a vocation, not a volunteer. They
+        // stand at the shrine's shoulder (a diagonal, never a cardinal), so
+        // the column's road and every straight approach to the rest point
+        // stay clear: a keeper sweeps a doorstep, they do not stand in it.
+        var keeperRng = new Rng(SeedTree.Derive(worldSeed, "keeper"));
+        string keeperName = NameGen.Person(ref keeperRng);
+        var keeperSpots = new List<Pos>();
+        foreach (var (kdx, kdy) in ((int, int)[])[(1, 1), (-1, 1), (1, -1), (-1, -1)])
+        {
+            var q = shrine.Plus(kdx, kdy);
+            if (overworld.Walkable(q) && !npcs.Any(n => n.Pos == q)) keeperSpots.Add(q);
+        }
+        Pos keeperPos = shrine.Plus(1, 1);
+        if (keeperSpots.Count > 0)
+        {
+            keeperPos = keeperRng.Pick(keeperSpots);
+        }
+        else
+        {
+            foreach (var (kdx, kdy) in Directions.All8)
+            {
+                var q = shrine.Plus(kdx, kdy);
+                if (overworld.Walkable(q) && !npcs.Any(n => n.Pos == q)) { keeperPos = q; break; }
+            }
+        }
+        npcs.Add(new Npc
+        {
+            Id = "npc_keeper",
+            Name = keeperName,
+            Role = "shrinekeeper",
+            Pos = keeperPos,
+            Kind = NpcKind.Keeper,
+        });
+
+        // Then the second faith (D-114): the harrow, the order's house at the
+        // valley's old holy ground, the elder site whose ring the stead's
+        // shrine-stone was cut from, so custody is a live question and not a
+        // history lesson. Peaceful like the songhall: it needs distance only
+        // from the stead and the two nearest mouths, and the terrain check
+        // excludes every stamped entrance for free. The war, the aggressor,
+        // and the schism accounts are none of worldgen's business: the War of
+        // Faiths casts those at template time.
+        var harrowRng = new Rng(SeedTree.Derive(worldSeed, "harrow"));
+        Pos harrowPos = FindDistantSpot(overworld, ref harrowRng, settlement, minDistance: 12);
+        while (overworld[harrowPos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills)
+               || harrowPos.Manhattan(camp) < 6 || harrowPos.Manhattan(gate) < 6
+               || npcs.Any(n => n.Pos == harrowPos))
+            harrowPos = FindDistantSpot(overworld, ref harrowRng, settlement, minDistance: 12);
+        overworld[harrowPos] = Terrain.HarrowEntrance;
+        CarvePathIfDisconnected(overworld, shrine, harrowPos);
+
+        string elderName = NameGen.Person(ref harrowRng);
+        string doorwardName = NameGen.Person(ref harrowRng);
+        // The folk stand on plain ground only: a doorward cast onto some other
+        // site's mouth would stand between every walker and that door.
+        var harrowSpots = new List<Pos>();
+        foreach (var (hdx, hdy) in Directions.All8)
+        {
+            var q = harrowPos.Plus(hdx, hdy);
+            if (overworld.InBounds(q) && overworld[q] is Terrain.Grass or Terrain.Forest or Terrain.Hills
+                && !npcs.Any(n => n.Pos == q)) harrowSpots.Add(q);
+        }
+        Pos elderPos = harrowSpots.Count > 0 ? harrowRng.Pick(harrowSpots) : harrowPos.Plus(0, 1);
+        harrowSpots.Remove(elderPos);
+        Pos doorwardPos = harrowSpots.Count > 0 ? harrowRng.Pick(harrowSpots) : harrowPos.Plus(1, 0);
+        npcs.Add(new Npc
+        {
+            Id = "npc_harrow_elder",
+            Name = elderName,
+            Role = "elder",
+            Pos = elderPos,
+            Kind = NpcKind.Harrower,
+        });
+        npcs.Add(new Npc
+        {
+            Id = "npc_harrow_doorward",
+            Name = doorwardName,
+            Role = "doorward",
+            Pos = doorwardPos,
+            Kind = NpcKind.Harrower,
+        });
+
+        var (harrowMap, harrowEntry) = GenerateHarrow();
+        sites.Add(new Site
+        {
+            Id = "harrow",
+            Kind = SiteKind.Harrow,
+            Map = harrowMap,
+            OverworldPos = harrowPos,
+            EntryPos = harrowEntry,
+            Spawns = [],
+            ChestPos = harrowEntry,
+            ChestLooted = true,
+        });
+        facts.Add("site", "harrow", $"{harrowPos.X},{harrowPos.Y}",
+            "An old turf hall inside a ring of leaning stones, up the valley from the stead. A fire is kept in it, and a rite over the mother-stone, and neither has lapsed in living memory.");
+        // The founding planted in generated history (D-114): the shared holy
+        // origin the War of Faiths' template spec demands, literal in the
+        // geography. The harrow is the elder site; the stead's shrine is its
+        // daughter-stone; whether it was lent or given is the live seam.
+        facts.Add("founding", "harrow_shrine", settlementName,
+            $"The harrow held this valley's holy ground before {settlementName} laid its first course. When the stead was raised, a stone came down off the harrow's ring and was set up as its shrine: a daughter-stone, lent, the harrow still says; a gift outright, the stead has always answered.");
+
         // The gleanings (D-052): what the wood sets out for taught eyes. Placed in
         // every world on their own stream, after every other draw, so pinned worlds
         // keep their layouts; only the gleaning lesson makes them visible, so
@@ -761,6 +875,7 @@ public static class WorldGen
             {
                 NpcKind.Unbinder => $"{npc.Name}, a wandering {npc.Role}, camped away from the stead.",
                 NpcKind.Severed => $"{npc.Name}, a hermit at a fire in the wilds. No one remembers them arriving.",
+                NpcKind.Harrower => $"{npc.Name}, {npc.Role} of the harrow up the valley.",
                 _ => $"{npc.Name}, {npc.Role} of {settlementName}.",
             });
         facts.Add("wanderer", unbinder.Id, $"{unbinderPos.X},{unbinderPos.Y}",
@@ -1137,6 +1252,32 @@ public static class WorldGen
         var entry = new Pos(2, mid);
         map[entry] = Terrain.ExitLadder;
         return (map, entry, hearth);
+    }
+
+    public const int HarrowW = 20;
+    public const int HarrowH = 9;
+
+    /// <summary>The mother-stone's tile (D-114): the ring's elder stone, with the empty socket beside it.</summary>
+    public static readonly Pos HarrowStonePos = new(16, 4);
+
+    /// <summary>
+    /// The harrow (D-114): the order's house at the valley's old holy ground,
+    /// fully authored like the songhall, no carve RNG and no spawns: door
+    /// west, the tended fire at the middle, and the mother-stone at the east
+    /// end beside the socket the daughter-stone was lifted from.
+    /// </summary>
+    private static (GameMap Map, Pos Entry) GenerateHarrow()
+    {
+        var map = new GameMap("harrow", HarrowW, HarrowH, Terrain.Wall);
+        for (int y = 1; y <= HarrowH - 2; y++)
+            for (int x = 1; x <= HarrowW - 2; x++)
+                map[new Pos(x, y)] = Terrain.Floor;
+
+        map[new Pos(10, 4)] = Terrain.Hearth;
+        map[HarrowStonePos] = Terrain.Plinth;
+        var entry = new Pos(2, 4);
+        map[entry] = Terrain.ExitLadder;
+        return (map, entry);
     }
 
     public const int SonghallW = 26;

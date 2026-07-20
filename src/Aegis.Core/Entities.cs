@@ -545,8 +545,11 @@ public enum ReadTier { Blur, Read, Keen }
 /// The Severed kind (D-038) is a former bearer met as a person, not a foe:
 /// the game never makes them fightable, only listenable. The Smith (D-041)
 /// keeps their own small menu so the villagers' nine digits stay unbreached.
+/// The Keeper (D-114) stands the stead's shrine as a vocation, and the
+/// Harrowers keep the order's house up the valley: the two faiths' folk,
+/// each with their own menu for the same reason the Smith has one.
 /// </summary>
-public enum NpcKind { Villager, Unbinder, Severed, Smith, Skald }
+public enum NpcKind { Villager, Unbinder, Severed, Smith, Skald, Keeper, Harrower }
 
 /// <summary>
 /// A named, placed person (D-031). Static in v1: they stand near their homes and

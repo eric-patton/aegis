@@ -222,6 +222,7 @@ public static class Presenter
         {
             NpcKind.Unbinder => $"{npc.Name}, a wandering {npc.Role}",
             NpcKind.Severed => $"{npc.Name}, {npc.Role} of no stead at all",
+            NpcKind.Harrower => $"{npc.Name}, {npc.Role} of the harrow",
             _ => $"{npc.Name}, {npc.Role} of {game.World.SettlementName}",
         }, Hue.White);
 
@@ -736,6 +737,7 @@ public static class Presenter
         Terrain.RingfortEntrance => ('0', Hue.Yellow, Hue.Black),
         Terrain.LeaguerEntrance => ('U', Hue.Blue, Hue.Black),
         Terrain.WildsEntrance => ('"', Hue.Green, Hue.Black),
+        Terrain.HarrowEntrance => ('A', Hue.White, Hue.Black),
         _ => ('?', Hue.Magenta, Hue.Black),
     };
 
@@ -878,6 +880,7 @@ public static class Presenter
             if (here == Terrain.LeaguerEntrance) Line("Leaguer banks: > enters", Hue.Blue);
             if (here == Terrain.WildsEntrance) Line("Game-trail: > enters", Hue.Green);
             if (here == Terrain.SonghallEntrance) Line("Songhall door: > enters", Hue.Cyan);
+            if (here == Terrain.HarrowEntrance) Line("Harrow door: > enters", Hue.White);
             if (here == Terrain.ThresholdEntrance)
                 Line(game.Player.CommissionHeard ? "Deep stair: > descends" : "Deep stair: shut", Hue.Magenta);
             if (here == Terrain.Waygate)

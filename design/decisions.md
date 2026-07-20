@@ -231,6 +231,61 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-115: The two-faiths worldgen lane: the harrow raised, the keeper cast (2026-07-20)
+D-114's first lane lands, built to its spec: the valley now holds both faiths as
+institutions, in every world at every tier, ahead of the War of Faiths template.
+The harrow (a new SiteKind and terrain, glyph 'A') stands up the valley on its own
+seed stream: a fully authored peaceful room in the songhall's mold (no carve RNG,
+no spawns, no chest), holding a tended fire and, at the east end, the mother-stone
+beside an empty socket, so the room states the founding without a speaker. The
+founding itself goes into generated history as a fact: the harrow held the holy
+ground first, and the stead's shrine-stone came down off its ring, a daughter-stone,
+lent by the harrow's telling and given outright by the stead's. Cast: an elder and a
+doorward of the harrow (NpcKind.Harrower) beside its door, and a shrinekeeper
+(NpcKind.Keeper) at the stead's shrine, placed at a diagonal shoulder, never a
+cardinal, so the rest point's every straight approach and the column's road stay
+clear (the all-8 placement failed two shrine tests immediately: a keeper standing in
+the east doorway turned a test's step into a bump).
+
+**The doctrine speaks on both sides, per D-114's calls.** The villagers' shared nine
+digits are full in a deep world (eight topics plus a trade offer), so the stead's
+side lives on the keeper, where it institutionally belongs: the keeping (shelter is
+a gift; you do not bill a gift), the two readings named as readings, and the rumor
+line (word at the well is the elder means to come down and say its claim at the
+shrine itself). The elder carries the order's side: the founding as custody, and the
+debt reading (the power holds an account as a river holds water; sweeping is
+housekeeping, not payment). The doorward keeps shorter answers and the one sharpened
+hint ("most years that is a difference for winter evenings. Most years."). The war,
+the aggressor, and the schism accounts are deliberately absent: template-time casts,
+per the spec.
+
+**Save v57 to v58** (new site, new people, every world re-deals), and the D-114
+verification bar held: 574 tests green (five new in HarrowTests: the site and both
+faiths' folk in every world, folk on plain ground at every tier, twins, the two
+voices with the rumor line, the room's founding surfaces), journey twins
+byte-identical and journals replaying exact through the independent sim path on all
+five sweep seeds (1, 7, 99, 2024, 88888), all reaching cycle 13.
+
+**Two live finds along the way, both fixed.** First, the harrow's folk were cast on
+any walkable neighbor, which can be another site's mouth, and the journey pilot
+paths to a mouth as a goal, so a doorward on a door meant an endless bump-and-close:
+folk now stand on plain ground only (grass, forest, hills), with a regression test.
+Second, a latent D-100/D-104 pilot bug the re-deal exposed: seed 88888's cycle-10
+world pinned the laden mule at Chebyshev 2 against houses and folk where its follow
+step could not close the gap, and the bearer's ridden stride (two cells a key on
+open grass) overshot the adjacency ring every key, orbiting its own saddlebags for
+the whole 60000-key world budget. The pilot gained ApproachBeast: it simulates the
+engine's own stride landing per direction and takes a key that ends beside the bags
+(in the stuck geometry, the southeast step whose stride the smith's own standing
+spot happens to block). Engine untouched by that fix; it is the pilot learning a
+rule the engine already had. Options set aside: an unconditional villager topic for
+the harrow (would breach the nine digits when an echo world fills all eight topic
+slots, exactly the overflow the D-041 lesson warns about); making 'o' reach the bags
+at stride range (a design change to D-100's "beside" for what is purely a pilot
+blind spot). Deferred to the template lane (D-032/D-035/D-112 seam): eligibility,
+casting, threads, endings, the two schism accounts, and whether the harrow's elder
+becomes the named-figure candidate D-110 keeps deferring.
+
 ### D-114: The valley's two faiths: scoping the War of Faiths' institutions (2026-07-20)
 Design-only, no code: the scoping the roadmap's "wants a second faith-bearing
 institution first" clause called for, settled in conversation. The gap turned out

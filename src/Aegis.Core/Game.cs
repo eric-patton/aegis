@@ -1203,6 +1203,8 @@ public sealed class Game
                     : "A break in the trees where the deer come down to graze. Slots pressed in the mud, a run worn through the treeline, and the light going gold. Press > to hunt.", LogTone.Info);
             else if (t == Terrain.SonghallEntrance)
                 Log.Add(Turn, "The stead's songhall: turf roof, smoke at the roof-hole, and low singing sometimes when the wind sits right. Press > to step in.", LogTone.Info);
+            else if (t == Terrain.HarrowEntrance)
+                Log.Add(Turn, "An old turf hall inside a ring of leaning stones. Smoke stands at the roof-hole in any weather, and the stones lean inward, like listeners. Press > to step in.", LogTone.Info);
             else if (t == Terrain.ThresholdEntrance)
                 Log.Add(Turn, !Player.CommissionHeard
                     ? "A stair descends into the hill, cut clean and swept clean, though nothing lives near to sweep it. The dark below is not night-dark."
@@ -1235,7 +1237,23 @@ public sealed class Game
                     : "The Hearth burns alone, by your leave. It does not reproach you. Fires never do.", LogTone.Aegis);
             else if (CurrentSite!.Kind == SiteKind.Songhall)
                 DescribeSonghallFixture(t, p);
+            else if (CurrentSite!.Kind == SiteKind.Harrow)
+                DescribeHarrowFixture(t);
         }
+    }
+
+    /// <summary>
+    /// The harrow's reading surfaces (D-114). The room states the founding
+    /// without a speaker: the mother-stone, and beside it the socket the
+    /// daughter-stone was lifted from. The elder's talk says whose fault
+    /// that is; the stones only say that it happened.
+    /// </summary>
+    private void DescribeHarrowFixture(Terrain t)
+    {
+        if (t == Terrain.Plinth)
+            Log.Add(Turn, "The mother-stone stands here, twin in grain and tool-mark to the stead's shrine-stone, and half again its height. Beside it a socket is cut in the floor: empty, swept, and plainly kept that way.", LogTone.Info);
+        else if (t == Terrain.Hearth)
+            Log.Add(Turn, "The harrow's fire, small and exact. The wood beside it is split to one length, and the ash is raked the way a ledger is ruled.", LogTone.Info);
     }
 
     /// <summary>
@@ -1330,6 +1348,8 @@ public sealed class Game
                     : "You go down again. The door stands open. It will always stand open to you now.", LogTone.Aegis);
             else if (site.Kind == SiteKind.Songhall)
                 Log.Add(Turn, "You step in under the turf roof. Woodsmoke, wax, and under both the smell of cut oak: the hall keeps its songs the way a granary keeps seed.", LogTone.Info);
+            else if (site.Kind == SiteKind.Harrow)
+                Log.Add(Turn, "You step in under the harrow's roof. Tallow-smoke, raked ash, and old stone: the room is bare the way a thing is bare on purpose.", LogTone.Info);
             else
                 Log.Add(Turn, site.Kind switch
                 {
@@ -1965,6 +1985,8 @@ public sealed class Game
             NpcKind.Severed => BuildSeveredTopics(),
             NpcKind.Smith => BuildSmithTopics(),
             NpcKind.Skald => BuildSkaldTopics(),
+            NpcKind.Keeper => BuildKeeperTopics(),
+            NpcKind.Harrower => BuildHarrowTopics(npc),
             _ => BuildTopics(npc),
         });
         _offers.Clear();
@@ -1992,6 +2014,18 @@ public sealed class Game
             // First-meeting cycle is recorded before the trigger fires, so recognition
             // content can gate on "met one in an EARLIER world" (D-034).
             if (Player.FirstUnbinderCycle == 0) Player.FirstUnbinderCycle = Cycle;
+        }
+        else if (npc.Kind == NpcKind.Harrower)
+        {
+            // The harrow's folk (D-114) are of the harrow, not the stead: the
+            // stead's greeting formula would put them in the wrong house.
+            Log.Add(Turn, $"{npc.Name}, {npc.Role} of the harrow, marks you before you speak, the way doorkeepers do.");
+            if (!World.Facts.Exists("met", npc.Id))
+            {
+                World.Facts.Add("met", npc.Id, World.SettlementName,
+                    $"{npc.Name}, {npc.Role} of the harrow, has spoken with the bearer.");
+                Log.Add(Turn, "\"The harrow gives fire and floor to any who come up the hill civil. Doctrine is not asked of guests. It is offered, though.\"");
+            }
         }
         else
         {
@@ -2188,6 +2222,46 @@ public sealed class Game
                 : $"\"The songs weigh what you have carried at {Player.Legend}. In them you are {LegendStanding.TitleOf(Standing)}; the next weighing tips at {LegendStanding.Threshold(Standing + 1)}. The wall keeps room.\""));
 
         return topics;
+    }
+
+    /// <summary>
+    /// The shrinekeeper's own topics (D-114): the first faith speaking as an
+    /// institution. The stead's read of the shrine-power is the keeper's
+    /// creed, and the harrow's claim is answered here, not in the villagers'
+    /// nine digits, which a full world already fills. The last topic carries
+    /// the rumor line: the custody question walking down the hill.
+    /// </summary>
+    private List<(string Label, string Answer)> BuildKeeperTopics()
+    {
+        return
+        [
+            ("The keeping", "\"Swept at dawn, tended at dusk, and never asked for more than that. What anchors here shelters us, and shelter is a gift. You do not bill a gift; you keep its house well. That is the whole of my office, and I want no deeper one.\""),
+            ("The harrow", "\"The old hall up the valley. Their stone and ours were cut from one ring, that much is true, and they have kept their fire honestly. Where we part is what the power is. They say it holds an account, and everything given it is owed. We say it gives, and everything done for it is thanks. Same stone, two readings, and only one of them lets you sleep.\""),
+            ("The harrow's claim", "\"They hold our stone went down the hill on loan, and that its keeping is theirs by right. Word at the well is their elder means to come down and say so, at the shrine itself, before the year turns. Let them come. The stone has stood our weather longer than any living memory of theirs, and it has not asked to go home.\""),
+        ];
+    }
+
+    /// <summary>
+    /// The harrow's topics (D-114): the second faith in its own voice. The
+    /// elder carries the doctrine (the same power the shrine anchors, read as
+    /// debt, not gift) and the founding's custody claim; the doorward keeps
+    /// the door's shorter answers. The war, the aggressor, and the schism
+    /// accounts are cast at template time, never here.
+    /// </summary>
+    private List<(string Label, string Answer)> BuildHarrowTopics(Npc npc)
+    {
+        if (npc.Role == "elder")
+            return
+            [
+                ("The harrow", "\"Holy ground before the valley had a stead to name it. The ring stood, the fire was lit, and the rite has been said over the mother-stone every dusk since. We did not choose this ground. It was chosen, and we are what answering that looks like.\""),
+                ("The daughter-stone", "\"The stead's shrine-stone came off our ring, cut and carried down with our own hands, in the founders' day. Lent, elder to daughter, as fire is lent from hearth to hearth. The stead has kept it swept; I grant that gladly. But sweeping is housekeeping, and what anchors in that stone is not a houseguest.\""),
+                ("What is owed", "\"The stead says gift, and sleeps well. We say the power holds an account, as a river holds water: not out of spite, out of nature. What shelters you is spending something, and what is spent is owed. The rite pays a little of it every dusk. Their sweeping pays none. That is not wickedness in them; it is arithmetic they have declined to do.\""),
+            ];
+        return
+        [
+            ("The door", "\"Fire and floor for any who come up civil, doctrine offered and never forced. I keep the door, the wood, and the raking of the ash. The elder keeps the rest.\""),
+            ("The stead below", "\"Good folk, and half my kin among them. They read the stone one way at their shrine, and we read it another up here, and most years that is a difference for winter evenings. Most years.\""),
+        ];
     }
 
     /// <summary>

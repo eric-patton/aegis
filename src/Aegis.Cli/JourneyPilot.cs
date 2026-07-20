@@ -305,6 +305,7 @@ public static class JourneyPilot
         if (g.Mount is { Bags: > 0 } laden)
         {
             if (Chebyshev(p.Pos, laden.Pos) == 1) return 'o';
+            if (ApproachBeast(g, laden) is { } sidle) return sidle;
             var toLaden = NavKey(g, g.World.Overworld, p.Pos, laden.Pos, OverworldBlocked(g));
             if (toLaden is not null) return toLaden;
         }
@@ -794,6 +795,35 @@ public static class JourneyPilot
         return NearestUnclearedSite(g, skip) is not null
             && g.Stable.Any(b => b.Kind == MountKind.Courser)
             && g.Mount?.Kind != MountKind.Courser;
+    }
+
+    /// <summary>
+    /// One step that ENDS beside the beast, honoring the ridden stride (D-100): on
+    /// open grass a key covers two cells, so a plain walk toward a beast standing two
+    /// off can overshoot the adjacency ring forever, orbiting it (found live: a
+    /// re-dealt world pinned the mule against houses and folk where its follow step
+    /// could not close the gap either, and the journey spent its whole world budget
+    /// circling the bags). Simulate the engine's own landing rule per direction and
+    /// take any key whose landing is in reach of the saddlebags.
+    /// </summary>
+    private static char? ApproachBeast(Game g, Mount beast)
+    {
+        var p = g.Player;
+        var map = g.World.Overworld;
+        foreach (var (dx, dy) in Directions.All8)
+        {
+            var step = p.Pos.Plus(dx, dy);
+            if (!map.Walkable(step) || step == beast.Pos) continue;
+            if (g.World.Npcs.Any(n => n.Pos == step)) continue;
+            var landing = step;
+            var far = step.Plus(dx, dy);
+            if (map.InBounds(far)
+                && MountCatalog.Strides(beast.Kind, map[step]) && MountCatalog.Strides(beast.Kind, map[far])
+                && far != beast.Pos && !g.World.Npcs.Any(n => n.Pos == far))
+                landing = far;
+            if (Chebyshev(landing, beast.Pos) == 1) return KeyFor(dx, dy);
+        }
+        return null;
     }
 
     private const int BankFloat = 25; // under this the walk to load is not worth the key.

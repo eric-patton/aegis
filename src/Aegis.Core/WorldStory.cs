@@ -739,10 +739,13 @@ public static class WarOfFaithsTemplate
                 ],
             },
 
-            // The climax, truth in hand: the elder comes down at dawn, the claim
-            // is said over the daughter-stone with both champions standing, and
-            // the bearer answers it with the socket's cuts. The best ending this
-            // template owns: the war that never starts.
+            // The climax, truth in hand, staged as a scene (D-118, the choice
+            // D-116 parked on the D-117 machinery): the elder comes down at
+            // dawn, the claim is said over the daughter-stone with both
+            // champions standing, and the socket's telling is the bearer's to
+            // spend or keep. The spec's three-way ending at slice scale: say
+            // it whole, wield it for one book, or bury it. Without the truth
+            // there is nothing to choose, so wf-claim-cold stays plain lines.
             new Storylet
             {
                 Id = "wf-claim-truth",
@@ -755,19 +758,106 @@ public static class WarOfFaithsTemplate
                     new FactPattern("evidence", "founding_truth"),
                 ],
                 Forbids = [new FactPattern("story_complete", Id)],
-                Lines =
+                Lines = [],
+                Scene = new Scene("the-claim-at-dawn", "The claim at dawn",
                 [
-                    ($"At dawn, as the well has had it for weeks, {elderName} comes down the hill and stands before the shrine, and says the harrow's claim over the daughter-stone, formally, like a debt read out. {keeperName} does not sweep while it is said.", LogTone.Info),
-                    ("Then, once, in the open, you say what is cut low in the socket: the two names, the one rite, the burying winter. Neither of them stops you. It lands the way truth lands on people who have spent their lives arguing the wrong question.", LogTone.Info),
-                    ($"By full light something has been agreed that neither book has a word for yet: the rite said at both stones, hearth to hearth, and the stone's keeping left where the grief left it, shared. The harrow's folk walk back up the hill unarmed of their claim, and {settlementName} watches them go with nothing to forgive.", LogTone.Reward),
-                    ("\"A war ended before it fed, bearer. The claim was a question, and you were carrying the answer. Few walks end that cleanly. Mark this one.\"", LogTone.Aegis),
-                ],
-                Effect = g =>
-                {
-                    g.World.Facts.Add("story_complete", Id, settlementName);
-                    g.World.Facts.Add("coda", "one_grief_shared", settlementName,
-                        "The founding truth was said at the shrine with both champions standing, and the claim dissolved in it: one rite now, said at both stones, the keeping shared as the grief was.");
-                },
+                    new SceneNode
+                    {
+                        Id = "open",
+                        Lines =
+                        [
+                            ($"At dawn, as the well has had it for weeks, {elderName} comes down the hill and stands before the shrine, and says the harrow's claim over the daughter-stone, formally, like a debt read out. {keeperName} does not sweep while it is said.", LogTone.Info),
+                            ("The claim ends, and the quiet after it is a held breath: the old answers wait word-perfect in the keeper's mouth, the socket's cuts wait in yours, and no one else on this ground knows there is anything to wait for.", LogTone.Info),
+                            ("\"You carry the one thing neither book holds, bearer. Truth does not spend itself. Say it whole, spend it crooked, or keep it. I only keep the count.\"", LogTone.Aegis),
+                        ],
+                        Choices =
+                        [
+                            new SceneChoice("Say the socket's telling, whole", "shared"),
+                            new SceneChoice("Turn the cuts against the harrow's claim", "broken",
+                                SceneCheck.OfAttr(Attr.Presence, difficulty: 1), FailNext: "seen"),
+                            new SceneChoice("Keep the telling to yourself", "kept"),
+                        ],
+                    },
+
+                    // Publish: the war that never starts, the best ending this
+                    // template owns, exactly as it read before it was a choice.
+                    new SceneNode
+                    {
+                        Id = "shared",
+                        Lines =
+                        [
+                            ("Once, in the open, you say what is cut low in the socket: the two names, the one rite, the burying winter. Neither of them stops you. It lands the way truth lands on people who have spent their lives arguing the wrong question.", LogTone.Info),
+                            ($"By full light something has been agreed that neither book has a word for yet: the rite said at both stones, hearth to hearth, and the stone's keeping left where the grief left it, shared. The harrow's folk walk back up the hill unarmed of their claim, and {settlementName} watches them go with nothing to forgive.", LogTone.Reward),
+                            ("\"A war ended before it fed, bearer. The claim was a question, and you were carrying the answer, and you spent it whole. Few walks end that cleanly. Mark this one.\"", LogTone.Aegis),
+                        ],
+                        OnEnter = g =>
+                        {
+                            g.World.Facts.Add("story_complete", Id, settlementName);
+                            g.World.Facts.Add("coda", "one_grief_shared", settlementName,
+                                "The founding truth was said at the shrine with both champions standing, and the claim dissolved in it: one rite now, said at both stones, the keeping shared as the grief was.");
+                        },
+                    },
+
+                    // Side with the stead, and it carries: a true stone laid in
+                    // a crooked course. The claim breaks; nothing is shared.
+                    new SceneNode
+                    {
+                        Id = "broken",
+                        Lines =
+                        [
+                            ($"You say the socket's cuts, but you say them the stead's way: the stone carried down to stand over {settlementName}'s dying, seated by grief, and grief keeps what it seats. The burying winter you give them. The two names over one rite-mark you keep. {elderName} asked this valley for a reason to doubt, and you hand over exactly half of one.", LogTone.Info),
+                            ($"It carries the way a blade carries. The elder stands a long while, then turns up the hill without the claim, and the harrow's folk follow, and nothing is shared. {keeperName} keeps the stone, the book, and the last word, and looks at you like someone counting what it cost.", LogTone.Info),
+                            ("\"Broken, then, on a true stone laid in a crooked course. The stead will call this winning by supper; up the hill they will call it what it is. I keep the count either way, bearer.\"", LogTone.Aegis),
+                        ],
+                        OnEnter = g =>
+                        {
+                            g.World.Facts.Add("story_complete", Id, settlementName);
+                            g.World.Facts.Add("coda", "claim_broken", settlementName,
+                                "The socket's telling was said at the shrine shaped as the stead's answer, and the harrow's claim broke on the half of it. The stone stays, the ring's book is closed against its keepers, and the whole truth is still cut where no one now will climb to read it.");
+                        },
+                    },
+
+                    // Side with the stead, and the shaping is heard: honest to
+                    // the bone cuts both ways. The truth is spent and buys
+                    // nothing; the quarrel shelves the old way.
+                    new SceneNode
+                    {
+                        Id = "seen",
+                        Lines =
+                        [
+                            ($"You shape it as you say it, and {elderName} hears the shaping. Honest to the bone cuts both ways: the elder asked this valley for a reason to doubt, not a reason built to order, and one raised hand stops the half-telling before it is done. \"No. Not said so. Whatever you read up there, you have spent it.\"", LogTone.Info),
+                            ($"{keeperName} answers the claim with the gift's own catechism, unhurried, word-perfect, and the morning closes the way the last generation's did: spoken, answered, refused, folded away. The truth is still in the socket. No one standing here will believe it now from you.", LogTone.Info),
+                            ("\"You carried the answer and bent it, and it broke in the bending. Shelved, then, and both wrong books stand. Truth spent crooked buys what crooked buys, bearer: nothing, at cost.\"", LogTone.Aegis),
+                        ],
+                        OnEnter = g =>
+                        {
+                            g.World.Facts.Add("story_complete", Id, settlementName);
+                            g.World.Facts.Add("coda", "claim_shelved", settlementName,
+                                "The claim was said at the shrine, and the founding truth was offered bent to the stead's shape; the elder refused the shaping, and the quarrel folded away unspent, both wrong tellings standing.");
+                        },
+                    },
+
+                    // Suppress: peace on the standing lie, chosen. The valley
+                    // ends where the cold climax ends; the graph knows why.
+                    new SceneNode
+                    {
+                        Id = "kept",
+                        Lines =
+                        [
+                            ($"You say nothing. {keeperName} answers the claim with the gift's own catechism, unhurried, word-perfect, and nothing new is said, because the one person standing there with anything new to say is not saying it.", LogTone.Info),
+                            ("The claim is spoken, answered, refused, and folded away, the way it was in the last generation and the one before. The season's wrong is not paid back; it is shelved. The stead calls it peace by supper, and only you know what it is shelved on.", LogTone.Info),
+                            ("\"Kept, then. A war ends on a standing lie as surely as on a truth; it only does not stay ended. You stood the one morning it could be said, and chose the quiet. I keep the count of unsaid things too, bearer.\"", LogTone.Aegis),
+                        ],
+                        OnEnter = g =>
+                        {
+                            g.World.Facts.Add("story_complete", Id, settlementName);
+                            g.World.Facts.Add("coda", "claim_shelved", settlementName,
+                                "The claim was said at the shrine and met with the old answers, and the bearer stood there holding the founding truth and kept it. The quarrel folded away unspent, both wrong tellings standing on a silence freely chosen.");
+                            g.World.Facts.Add("withheld", "founding_truth", settlementName,
+                                "At the claim-saying the bearer held the socket's telling and said nothing: the founding truth stayed in its stone by choice, not ignorance.");
+                        },
+                    },
+                ]),
             },
 
             // The climax, cold: the claim said and met with the old answers,
@@ -841,6 +931,29 @@ public static class WarOfFaithsTemplate
                 [
                     ($"{straddlerName} lets out a breath they have plainly held for a season. \"Shelved, then. I have lived my whole life under shelved, and I can live the rest of it there too. My kin walked back up the hill still owed or still owing, depending which of my doors you ask. But nobody bled, and you stood where I asked you to stand.\"", LogTone.Reward),
                     ("\"A morning asked for and stood, even empty-handed. The claim will come down the hill again in some other lifetime, bearer. It will not be your weather then.\"", LogTone.Aegis),
+                ],
+                Effect = g => g.Player.Essence += 3,
+            },
+
+            // The witnessed settling, claim broken: the straddler's two houses
+            // are further apart than ever, and they saw what you did. Same
+            // coin: the endings differ in what the valley believes, never in
+            // the pay.
+            new Storylet
+            {
+                Id = "wf-settling-broken",
+                Trigger = StoryletTrigger.Talk,
+                Priority = 10,
+                Requires =
+                [
+                    new FactPattern("coda", "claim_broken"),
+                    new FactPattern("promise", "see_it_settled"),
+                ],
+                When = g => g.TalkNpc?.Id == straddlerId,
+                Lines =
+                [
+                    ($"{straddlerName} does not find your hand. \"My mother's shrine keeps its stone, and my grandmother's fire is a beaten fire now. I prayed at both stones this morning and it was two prayers, further apart than I have ever carried them. You stood where I asked you to stand, and I watched what you did there, and I have not decided what I watched.\"", LogTone.Reward),
+                    ("\"A morning asked for, stood, and answered with an edge. It weighs like a deed all the same, bearer. Deeds are not sorted kind from keen before they are weighed.\"", LogTone.Aegis),
                 ],
                 Effect = g => g.Player.Essence += 3,
             },

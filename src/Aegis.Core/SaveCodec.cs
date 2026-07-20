@@ -220,10 +220,13 @@ namespace Aegis.Core;
 /// beat now opens a modal scene whose digits are journaled and whose checks
 /// draw on the combat stream, so a v59 journal's keys land in a scene that
 /// did not exist and every roll after the first check shifts.
+/// v61 when D-118 staged the faiths' claim-saying as a scene: a v60 journal
+/// that reached the truth-in-hand climax replays into a modal choice that
+/// did not exist, and the wielding's check draws on the combat stream.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 60;
+    public const int Version = 61;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

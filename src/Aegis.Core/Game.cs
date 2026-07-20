@@ -6903,6 +6903,7 @@ public sealed class Game
         Player.Focus = Player.MaxFocus;
     }
     internal void Debug_ForceDeathCheck() { if (Player.Hp <= 0) HandleDeath(); }
+    internal void Debug_BurnCombatRoll() => _combatRng.Chance(0.5);
     internal void Debug_Raid() => RaidTheStead();
     internal void Debug_SetMount(Mount? mount) => Mount = mount;
     internal void Debug_ClearCamp() => Debug_ClearSite(SiteKind.GoblinCamp);

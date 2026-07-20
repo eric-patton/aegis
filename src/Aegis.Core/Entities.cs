@@ -477,6 +477,39 @@ public sealed class Monster
     public int ExposedTurns { get; set; }
 
     /// <summary>
+    /// The guard worn down (D-125): the second bar, rocked by pressure that is
+    /// not blood. Paid blows rock it a little, the heave's weight and the wall
+    /// more, a parried blow most of all. At the brim the guard breaks: the
+    /// stagger, and the riposte's open door.
+    /// </summary>
+    public int PostureDmg { get; set; }
+
+    /// <summary>
+    /// Where each kind's guard gives (D-125): discipline and mass, not blood.
+    /// A goblin's guard is habit; a carl's is a wall's; stone is rocked last.
+    /// </summary>
+    public int MaxPosture => Kind switch
+    {
+        MonsterKind.Goblin => 4,
+        MonsterKind.Hart => 4,
+        MonsterKind.Hound => 5,
+        MonsterKind.Warder => 5,
+        MonsterKind.Boar => 6,
+        MonsterKind.Wight => 6,
+        MonsterKind.Carl => 8,
+        MonsterKind.Thegn => 8,
+        MonsterKind.Severed => 9,
+        _ => 10,
+    };
+
+    /// <summary>
+    /// The open door (D-125): set when the guard breaks, spent by the one
+    /// melee blow that takes the riposte, and regathered when the stagger has
+    /// run out and the body next acts.
+    /// </summary>
+    public bool GuardBroken { get; set; }
+
+    /// <summary>
     /// The named of the dens (D-110): a roster raider's own name, null for the
     /// unnamed. Set at spawn from the world seed, never serialized.
     /// </summary>

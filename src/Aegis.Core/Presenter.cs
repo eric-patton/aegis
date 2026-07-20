@@ -873,6 +873,7 @@ public static class Presenter
             if (game.InThrust) Line("Spear leveled: choose a line", Hue.Cyan);
             if (game.InHeave) Line("Feet set: choose a line", Hue.DarkYellow);
             if (game.InCastLine) Line("The word waits: choose a line", Hue.Cyan);
+            if (game.ParryOpen) Line("Blow shown at your feet: a parries", Hue.Cyan);
             if (game.Player.HeaveTarget is not null) Line("! heave wound up: act to loose", Hue.DarkYellow);
             if (game.Player.LevinTarget is not null) Line("! levin held: act to say it", Hue.DarkYellow);
             if (game.Player.WardTurns > 0) Line($"Warded ({game.Player.WardTurns})", Hue.Cyan);
@@ -912,6 +913,9 @@ public static class Presenter
                 if (tier == ReadTier.Keen) named += Weight(monster.Intent!.Kind);
                 Line(named, Hue.Red);
             }
+            // The broken guard (D-125): the open door is named while it stands.
+            foreach (var monster in game.LiveMonstersHere.Where(m => m.GuardBroken && m.ExposedTurns > 0))
+                Line($"! {monster.Name} staggers, guard beaten open", Hue.Yellow);
         }
         else
         {
@@ -949,7 +953,7 @@ public static class Presenter
         Line("g grab  p lift  >/< enter/exit", Hue.DarkGray);
         Line("f loose  e eat  d drink", Hue.DarkGray);
         Line("z cast  i gear  c you", Hue.DarkGray);
-        Line("x stance  o order", Hue.DarkGray);
+        Line("x stance  a parry  o order", Hue.DarkGray);
         Line("q quit", Hue.DarkGray);
     }
 

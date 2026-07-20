@@ -243,10 +243,13 @@ namespace Aegis.Core;
 /// the overworld (a v66 journal's step onto that tile now bumps to talk),
 /// pilfering pockets a trinket beside the loaf, and the cart's three
 /// digits (bread, hides, the fence) answer where nothing did.
+/// v68 when D-125 gave every foe a second bar: paid blows, the heave, and
+/// the wall now rock a guard that breaks into a stagger (a v67 journal's
+/// long fights resolve differently), and 'a', once nothing, sets a parry.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 67;
+    public const int Version = 68;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

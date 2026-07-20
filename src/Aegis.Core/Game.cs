@@ -25,6 +25,24 @@ public static class Peddling
 }
 
 /// <summary>
+/// The guard worn open (D-125): the second bar, and what wears it. Pressure is
+/// flat and legible like the footing's 2s (D-094): a paid blow rocks a point,
+/// the wall two, the heave's weight three, a parried blow most of all. The
+/// parry costs less wind than a swing (it spends the turn not killing), and
+/// the riposte through a broken guard lands 4 deeper: the one flat number big
+/// enough to be worth standing into a shown blow for.
+/// </summary>
+public static class GuardBreak
+{
+    public const int BlowPressure = 1;
+    public const int SlamPressure = 2;
+    public const int HeavePressure = 3;
+    public const int ParryPressure = 4;
+    public const int ParryCost = 2;
+    public const int RiposteBonus = 4;
+}
+
+/// <summary>
 /// The deterministic game engine. No console, no I/O, no wall clock: state advances
 /// only through <see cref="Apply(Command)"/>, and all randomness flows from the seed
 /// tree. Frontends (TUI, pilot, sim) are pure drivers around this class.
@@ -163,6 +181,13 @@ public sealed class Game
 
     /// <summary>Set by choosing the old way: the moment closes for this world's keeper.</summary>
     private bool _layingDeclined;
+
+    /// <summary>
+    /// The guard set (D-125): the one foe this turn's parry stands against.
+    /// Lives exactly one turn, declaration to resolution, and is journal-derived
+    /// like everything on the bearer: never serialized.
+    /// </summary>
+    private Monster? _parryTarget;
 
     /// <summary>The pack menu (D-041): 'i' anywhere; digits wield or wear, anything else closes.</summary>
     public bool InGearMenu { get; private set; }
@@ -1083,6 +1108,7 @@ public sealed class Game
             Command.Heave => DoHeave(),
             Command.Cast => DoCast(),
             Command.Stance => DoStance(),
+            Command.Parry => DoParry(),
             Command.Order => DoOrder(),
             _ => CommandMap.Delta(cmd) is { } d && DoMove(d.dx, d.dy),
         };
@@ -4024,6 +4050,83 @@ public sealed class Game
         return LiveMonstersHere.Any();
     }
 
+    /// <summary>What iron can meet (D-125): a swung blow. Not a charging mass, a falling stone, a cry, or the cold.</summary>
+    private static bool Parryable(IntentKind kind) => kind is IntentKind.CrushingBlow or IntentKind.BarrowBlade
+        or IntentKind.SunderingCut or IntentKind.GravenFist or IntentKind.ThroatLunge or IntentKind.SeaxStab
+        or IntentKind.MeasuredCut;
+
+    /// <summary>
+    /// The blow a parry could meet (D-125): an adjacent foe whose wind-up's
+    /// shown mark sits on the bearer's own ground and falls this coming turn.
+    /// The iron goes where the eye says, so a mark that lies (the thegn's
+    /// feint below a keen read shows a neighbor cell) is a blow that cannot be
+    /// met: the feint's teeth stay exactly as long as the read stays short.
+    /// </summary>
+    private Monster? ParryMark() => Mode != MapMode.Site ? null
+        : Monsters.FirstOrDefault(m => m.Alive && m.SiteId == CurrentSite!.Id
+            && m.Pos.Chebyshev(Player.Pos) == 1
+            && m.Intent is { } i && i.TurnsUntilResolve <= 1 && i.TargetCell == Player.Pos
+            && i.FeintCell is null && Parryable(i.Kind));
+
+    /// <summary>A blow is shown at the bearer's feet that iron could meet (the sidebar's hint).</summary>
+    public bool ParryOpen => ParryMark() is not null;
+
+    /// <summary>
+    /// The parry (D-125): 'a' against a blow shown at your own ground. The
+    /// turn is committed to the guard, not the kill: the blow is turned aside
+    /// whole, and the force of its own swing rocks the striker's guard harder
+    /// than any blow of yours could. Costs less wind than a swing; a guard
+    /// nobody menaces, or arms too spent to set one, refuse without the turn.
+    /// </summary>
+    private bool DoParry()
+    {
+        if (ParryMark() is not { } foe)
+        {
+            Log.Add(Turn, "No blow is shown at your ground; there is nothing for a guard to meet.");
+            return false;
+        }
+        if (Player.Stamina < GuardBreak.ParryCost)
+        {
+            Log.Add(Turn, "Your arms are too spent to set the guard; this one must be answered by feet.", LogTone.Combat);
+            return false;
+        }
+        Player.Stamina -= GuardBreak.ParryCost;
+        _parryTarget = foe;
+        Log.Add(Turn, $"You set your guard on the shown line and hold your ground against the {foe.Name}.", LogTone.Combat);
+        return true;
+    }
+
+    /// <summary>
+    /// Pressure on the second bar (D-125). At the brim the guard breaks: the
+    /// wind-up dies, the body staggers open two turns (shafts find it, feet
+    /// and blows stop), and the riposte's door stands open until one melee
+    /// blow takes it or the stagger runs out.
+    /// </summary>
+    private void RockGuard(Monster monster, int pressure)
+    {
+        if (!monster.Alive || monster.Dormant) return;
+        monster.PostureDmg += pressure;
+        if (monster.PostureDmg < monster.MaxPosture) return;
+        monster.PostureDmg = 0;
+        monster.GuardBroken = true;
+        monster.ExposedTurns = 2;
+        if (monster.Intent is not null) monster.Intent = null;
+        Log.Add(Turn, $"The {monster.Name}'s guard is beaten open: it staggers, arms wide, nothing between you and it.", LogTone.Reward);
+    }
+
+    /// <summary>
+    /// The riposte (D-125): one melee blow through a broken guard lands 4
+    /// deeper and spends the open door. Only a paid blow takes it; a winded
+    /// tap through an open guard is still a winded tap.
+    /// </summary>
+    private int RiposteBonus(Monster target)
+    {
+        if (!target.GuardBroken || target.ExposedTurns == 0) return 0;
+        target.GuardBroken = false;
+        Log.Add(Turn, $"Your blow goes through the door the broken guard left open.", LogTone.Combat);
+        return GuardBreak.RiposteBonus;
+    }
+
     /// <summary>
     /// The one word to the one who walks with you (D-097): a single key whose
     /// meaning reads from the moment. Beside a hurt guest with the satchel to
@@ -4289,6 +4392,8 @@ public sealed class Game
                 + (weapon is null && Player.HasPerk(PerkId.CaughtArm) && target.Intent is not null ? 3 : 0);
             // The footing (D-094): pressing gives the blow 2 more, guarded 2 less, never below 1.
             damage = Math.Max(1, damage + Player.StanceBlow - (Player.ChilledTurns > 0 ? 2 : 0));
+            // The riposte (D-125): a paid blow through a broken guard lands deeper.
+            damage += RiposteBonus(target);
             // Only a full swing teaches (D-014's cost gating: this one was paid
             // for in wind and wear). Feeble flailing is free, and free is unfed.
             trained = family;
@@ -4325,6 +4430,8 @@ public sealed class Game
                     Log.Add(Turn, "Grit sifts from the figure. The head grinds around to face you.", LogTone.Danger);
                 }
             }
+            // The guard rocked (D-125): only a paid blow carries the pressure.
+            if (trained is not null) RockGuard(target, GuardBreak.BlowPressure);
             // The checked swing (D-055): a landed hafted blow breaks the wind-up
             // outright. Only a paid swing has the weight; feeble flailing checks
             // nothing.
@@ -4357,7 +4464,13 @@ public sealed class Game
                     Log.Add(Turn, $"The blow carries the {target.Name} a full stride back.", LogTone.Combat);
                 }
                 else
+                {
                     Log.Add(Turn, $"The {target.Name} is driven against what will not give, and held there a breath.", LogTone.Combat);
+                    // The wall-slam (D-125, tracked since D-095): ground that
+                    // will not give hands the shove's weight back through the
+                    // body, and the guard takes it.
+                    RockGuard(target, GuardBreak.SlamPressure);
+                }
             }
         }
         else
@@ -4701,6 +4814,7 @@ public sealed class Game
                 + Player.Skills.Bonus(SkillId.Hafted)
                 + (Player.HasPerk(PerkId.TrueArc) ? 1 : 0);
             damage = Math.Max(1, damage + Player.StanceBlow - (Player.ChilledTurns > 0 ? 2 : 0)); // footing (D-094), grave-cold (D-096)
+            damage += RiposteBonus(target); // the open door (D-125) is within the ash's reach
             target.Hp -= damage;
 
             if (target.Alive)
@@ -4715,6 +4829,8 @@ public sealed class Game
                         Log.Add(Turn, "Grit sifts from the figure. The head grinds around to face you.", LogTone.Danger);
                     }
                 }
+                // The guard rocked (D-125): a paid point is pressure like a paid edge.
+                RockGuard(target, GuardBreak.BlowPressure);
                 // The checked swing (D-055) has the same weight at the ash's
                 // length: a paid landed blow breaks the wind-up outright.
                 if (Player.HasPerk(PerkId.CheckedSwing) && target.Intent is not null)
@@ -4843,6 +4959,7 @@ public sealed class Game
             + (family == SkillId.Blades && Player.HasPerk(PerkId.DrawnCut) ? 1 : 0)
             + (family == SkillId.Hafted && Player.HasPerk(PerkId.TrueArc) ? 1 : 0);
         damage = Math.Max(1, damage + Player.StanceBlow - (Player.ChilledTurns > 0 ? 2 : 0)); // footing (D-094), grave-cold (D-096)
+        damage += RiposteBonus(target); // the open door (D-125), hit with everything
         target.Hp -= damage;
 
         if (target.Alive)
@@ -4857,6 +4974,9 @@ public sealed class Game
                     Log.Add(Turn, "Grit sifts from the figure. The head grinds around to face you.", LogTone.Danger);
                 }
             }
+            // The guard rocked hardest by weight (D-125): the heave is the
+            // biggest single thing a hand can throw, and the bar knows it.
+            RockGuard(target, GuardBreak.HeavePressure);
             // The checked swing (D-055): a landed paid hafted blow breaks the
             // wind-up outright, at the heave's weight as at the swing's.
             if (family == SkillId.Hafted && Player.HasPerk(PerkId.CheckedSwing) && target.Intent is not null)
@@ -5919,6 +6039,10 @@ public sealed class Game
                 }
             }
 
+        // The guard set (D-125) lives declaration to resolution, exactly one
+        // field-turn, met or not: iron cannot wait in a line forever.
+        _parryTarget = null;
+
         // Those who walk with you (D-097, D-099) take their own step after
         // the field has moved, so what they answer is what actually stands.
         if (Player.Hp > 0)
@@ -5963,6 +6087,10 @@ public sealed class Game
 
     private void ActMonster(Monster monster)
     {
+        // The guard regathered (D-125): a stagger walked off un-riposted is a
+        // door closed. The body next acts whole.
+        if (monster.GuardBroken && monster.ExposedTurns == 0) monster.GuardBroken = false;
+
         // Resolve a telegraphed intent first: it lands on the cell, not the player.
         if (monster.Intent is { } intent)
         {
@@ -5979,6 +6107,10 @@ public sealed class Game
                 // which is not always where the mark said.
                 var struckCell = intent.FeintCell ?? intent.TargetCell;
                 bool landed = Player.Pos == struckCell;
+                // The guard set (D-125) meets the blow it was set against. A
+                // feinting striker can never be the set target: the shown mark
+                // the declaration demanded was never on the bearer's cell.
+                bool parried = landed && monster == _parryTarget;
 
                 // The dice are rolled only when a body is actually struck, so a
                 // world without a guest draws exactly what it always drew.
@@ -6017,6 +6149,16 @@ public sealed class Game
                     }
                     else
                         Log.Add(Turn, "The grave-cold closes on ground you had the sense to leave: frost stars the stone where you stood.", LogTone.Combat);
+                }
+                else if (parried)
+                {
+                    // The parry (D-125): the blow is turned whole, no dice, and
+                    // the striker's own committed force is what rocks its guard.
+                    // The turn was spent on the guard, not the kill: that is
+                    // the price, and the broken guard's riposte is the pay.
+                    Log.Add(Turn, $"The blow comes exactly as shown, and your guard is waiting: you turn it aside whole, and the force of its own swing rocks the {monster.Name}.", LogTone.Reward);
+                    RockGuard(monster, GuardBreak.ParryPressure);
+                    GainSkill(Player.Weapon?.Family ?? SkillId.Brawling);
                 }
                 else if (landed)
                 {
@@ -6109,7 +6251,7 @@ public sealed class Game
                 // moment stands open the hand holds (D-045). A lofted stone
                 // (D-057) falls from the sky's top, not from a hand in reach:
                 // there is nothing to answer over.
-                if (landed && intent.Kind is not IntentKind.BoarCharge and not IntentKind.LoftedStone && Player.Hp > 0
+                if (landed && !parried && intent.Kind is not IntentKind.BoarCharge and not IntentKind.LoftedStone && Player.Hp > 0
                     && Player.Weapon is { Move: MoveVerb.Answer } blade
                     && monster.Pos.Chebyshev(Player.Pos) == 1)
                 {
@@ -6140,6 +6282,10 @@ public sealed class Game
         if (monster.Kind == MonsterKind.Hart) { ActHart(monster); return; }
         if (monster.Kind == MonsterKind.Warder) { ActWarder(monster); return; }
         if (monster.Kind == MonsterKind.Thegn) { ActThegn(monster); return; }
+
+        // Standing open (D-125): the kinds on the generic path stagger like
+        // the schooled ones do. A broken guard holds feet and blows both.
+        if (monster.ExposedTurns > 0) { monster.ExposedTurns--; return; }
 
         // The second body (D-097, D-099): a raider that one of the fellows
         // stands nearer than the bearer turns on that fellow. The old kinds

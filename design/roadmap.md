@@ -117,10 +117,18 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   the shrine), closing the named launch-template list. **Magic, the alternative keystone, landed (D-091):** Mind and Will wake,
   the caster build exists (graven stones, four workings, Focus, Spellcraft), and the deep
   sites carry a prize beyond coin and gear.
-- **Phase 3: Remaining pillars & stakes.** Companions, the Death's-Toll/scar layer, the
-  other activity families, and the skills those unlock.
+- **Phase 3: Remaining pillars & stakes.** `[x]` essentially DONE: companions shipped
+  whole (D-097/D-099/D-100), the Death's Toll shipped whole (D-098), all four activity
+  families opened and crime complete on its named verbs (D-127).
 - **Ongoing: Breadth & depth.** Catalog growth (templates, monsters, tiers, gear, oaths),
   combat depth (posture, parry, movesets), and narrative depth (dialogue trees).
+- **The next stretch (2026-07, adopted D-131): see `design/plan-2026-07.md`.** Four
+  lanes: the stead layer first (Phase A), multi-region (Phase B), breadth interleaved
+  (Phase C), pacing/worldgen/NG+ freshness (Phase D). The plan holds the reasoning and
+  the 14-step suggested sequence; the trackable boxes live under the pillars below (the
+  stead-layer and pacing-and-freshness sections are new; the B and C lanes mostly attach
+  to boxes that already existed). This entry supersedes the phase numbering above as the
+  sequencing story.
 
 ---
 
@@ -219,7 +227,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   three sprigs steeped at the stillroom or, taught, at any shrine rest; 'd' drinks it on the road:
   the herb lane's first sink and the first remedy that walks into a deep site); smithing as a
   player lane pending (D-006, D-025)
-- [~] Wilderness living: hunting + sell path + cooking + foraging shipped (D-070, D-071, D-073, D-074); tracking, fishing, camping pending (D-006)
+- [~] Wilderness living: hunting + sell path + cooking + foraging shipped (D-070, D-071, D-073, D-074); tracking, fishing, camping pending (D-006; camping lands as part of B1, D-131)
 - [x] A hide-buyer with room to grow: the woodward's trade sub-menu, hides to coin (D-071)
 - [x] Crime: all four of D-006's named verbs shipped. Pickpocketing (D-107, v55: 'p' beside one
   of the stead's folk, the Sleight skill's dice, one try per pocket per world; clean lifts pay
@@ -253,8 +261,50 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - [x] A consumer for the light_purse fact (the stead reading a fleeced bearer, gated on the
   live net like the lucky hand's talk) (D-108, built D-123)
 - [x] Carousing as a round-standing verb at the hearth (D-108, built D-123)
-- [ ] Aspirational sink ladder: property, retinue, master training, commissions (D-025, D-036)
+- [ ] Aspirational sink ladder: property, retinue, master training, commissions (D-025, D-036);
+  the stead half is now planned as the facility ladder (A3 below, D-131), the town half
+  as B2's property rung
 - [~] Grow the wood's-edge bench: cooking (D-073) + foraged-goods sale (D-074) shipped; hunting gear/lessons pending (D-071)
+
+### The stead layer (plan 2026-07 Phase A, adopted D-131)
+
+The home stead becomes something the bearer invests in and comes home to, riding
+existing machinery (fact graph, storylets, the coarse tick, vendor benches). The
+KDM-derived lane; full reasoning in `design/plan-2026-07.md`.
+
+- [ ] A1: Scheduled future facts: a `due` tick, a foreshadow hook, cancellation
+  conditions; the tick fires them when due; two modest first uses (D-131)
+- [ ] A2: Stead event storylets on the tick beyond the raids: small, mixed-valence,
+  consequence-dense, several foreshadowed via A1 (the fanfic test applies) (D-131)
+- [ ] A3 v1: Facility ladder, first three (palisade, watchtower, granary): coin sinks
+  that modify existing systems (raids, watch, stores); this is the stead half of the
+  open D-025/D-036 sink-ladder box; regard capped at a one-time acknowledgment per
+  facility, never recurring (D-131)
+- [ ] A3 v2: Facility ladder, next two (stillroom extension, smithy bench; the Smithing
+  skill seeded at home) (D-131)
+- [ ] A4: The crossing split: facilities and stead state reset with the World bucket;
+  knowledge carries as it already does; optional light legacy echo via the D-120
+  silence/mythology pipe (scope ◇ parked) (D-131)
+- ◇ A5: Named stead folk, deferred not rejected: revisit after A1-A3 are live and the
+  raids can threaten something with a name (parking lot) (D-131)
+
+### Multi-region (plan 2026-07 Phase B, adopted D-131)
+
+The world widens to a handful of regions at valley density, one at a time, the road
+between them as play. Starts after the stead layer's core lands.
+
+- [ ] B1: The road: travel-as-play before the destination (supplies, weather exposure,
+  camp rests, encounter sites); includes camping, which is still an open D-006 box, not
+  an existing verb (D-131)
+- [ ] B2: The market town: authored chunks stitched per seed, its own factions (a guild,
+  a law), Commerce seeded, smithing lessons, the law and reputation web surfaced not
+  hidden; later tournaments and property (the town-life boxes above) (D-131)
+- [ ] B3: Region machinery, done once and kept general: region entities and name pools
+  (the D-049 box below), per-region price spreads, caravan/arbitrage between stead and
+  town (D-025, and the peddler's stock-growth deferral above), cross-region faction
+  relations with news that travels (D-131)
+- [ ] B4: Later regions after the town proves the machinery: a wild frontier region
+  first, each at full density (D-131)
 
 ### Magic (v1 shipped, D-091)
 
@@ -446,6 +496,27 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - [x] Cross-world withheld consumer: the unsaid crosses as a silence fact, hushed or not, and later worlds retell the wrong story for true (D-118/D-119 deferral, built D-120)
 - [ ] NPC depth: per-role voices, schedules, movement (D-031)
 
+### Pacing, worldgen & NG+ freshness (plan 2026-07 Phase D, adopted D-131)
+
+The procgen-lessons lane: editorial authority above the tick, worlds that differ in
+kind, and the evaluation harness that hardens every generator change.
+
+- [ ] D1: The pacing layer: a storyteller above the coarse tick with editorial authority
+  over when eligible storylets and tick events fire; read-only first (log what it would
+  have done across the sweep seeds) before it steers (authority scope ◇ parked) (D-131)
+- [ ] D2: The twist library: worlds past a given tier carry one generated rule that
+  changes how the world works, written into history and law; authored as templates,
+  drawn per world, must touch systems not just flavor; arrives after the town
+  (governance ◇ parked, to be reconciled with the tier-7+ question, D-058) (D-131)
+- [ ] D3: Prose variety infrastructure: fact-keyed fragments composed per surface (rumor,
+  epitaph, ledger, song) plus a repetition audit across seeds; the audit needs a
+  generate-then-curate surface dump (talk-gated prose is pilot-unexercised by design, so
+  the journey sweep alone cannot carry it); shares a harness with D4 (D-131)
+- [ ] D4: Worldgen evaluation harness: batch-generate worlds and chart expressive-range
+  metrics over the fact graph (faction states reached, template mixes, price spreads,
+  storylet coverage); extends `journey --json` (D-083); begin before the generator grows
+  again (step 7 of the plan's sequence, ahead of Phase B) (D-131)
+
 ### Content catalogs (breadth, grow over time)
 
 - [~] Gear: 10 items; req axes Might/Vigor/Grace; deep signature verbs pending (D-041, D-056)
@@ -453,8 +524,10 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - [~] Legend: 5 rungs, 3 hospitality boons; rungs past 5 open (D-048)
 - [~] Hostility-tier bands: 2-6 distinct + tier-7 recombination; tier 7+ approach open (D-033..D-058)
 - [~] Scar list: three shipped (eye, hand, look); the dragging step and more open (D-098)
-- [ ] Weather / seasons (referenced only in flavor today) (vision §1, D-051)
-- [ ] Region entities, biome names, culture-flavored name pools, world epithets (D-049)
+- [ ] Weather / seasons (referenced only in flavor today) (vision §1, D-051; planned to
+  ride the stead event deck, plan 2026-07 step 4, D-131)
+- [ ] Region entities, biome names, culture-flavored name pools, world epithets (D-049;
+  planned as part of B3 region machinery, D-131)
 
 ### Tooling & verification, built
 
@@ -477,7 +550,13 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - ◇ Storylet external data-file format + condition/effect vocabulary (D-030)
 - ◇ Catalogs to grow: more oaths, the scar list, Legend rungs past 5, patron deeds past 3, hostility bands past the fen-leaguer (D-047, D-009, D-048, D-054, D-033+)
 - ◇ Story open items: bottle-episode playability, Unbinder guise tells, reveal-tier sharing across characters, template 7+ candidates (aegis-arc.md §11, world-story-templates.md §11)
-- ◇ Tier 7+ content: more distinct bands vs a recombination system (D-058)
+- ◇ Tier 7+ content: more distinct bands vs a recombination system vs the twist library (D-058, D-131: the twist library is a third candidate answer; reconcile, don't run both)
+- ◇ Named stead folk (plan 2026-07 A5): adopt after A1-A3 are live, and at what depth (D-131)
+- ◇ The legacy echo at the crossing (plan 2026-07 A4): how much a built stead may leak into the next world's history without diluting the fresh-world promise (D-131)
+- ◇ Town law vs stead shame: one unified transgression ledger per faction, or the town's law getting its own shape (courts, fines, outlawry) (D-131)
+- ◇ Twist-library governance: how twists compose with story templates and tiers, whether a world ever carries two (D-131)
+- ◇ Pacing-layer authority: which event classes it may delay or hasten, and which stay untouchable (D-131)
+- ◇ Generator-version pinning per world: today a save bump re-deals live worlds; decide before any save-format freeze whether old generators ship alongside new (D-131)
 
 ---
 
@@ -485,6 +564,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-20: **D-131 the July 2026 plan adopted and wired in.** Design-only session. The research sweep's plan (`design/plan-2026-07.md`, distilling research/11 Daggerfall, research/12 KDM's settlement phase, research/13 the procgen survey) is adopted with its five user decisions standing: multi-region world scale at valley density, the facilities version of the stead layer, all four lanes with the stead layer first, a market town as the first new region, and NG+ freshness as worlds that differ in kind. New tracked here: the stead-layer section (A1 scheduled future facts, A2 stead event deck, A3 facility ladder in two cuts, A4 crossing split, A5 named folk parked), the multi-region section (B1 the road, B2 the market town, B3 region machinery, B4 later regions), and the pacing/worldgen/NG+ section (D1 pacing layer, D2 twist library, D3 prose variety, D4 evaluation harness); the sink-ladder, weather, region-entities, and camping lines annotated to their lanes; the phase map now points at the plan as the sequencing story. Six questions joined the parking lot (named folk depth, legacy echo scope, town law vs stead shame, twist governance and its reconciliation with the D-058 tier-7+ question, pacing authority, generator-version pinning). Three plan corrections folded in at adoption: camping is an open box that lands as part of B1, not an existing verb; the generator-freeze principle is only half honored today (save bumps re-deal live worlds; true pinning parked for before any save-format freeze); and D3's repetition audit cannot ride the journey sweep (talk-gated prose is pilot-unexercised by design) so it shares a generate-then-curate harness with D4. Plus one guard: a facility pays regard once, never recurring (the D-109 no-profit discipline extended to purchases). Next: A1.
 - 2026-07-20: **D-130 the Long Siege: the sixth spine, and the fen-leaguer gets its story.** The parking-lot deferral tracked since D-121 closes: the sixth template binds to the one deep site with a whole identity and no spine, D-057's fen-leaguer, "the siege that outlived its object." Eligible tier 6+ where the leaguer stands. The accepted history is the stead's penned-thing tale told as gratitude (something old and hungry walled under the holm, held by the falling stones: a watch the stead never had to post); the holm's bare turf flips it twice over (nothing was ever penned: the besieged were the stead's own founders, out across one winter's ice, and the tale was theirs, told so the siege's setters would never come asking, so the stead has spent its history thanking the works set to starve its own grandmothers). The fisher's whole-life wanting voices act 1 against the tale (promise lift_the_leaguer, 3 essence settling, truth-indifferent); the lifting with the truth in hand opens "The ice and the tally" (carry the tally down, founding_carried, the gratitude turned inheritance; or leave the founders their fear, fear_stands plus withheld mere_truth, the fifth writer into the D-118/D-120 silence pipe with its own retelling arm); without the truth, plain lines and the tale explains the quiet alone. Full-contract spec added as world-story-templates.md §9. Save v71 -> v72 (tier-6+ worlds draw among six and re-deal; tiers 1-5 untouched by construction). 698 tests green (9 new SiegeTests on master seed 2's sixth world; one LeaguerTests texture test hardened onto a non-siege world, since the evidence outranks the bare-holm line by design). Twins byte-identical on all five sweep seeds; all five moved off v72 as predicted, drift healthy (cycle 13 and 12 crossings everywhere, death counts identical, seed 7 +2839 keys from a longer late-world story); sim replays exact (seeds 1, 7, 2024); the v73 sweeps are the new baselines. Deferred: the seventh template (the dying god's succession); D-025 economy hooks for the opened mere.
 - 2026-07-20: **D-129 the guard war's coda: the board-check and the drilled bind.** The two kinds the second bars were built waiting for (named at D-125 and D-126) ship together. The shield-carl's board-check is the field's first pressure verb aimed at the bearer's guard and not the blood: at arm's length, a quarter of its turns, the whole board squares as a telegraphed blow at the bearer's cell, landing as thrown mass at the charge's tier (3) with no dice and no wound, riding D-126's stance-and-commitment reading, dodged by feet, and met cleanest by the parry (a met check hands the carl's mass back for the full 4: verb and answer point at each other). A sundered board has no check, and the board never leaves its line, so the archer's windows stay the seax's. The drilled thegn answers being parried: its met cut gives only half its force to the bind (2, not 4) and shoves a point back through the crossed iron; the parry stays worth its turn (bloodless, still teaching), and the feint interplay is untouched by construction (a lying mark can never be met, so the bind only answers the honest cut). Save v70 -> v71 (the carl's new draw re-deals fort fights). 689 tests green (9 new GuardWarTests; one RingfortTests seax test hardened past the check, the D-121 precedent). Twins byte-identical on all five sweep seeds; all five moved off v70 as predicted, drift healthy (cycle 13 and 12 crossings everywhere, deaths equal or fewer, hauls near-identical, seed 1 wearing D-126's more-keys-fewer-turns signature); sim replays exact (seeds 1, 7, 2024); the v72 sweeps are the new baselines. Combat's open lane narrows to knacks, flanking, duels, and more second moves.
 - 2026-07-20: **D-128 the stead reads its own unease: the secret facts' consumer pass.** The deferral D-127 named the day it tripled the fuel, one small session in the D-109 discipline (narrative and facts, no mechanics: the world reading differently IS the payoff). lifted_purse already had its reader (D-109's two ledgers), so this pays the two tracked open: the bolted dark reads the burgled house off the lane (bright iron on grey wood, the dog kept in, talk that stops at one threshold; NearHouse, once per world, priority 6), with the structural idea being the forbid: shame/housebroken kills the beat for the world, because a lane that has seen a face has a name for its trouble and the beat's whole weight was the lack of one. The heirloom missed grieves the fenced goods to the very hand that sent them (the whittled nothing shaped in the air, the floor up twice, "nobody here would take it" said to the taker; villager Talk, once per world, gated on live shame at zero like the tale carried). Every secret fact a deed can write now has a consumer. Pure perception, no new state, no save bump (v70 holds, the D-109 precedent). 680 tests green first run (5 new in FactConsumerTests, seed 1 probed honest: first burgle clean, second caught). Twins byte-identical and all five sweep seeds byte-identical to the v70 baselines outright (fact-gated on crimes no journey commits); sim replays exact (seeds 1, 7, 2024). New tracked: a consumer for shame/housebroken in its turn.

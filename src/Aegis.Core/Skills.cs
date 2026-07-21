@@ -14,9 +14,11 @@ namespace Aegis.Core;
 /// Smithing (D-135) is the iron's craft, seeded at the stead's own bench, fed
 /// only by sittings that truly moved wear off a piece;
 /// Commerce (D-140) is the trader's craft, seeded at the market town, fed
-/// only by lots sold above the valley's own price (the margin the walk earned).
+/// only by lots sold above the valley's own price (the margin the walk earned);
+/// Persuasion (D-142) is the pleader's craft, seeded at the moot-stone, fed
+/// only by pleas that truly moved the town's book (the fine paid is the cost).
 /// </summary>
-public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting, Cooking, Survival, Spellcraft, Sleight, Smithing, Commerce }
+public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting, Cooking, Survival, Spellcraft, Sleight, Smithing, Commerce, Persuasion }
 
 /// <summary>
 /// Counted uses are the only state; levels are derived, never granted. A skill
@@ -26,7 +28,7 @@ public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting, Cookin
 /// </summary>
 public sealed class SkillSet
 {
-    public const int Count = 12;
+    public const int Count = 13;
 
     private readonly int[] _uses = new int[Count];
 
@@ -67,6 +69,7 @@ public sealed class SkillSet
         SkillId.Sleight => "Sleight",
         SkillId.Smithing => "Smithing",
         SkillId.Commerce => "Commerce",
+        SkillId.Persuasion => "Persuasion",
         _ => id.ToString(),
     };
 }

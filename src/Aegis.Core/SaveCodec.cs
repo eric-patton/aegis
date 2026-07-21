@@ -287,10 +287,14 @@ namespace Aegis.Core;
 /// forge and the guildhall in every town (a v79 journal's town walks different
 /// lanes), and digits a v79 journal never held file iron for coin, teach the
 /// drawn temper, and swear the carriers' bond.
+/// v81 when D-142 opened the warden's book: 'p' inside the town wall, once
+/// nothing, now brushes a towner's purse and draws the lift's dice; a caught
+/// hand goes into the moot's book (counters distrust, then bar), and the
+/// plea digit at the warden moves coin, the book, and the Persuasion craft.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 80;
+    public const int Version = 81;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed, Forge, Bond }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed, Forge, Bond, Plea }
 
 /// <summary>
 /// The cart's counter (D-124): the road's prices. The ration a coin or two
@@ -440,6 +440,16 @@ public sealed class Game
 
     /// <summary>Whether the carriers' bond is sworn (D-141): the town's first ledger opened on the bearer, per-world like every ledger.</summary>
     public bool GuildSworn => World.Facts.Exists("guild", "guild_sworn");
+
+    /// <summary>
+    /// The moot's book on the bearer (D-142): the town faction's infamy count,
+    /// a mark per crime the wall saw, answered mark by mark at the moot-stone.
+    /// Per-world like every ledger, rebuilt by replay, never serialized.
+    /// </summary>
+    public int TownBook => InfamyOf(FactionId.Town);
+
+    /// <summary>Test hook: marks go into the warden's book without staging a caught hand.</summary>
+    public void Debug_RaiseTownBook(int marks) => RaiseTownBook(marks);
 
     /// <summary>Whether any owned piece carries wear a file could move (D-141): the forge's and the pilot's shared read.</summary>
     public bool IronNeedsWork => BenchTarget() is not null;
@@ -2404,7 +2414,10 @@ public sealed class Game
     /// </summary>
     private bool DoLift()
     {
-        if (Mode != MapMode.Overworld)
+        // The town's pockets (D-142): the light hand works inside the wall
+        // too, but the wall keeps a book the lanes never did.
+        bool inTown = Mode == MapMode.Site && CurrentSite?.Kind == SiteKind.Town;
+        if (Mode != MapMode.Overworld && !inTown)
         {
             Log.Add(Turn, "No pockets down here worth the name; what the deep places hold is not carried on a hip.");
             return false;
@@ -2414,7 +2427,7 @@ public sealed class Game
         foreach (var (dx, dy) in Directions.All8)
         {
             var q = Player.Pos.Plus(dx, dy);
-            if (NpcsHere.FirstOrDefault(n => n.Pos == q && n.Kind == NpcKind.Villager) is { } npc)
+            if (NpcsHere.FirstOrDefault(n => n.Pos == q && n.Kind == (inTown ? NpcKind.Towner : NpcKind.Villager)) is { } npc)
             {
                 mark = npc;
                 break;
@@ -2443,7 +2456,13 @@ public sealed class Game
             int take = _combatRng.Range(Lifting.TakeMin, Lifting.TakeMaxExclusive);
             Player.Coin += take;
             Log.Add(Turn, $"A brush at the shoulder, a word about the weather, and {mark.Name}'s purse is {take} coin the lighter. No eye follows you away. ({Player.Coin} coin carried)", LogTone.Reward);
-            if (!World.Facts.Exists("secret", "lifted_purse"))
+            if (inTown)
+            {
+                if (!World.Facts.Exists("secret", "lifted_purse_town"))
+                    World.Facts.Add("secret", "lifted_purse_town", World.TownName,
+                        $"Coin has gone missing from a pocket inside {World.TownName}'s wall, and the warden's book has no name to put to it.");
+            }
+            else if (!World.Facts.Exists("secret", "lifted_purse"))
                 World.Facts.Add("secret", "lifted_purse", World.SettlementName,
                     $"Coin has gone missing from a pocket in {World.SettlementName}, and no one knows whose hand took it.");
             GainSkill(SkillId.Sleight);
@@ -2452,12 +2471,22 @@ public sealed class Game
         {
             World.CaughtLifts.Add(mark.Id);
             Log.Add(Turn, $"Your fingers find the purse, and {mark.Name}'s hand finds your wrist. \"So that is what you are.\" It will be round the well by morning.", LogTone.Danger);
-            if (!World.Facts.Exists("shame", "confronted"))
-                World.Facts.Add("shame", "confronted", World.SettlementName,
-                    $"{mark.Name} caught the bearer's hand in their purse and said so to their face.");
-            if (World.CaughtLifts.Count == 1)
-                Log.Add(Turn, "(A wrong done to a hand is made right in that hand: coin twice the take, offered plainly, with the same key that tried it.)", LogTone.Info);
-            RaiseShame(1);
+            if (inTown)
+            {
+                // The wall's justice is the moot's, not the well's (D-142):
+                // a caught hand in town goes into the book, not the stead's
+                // shame, because a stead's suspicion has no eyes out east.
+                RaiseTownBook(1);
+            }
+            else
+            {
+                if (!World.Facts.Exists("shame", "confronted"))
+                    World.Facts.Add("shame", "confronted", World.SettlementName,
+                        $"{mark.Name} caught the bearer's hand in their purse and said so to their face.");
+                if (World.CaughtLifts.Count == 1)
+                    Log.Add(Turn, "(A wrong done to a hand is made right in that hand: coin twice the take, offered plainly, with the same key that tried it.)", LogTone.Info);
+                RaiseShame(1);
+            }
         }
         return true;
     }
@@ -2479,7 +2508,13 @@ public sealed class Game
         Player.Coin -= SteadShame.RepayCoin;
         World.RepaidLifts.Add(mark.Id);
         Log.Add(Turn, $"You put {SteadShame.RepayCoin} coin into {mark.Name}'s hand and name what it is for. They count it, twice, and nod once.", LogTone.Reward);
-        LowerShame(1);
+        // A town mark's wrong is made right in the hand like anywhere (D-142),
+        // but the mark in the WARDEN'S book is the moot's to rule through, not
+        // the wronged hand's: the plea at the stone is the only eraser there.
+        if (mark.Kind == NpcKind.Towner)
+            Log.Add(Turn, "The hand is even with you. The warden's book is not; a mark at the moot-stone waits for the moot-stone.", LogTone.Info);
+        else
+            LowerShame(1);
         return true;
     }
 
@@ -3052,7 +3087,11 @@ public sealed class Game
                 topics.Add(("The simples", "\"Half of what is on this cloth I could not grow if I prayed. It walks in off the hills in satchels like yours, and walks out priced for town ailments, which pay better than country ones. The sample-book keeps us both honest.\""));
                 break;
             case "npc_mootwarden":
-                topics.Add(("The moot", "\"Disputes are heard at the moot-stone on law-days, and what is sworn there binds inside the wall. You are not in anyone's book yet, which is its own kind of standing: spend it carefully. The town remembers faces the way the hills remember weather.\""));
+                // The moot's topic reads the book true (D-142): the law was
+                // surfaced as talk in D-140, and now the talk reads the machinery.
+                topics.Add(("The moot", TownBook > 0
+                    ? $"\"Disputes are heard at the moot-stone on law-days, and what is sworn there binds inside the wall. Your name stands in the book with {TownBook} mark{(TownBook == 1 ? "" : "s")} against it, which you know, and every counter on the street knows by now too. The stone will hear you whenever you have the coin and the stomach.\""
+                    : "\"Disputes are heard at the moot-stone on law-days, and what is sworn there binds inside the wall. You are not in anyone's book yet, which is its own kind of standing: spend it carefully. The town remembers faces the way the hills remember weather.\""));
                 // The guild's door opened in step 10 (D-141): the warden now
                 // points at the hall instead of describing a closed one.
                 topics.Add(("The guild", GuildSworn
@@ -3196,6 +3235,15 @@ public sealed class Game
                 case "npc_guildmaster":
                     offers.Add((TradeGood.Bond, "", BondLabel()));
                     break;
+                // The moot's one digit (D-142): the plea, listed only while a
+                // mark stands. The warden still keeps no counter (the law is
+                // not for sale); a fine is not a price, it is an answer, and
+                // with the book even the digit goes home again. Nothing else
+                // sits on this board, so no digit ever shifts under it (D-041).
+                case "npc_mootwarden":
+                    if (TownBook > 0)
+                        offers.Add((TradeGood.Plea, "", PleaLabel()));
+                    break;
             }
         // The cart's counter (D-124): the road's three digits. Bread at the
         // road's price (sold to anyone; the cart keeps no stead's books), the
@@ -3288,6 +3336,7 @@ public sealed class Game
     /// </summary>
     private void TryLearnLesson(string idStr)
     {
+        if (TownCounterBarred()) return;
         var id = LessonCatalog.FromId(idStr);
         var def = LessonCatalog.Def(id);
         if (Player.HasLesson(id))
@@ -3472,6 +3521,7 @@ public sealed class Game
     /// </summary>
     private void WorkTheForge()
     {
+        if (TownCounterBarred()) return;
         if (BenchTarget() is not { } worn)
         {
             Log.Add(Turn, $"{TalkNpc!.Name} turns each piece once against the light and hands it back. \"True, all of it. Come back when the road has had its say; the road always gets its say.\"");
@@ -3507,6 +3557,7 @@ public sealed class Game
     /// </summary>
     private void TrySwearBond()
     {
+        if (TownCounterBarred()) return;
         if (GuildSworn)
         {
             Log.Add(Turn, $"{TalkNpc!.Name}: \"Sworn is sworn. The book does not take a name twice, and the mark does not wear off. Go and carry.\"");
@@ -3863,6 +3914,7 @@ public sealed class Game
     /// </summary>
     private void TrySellHides()
     {
+        if (TownCounterBarred()) return;
         if (Player.Hide == 0)
         {
             Log.Add(Turn, $"{TalkNpc!.Name}: \"Bring me hides and I will weigh them fair. You carry none the wood would thank you for.\"");
@@ -3888,6 +3940,7 @@ public sealed class Game
     /// </summary>
     private void TrySellHerbs()
     {
+        if (TownCounterBarred()) return;
         if (Player.Herb == 0)
         {
             Log.Add(Turn, $"{TalkNpc!.Name}: \"Bring me the wood's simples and I will pay for them. Your satchel is empty of them today.\"");
@@ -3911,9 +3964,58 @@ public sealed class Game
     /// seasons the trade without ever outweighing the goods. The sworn bond
     /// (D-141) rides the same lot the same flat way: the guild's mark is
     /// trust, and trust is worth a coin at a counter that knows the mark.
+    /// While any mark stands in the warden's book (D-142) the haggle coin
+    /// dies whole: no counter trusts a booked hand's scales, level, mark,
+    /// or otherwise, which is the law's first tooth and the cheapest.
     /// </summary>
-    private int TownHaggle() => TalkNpc?.Kind == NpcKind.Towner
+    private int TownHaggle() => TalkNpc?.Kind == NpcKind.Towner && TownBook == 0
         ? Player.Skills.Level(SkillId.Commerce) + (GuildSworn ? CarriersGuild.LotBonus : 0) : 0;
+
+    /// <summary>
+    /// The law's second tooth (D-142): at the barred rung the town's counters
+    /// shut to the bearer entirely. The moot-warden's own board never bars:
+    /// the plea must always be hearable, or the law is just a wall.
+    /// </summary>
+    private bool TownCounterBarred()
+    {
+        if (TalkNpc?.Kind != NpcKind.Towner || TalkNpc.Id == "npc_mootwarden" || TownBook < TownLaw.BarredRung) return false;
+        Log.Add(Turn, $"{TalkNpc.Name} looks at you the way counters look at a name twice in the book, and puts both hands flat on the board. \"When the moot says even. Not before.\"", LogTone.Danger);
+        return true;
+    }
+
+    /// <summary>The plea's label (D-142): the fine read true, the tongue's shaving shown where it works.</summary>
+    private string PleaLabel() =>
+        $"Answer a mark at the moot-stone ({PleaFine()} coin the mark; {TownBook} against you)";
+
+    /// <summary>What one mark costs this bearer: the fine, shaved by the pleader's craft, never below the floor.</summary>
+    private int PleaFine() => Math.Max(TownLaw.FineFloor, TownLaw.FineCoin - Player.Skills.Level(SkillId.Persuasion));
+
+    /// <summary>
+    /// A plea at the moot-stone (D-142): one mark answered for one fine, and
+    /// Persuasion (the 13th skill) fed one use only when a plea truly moved
+    /// the book, cost-gated by the fine itself (D-014 in the law's coin). The
+    /// craft's level shaves the fine toward its floor: a practiced pleader
+    /// still pays, but the moot hears them faster.
+    /// </summary>
+    private void TryPleadCase()
+    {
+        if (TownBook == 0)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The book stands even against your name. The moot does not hear pleas about weather.\"");
+            return;
+        }
+        int fine = PleaFine();
+        if (Player.Coin < fine)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The mark is {fine} coin to answer, and you hold {Player.Coin}. The moot waits better than you do.\"");
+            return;
+        }
+
+        Player.Coin -= fine;
+        Log.Add(Turn, $"You stand at the moot-stone and answer the mark plainly: what was done, what it weighed, what you set against it. {TalkNpc!.Name} hears you out, takes {fine} coin for the wronged and the stone, and rules on it.", LogTone.Info);
+        LowerTownBook(1);
+        GainSkill(SkillId.Persuasion);
+    }
 
     /// <summary>
     /// Commerce fed (D-140): one use per lot sold at a town counter, and only
@@ -4081,6 +4183,7 @@ public sealed class Game
     /// </summary>
     private void TryBuyTownRation()
     {
+        if (TownCounterBarred()) return;
         if (Player.Rations >= RationCap)
         {
             Log.Add(Turn, $"{TalkNpc!.Name}: \"Your pack is full, friend. The stall will be here when it is not.\"");
@@ -4397,6 +4500,13 @@ public sealed class Game
                 // The carriers' bond (D-141): the same read-true refresh.
                 case TradeGood.Bond:
                     TrySwearBond();
+                    _offers.Clear();
+                    _offers.AddRange(BuildOffers(TalkNpc!));
+                    break;
+                // The plea at the moot-stone (D-142): the label counts the
+                // marks, and the digit leaves the board when the book is even.
+                case TradeGood.Plea:
+                    TryPleadCase();
                     _offers.Clear();
                     _offers.AddRange(BuildOffers(TalkNpc!));
                     break;
@@ -6536,6 +6646,7 @@ public sealed class Game
             SkillId.Spellcraft => $"The words come steadier now, and cost you less of yourself to hold. (Spellcraft rises to {after})",
             SkillId.Sleight => $"Your fingers have learned the weight of a purse without asking the eyes. (Sleight rises to {after})",
             SkillId.Smithing => $"The file stops skating and starts cutting; the iron answers your hands now. (Smithing rises to {after})",
+            SkillId.Persuasion => $"You are learning what a moot wants to hear: the thing itself, weighed plainly, and not one word more. (Persuasion rises to {after})",
             _ => $"Your craft deepens. ({SkillSet.NameOf(id)} rises to {after})",
         }, LogTone.Reward);
 
@@ -6775,6 +6886,35 @@ public sealed class Game
             Player.ShameLineHeard = true;
             Log.Add(Turn, "\"I hold you whatever you carry, bearer. But what is taken is carried too, and it does not lighten on the road.\"", LogTone.Aegis);
         }
+    }
+
+    /// <summary>
+    /// The town's book takes its marks (D-142): the law surfaced as machinery,
+    /// not talk. The first mark is named at the taking; the barred rung shuts
+    /// the counters (never the moot: a law you cannot answer is a wall).
+    /// </summary>
+    private void RaiseTownBook(int amount)
+    {
+        if (amount <= 0) return;
+        int before = TownBook;
+        _factionInfamy[FactionId.Town] = before + amount;
+        if (before == 0)
+        {
+            Log.Add(Turn, $"By evening your name stands in the warden's book at the moot-stone. In {World.TownName} that is not gossip; it is arithmetic, and it waits to be answered.", LogTone.Danger);
+            if (!World.Facts.Exists("law", "booked"))
+                World.Facts.Add("law", "booked", World.TownName,
+                    $"The bearer's name stands in {World.TownName}'s book at the moot-stone, with a mark against it waiting to be answered.");
+        }
+        if (before < TownLaw.BarredRung && TownBook >= TownLaw.BarredRung)
+            Log.Add(Turn, $"Word crosses the counters faster than you can: no board in {World.TownName} will trade with a name twice in the book. The moot-stone will still hear you. It is the one thing here that must.", LogTone.Danger);
+    }
+
+    /// <summary>A plea answered walks the book back one mark (D-142), the easing named as it lands (D-023).</summary>
+    private void LowerTownBook(int amount)
+    {
+        _factionInfamy[FactionId.Town] = Math.Max(0, TownBook - amount);
+        if (TownBook == 0)
+            Log.Add(Turn, $"The warden rules a line through the last mark. Your name stays in the book, because a book does not forget; but it stands even, and in {World.TownName} even is as good as clean.", LogTone.Reward);
     }
 
     /// <summary>

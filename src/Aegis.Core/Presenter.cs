@@ -475,10 +475,12 @@ public static class Presenter
         const int boxW = 54;
         // Every skill gets its own row (a D-091 mending: the Taught and Legend
         // rows used to overwrite the newest skills), then Taught, then Legend.
-        // The layout is dense on purpose (D-140): twelve skills and a deep
-        // question must fit the 24-row frame, so the blank rows are gone and
-        // the key hint rides the bottom border.
-        int boxH = choice is null ? 9 + SkillSet.Count : 10 + SkillSet.Count + choice.Options.Length;
+        // The layout is dense on purpose (D-140), and denser again for the
+        // 13th skill (D-142): the attributes fold from two columns of four to
+        // three of three, buying the one row Persuasion needed, so thirteen
+        // skills and a deep question still fit the 24-row frame exactly. The
+        // next skill has no row to take; the sheet owes a real re-lay then.
+        int boxH = choice is null ? 8 + SkillSet.Count : 9 + SkillSet.Count + choice.Options.Length;
         int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
         int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
 
@@ -492,8 +494,8 @@ public static class Presenter
         for (int i = 0; i < AttributeSet.Count; i++)
         {
             var attr = (Attr)i;
-            int col = i < 4 ? x0 + 2 : x0 + 24;
-            int row = y0 + 2 + (i < 4 ? i : i - 4);
+            int col = x0 + 2 + (i / 3) * 17;
+            int row = y0 + 2 + i % 3;
             bool raised = p.Attributes[attr] > AttributeSet.Baseline;
             frame.Write(col, row, $"{AttributeSet.NameOf(attr),-9}{p.Attributes[attr],2}",
                 raised ? Hue.White : Hue.Gray);
@@ -510,15 +512,15 @@ public static class Presenter
                 .Select(o => o.Name.StartsWith("the ") ? o.Name[4..] : o.Name).ToList();
             string row = $"{SkillSet.NameOf(skill),-9}{level,2}  {p.Skills.Uses(skill)}/{SkillSet.UsesForLevel(level + 1)}";
             if (knacks.Count > 0) row += $"  {string.Join(", ", knacks)}";
-            frame.Write(x0 + 2, y0 + 6 + i, row, level > 0 ? Hue.White : Hue.Gray);
+            frame.Write(x0 + 2, y0 + 5 + i, row, level > 0 ? Hue.White : Hue.Gray);
         }
 
         // The lessons row (D-052): the fourth ledger, what other hands put in.
-        frame.Write(x0 + 2, y0 + 6 + SkillSet.Count,
+        frame.Write(x0 + 2, y0 + 5 + SkillSet.Count,
             $"Taught   {(p.Lessons.Count > 0 ? string.Join(", ", p.Lessons.Select(l => LessonCatalog.Def(l).Short)) : "-")}",
             p.Lessons.Count > 0 ? Hue.White : Hue.Gray);
 
-        frame.Write(x0 + 2, y0 + 7 + SkillSet.Count,
+        frame.Write(x0 + 2, y0 + 6 + SkillSet.Count,
             game.Standing > 0
                 ? $"Legend {p.Legend,4}   {LegendStanding.TitleOf(game.Standing)}"
                 : $"Legend {p.Legend,4}",
@@ -526,12 +528,12 @@ public static class Presenter
 
         if (choice is not null)
         {
-            frame.Write(x0 + 2, y0 + 8 + SkillSet.Count,
+            frame.Write(x0 + 2, y0 + 7 + SkillSet.Count,
                 choice.Level >= 4
                     ? $"{SkillSet.NameOf(choice.Skill)} has deepened into a second question:"
                     : $"{SkillSet.NameOf(choice.Skill)} has settled into a question:", Hue.Cyan);
             for (int i = 0; i < choice.Options.Length; i++)
-                frame.Write(x0 + 2, y0 + 9 + SkillSet.Count + i,
+                frame.Write(x0 + 2, y0 + 8 + SkillSet.Count + i,
                     $"{i + 1}) {choice.Options[i].Name}: {choice.Options[i].Blurb}", Hue.White);
             frame.Write(x0 + 2, y0 + boxH - 1,
                 $" 1-{choice.Options.Length} choose, for good; any other key closes ", Hue.DarkGray);

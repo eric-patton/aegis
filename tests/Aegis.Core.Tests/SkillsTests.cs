@@ -199,7 +199,7 @@ public class SkillsTests
 
         var snap = game.TakeSnapshot();
         Assert.True(snap.InSheetMenu);
-        Assert.Equal("blades:0:0,hafted:1:12,brawling:0:0,warding:0:0,ranged:0:0,hunting:0:0,cooking:0:0,survival:0:0,spellcraft:0:0,sleight:0:0,smithing:0:0,commerce:0:0", snap.Skills);
+        Assert.Equal("blades:0:0,hafted:1:12,brawling:0:0,warding:0:0,ranged:0:0,hunting:0:0,cooking:0:0,survival:0:0,spellcraft:0:0,sleight:0:0,smithing:0:0,commerce:0:0,persuasion:0:0", snap.Skills);
 
         game.ApplyKey(' ');
         Assert.False(game.InSheetMenu);

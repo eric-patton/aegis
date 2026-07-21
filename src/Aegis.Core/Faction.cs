@@ -10,7 +10,7 @@ namespace Aegis.Core;
 /// than war: the mound stilled is a deed the stead counts (D-076), and the
 /// mound riled is a dread the stead speaks of at its doors.
 /// </summary>
-public enum FactionId { Stead, Raiders, Mound }
+public enum FactionId { Stead, Raiders, Mound, Town }
 
 /// <summary>
 /// The home stead's regard for the bearer (D-076): the first rung of the faction
@@ -324,6 +324,27 @@ public static class SteadFacilities
 
     /// <summary>What the drawn temper (D-141, the town school's lesson) adds to every sitting's file.</summary>
     public const int TemperBonus = 2;
+}
+
+/// <summary>
+/// The town's law (D-142, plan 2026-07 step 10's second half): the moot's book
+/// on the bearer, surfaced as machinery where D-140 surfaced it as talk. The
+/// book is the town faction's infamy count: a mark per crime the wall saw,
+/// answered mark by mark at the moot-stone for a fine. While any mark stands,
+/// no counter trusts the bearer's scales (the haggle coin dies); at the barred
+/// rung the counters shut entirely, though the moot itself always hears a
+/// plea: a law you cannot answer is not a law, it is a wall.
+/// </summary>
+public static class TownLaw
+{
+    /// <summary>What one mark costs to answer at the moot-stone, before the tongue's shaving.</summary>
+    public const int FineCoin = 6;
+
+    /// <summary>The floor no plea talks below: the moot's dignity is not free.</summary>
+    public const int FineFloor = 2;
+
+    /// <summary>Marks at which the town's counters shut to the bearer.</summary>
+    public const int BarredRung = 2;
 }
 
 /// <summary>

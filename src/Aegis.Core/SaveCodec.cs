@@ -291,10 +291,14 @@ namespace Aegis.Core;
 /// nothing, now brushes a towner's purse and draws the lift's dice; a caught
 /// hand goes into the moot's book (counters distrust, then bar), and the
 /// plea digit at the warden moves coin, the book, and the Persuasion craft.
+/// v82 when D-143 named the regions and taught word to travel: an unwelcome
+/// name or a barred one now puts news on the calendar, and once the word
+/// lands the town's haggle coin dies while home shame stands, so a v81
+/// journal's lot prices (and everything bought after them) drift.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 81;
+    public const int Version = 82;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

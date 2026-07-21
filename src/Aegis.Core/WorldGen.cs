@@ -53,6 +53,22 @@ public sealed class Site
     public bool CofferTried { get; set; }
 }
 
+/// <summary>
+/// A named stretch of country (D-143, plan 2026-07 B3): the region made an
+/// entity at last, the box D-049 left open because no region existed to hang
+/// a name on. A region is identity, not a map: the overworlds already exist,
+/// and the region is the name the world knows them by, the subject that
+/// cross-country word travels under (news moves between regions on the
+/// drovers' clock, never between tiles), and the seam later regions (B4)
+/// hang from. Two per world for now: the home valley and the road's high
+/// country with the town at its end.
+/// </summary>
+public sealed class Region
+{
+    public required string Id { get; init; }
+    public required string Name { get; init; }
+}
+
 public sealed class World
 {
     public required ulong Seed { get; init; }
@@ -89,6 +105,15 @@ public sealed class World
     /// waykeeper shrugged at, standing behind its gate at the road's east end.
     /// </summary>
     public required string TownName { get; init; }
+
+    /// <summary>The world's named countries (D-143): the valley first, the road's high country second.</summary>
+    public required IReadOnlyList<Region> Regions { get; init; }
+
+    /// <summary>The home valley's region (D-143): the country the stead calls its own.</summary>
+    public Region ValleyRegion => Regions.First(r => r.Id == "valley");
+
+    /// <summary>The road's high country (D-143): the region the town keeps its law in.</summary>
+    public Region RoadRegion => Regions.First(r => r.Id == "road");
     public required List<Site> Sites { get; init; }
     public required List<Npc> Npcs { get; init; }
 
@@ -1156,6 +1181,25 @@ public static class WorldGen
         foreach (var tf in townFolk)
             facts.Add("person", tf.Id, tf.Name, $"{tf.Name}, {tf.Role} of {townName}.");
 
+        // The countries named (D-143, plan 2026-07 B3): the region becomes an
+        // entity, on its own derived stream after every existing draw, so all
+        // prior placement, casting, and story stay byte-identical. The valley
+        // and the road's high country each take a name in the world's own
+        // tongue, rerolled against each other, and the facts make the naming
+        // perceivable (D-023): a country nobody can hear of is a label.
+        var regionRng = new Rng(SeedTree.Derive(worldSeed, "regions"));
+        string valleyRegionName = NameGen.Region(ref regionRng);
+        string roadRegionName = NameGen.Region(ref regionRng, [valleyRegionName]);
+        var regions = new List<Region>
+        {
+            new() { Id = "valley", Name = valleyRegionName },
+            new() { Id = "road", Name = roadRegionName },
+        };
+        facts.Add("region", "valley", valleyRegionName,
+            $"The {valleyRegionName}: the home valley, {settlementName}'s country, hills at its back and the drove road climbing out of it east.");
+        facts.Add("region", "road", roadRegionName,
+            $"The {roadRegionName}: the high country the east road crosses, {townName}'s country, where the drove roads meet and word and freight travel together.");
+
         return new World
         {
             Seed = worldSeed,
@@ -1177,6 +1221,7 @@ public static class WorldGen
             RoadHomePos = roadHome,
             RoadHerbs = roadHerbs,
             TownName = townName,
+            Regions = regions,
             Oaths = oaths,
         };
     }

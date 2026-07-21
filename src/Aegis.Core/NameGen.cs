@@ -1,9 +1,11 @@
 namespace Aegis.Core;
 
 /// <summary>
-/// Syllable-weave name generator, second pass (D-049). Three kinds, three sounds:
+/// Syllable-weave name generator, second pass (D-049). Each kind keeps its own sound:
 /// worlds weave from their own opener pool so no world sounds like its steadholder,
-/// steads and persons share the folk openers so a Kereda can keep a Keriford.
+/// steads and persons share the folk openers so a Kereda can keep a Keriford, and
+/// regions (D-143) borrow the world openers over the land's plain closers, so a
+/// country sounds of its world and reads with "the" in front.
 /// Every weave guards its seams (no doubled letter where syllables meet) and the
 /// world weave rerolls against the names a character has already walked, so the
 /// long song never sings the same world twice. Culture-aware pools keyed to the
@@ -32,6 +34,14 @@ public static class NameGen
     private static readonly string[] PersonClosers =
         ["da", "dric", "ga", "lin", "mund", "na", "ric", "rin", "sa", "wyn", "dis", "gar", "hild", "red", "ulf", "wen"];
 
+    // Region closers (D-143): the land's own plain words, spoken with "the" in
+    // front (the Brancorwold, the Isenheath). Regions share the world openers,
+    // so a country sounds of its world's tongue, and keep their own closer
+    // pool, disjoint from every other kind's, so no region can ever share a
+    // full name with a world, a stead, or a person (the D-049 rule).
+    private static readonly string[] RegionClosers =
+        ["wold", "heath", "shaw", "holt", "hurst", "gill", "scar", "side", "down", "how"];
+
     // Raider pools (D-110): the dens keep their own tongue, short and bitten
     // off. Vowel-final openers onto consonant closers, so every seam is clean
     // and no den-name sounds like a stead or a steadholder.
@@ -56,6 +66,13 @@ public static class NameGen
     /// <summary>Person name: full weave mostly, a short call-name (Marwyn) one time in five.</summary>
     public static string Person(ref Rng rng)
         => Weave(ref rng, Openers, PersonClosers, shortInFive: 1);
+
+    /// <summary>
+    /// Region name (D-143): the country itself, rerolled against its world's
+    /// other countries so no world names two stretches of ground the same.
+    /// </summary>
+    public static string Region(ref Rng rng, IReadOnlyCollection<string>? taken = null)
+        => Weave(ref rng, WorldOpeners, RegionClosers, shortInFive: 2, taken);
 
     /// <summary>
     /// Raider name (D-110): always the short bitten weave, no middle syllable,

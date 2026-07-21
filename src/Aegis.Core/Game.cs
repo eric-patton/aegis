@@ -451,6 +451,17 @@ public sealed class Game
     /// <summary>Test hook: marks go into the warden's book without staging a caught hand.</summary>
     public void Debug_RaiseTownBook(int marks) => RaiseTownBook(marks);
 
+    /// <summary>
+    /// Whether word of the valley's grievance has walked east (D-143): written
+    /// when the drovers carry an unwelcome name over the tops, permanent like
+    /// all word spoken. Its teeth gate on the CURRENT shame beside it: a town
+    /// hears the mending on the same road it heard the wrong.
+    /// </summary>
+    public bool WordEast => World.Facts.Exists("news", "word_east");
+
+    /// <summary>Whether word of the town's barred name has come down the road (D-143): the valley's ears, talk only, never the stead's own book.</summary>
+    public bool WordWest => World.Facts.Exists("news", "word_west");
+
     /// <summary>Whether any owned piece carries wear a file could move (D-141): the forge's and the pilot's shared read.</summary>
     public bool IronNeedsWork => BenchTarget() is not null;
 
@@ -1759,12 +1770,12 @@ public sealed class Game
         PlaceFellowsBeside(Player.Pos);
         if (toRoad)
         {
-            Log.Add(Turn, "You take the drove road east, up out of the valley. The stead's smoke drops behind the shoulder of the hills, and the road settles into its own long rhythm.", LogTone.Info);
+            Log.Add(Turn, $"You take the drove road east, up out of the valley and into the {World.RoadRegion.Name}. The stead's smoke drops behind the shoulder of the hills, and the road settles into its own long rhythm.", LogTone.Info);
             Log.Add(Turn, SkyLine(), LogTone.Info);
         }
         else
         {
-            Log.Add(Turn, $"You come down off the drove road, and the valley opens under you: {World.SettlementName}'s smoke standing where it always stood.", LogTone.Info);
+            Log.Add(Turn, $"You come down off the drove road into the {World.ValleyRegion.Name}, and the valley opens under you: {World.SettlementName}'s smoke standing where it always stood.", LogTone.Info);
         }
         return true;
     }
@@ -2772,9 +2783,14 @@ public sealed class Game
             // reader rides the stead topic's own digit, because the shared nine
             // are a wall (D-041) and a road is part of where a stead is.
             string road = World.Facts.Find("site", "road") is not null
-                ? " And if it is roads you want: the old drove road climbs east over the tops. A wayhouse keeps its far end, they say, and the walking between is nobody's but yours."
+                ? $" And if it is roads you want: the old drove road climbs east over the tops into the {World.RoadRegion.Name}. A wayhouse keeps its far end, they say, and the walking between is nobody's but yours."
                 : "";
-            topics.Add(("The stead", $"{stead.Detail} \"We hold on. That is the whole craft of it.{road}\""));
+            // Word come down the road (D-143): the doors speak what the carts
+            // carried, on the stead topic's own digit so the shared nine hold.
+            string word = WordWest
+                ? $" There is a thing being said down the road, about your name and {World.TownName}'s book. We judge what we see under our own roofs and no more. But it is being said."
+                : "";
+            topics.Add(("The stead", $"{stead.Detail} \"We hold on. That is the whole craft of it.{road}{word}\""));
         }
 
         if (CampCleared)
@@ -3073,7 +3089,7 @@ public sealed class Game
     {
         var topics = new List<(string, string)>
         {
-            ("The town", $"\"{World.TownName}? Three drove roads and a wall, and everything else follows: where roads cross, things change hands, and where things change hands you get a market, a moot, and more locks than either. You will find us honest. It is cheaper.\""),
+            ("The town", $"\"{World.TownName}? Three drove roads and a wall at the heart of the {World.RoadRegion.Name}, and everything else follows: where roads cross, things change hands, and where things change hands you get a market, a moot, and more locks than either. You will find us honest. It is cheaper.\""),
         };
         switch (npc.Id)
         {
@@ -3089,9 +3105,15 @@ public sealed class Game
             case "npc_mootwarden":
                 // The moot's topic reads the book true (D-142): the law was
                 // surfaced as talk in D-140, and now the talk reads the machinery.
+                // The road's word rides the same digit (D-143): another
+                // country's grievance is not the moot's arithmetic, and the
+                // warden says exactly that.
+                string wordIn = WordEast
+                    ? $" And word has walked in from the {World.ValleyRegion.Name} about how your name is spoken out west. Nothing in my book answers to another country's grievance; but counters listen to roads, and a road-spoken name is paid in chalk here until the road speaks better."
+                    : "";
                 topics.Add(("The moot", TownBook > 0
-                    ? $"\"Disputes are heard at the moot-stone on law-days, and what is sworn there binds inside the wall. Your name stands in the book with {TownBook} mark{(TownBook == 1 ? "" : "s")} against it, which you know, and every counter on the street knows by now too. The stone will hear you whenever you have the coin and the stomach.\""
-                    : "\"Disputes are heard at the moot-stone on law-days, and what is sworn there binds inside the wall. You are not in anyone's book yet, which is its own kind of standing: spend it carefully. The town remembers faces the way the hills remember weather.\""));
+                    ? $"\"Disputes are heard at the moot-stone on law-days, and what is sworn there binds inside the wall. Your name stands in the book with {TownBook} mark{(TownBook == 1 ? "" : "s")} against it, which you know, and every counter on the street knows by now too. The stone will hear you whenever you have the coin and the stomach.{wordIn}\""
+                    : $"\"Disputes are heard at the moot-stone on law-days, and what is sworn there binds inside the wall. You are not in anyone's book yet, which is its own kind of standing: spend it carefully. The town remembers faces the way the hills remember weather.{wordIn}\""));
                 // The guild's door opened in step 10 (D-141): the warden now
                 // points at the hall instead of describing a closed one.
                 topics.Add(("The guild", GuildSworn
@@ -3966,9 +3988,14 @@ public sealed class Game
     /// trust, and trust is worth a coin at a counter that knows the mark.
     /// While any mark stands in the warden's book (D-142) the haggle coin
     /// dies whole: no counter trusts a booked hand's scales, level, mark,
-    /// or otherwise, which is the law's first tooth and the cheapest.
+    /// or otherwise, which is the law's first tooth and the cheapest. And
+    /// once word has walked east (D-143), a name still spoken poorly at
+    /// home is paid the same chalk-only distrust: the road carries the
+    /// wrong AND the mending, so squaring the stead's book restores the
+    /// town's trust the moment it is done.
     /// </summary>
     private int TownHaggle() => TalkNpc?.Kind == NpcKind.Towner && TownBook == 0
+        && !(WordEast && Shame > 0)
         ? Player.Skills.Level(SkillId.Commerce) + (GuildSworn ? CarriersGuild.LotBonus : 0) : 0;
 
     /// <summary>
@@ -6880,6 +6907,11 @@ public sealed class Game
                     World.Facts.Add("shame", subject, World.SettlementName,
                         $"In {World.SettlementName} the bearer has been {SteadShame.TitleOf(SteadShame.Threshold(rung))}.");
             }
+            // An unwelcome name is worth carrying (D-143): the drovers put the
+            // word on the calendar, and restitution before the due tick is the
+            // designed exit.
+            if (rungBefore < SteadShame.UnwelcomeRung && rungAfter >= SteadShame.UnwelcomeRung)
+                ScheduleWordEast();
         }
         if (!Player.ShameLineHeard)
         {
@@ -6906,7 +6938,13 @@ public sealed class Game
                     $"The bearer's name stands in {World.TownName}'s book at the moot-stone, with a mark against it waiting to be answered.");
         }
         if (before < TownLaw.BarredRung && TownBook >= TownLaw.BarredRung)
+        {
             Log.Add(Turn, $"Word crosses the counters faster than you can: no board in {World.TownName} will trade with a name twice in the book. The moot-stone will still hear you. It is the one thing here that must.", LogTone.Danger);
+            // And past the counters, the road (D-143): a barred name is
+            // freight, and the carts west will carry it unless the moot
+            // rules the book back under the rung first.
+            ScheduleWordWest();
+        }
     }
 
     /// <summary>A plea answered walks the book back one mark (D-142), the easing named as it lands (D-023).</summary>
@@ -7285,6 +7323,80 @@ public sealed class Game
             $"The muster in the hills above {World.SettlementName} broke up over its dead fires: the camp it gathered to avenge is gone.");
         Log.Add(Turn, "Word comes down with the wanderers: the fires in the high hills are going out one by one. The muster has broken up over what is left of the camp it gathered for. A raid that was coming, now, is not.", LogTone.Reward);
         Log.Add(Turn, "\"That is what it looks like when a thing that was going to happen, does not. Almost nothing. Remember the shape of it anyway, bearer: you made that nothing.\"", LogTone.Aegis);
+    }
+
+    /// <summary>
+    /// Word takes the road east (D-143, plan 2026-07 B3): a stead that calls
+    /// the bearer unwelcome talks about it, and talk rides to the town with
+    /// the next drovers on the calendar's own clock (D-132). Two ticks of
+    /// grace, announced at the scheduling so the window is legible, and the
+    /// designed exit is restitution: a book made even before the carts go is
+    /// a word that never leaves the valley. News is a region verb: it moves
+    /// between the world's named countries at freight speed, never at the
+    /// speed of the map, which is most of why regions exist as entities.
+    /// </summary>
+    private void ScheduleWordEast()
+    {
+        if (WordEast || _schedule.Any(f => f.Key == "word_east")) return;
+        _schedule.Add(new ScheduledFact
+        {
+            Key = "word_east",
+            DueTick = (Turn - _worldStartTurn) / SteadRaids.TickTurns + 2,
+            CancelWhen = g => g.Shame < SteadShame.Threshold(SteadShame.UnwelcomeRung),
+            Fire = g => g.WordGoesEast(),
+            Cancelled = g => g.WordDiesAtHome(),
+        });
+        Log.Add(Turn, $"Talk like that does not stay in a valley. The next drovers east will carry your name over the tops into the {World.RoadRegion.Name} with the hides, unless {World.SettlementName}'s book is made even before they go.", LogTone.Danger);
+    }
+
+    /// <summary>The word lands in the town (D-143): permanent like all word spoken; its teeth are TownHaggle's, gated on the shame still standing.</summary>
+    private void WordGoesEast()
+    {
+        World.Facts.Add("news", "word_east", World.TownName,
+            $"Word came over the tops with the drovers: the bearer's name is spoken poorly in {World.SettlementName}, out west in the {World.ValleyRegion.Name}.");
+        Log.Add(Turn, $"Somewhere behind you the drovers have been through {World.TownName} with hides, and with your name. What {World.SettlementName} calls you has crossed into the {World.RoadRegion.Name} now, and chalk is all a town counter pays a name the road speaks poorly.", LogTone.Danger);
+    }
+
+    /// <summary>The cancelled word (D-143): restitution outran the drovers, and the world says so (D-023: a future that quietly fails teaches nothing).</summary>
+    private void WordDiesAtHome()
+    {
+        Log.Add(Turn, $"The drovers go east with hides and nothing worth telling: {World.SettlementName}'s book stood even before they rolled, and the word died at home, the way answered wrongs do.", LogTone.Reward);
+    }
+
+    /// <summary>
+    /// Word comes down the road west (D-143): a name at the town's barred
+    /// rung is freight, carried to the valley on the same two-tick clock,
+    /// cancelled the same designed way (the moot ruling the book back under
+    /// the rung first). Deliberately talk-only at the stead's end: the home
+    /// book moves for what the doors see, never for what the road says, so
+    /// the two laws stay separate ledgers (D-142) even once they share news.
+    /// </summary>
+    private void ScheduleWordWest()
+    {
+        if (WordWest || _schedule.Any(f => f.Key == "word_west")) return;
+        _schedule.Add(new ScheduledFact
+        {
+            Key = "word_west",
+            DueTick = (Turn - _worldStartTurn) / SteadRaids.TickTurns + 2,
+            CancelWhen = g => g.TownBook < TownLaw.BarredRung,
+            Fire = g => g.WordGoesWest(),
+            Cancelled = g => g.WordDiesAtTheWall(),
+        });
+        Log.Add(Turn, $"A name twice in a town's book is freight. The next carts west will carry yours down into the {World.ValleyRegion.Name}, unless the moot rules the book back under {TownLaw.BarredRung} marks before they roll.", LogTone.Danger);
+    }
+
+    /// <summary>The word reaches the valley (D-143): the doors hear it and say so; the stead's own book does not move for hearsay.</summary>
+    private void WordGoesWest()
+    {
+        World.Facts.Add("news", "word_west", World.SettlementName,
+            $"Word came down the road with the carts: the bearer's name stands twice-marked in {World.TownName}'s book, out east in the {World.RoadRegion.Name}.");
+        Log.Add(Turn, $"Carts have come down into the valley with salt and iron and your name. {World.SettlementName} knows what {World.TownName}'s book says of you now. The stead moves its own book for what it sees under its own roofs, and no more; but doors listen, and doors remember.", LogTone.Danger);
+    }
+
+    /// <summary>The westbound word cancelled (D-143): the pleas outran the carts.</summary>
+    private void WordDiesAtTheWall()
+    {
+        Log.Add(Turn, $"The carts roll west with nothing to say of you: the moot ruled {World.TownName}'s book back under {TownLaw.BarredRung} marks before they loaded, and even is as good as clean wherever the road goes.", LogTone.Reward);
     }
 
     /// <summary>
@@ -9016,6 +9128,8 @@ public sealed class Game
         CurrentSite = mode == MapMode.Site ? World.CampSite : null;
     }
     internal void Debug_HurtPlayer(int damage) => Player.Hp -= damage;
+    internal void Debug_RaiseShame(int doors) => RaiseShame(doors);
+    internal void Debug_LowerShame(int doors) => LowerShame(doors);
     internal void Debug_SetSky(RoadSky sky) => Sky = sky; // the road's weather pinned (D-138), so camp tests stay about the camp
     internal void Debug_GrantGear(string id) => AcquireGear(GearCatalog.Create(id));
     internal void Debug_LearnSpell(SpellId id)

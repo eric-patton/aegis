@@ -83,6 +83,22 @@ public static class TownMarket
 }
 
 /// <summary>
+/// The wolf-winter (D-149, B4's frontier-news deferral): the valley's hard
+/// winter, one country up and one tick behind, and the first news that is not
+/// about the bearer at all. While it sits on the tops the pack bites a point
+/// hungrier; when its word reaches the town on the drovers' clock (D-143's
+/// freight speed) the hidemonger pays a coin over the chalk, because the tops
+/// send no hides through a wolf-winter and scarcity is a price. The lifting
+/// walks to town on the same clock the landing did.
+/// </summary>
+public static class FellWinter
+{
+    public const int Ticks = 3;
+    public const int HideBonus = 1;
+    public const int Fang = 1;
+}
+
+/// <summary>
 /// The town forge (D-141, plan 2026-07 step 10): the school for D-135's
 /// home-seeded craft. A sitting under the smith's eye files the same iron the
 /// stead's bench does and feeds Smithing the same honest way, but it costs
@@ -513,6 +529,15 @@ public sealed class Game
     /// </summary>
     private readonly List<ScheduledFact> _schedule = [];
 
+    /// <summary>The wolf-winter's remaining ticks (D-149): the season sitting on the tops. World-bucket.</summary>
+    private int _fellWinterTicks;
+
+    /// <summary>Whether a wolf-winter sits on the tops (D-149): the pack bites hungrier under it.</summary>
+    public bool FellWinterStands => _fellWinterTicks > 0;
+
+    /// <summary>The wolf-winter's word standing in the town (D-149): hides scarce, the counter paying for it.</summary>
+    public bool WolfWordStands { get; private set; }
+
     /// <summary>Whether a scheduled future already spoke for this tick's raiding night (D-132).</summary>
     private bool _nightSpokenFor;
 
@@ -698,7 +723,10 @@ public sealed class Game
         : TalkNpc?.Id == "npc_herbwife" ? StillroomHerbPrice : HerbPrice;
 
     /// <summary>The price the current buyer pays for hides (D-124): the cart's coin over the bench, and the town's over the cart (D-140), since each stands a step closer to where hides are wanted.</summary>
-    private int HidePriceHere => TalkNpc?.Id == "npc_hidemonger" ? TownMarket.HidePrice
+    private int HidePriceHere => TalkNpc?.Id == "npc_hidemonger"
+        // Scarcity's coin (D-149): a wolf-winter word standing in the town
+        // means no hides come down the track, and the counter pays for it.
+        ? TownMarket.HidePrice + (WolfWordStands ? FellWinter.HideBonus : 0)
         : TalkNpc?.Kind == NpcKind.Peddler ? HidePrice + Peddling.HideBonus : HidePrice;
 
     /// <summary>
@@ -1858,7 +1886,9 @@ public sealed class Game
         PlaceFellowsBeside(Player.Pos);
         if (toFells)
         {
-            Log.Add(Turn, $"You take the drovers' track up off the road's shoulder and onto the {World.FellRegion.Name}: heath to every horizon, scree walling the ways, and not a roof in any of it. Whatever the night wants up here, a camp is the only answer you carry.", LogTone.Info);
+            Log.Add(Turn, FellWinterStands
+                ? $"You take the drovers' track up into the wolf-winter: the {World.FellRegion.Name} white to every horizon, the tarns lidded black, and nothing moving that is not hunting. Whatever hunts up here now is hungrier than it was."
+                : $"You take the drovers' track up off the road's shoulder and onto the {World.FellRegion.Name}: heath to every horizon, scree walling the ways, and not a roof in any of it. Whatever the night wants up here, a camp is the only answer you carry.", LogTone.Info);
             Log.Add(Turn, SkyLine(), LogTone.Info);
         }
         else
@@ -3022,8 +3052,13 @@ public sealed class Game
                 ? $"\"The {World.FellRegion.Name}, up the drovers' track north of the road. Quiet lately, I hear: somebody thinned the pack. It will not stay thinned. Wolf-country never does."
                 : $"\"The {World.FellRegion.Name}, up the drovers' track north of the road. No roof, no law, and wolves that hunt in company. The hides come down worth the climb, when the climber comes down with them. Take a supper you can burn.")
                 + (World.FellCairnSite.Cleared
-                ? " And the old cairn on the tops sits quiet now, they tell me. First time in anyone's telling.\""
-                : " And give the old cairn on the tops its room: the drovers water anywhere but its lee, and drovers are not careful people.\"")),
+                ? " And the old cairn on the tops sits quiet now, they tell me. First time in anyone's telling."
+                : " And give the old cairn on the tops its room: the drovers water anywhere but its lee, and drovers are not careful people.")
+                // The winter read at the climb's own door (D-149): the
+                // waykeeper prices the season the way they price everything.
+                + (FellWinterStands
+                ? " And not this season, walker, not without need: a wolf-winter sits up there, and hungry ground makes bold teeth.\""
+                : "\"")),
         ];
     }
 
@@ -4104,7 +4139,7 @@ public sealed class Game
 
     /// <summary>The hide-sale entry (D-071): what the bench will weigh, and for how much.</summary>
     private string HideSaleLabel() => Player.Hide > 0
-        ? $"Sell your hides ({Player.Hide} at {HidePriceHere}c, {Player.Hide * HidePriceHere} coin)"
+        ? $"Sell your hides ({Player.Hide} at {HidePriceHere}c, {Player.Hide * HidePriceHere} coin{(TalkNpc?.Id == "npc_hidemonger" && WolfWordStands ? "; wolf-winter's scarcity" : "")})"
         : "Sell hides (none cured yet)";
 
     /// <summary>The herb-sale entry (D-074): what the satchel holds, at this buyer's price (D-081).</summary>
@@ -7588,6 +7623,10 @@ public sealed class Game
     private void ScheduleWorldFuture()
     {
         _schedule.Clear();
+        // The wolf-winter is the World bucket's weather (D-149): a new world
+        // starts with clear tops and a town that has heard nothing.
+        _fellWinterTicks = 0;
+        WolfWordStands = false;
         // The teller starts each world cool (D-145): carried temperature and
         // quiet streak reset with the World bucket; the book itself spans the run.
         Teller.NewWorld(Player.Deaths);
@@ -7680,6 +7719,70 @@ public sealed class Game
                 $"{World.SettlementName}'s lofts went to the boards in the hard winter; there is nothing left worth a night's ride.",
                 "And with that the lofts are down to the boards: the winter has eaten what the season had left, and there is nothing in this stead now worth a night's ride.");
         if (!LevyStands && Stores <= SteadLevy.CalledAt) CallLevy();
+
+        // The frontier takes the season harder (D-149): the same weather one
+        // country up and one tick behind, put on the calendar the moment the
+        // valley feels it, so the tops' turn is a future the bearer can read.
+        _schedule.Add(new ScheduledFact
+        {
+            Key = "wolf_winter",
+            DueTick = (Turn - _worldStartTurn) / SteadRaids.TickTurns + 1,
+            Fire = g => g.WolfWinterComesDown(),
+        });
+        Log.Add(Turn, $"And what the valley gets in feet the tops get in fathoms: the last drover down says the {World.FellRegion.Name} is whitening already, and nothing up there has lofts.", LogTone.Info);
+    }
+
+    /// <summary>
+    /// The wolf-winter comes down on the tops (D-149): the hard winter's
+    /// shadow, one country up. Its teeth are hunger's: the pack bites a point
+    /// deeper while it stands, and no drover climbs, so the word of it (and
+    /// the scarcity it prices) walks to the town on the calendar's own clock.
+    /// </summary>
+    private void WolfWinterComesDown()
+    {
+        _fellWinterTicks = FellWinter.Ticks;
+        World.Facts.Add("event", "wolf_winter", World.FellRegion.Name,
+            $"A wolf-winter came down on the {World.FellRegion.Name}: snow over the heath to the scree-tops, and everything alive up there hungry.");
+        Log.Add(Turn, $"The season reaches the tops: snow over the heath to the scree-tops, the tarns lidded black, and the {World.FellRegion.Name} gone quiet the way ground goes quiet when everything on it is hungry. The drovers have stopped climbing. A wolf-winter, the old men call that.", LogTone.Danger);
+        _schedule.Add(new ScheduledFact
+        {
+            Key = "wolf_word",
+            DueTick = (Turn - _worldStartTurn) / SteadRaids.TickTurns + 2,
+            Fire = g => g.WolfWordLands(),
+        });
+    }
+
+    /// <summary>The wolf-winter's word reaches the town (D-149): scarcity is a price, and the counter says so.</summary>
+    private void WolfWordLands()
+    {
+        WolfWordStands = true;
+        World.Facts.Add("news", "wolf_winter", World.TownName,
+            $"Word reached {World.TownName} that a wolf-winter sits on the {World.FellRegion.Name}: no hides come down the drovers' track, and the counters pay scarcity's coin.");
+        Log.Add(Turn, $"Word has reached {World.TownName} by now: a wolf-winter on the {World.FellRegion.Name}, the drovers' track empty of drovers, and no hides coming down it. Scarcity is a price, and the hide counter is paying it to whoever still climbs.", LogTone.Info);
+    }
+
+    /// <summary>
+    /// The wolf-winter runs out (D-149): the season lifts on the clock that
+    /// landed it, and the lifting's word takes the same two-tick road to town
+    /// the landing's did, because good news rides the same carts as bad.
+    /// </summary>
+    private void WolfWinterLifts()
+    {
+        Log.Add(Turn, $"The wolf-winter breaks on the {World.FellRegion.Name}: the heath shows through the snow in lee after lee, and whatever the tops' hunger did not take starts moving again.", LogTone.Info);
+        if (!WolfWordStands) return;
+        _schedule.Add(new ScheduledFact
+        {
+            Key = "wolf_word_lifts",
+            DueTick = (Turn - _worldStartTurn) / SteadRaids.TickTurns + 2,
+            Fire = g => g.WolfWordLifts(),
+        });
+    }
+
+    /// <summary>The lifting's word lands (D-149): the drovers climb again, and scarcity's coin goes home.</summary>
+    private void WolfWordLifts()
+    {
+        WolfWordStands = false;
+        Log.Add(Turn, $"The drovers are on the track again, and {World.TownName}'s counters know it before the first cart is through the gate: hides will come down the ordinary way now, and the ordinary chalk is back on the hide board.", LogTone.Info);
     }
 
     /// <summary>
@@ -8190,6 +8293,11 @@ public sealed class Game
                 && Monsters.FirstOrDefault(m => !m.Alive && m.SiteId == mound.Id && m.Kind == MonsterKind.Wight) is { } fallen)
                 RaiseTheFallen(mound, fallen);
 
+            // The wolf-winter runs its course (D-149): counted down on the
+            // same clock that landed it, the lifting's word walking to town
+            // two ticks behind, the way the landing's did.
+            if (_fellWinterTicks > 0 && --_fellWinterTicks == 0) WolfWinterLifts();
+
             // The road's sky turns on the tick (D-138): the stream advances
             // every tick wherever the bearer stands (replay's sameness), and
             // the turning is narrated only where there is no roof against it.
@@ -8321,7 +8429,8 @@ public sealed class Game
                     IntentKind.ThroatLunge => _combatRng.Range(6, 10),
                     IntentKind.SeaxStab => _combatRng.Range(6, 10),
                     IntentKind.MeasuredCut => _combatRng.Range(5, 9),
-                    IntentKind.Pounce => _combatRng.Range(5, 9),
+                    // The wolf-winter's hunger (D-149) rides the spring too.
+                    IntentKind.Pounce => _combatRng.Range(5, 9) + (FellWinterStands ? FellWinter.Fang : 0),
                     _ => _combatRng.Range(4, 7),
                 };
                 if (intent.Kind == IntentKind.BoarCharge)
@@ -9102,7 +9211,9 @@ public sealed class Game
             {
                 // The bite worries worse in company, but wolves work a prey in
                 // shifts, not a pile: the bonus is capped where the closing is.
-                int damage = Absorb(_combatRng.Range(2, 4) + Math.Min(packNear, 2));
+                // A wolf-winter's hunger (D-149) drives the jaw a point deeper.
+                int damage = Absorb(_combatRng.Range(2, 4) + Math.Min(packNear, 2)
+                    + (FellWinterStands ? FellWinter.Fang : 0));
                 Player.Hp -= damage;
                 Log.Add(Turn, packNear > 0
                     ? $"Teeth from the side you were not watching: the pack works you for {damage}."
@@ -9655,6 +9766,7 @@ public sealed class Game
     internal void Debug_HoldTheDeck() => _deckHeld = true;
     internal void Debug_SetMount(Mount? mount) => Mount = mount;
     internal void Debug_GiveBook(BookId id) { if (!Player.Books.Contains(id)) Player.Books.Add(id); }
+    internal void Debug_SetFellWinter(int ticks) => _fellWinterTicks = ticks; // the season pinned (D-149), so fang tests stay about the fang
     internal void Debug_BankLore(int uses) { for (int i = 0; i < uses; i++) Player.Skills.AddUse(SkillId.Lore); }
     internal void Debug_ClearCamp() => Debug_ClearSite(SiteKind.GoblinCamp);
     internal void Debug_ClearSite(SiteKind kind)
@@ -9751,6 +9863,8 @@ public sealed class Game
         StoresMax: StoresMax,
         StillwingStands: StillwingStands,
         SmithyStands: SmithyStands,
+        FellWinterStands: FellWinterStands,
+        WolfWordStands: WolfWordStands,
         Shame: Shame,
         ShameTitle: SteadShame.TitleOf(Shame),
         Grudge: Grudge,
@@ -9922,6 +10036,8 @@ public sealed record Snapshot(
     int StoresMax,
     bool StillwingStands,
     bool SmithyStands,
+    bool FellWinterStands,
+    bool WolfWordStands,
     int Shame,
     string ShameTitle,
     int Grudge,

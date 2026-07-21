@@ -44,7 +44,9 @@ public class ScheduleTests
         Assert.Equal(SteadStores.Max - 2, game.Stores);
         Assert.Equal(priceBefore + 1, game.RationPrice); // bread rides the same stores the raids thin
         Assert.Contains(game.Log.Recent(4), e => e.Text.Contains("comes down on"));
-        Assert.Empty(game.Upcoming); // the future has happened
+        // The valley's future has happened, and it put the tops' turn on the
+        // calendar as it landed (D-149): the season climbs, one tick behind.
+        Assert.Equal("wolf_winter", Assert.Single(game.Upcoming).Key);
     }
 
     [Fact]

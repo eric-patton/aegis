@@ -310,10 +310,14 @@ namespace Aegis.Core;
 /// walk crossed empty (their digits sell sittings and books no old journal
 /// could buy), the hall's chest carries a book, and a read herbal steeps
 /// draughts one sprig cheaper, so old journals replay to different state.
+/// v87 when D-149 sent the wolf-winter down on the tops: every world's hard
+/// winter now reaches the fells a tick behind it, the pack bites a point
+/// hungrier under it, and its word prices hides in the town two ticks later,
+/// so a v86 journal's fights and sales replay to different state.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 86;
+    public const int Version = 87;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

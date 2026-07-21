@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed, Forge, Bond, Plea, Salt }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed, Forge, Bond, Plea, Salt, Script, Book }
 
 /// <summary>
 /// The cart's counter (D-124): the road's prices. The ration a coin or two
@@ -994,6 +994,14 @@ public sealed class Game
                 break;
             case PastId.HedgeHealer:
                 Player.Herb += 3;
+                // The healer read the herbals somewhere (D-148): lettered from
+                // the start, so the herb lane's book pays the moment it is bought.
+                BankSkill(SkillId.Lore);
+                break;
+            case PastId.ScribesWard:
+                // Raised among old writings (D-148): the one past that was
+                // always going to be lettered, now mechanically so.
+                BankSkill(SkillId.Lore);
                 break;
             case PastId.Wayfarer:
                 Player.Rations += 2;
@@ -1325,6 +1333,7 @@ public sealed class Game
             Command.Lift => DoLift(),
             Command.Burgle => DoBurgle(),
             Command.Rest => DoRest(),
+            Command.Read => DoRead(),
             Command.Eat => DoEat(),
             Command.Drink => DoDrink(),
             Command.Gear => DoGearMenu(),
@@ -1961,6 +1970,15 @@ public sealed class Game
         Player.Coin = 0;
         int honored = 10 * prevBurden;
         Player.Legend += honored;
+        // The lay carried (D-148): a story read whole crosses as Legend, once
+        // ever, because the crossing is where Legend is minted and nowhere
+        // else (D-048's one-home rule); a book is not a purse, so it pays a
+        // reader once and is done paying.
+        if (Player.HasRead(BookId.Lay) && !Player.LayHonored)
+        {
+            Player.LayHonored = true;
+            Player.Legend += 2;
+        }
         // The patron's weighing (D-054): pledged coin crosses as Legend at half
         // again its count, because patronized coin sings louder than counted
         // coin, and the deed itself joins the character for good.
@@ -2330,6 +2348,16 @@ public sealed class Game
                         SiteKind.Leaguer => "Beneath the hoard lies a scaled byrnie the twin of your own. You leave it to keep the holm.",
                         _ => "The master carver's maul lies here too, twin to the one you carry. You leave it to the pit.",
                     }, LogTone.Info);
+                }
+                // The hall's shelf (D-148): the deep band's one seeded book. A
+                // fallen hall is where a lay would have been kept, and the
+                // chest gives the copy only while the text is still unread:
+                // like the signature iron, the catalog exists once.
+                if (CurrentSite.Kind == SiteKind.Hall
+                    && !Player.Books.Contains(BookId.Lay) && !Player.HasRead(BookId.Lay))
+                {
+                    Player.Books.Add(BookId.Lay);
+                    Log.Add(Turn, "And flat beneath it all, wrapped against a damp that never came: a book, the hand old and knotted. The lay of the kindled lands, whole, is yours. (v reads it at the shrine)", LogTone.Reward);
                 }
             }
             // The grave-goods taken while the dead still walk (D-106): the
@@ -3081,6 +3109,12 @@ public sealed class Game
             ("The hall", "\"Raised before my grandmother's day, for keeping what will not keep in a granary. Every year the stead cuts its songs into the east wall, and I keep them in my chest besides. Walkers' verses too, when the road sends any worth the cutting.\""),
         };
 
+        // The lay answered (D-148): a skald meeting the one walker who has
+        // worked the old text whole. Keyed on the reading, not a world fact,
+        // so every world's hall knows a read bearer: knowledge crosses.
+        if (Player.HasRead(BookId.Lay))
+            topics.Add(("The old lay", "\"You have read the lay of the kindled lands. Whole? Off the page? I have carried its verses secondhand my whole working life, singer to singer, and every hall garbles a different stanza. Sit sometime and tell me where my copy runs wrong. The songs owe the page that much.\""));
+
         if (Player.Legend <= 0)
             topics.Add(("Your name", "\"No song carries you yet, stranger. That is not a lack; it is room. The wall has kept planks bare longer than you have been walking.\""));
         else if (Standing >= LegendStanding.MaxStanding)
@@ -3212,6 +3246,15 @@ public sealed class Game
                 break;
             case "npc_townsmith":
                 topics.Add(("The forge", "\"The stead smiths west of here do good plain work, and I will say so to their faces. What I keep that they do not is a school: coal, the wheel, and my eye on your hands while you work your own iron. You pay for the sitting. The learning comes free with the sweat.\""));
+                break;
+            // The scrivener (D-148): the town's bookish anchor, and the school
+            // for letters. The topic reads the bearer's own state: an
+            // unlettered hand is told plainly what the desk sells, and a
+            // lettered one is talked to like trade.
+            case "npc_scrivener":
+                topics.Add(("The letters", Player.Skills.Level(SkillId.Lore) < 1
+                    ? "\"Bills of lading, marriage lines, wills, and the moot's fair copies: that is the bread of it. The rest is teaching letters to any hand with coin and the patience to sit, and selling the few books worth the copying. The letters go cheap, sitting by sitting. What they open does not.\""
+                    : "\"A lettered hand, good. Then you know the trade's secret: the ink is cheap and the patience is not. Sit and copy whenever you like; the eye sharpens on other people's sentences. And the shelf is there when your purse feels scholarly.\""));
                 break;
             case "npc_guildmaster":
                 topics.Add(("The carriers", GuildSworn
@@ -3350,6 +3393,15 @@ public sealed class Game
                 // readable at the door.
                 case "npc_guildmaster":
                     offers.Add((TradeGood.Bond, "", BondLabel()));
+                    break;
+                // The scrivener's board (D-148): the sitting always listed
+                // with a state-read label, then the shelf in catalog order,
+                // every title always listed (owned and read say so), so no
+                // digit ever shifts under a buyer's fingers (D-041).
+                case "npc_scrivener":
+                    offers.Add((TradeGood.Script, "", ScriptLabel()));
+                    foreach (var book in BookCatalog.All)
+                        offers.Add((TradeGood.Book, BookCatalog.IdOf(book.Id), BookLabel(book)));
                     break;
                 // The moot's one digit (D-142): the plea, listed only while a
                 // mark stands. The warden still keeps no counter (the law is
@@ -3769,11 +3821,86 @@ public sealed class Game
         RaiseRegard(1, $"The stead walks past the new {name} every morning, and every morning it remembers whose coin raised it.");
     }
 
+    /// <summary>The scrivener's sitting read true (D-148): letters for the unlettered, copy-work for the schooled.</summary>
+    private string ScriptLabel() => Player.Skills.Level(SkillId.Lore) < 1
+        ? $"Sit to your letters ({Scrivener.SittingCoin} coin the sitting)"
+        : $"Sit and copy under the scrivener's eye ({Scrivener.SittingCoin} coin the sitting)";
+
+    /// <summary>A shelf entry's label (D-148): the asking, the owning, or the finished book, so the board reads true (D-041).</summary>
+    private string BookLabel(BookDef def) =>
+        Player.HasRead(def.Id) ? $"{Cap(def.Title)} (read, and yours for good)"
+        : Player.Books.Contains(def.Id) ? $"{Cap(def.Title)} (yours already; v reads at the shrine)"
+        : $"Buy {def.Title} ({def.Price} coin{(def.LoreReq > 1 ? ", a knotted hand" : "")})";
+
+    /// <summary>
+    /// A sitting at the scrivener's desk (D-148): coin for the chair and the
+    /// eye, banked as Lore uses (the D-141 school pattern). The sittings that
+    /// carry a hand to Lore 1 are the act of learning its letters, and the
+    /// crossing into lettered is said out loud, once, because it opens a door
+    /// nothing else in the world opens.
+    /// </summary>
+    private void TryScribeSitting()
+    {
+        if (TownCounterBarred()) return;
+        if (Player.Coin < Scrivener.SittingCoin)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The chair costs {Scrivener.SittingCoin} coin the sitting, and you hold {Player.Coin}. Come back with it; letters keep.\"");
+            return;
+        }
+        bool wasLettered = Player.Skills.Level(SkillId.Lore) >= 1;
+        Player.Coin -= Scrivener.SittingCoin;
+        for (int i = 0; i < Scrivener.SittingUses; i++) Player.Skills.AddUse(SkillId.Lore);
+        if (!wasLettered && Player.Skills.Level(SkillId.Lore) >= 1)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name} guides your hand through the last of the letterforms, and somewhere in the copying the marks stop being marks: the page under your hand is saying something, and you can hear it. \"There. Cheapest door in this town, and the widest.\"", LogTone.Reward);
+            Log.Add(Turn, "(The letters are yours: books open to you now, and every written thing after them.)", LogTone.Reward);
+        }
+        else
+            Log.Add(Turn, wasLettered
+                ? $"A sitting of copy-work under the scrivener's eye, other people's sentences sharpening your own. ({Player.Coin} coin left)"
+                : $"A sitting over the letterforms, {TalkNpc!.Name}'s hand correcting yours: stroke, curve, patience. The marks are beginning to sort themselves. ({Player.Coin} coin left)", LogTone.Info);
+    }
+
+    /// <summary>
+    /// A book bought off the shelf (D-148): sold only to a lettered hand,
+    /// because the scrivener sells no one paper they cannot open; the lay's
+    /// harder asking gates the reading, not the sale. Refusals never take coin.
+    /// </summary>
+    private void TryBuyBook(string idStr)
+    {
+        if (TownCounterBarred()) return;
+        var id = BookCatalog.FromId(idStr);
+        var def = BookCatalog.Def(id);
+        if (Player.HasRead(id))
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"You have read it; you told me so yourself, or your eyes did. A book finished is yours in the only way that keeps. Spend the coin on one you have not.\"");
+            return;
+        }
+        if (Player.Books.Contains(id))
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"It is in your pack. The shrine's quiet and the letter v, and it will open; a second copy would not read faster.\"");
+            return;
+        }
+        if (Player.Skills.Level(SkillId.Lore) < 1)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Letters first. I sell no one paper they cannot open; it is bad for the paper and worse for the trade. The chair is right there.\"");
+            return;
+        }
+        if (Player.Coin < def.Price)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"{Cap(def.Title)} asks {def.Price} coin, and you hold {Player.Coin}. Books keep better than most things worth wanting.\"");
+            return;
+        }
+        Player.Coin -= def.Price;
+        Player.Books.Add(id);
+        Log.Add(Turn, $"You count out {def.Price} coin and {def.Title} goes wrapped in oilcloth into your pack: {def.Blurb}. (v reads it at the shrine; {Player.Coin} coin left)", LogTone.Reward);
+    }
+
     /// <summary>The draught entry (D-090): the simples steeped, priced in sprigs, never in coin.</summary>
     private string DraughtLabel() =>
         Player.Draughts >= DraughtCap ? $"Have a hale-draught drawn (your satchel holds {DraughtCap})"
-        : Player.Herb >= DraughtHerbs ? $"Have a hale-draught drawn ({DraughtHerbs} sprigs)"
-        : $"Have a hale-draught drawn ({DraughtHerbs} sprigs; you carry {Player.Herb})";
+        : Player.Herb >= DraughtNeed ? $"Have a hale-draught drawn ({DraughtNeed} sprigs)"
+        : $"Have a hale-draught drawn ({DraughtNeed} sprigs; you carry {Player.Herb})";
 
     /// <summary>
     /// The stillroom steeps a draught (D-090): the herb lane's first sink. The
@@ -3787,13 +3914,13 @@ public sealed class Game
             Log.Add(Turn, $"{TalkNpc!.Name}: \"Two vials is what a satchel keeps whole on the road. Drink one down and come back to me.\"");
             return;
         }
-        if (Player.Herb < DraughtHerbs)
+        if (Player.Herb < DraughtNeed)
         {
-            Log.Add(Turn, $"{TalkNpc!.Name}: \"Bring me {DraughtHerbs} sprigs and the steeping is yours for the asking. You carry {Player.Herb}.\"");
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Bring me {DraughtNeed} sprigs and the steeping is yours for the asking. You carry {Player.Herb}.\"");
             return;
         }
 
-        Player.Herb -= DraughtHerbs;
+        Player.Herb -= DraughtNeed;
         Player.Draughts++;
         Log.Add(Turn, $"{TalkNpc!.Name} strips your sprigs into the pot, steeps them slow, and pours the green of it off into a stoppered vial. \"Drink it where the road hurts. It knows its work.\" ({Player.Draughts} vial{(Player.Draughts == 1 ? "" : "s")} carried)", LogTone.Reward);
     }
@@ -4688,6 +4815,19 @@ public sealed class Game
                     _offers.Clear();
                     _offers.AddRange(BuildOffers(TalkNpc!));
                     break;
+                // The scrivener's desk and shelf (D-148): both labels read
+                // the bearer's state (letters, ownership), so both refresh
+                // read-true like the forge's sitting does (D-041).
+                case TradeGood.Script:
+                    TryScribeSitting();
+                    _offers.Clear();
+                    _offers.AddRange(BuildOffers(TalkNpc!));
+                    break;
+                case TradeGood.Book:
+                    TryBuyBook(arg);
+                    _offers.Clear();
+                    _offers.AddRange(BuildOffers(TalkNpc!));
+                    break;
                 // The carriers' bond (D-141): the same read-true refresh.
                 case TradeGood.Bond:
                     TrySwearBond();
@@ -5099,6 +5239,9 @@ public sealed class Game
 
     /// <summary>Sprigs one hale-draught steeps from (D-090): the herb lane's first sink.</summary>
     public const int DraughtHerbs = 3;
+
+    /// <summary>What a steeping truly asks (D-148): the wort-cunning's keep is one sprig back per vial.</summary>
+    public int DraughtNeed => Player.HasLesson(LessonId.WortCunning) ? DraughtHerbs - 1 : DraughtHerbs;
 
     /// <summary>What a draught gives back: two meals' worth of blood, and a deep cut at the wound's weight.</summary>
     public const int DraughtHeal = 12;
@@ -5630,6 +5773,100 @@ public sealed class Game
     }
 
     /// <summary>
+    /// The next page waiting (D-148): the first owned, unfinished book whose
+    /// lines the bearer's letters can hold, catalog order, or null. Null too
+    /// for the unlettered: at Lore 0 every mundane page refuses the eye, which
+    /// is the illiterate start felt (D-005). Shared by the read verb, the
+    /// sidebar's hint, and the pilot's shrine errand, so all three agree.
+    /// </summary>
+    public BookId? NextRead
+    {
+        get
+        {
+            int lore = Player.Skills.Level(SkillId.Lore);
+            foreach (var def in BookCatalog.All)
+                if (Player.Books.Contains(def.Id) && !Player.HasRead(def.Id) && def.LoreReq <= lore)
+                    return def.Id;
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// A sitting over the pages (D-148): the read verb, shrine-anchored like
+    /// the rest it shares its quiet with. Each sitting costs the turn and
+    /// feeds Lore (a page not yet worked through is real work; a finished book
+    /// reread feeds nothing), and the last sitting pays the book's keep. The
+    /// refusals cost nothing: an unlettered eye and a knotted hand both turn
+    /// the bearer away at the cover.
+    /// </summary>
+    private bool DoRead()
+    {
+        if (!(Mode == MapMode.Overworld && CurrentMap[Player.Pos] == Terrain.Shrine))
+        {
+            Log.Add(Turn, "Pages want the shrine's quiet; the road keeps none.");
+            return false;
+        }
+        var unfinished = BookCatalog.All.Where(b => Player.Books.Contains(b.Id) && !Player.HasRead(b.Id)).ToList();
+        if (unfinished.Count == 0)
+        {
+            Log.Add(Turn, "You carry nothing left to read.");
+            return false;
+        }
+        if (Player.Skills.Level(SkillId.Lore) < 1)
+        {
+            Log.Add(Turn, "You open the cover and the marks sit on the paper and stay marks. Letters first: the town's scrivener sells the sittings.");
+            return false;
+        }
+        if (NextRead is not { } id)
+        {
+            Log.Add(Turn, $"You open {unfinished[0].Title} and the hand knots past your letters. More sittings at the scrivener's desk would untie it (Lore {unfinished[0].LoreReq}).");
+            return false;
+        }
+
+        var def = BookCatalog.Def(id);
+        int done = Player.BookSittings.GetValueOrDefault(id) + 1;
+        Player.BookSittings[id] = done;
+        Player.Skills.AddUse(SkillId.Lore);
+        if (done < def.Sittings)
+        {
+            Log.Add(Turn, $"A sitting over {def.Title}: {def.Blurb}. ({done}/{def.Sittings} sittings)", LogTone.Info);
+            return true;
+        }
+
+        // The last page: the book joins the read shelf and pays its keep.
+        Player.BookSittings.Remove(id);
+        Player.BooksRead.Add(id);
+        switch (id)
+        {
+            case BookId.Herbal:
+                Log.Add(Turn, $"You close {def.Title} knowing it whole: which worts carry their strength double, and how a slow steep spends fewer of them.", LogTone.Info);
+                if (!Player.HasLesson(LessonId.WortCunning))
+                {
+                    Player.Lessons.Add(LessonId.WortCunning);
+                    Log.Add(Turn, "(The wort-cunning is yours: a draught steeps from 2 sprigs now, any still, any world.)", LogTone.Reward);
+                }
+                break;
+            case BookId.Bestiary:
+                Log.Add(Turn, $"You close {def.Title} with the buried kinds drawn plain behind your eyes: how a wight sets its weight before the blow, and where the blow means to land.", LogTone.Info);
+                Player.StudyKind(MonsterKind.Wight, Cycle);
+                Log.Add(Turn, "(The old dead read keen: their wind-ups show weight and mark, as three watched blows would teach it.)", LogTone.Reward);
+                break;
+            case BookId.Lay:
+                Log.Add(Turn, $"You close {def.Title} on the last verse, and for a moment the shrine's hum sits inside the meter. The first kindled lands, and every stead since standing on their ash: a story that carries.", LogTone.Info);
+                World.Facts.Add("book", "lay", World.SettlementName,
+                    "The bearer has read the lay of the kindled lands whole, an old text few living eyes have worked through.");
+                Log.Add(Turn, "(A story read whole is a story carried: the next crossing will weigh it into your Legend, once.)", LogTone.Reward);
+                break;
+        }
+        if (!Player.BookLineHeard)
+        {
+            Player.BookLineHeard = true;
+            Log.Add(Turn, "\"Another way of carrying, that. I hold what you have done; the pages hold what you have not done yet. Between the two of us you are getting hard to spill.\"", LogTone.Aegis);
+        }
+        return true;
+    }
+
+    /// <summary>
     /// The tended iron (D-052): a taught bearer's real rest holds their gear
     /// back from the worst of its wear. Only back to half: the deep wear is
     /// the wheel's business, so the smith's sink keeps its bottom half whole.
@@ -5658,8 +5895,8 @@ public sealed class Game
     private void SteepAtRest(string where = "While the shrine hums")
     {
         if (!Player.HasLesson(LessonId.Stillcraft)
-            || Player.Draughts >= DraughtCap || Player.Herb < DraughtHerbs) return;
-        Player.Herb -= DraughtHerbs;
+            || Player.Draughts >= DraughtCap || Player.Herb < DraughtNeed) return;
+        Player.Herb -= DraughtNeed;
         Player.Draughts++;
         Log.Add(Turn, $"{where} you steep the simples as she showed you: bruised, slow, patient. A draught of your own goes stoppered into the pack. ({Player.Draughts} vial{(Player.Draughts == 1 ? "" : "s")} carried)", LogTone.Reward);
     }
@@ -9417,6 +9654,8 @@ public sealed class Game
     internal void Debug_DrawSteadEvent(string key) => TheSeasonDeck.First(e => e.Key == key).Draw(this);
     internal void Debug_HoldTheDeck() => _deckHeld = true;
     internal void Debug_SetMount(Mount? mount) => Mount = mount;
+    internal void Debug_GiveBook(BookId id) { if (!Player.Books.Contains(id)) Player.Books.Add(id); }
+    internal void Debug_BankLore(int uses) { for (int i = 0; i < uses; i++) Player.Skills.AddUse(SkillId.Lore); }
     internal void Debug_ClearCamp() => Debug_ClearSite(SiteKind.GoblinCamp);
     internal void Debug_ClearSite(SiteKind kind)
     {
@@ -9555,6 +9794,8 @@ public sealed class Game
         Perks: string.Join(",", Player.Perks.Select(PerkCatalog.IdOf)),
         PendingKnack: PendingKnack is { } knack ? $"{SkillSet.NameOf(knack.Skill).ToLowerInvariant()} {knack.Level}" : "",
         Lessons: string.Join(",", Player.Lessons.Select(LessonCatalog.IdOf)),
+        Books: string.Join(",", Player.Books.Select(BookCatalog.IdOf)),
+        BooksRead: string.Join(",", Player.BooksRead.Select(BookCatalog.IdOf)),
         Reads: string.Join(",", Player.Reads.OrderBy(kv => (int)kv.Key)
             .Select(kv => $"{kv.Key.ToString().ToLowerInvariant()}:{kv.Value}")),
         ReadTiers: string.Join(",", Player.Reads.OrderBy(kv => (int)kv.Key)
@@ -9723,6 +9964,8 @@ public sealed record Snapshot(
     string Perks,
     string PendingKnack,
     string Lessons,
+    string Books,
+    string BooksRead,
     string Reads,
     string ReadTiers,
     int Gleanings,

@@ -305,10 +305,15 @@ namespace Aegis.Core;
 /// v85 when D-147 filled the fells in: the combe recut from the fells' own
 /// stone (a v84 journal's steps land on different ground) and the high cairn
 /// raised on the tops, a door, dice, and grave-gold no v84 journal knew.
+/// v86 when D-148 taught the world letters: Lore joins the skills, 'v' gained
+/// meaning as a journaled key, a scrivener stands in a market lean-to a v85
+/// walk crossed empty (their digits sell sittings and books no old journal
+/// could buy), the hall's chest carries a book, and a read herbal steeps
+/// draughts one sprig cheaper, so old journals replay to different state.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 85;
+    public const int Version = 86;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

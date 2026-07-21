@@ -351,6 +351,17 @@ public static class JourneyPilot
             if (toMouth is not null) return toMouth;
         }
 
+        // The quiet hour (D-148): pages bought in town are worked through at
+        // the shrine before the arch, a sitting a key, each one feeding Lore.
+        // What a finished book taught crosses with the knowledge it is; an
+        // unread page crossing the waygate would just be carried paper.
+        if (g.NextRead is not null)
+        {
+            if (p.Pos == g.World.ShrinePos) return 'v';
+            var toQuiet = NavKey(g, g.World.Overworld, p.Pos, g.World.ShrinePos, OverworldBlocked(g));
+            if (toQuiet is not null) return toQuiet;
+        }
+
         // The bank comes home before the arch (D-100): the bags are world-bound, so the
         // coin is taken back into the purse (one press tops the bags up off the purse,
         // the next empties them whole) before the crossing would forfeit it. A laden
@@ -504,7 +515,7 @@ public static class JourneyPilot
         // unsworn proven name sends the walk through the gate too, and both
         // errands clear themselves inside. Salt in the pack (D-144) is the
         // caravan leg's whole reason to exist: it sells only in there.
-        if (g.Player.Hide > 0 || g.Player.Herb > 0 || g.Player.Salt > 0 || ForgeErrand(g) || BondErrand(g))
+        if (g.Player.Hide > 0 || g.Player.Herb > 0 || g.Player.Salt > 0 || ForgeErrand(g) || BondErrand(g) || ScribeErrand(g))
         {
             var gate = g.World.TownSite.OverworldPos;
             if (p.Pos == gate) return '>';
@@ -585,6 +596,10 @@ public static class JourneyPilot
         // The carriers' bond (D-141): sworn once per world, on a proven name,
         // with coin to spare past the bond.
         else if (BondErrand(g)) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_guildmaster");
+        // The scrivener's desk (D-148): letters first, then the shelf, then
+        // whatever copy-work the lay's knotted hand still asks for. The
+        // predicates must match TownSellDigit's exactly, or the errand shuttles.
+        else if (ScribeErrand(g)) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_scrivener");
         if (stall is not null)
         {
             if (NavKey(g, town, p.Pos, stall.Pos, blocked) is { } toStall) return toStall;
@@ -609,8 +624,41 @@ public static class JourneyPilot
         // walk, so the menu closes the moment the errand's condition clears.
         if (g.TalkNpc.Id == "npc_townsmith" && ForgeErrand(g)) return OfferDigit(g, TradeGood.Forge);
         if (g.TalkNpc.Id == "npc_guildmaster" && BondErrand(g)) return OfferDigit(g, TradeGood.Bond);
+        // The scrivener (D-148): sittings before books (letters open the
+        // shelf), the lay's copy-work after, all the same predicates that
+        // sent the walk in.
+        if (g.TalkNpc.Id == "npc_scrivener")
+        {
+            if (LettersErrand(g) || CopyErrand(g)) return OfferDigit(g, TradeGood.Script);
+            if (BookBuy(g) is { } buy)
+                for (int i = 0; i < g.Offers.Count; i++)
+                    if (g.Offers[i].Good == TradeGood.Book && g.Offers[i].Arg == BookCatalog.IdOf(buy.Id))
+                        return (char)('1' + g.Topics.Count + i);
+        }
         return null;
     }
+
+    /// <summary>Unlettered, and coin enough for the chair and bread besides (D-148).</summary>
+    private static bool LettersErrand(Game g) =>
+        g.Player.Skills.Level(SkillId.Lore) < 1 && g.Player.Coin >= Scrivener.SittingCoin + 10;
+
+    /// <summary>The lay owned but its hand still knotted (D-148): copy-work until the letters reach it.</summary>
+    private static bool CopyErrand(Game g) =>
+        g.Player.Books.Contains(BookId.Lay) && !g.Player.HasRead(BookId.Lay)
+        && g.Player.Skills.Level(SkillId.Lore) >= 1
+        && g.Player.Skills.Level(SkillId.Lore) < BookCatalog.Def(BookId.Lay).LoreReq
+        && g.Player.Coin >= Scrivener.SittingCoin + 10;
+
+    /// <summary>The first title still unowned and unread that the purse covers with bread to spare (D-148).</summary>
+    private static BookDef? BookBuy(Game g) =>
+        g.Player.Skills.Level(SkillId.Lore) >= 1
+            ? BookCatalog.All.FirstOrDefault(b => !g.Player.Books.Contains(b.Id)
+                && !g.Player.HasRead(b.Id) && g.Player.Coin >= b.Price + 10)
+            : null;
+
+    /// <summary>Any business at the scrivener's (D-148): the walk in fires on the same tests the digits do.</summary>
+    private static bool ScribeErrand(Game g) =>
+        LettersErrand(g) || CopyErrand(g) || BookBuy(g) is not null;
 
     /// <summary>Worn iron, and coin enough to pay the smith and still eat (D-141).</summary>
     private static bool ForgeErrand(Game g) =>
@@ -1007,7 +1055,7 @@ public static class JourneyPilot
         {
             // The steeping first (D-090): sprigs into vials while the satchel has
             // room, and only what is left of the wood goes across the scales.
-            if (g.Player.Draughts < g.DraughtCap && g.Player.Herb >= Game.DraughtHerbs)
+            if (g.Player.Draughts < g.DraughtCap && g.Player.Herb >= g.DraughtNeed)
                 return TradeDigit(g, TradeGood.Draught);
             if (g.Player.Herb > 0) return TradeDigit(g, TradeGood.Herb);
             if (EyeCureWanted(g)) return TradeDigit(g, TradeGood.Surgery);

@@ -7,6 +7,7 @@ public enum LessonId
     Gleaning,
     Stillcraft,
     DrawnTemper,
+    WortCunning,
 }
 
 /// <summary>One lesson's catalog entry: the full name for prose, the short for the sheet.</summary>
@@ -37,6 +38,11 @@ public static class LessonCatalog
         // is the file's reach: a drawn temper takes more wear off every sitting,
         // at any bench in any world.
         new(LessonId.DrawnTemper, "the drawn temper", "drawn temper", 14),
+        // The wort-cunning (D-148): the first book-taught lesson, no mentor's
+        // price because no mentor sells it; the herbal is the whole cost. Its
+        // keep is thrift: a draught steeps from two sprigs, not three, at any
+        // still in any world, the bearer's own steeping included.
+        new(LessonId.WortCunning, "the wort-cunning", "wort-cunning", 0),
     ];
 
     public static LessonDef Def(LessonId id) => All.First(l => l.Id == id);
@@ -49,6 +55,7 @@ public static class LessonCatalog
         LessonId.Gleaning => "gleaning",
         LessonId.Stillcraft => "stillcraft",
         LessonId.DrawnTemper => "drawn_temper",
+        LessonId.WortCunning => "wort_cunning",
         _ => id.ToString().ToLowerInvariant(),
     };
 

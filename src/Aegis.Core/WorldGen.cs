@@ -1412,7 +1412,7 @@ public static class WorldGen
             ".#P......H#...",
             "..............",
             "....######....",
-            "....#....#....",
+            "....#.V..#....",
             "..............",
             ".###....###...",
             ".#B........#..",
@@ -1555,6 +1555,9 @@ public static class WorldGen
                         'W' => ("npc_mootwarden", "moot-warden"),
                         'S' => ("npc_townsmith", "forge-smith"),
                         'G' => ("npc_guildmaster", "guildmaster"),
+                        // The scrivener (D-148): the market's own lean-to, the
+                        // town's first bookish anchor, letters sold by the sitting.
+                        'V' => ("npc_scrivener", "scrivener"),
                         _ => null,
                     };
                     if (anchor is { } a)

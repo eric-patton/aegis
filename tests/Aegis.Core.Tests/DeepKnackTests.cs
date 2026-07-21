@@ -19,11 +19,11 @@ public class DeepKnackTests
         Assert.Equal(5, wave.Count);
         // One deep question per combat skill; the life-skills Hunting (D-070),
         // Cooking (D-073), Survival (D-074), Sleight (D-107), Smithing
-        // (D-135), Commerce (D-140), and Persuasion (D-142) carry no knacks
-        // yet, and the young Spellcraft (D-091) has not settled into
-        // questions either.
+        // (D-135), Commerce (D-140), Persuasion (D-142), and Lore (D-148)
+        // carry no knacks yet, and the young Spellcraft (D-091) has not
+        // settled into questions either.
         Assert.Equal(
-            Enum.GetValues<SkillId>().Where(s => s is not (SkillId.Hunting or SkillId.Cooking or SkillId.Survival or SkillId.Spellcraft or SkillId.Sleight or SkillId.Smithing or SkillId.Commerce or SkillId.Persuasion)),
+            Enum.GetValues<SkillId>().Where(s => s is not (SkillId.Hunting or SkillId.Cooking or SkillId.Survival or SkillId.Spellcraft or SkillId.Sleight or SkillId.Smithing or SkillId.Commerce or SkillId.Persuasion or SkillId.Lore)),
             wave.Select(c => c.Skill));
         Assert.All(wave, c => Assert.Equal(2, c.Options.Length));
 

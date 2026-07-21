@@ -262,6 +262,29 @@ public sealed class Player
     /// <summary>The Aegis speaks once at the first lesson shown; never again.</summary>
     public bool LessonLineHeard { get; set; }
 
+    /// <summary>
+    /// The books (D-148): mundane script, owned and worked through in sittings
+    /// at the shrine's quiet. Paper is paper, but what a finished book taught
+    /// is knowledge, so the whole shelf rides the character bucket: owned,
+    /// part-read, and finished all cross death and the waygate whole, and like
+    /// the skills they are rebuilt by replay, never serialized.
+    /// </summary>
+    public List<BookId> Books { get; } = [];
+
+    /// <summary>Sittings spent so far in each owned, unfinished book.</summary>
+    public Dictionary<BookId, int> BookSittings { get; } = new();
+
+    /// <summary>Books worked through to the last page; their keeps are held for good.</summary>
+    public List<BookId> BooksRead { get; } = [];
+
+    public bool HasRead(BookId id) => BooksRead.Contains(id);
+
+    /// <summary>The lay's one Legend payment (D-148) has been made at a crossing; never again.</summary>
+    public bool LayHonored { get; set; }
+
+    /// <summary>The Aegis speaks once at the first book finished; never again.</summary>
+    public bool BookLineHeard { get; set; }
+
     /// <summary>The Aegis marks the first hide sold at the bench (D-071); once only.</summary>
     public bool HideLineHeard { get; set; }
 
@@ -310,6 +333,18 @@ public sealed class Player
     {
         int seen = Reads.GetValueOrDefault(kind);
         if (seen < ReadKeen) Reads[kind] = seen + 1;
+        ReadTierStamp[kind] = tier;
+    }
+
+    /// <summary>
+    /// A kind studied from the page (D-148): the bestiary volume banks the
+    /// full read the way three watched wind-ups would, stamped at the tier it
+    /// was read under, so the scholar's knowledge dulls downstream exactly
+    /// like the veteran's (D-061) and restamps the same way.
+    /// </summary>
+    public void StudyKind(MonsterKind kind, int tier)
+    {
+        if (Reads.GetValueOrDefault(kind) < ReadKeen) Reads[kind] = ReadKeen;
         ReadTierStamp[kind] = tier;
     }
 

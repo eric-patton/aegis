@@ -16,9 +16,13 @@ namespace Aegis.Core;
 /// Commerce (D-140) is the trader's craft, seeded at the market town, fed
 /// only by lots sold above the valley's own price (the margin the walk earned);
 /// Persuasion (D-142) is the pleader's craft, seeded at the moot-stone, fed
-/// only by pleas that truly moved the town's book (the fine paid is the cost).
+/// only by pleas that truly moved the town's book (the fine paid is the cost);
+/// Lore (D-148) is letters and what letters open, fed only by sittings over
+/// script (the scrivener's desk, and pages not yet worked through): level 1 IS
+/// literacy, and below it mundane script refuses the eye. Graven script is not
+/// letters and never gates on this (D-091's stones answer something older).
 /// </summary>
-public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting, Cooking, Survival, Spellcraft, Sleight, Smithing, Commerce, Persuasion }
+public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting, Cooking, Survival, Spellcraft, Sleight, Smithing, Commerce, Persuasion, Lore }
 
 /// <summary>
 /// Counted uses are the only state; levels are derived, never granted. A skill
@@ -28,7 +32,7 @@ public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting, Cookin
 /// </summary>
 public sealed class SkillSet
 {
-    public const int Count = 13;
+    public const int Count = 14;
 
     private readonly int[] _uses = new int[Count];
 
@@ -70,6 +74,7 @@ public sealed class SkillSet
         SkillId.Smithing => "Smithing",
         SkillId.Commerce => "Commerce",
         SkillId.Persuasion => "Persuasion",
+        SkillId.Lore => "Lore",
         _ => id.ToString(),
     };
 }

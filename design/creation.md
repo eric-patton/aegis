@@ -61,9 +61,9 @@ plus one small concrete extra, and writes a `past` fact the world can react to
 |---|---|---|
 | Soldier | Blades | starts with a `quilted_jack` (half-worn, serviceable) |
 | Poacher | Ranged | starts with a `hunting_bow` |
-| Hedge-healer | Survival | 3 sprigs in the wallet |
+| Hedge-healer | Survival | 3 sprigs in the wallet; lettered (Lore 1, D-148) |
 | Smith's-hand | Warding | one mending free at any world's smith (spent once ever) |
-| Scribe's-ward | Spellcraft | a graven-stone rumor surfaced at wake |
+| Scribe's-ward | Spellcraft | a graven-stone rumor surfaced at wake; lettered (Lore 1, D-148) |
 | Wayfarer | Hunting | 2 rations from the road |
 | Oathbreaker (dark past) | Blades **and** Hunting | Shame starts at 1: a stained name the stead already half-knows |
 

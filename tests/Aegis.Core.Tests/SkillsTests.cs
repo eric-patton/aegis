@@ -191,15 +191,17 @@ public class SkillsTests
 
         var sheet = string.Join("\n", Presenter.Render(game).ToTextLines());
         Assert.Contains("The bearer", sheet);
-        Assert.Contains("Might", sheet);
-        Assert.Contains("Presence", sheet);
+        // The attributes fold to one abbreviated row since the 14th skill (D-148).
+        Assert.Contains("Mig", sheet);
+        Assert.Contains("Pre", sheet);
         Assert.Contains("Hafted", sheet);
+        Assert.Contains("Lore", sheet);
         Assert.Contains("12/20", sheet); // progress toward the next line
         Assert.Contains("0/8", sheet);   // untrained tracks show their first ask
 
         var snap = game.TakeSnapshot();
         Assert.True(snap.InSheetMenu);
-        Assert.Equal("blades:0:0,hafted:1:12,brawling:0:0,warding:0:0,ranged:0:0,hunting:0:0,cooking:0:0,survival:0:0,spellcraft:0:0,sleight:0:0,smithing:0:0,commerce:0:0,persuasion:0:0", snap.Skills);
+        Assert.Equal("blades:0:0,hafted:1:12,brawling:0:0,warding:0:0,ranged:0:0,hunting:0:0,cooking:0:0,survival:0:0,spellcraft:0:0,sleight:0:0,smithing:0:0,commerce:0:0,persuasion:0:0,lore:0:0", snap.Skills);
 
         game.ApplyKey(' ');
         Assert.False(game.InSheetMenu);

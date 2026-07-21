@@ -843,6 +843,22 @@ public static class StoryletCatalog
             ],
         },
 
+        // The builder's echo in the founding talk (D-136, plan 2026-07 A4):
+        // the one surface the legacy fact has. A built stead leaks into the
+        // next world as story only, by the road the patronage traces walk;
+        // nothing here stands pre-built, and the works bench opens bare.
+        new Storylet
+        {
+            Id = "the-builders-hand",
+            Trigger = StoryletTrigger.NearHouse,
+            Requires = [new FactPattern("legacy", "builders_hand")],
+            Lines =
+            [
+                ("Talk by the well, out of a drover's mouth: \"{r0.detail}\"", LogTone.Info),
+                ("An old woman takes it up like a thing she has said before. \"A stead is not raised by wishing at it. Whoever that was wants finding.\" She looks at your pack a beat too long.", LogTone.Info),
+            ],
+        },
+
         // Meeting the wandering mender in a LATER world than the first meeting: the
         // first thread a player can pull that runs between worlds. Completes its own
         // small answer (these wanderers know you) and unlocks asking about it.

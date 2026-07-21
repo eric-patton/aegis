@@ -13,7 +13,10 @@ namespace Aegis.Core.Tests;
 /// verb: it files wear off the bearer's own iron and seeds the Smithing
 /// craft. A funded work pays regard exactly once (D-131's guard), and like
 /// every stead thing the works are gone at the crossing; the craft is the
-/// bearer's, and crosses.
+/// bearer's, and crosses. The crossing split's audit (D-136, plan 2026-07
+/// A4) closes the layer: the works, the deeper lofts, and the deeper satchel
+/// all reset with the World bucket, and what leaks forward is one story
+/// fact, the builder's echo, hushed-gated and never mechanical.
 /// </summary>
 public class SteadFacilityTests
 {
@@ -228,6 +231,88 @@ public class SteadFacilityTests
         Assert.Equal(2, game.DraughtCap);
         // The wing and the bench were the world's; the hands are the bearer's.
         Assert.Equal(1, game.Player.Skills.Uses(SkillId.Smithing));
+    }
+
+    [Fact]
+    public void TheBuildersEcho_CrossesAsFoundingTalk()
+    {
+        // Master 43, like the echo-ballad test: its second world tells the
+        // stead, so the NearHouse pool stays the one this was written against.
+        var game = new Game(43);
+        game.Player.Coin = 200;
+        Fund(game, "palisade");
+        Fund(game, "watchtower");
+        Fund(game, "granary");
+        Fund(game, "stillwing");
+        Fund(game, "smithy");
+        string settlement = game.World.SettlementName;
+
+        game.Debug_ClearCamp();
+        game.Debug_SetPlayerPos(game.World.GatePos);
+        game.Apply(Command.Enter);
+        game.Apply(Command.Enter);
+        Assert.Equal(2, game.Cycle);
+
+        // The whole ladder stood, so the echo names the whole ladder; the
+        // works themselves stayed behind with the world that held them.
+        var echo = game.World.Facts.Find("legacy", "builders_hand");
+        Assert.NotNull(echo);
+        Assert.Equal(settlement, echo!.Object);
+        Assert.Contains("palisade to smithy bench", echo.Detail);
+        Assert.False(game.PalisadeStands);
+        Assert.Equal(SteadStores.Max, game.StoresMax);
+        Assert.Equal(2, game.DraughtCap);
+
+        // The founding talk says it aloud: NearHouse deals one card a visit,
+        // so walk up to the doors until the drover's telling comes around.
+        bool heard = false;
+        for (int i = 0; i < 6 && !heard; i++)
+        {
+            game.ApplyKey('k');
+            if (game.InScene) game.ApplyKey('3');
+            heard = game.Log.Recent(50).Any(e => e.Text.Contains("Drovers out of the passes"));
+            game.ApplyKey('j');
+        }
+        Assert.True(heard);
+    }
+
+    [Fact]
+    public void ABareStead_LeavesNoEcho()
+    {
+        var game = new Game(42);
+        game.Debug_ClearCamp();
+        game.Debug_SetPlayerPos(game.World.GatePos);
+        game.Apply(Command.Enter);
+        game.Apply(Command.Enter);
+        Assert.Equal(2, game.Cycle);
+
+        Assert.False(game.World.Facts.Exists("legacy", "builders_hand"));
+    }
+
+    [Fact]
+    public void TheHushedName_StillsTheBuildersEcho()
+    {
+        var game = new Game(42);
+        game.Player.Coin = 60;
+        Fund(game, "granary");
+
+        game.Debug_ClearCamp();
+        game.Debug_SetPlayerPos(game.World.GatePos);
+        game.ApplyKey('>');
+        game.ApplyKey(HushedKey());
+        game.ApplyKey('>');
+        Assert.Equal(2, game.Cycle);
+
+        // The building was the bearer's open deed: a hushed world was never
+        // told who paid for the last one's timber.
+        Assert.False(game.World.Facts.Exists("legacy", "builders_hand"));
+    }
+
+    private static char HushedKey()
+    {
+        for (int i = 0; i < OathCatalog.All.Count; i++)
+            if (OathCatalog.All[i].Id == OathId.HushedName) return (char)('1' + i);
+        throw new InvalidOperationException("no hushed name oath");
     }
 
     /// <summary>Draws a draught at the herbwife's stillroom through the real key surface.</summary>

@@ -1571,6 +1571,10 @@ public sealed class Game
         // this world is honored in Legend, never in power.
         int prevBurden = World.Burden;
         int standingBefore = Standing;
+        // The builder's echo (D-136, plan 2026-07 A4): counted before the old
+        // world folds shut, because the works are its facts and go with it.
+        int prevWorks = (PalisadeStands ? 1 : 0) + (TowerStands ? 1 : 0) + (GranaryStands ? 1 : 0)
+            + (StillwingStands ? 1 : 0) + (SmithyStands ? 1 : 0);
         Player.WorldsWalked.Add(prevWorld);
 
         if (oaths.Count > 0)
@@ -1671,7 +1675,10 @@ public sealed class Game
         // A fresh world's stores stand whole (D-079, D-089), and its raiders'
         // tick counts from this arrival, not from the far side of the arch.
         Raids = 0;
-        Stores = SteadStores.Max;
+        // The fresh world's own brim (D-136 hygiene): equal to the bare
+        // constant today, and right by construction should a world ever open
+        // with works already standing.
+        Stores = StoresMax;
         LevyStands = false;
         WatchStands = false;
         _risenCount = 0;
@@ -1715,6 +1722,15 @@ public sealed class Game
                     PatronDeedId.EndowedHearth => $"The songhall hearth at {World.SettlementName} burns fed from a walker's endowment: any stranger off the road eats at it.",
                     _ => $"On {World.SettlementName}'s verse-wall one verse is cut deeper than the rest, in the walker's own words, and the singers do not change it.",
                 });
+            // The builder's echo (D-136, plan 2026-07 A4): a stead built up by
+            // a walker's open coin is a story, and stories cross the way the
+            // patronage traces do. Story only, one fact, never compounding:
+            // the last world's works are talk here, and the new valley's works
+            // bench opens bare, so the fresh-world promise holds whole.
+            if (prevWorks > 0)
+                World.Facts.Add("legacy", "builders_hand", prevSettlement, prevWorks >= 5
+                    ? $"Drovers out of the passes tell of a stead called {prevSettlement} that a walker built up work by work, palisade to smithy bench, until there was nothing left in it to buy. No road runs there now."
+                    : $"Drovers out of the passes tell of a stead called {prevSettlement} that a stranger's coin was building up, work by work, when the walker moved on. No road runs there now.");
         }
 
         // The unsaid crosses on its own legs (D-120): a hushed name stills the

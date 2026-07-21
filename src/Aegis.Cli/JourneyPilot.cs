@@ -728,7 +728,7 @@ public static class JourneyPilot
         {
             // The steeping first (D-090): sprigs into vials while the satchel has
             // room, and only what is left of the wood goes across the scales.
-            if (g.Player.Draughts < Game.DraughtCap && g.Player.Herb >= Game.DraughtHerbs)
+            if (g.Player.Draughts < g.DraughtCap && g.Player.Herb >= Game.DraughtHerbs)
                 return TradeDigit(g, TradeGood.Draught);
             if (g.Player.Herb > 0) return TradeDigit(g, TradeGood.Herb);
             if (EyeCureWanted(g)) return TradeDigit(g, TradeGood.Surgery);

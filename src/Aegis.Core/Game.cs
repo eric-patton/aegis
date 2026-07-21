@@ -344,6 +344,12 @@ public sealed class Game
     /// <summary>The lofts' brim (D-134): the season's ceiling, raised while the granary stands.</summary>
     public int StoresMax => SteadStores.Max + (GranaryStands ? SteadFacilities.GranaryRaise : 0);
 
+    /// <summary>Whether the stillroom's new wing stands (D-135): a third vial racked against the road.</summary>
+    public bool StillwingStands => World.Facts.Exists("event", "stillroom_wing_built");
+
+    /// <summary>Whether the smithy bench stands (D-135): the bearer's iron seen to at home, by the bearer's own hands.</summary>
+    public bool SmithyStands => World.Facts.Exists("event", "smithy_built");
+
     /// <summary>
     /// Whether the stead's levy stands (D-105): the lofts down to the last
     /// measure, the larder closed, the steadholder taking coin against carted
@@ -2921,6 +2927,9 @@ public sealed class Game
             offers.Add((TradeGood.Facility, "palisade", FacilityLabel("palisade")));
             offers.Add((TradeGood.Facility, "watchtower", FacilityLabel("watchtower")));
             offers.Add((TradeGood.Facility, "granary", FacilityLabel("granary")));
+            // The second rung (D-135): appended, so the older digits hold (D-041).
+            offers.Add((TradeGood.Facility, "stillwing", FacilityLabel("stillwing")));
+            offers.Add((TradeGood.Facility, "smithy", FacilityLabel("smithy")));
         }
         return offers;
     }
@@ -2934,10 +2943,52 @@ public sealed class Game
         "watchtower" => TowerStands
             ? "The watchtower (standing, your coin in its beams)"
             : $"Fund the watchtower ({SteadFacilities.TowerCoin} coin: eyes that spare the watch its bread)",
-        _ => GranaryStands
+        "granary" => GranaryStands
             ? "The granary (standing, your coin in its boards)"
             : $"Fund the granary ({SteadFacilities.GranaryCoin} coin: lofts two measures the deeper)",
+        "stillwing" => StillwingStands
+            ? "The stillroom's new wing (standing, your coin in its shelves)"
+            : $"Fund the stillroom's new wing ({SteadFacilities.StillwingCoin} coin: a third vial racked against the road)",
+        // The smithy is the one work whose standing entry is a verb (D-135):
+        // the digit that raised the bench is the digit that works it after.
+        _ => !SmithyStands
+            ? $"Fund the smithy bench ({SteadFacilities.SmithyCoin} coin: anvil and stone, your iron seen to at home)"
+            : BenchTarget() is { } worn
+                ? $"Work your iron at the bench (the {worn.Name}, wear {worn.Wear}/{worn.MaxWear})"
+                : "The smithy bench (standing; your iron carries no wear)",
     };
+
+    /// <summary>What the bench would take up next (D-135): the most worn piece the bearer owns, if any wear is carried at all.</summary>
+    private GearItem? BenchTarget()
+    {
+        GearItem? worst = null;
+        foreach (var item in Player.AllGear)
+            if (item.Wear > 0 && (worst is null || item.Wear > worst.Wear)) worst = item;
+        return worst;
+    }
+
+    /// <summary>
+    /// A sitting at the stead's bench (D-135): the most worn piece worked by
+    /// the bearer's own hands, and Smithing (the craft's home-seeded first
+    /// feed) counted only when the sitting truly moved iron, which keeps the
+    /// growth cost-gated by construction: the wear itself was earned in the
+    /// fights that put it there (D-014).
+    /// </summary>
+    private void WorkTheBench()
+    {
+        if (BenchTarget() is not { } worn)
+        {
+            Log.Add(Turn, "You lay your iron out on the bench and find nothing for the file: every edge true, every strap sound.");
+            return;
+        }
+
+        int off = Math.Min(worn.Wear, SteadFacilities.BenchBase + SteadFacilities.BenchPerLevel * Player.Skills.Level(SkillId.Smithing));
+        worn.Wear -= off;
+        Log.Add(Turn, worn.Wear == 0
+            ? $"File, stone, and patience at the stead's bench, and the {worn.Name} comes back to true: no wear left that your hands can find."
+            : $"You set the {worn.Name} on the stead's bench and work it with file and stone, the way iron likes: slow. ({worn.Wear}/{worn.MaxWear} wear now)", LogTone.Info);
+        GainSkill(SkillId.Smithing);
+    }
 
     /// <summary>
     /// A work is funded (D-134): the bearer's coin becomes the stead's timber.
@@ -2951,7 +3002,9 @@ public sealed class Game
         {
             "palisade" => ("palisade_built", SteadFacilities.PalisadeCoin, "palisade"),
             "watchtower" => ("watchtower_built", SteadFacilities.TowerCoin, "watchtower"),
-            _ => ("granary_built", SteadFacilities.GranaryCoin, "granary"),
+            "granary" => ("granary_built", SteadFacilities.GranaryCoin, "granary"),
+            "stillwing" => ("stillroom_wing_built", SteadFacilities.StillwingCoin, "stillroom wing"),
+            _ => ("smithy_built", SteadFacilities.SmithyCoin, "smithy bench"),
         };
         if (World.Facts.Exists("event", fact))
         {
@@ -2977,10 +3030,20 @@ public sealed class Game
                     $"{World.SettlementName} raised a watchtower on the bearer's coin: eyes on the hills from first dark, and the watch spared its bread.");
                 Log.Add(Turn, $"You count {coin} coin onto the board, and the stead raises its tower where the lanes cross: beams, a ladder, and a roofed platform with the whole run of the hills under it. A watch with eyes like that needs half the bodies and none of the bread.", LogTone.Reward);
                 break;
-            default:
+            case "granary":
                 World.Facts.Add("event", fact, World.SettlementName,
                     $"{World.SettlementName} raised a granary on the bearer's coin: lofts two measures the deeper, a season's spare against the bad nights.");
                 Log.Add(Turn, $"You count {coin} coin onto the board, and the stead builds at last what it always meant to: a granary on staddle stones, board-tight against the damp and the rats. {World.SettlementName}'s lofts hold two measures the deeper now.", LogTone.Reward);
+                break;
+            case "stillwing":
+                World.Facts.Add("event", fact, World.SettlementName,
+                    $"{World.SettlementName}'s stillroom grew a new wing on the bearer's coin: shelf on shelf of racked glass, and a third vial kept ready for the road.");
+                Log.Add(Turn, $"You count {coin} coin onto the board, and the herbwife has her wing before the month is out: new beams off the old stillroom, shelf on shelf of racked glass under the hanging simples. She keeps a third vial ready for you now. The road, she says, drinks faster than the pot steeps.", LogTone.Reward);
+                break;
+            default:
+                World.Facts.Add("event", fact, World.SettlementName,
+                    $"{World.SettlementName} raised a smithy bench on the bearer's coin: anvil, stone, and a home where iron gets seen to.");
+                Log.Add(Turn, $"You count {coin} coin onto the board, and the stead raises its lean-to: an anvil on an oak stump, a grindstone, a rack of files older than their handles. The smith looks the bench over and leaves a hammer on it, which is a smith's whole blessing. Your iron can be seen to at home now, by your own hands.", LogTone.Reward);
                 break;
         }
         RaiseRegard(1, $"The stead walks past the new {name} every morning, and every morning it remembers whose coin raised it.");
@@ -3231,7 +3294,12 @@ public sealed class Game
                 case TradeGood.Surgery: TryEyeSurgery(); break; // the eye's road back (D-098)
                 case TradeGood.Beast: TryBuyMule(); break;      // the stead's beast (D-100)
                 case TradeGood.Stable: TryStableSwap(); break;  // the gathered beasts (D-100 stage 2)
-                case TradeGood.Facility: TryFundFacility(arg); break; // the stead's works (D-134)
+                // The stead's works (D-134): funding, except the standing smithy,
+                // whose digit becomes the bench itself (D-135).
+                case TradeGood.Facility:
+                    if (arg == "smithy" && SmithyStands) WorkTheBench();
+                    else TryFundFacility(arg);
+                    break;
             }
             // The labels move with the state (hides sold, lesson taken); rebuild so the
             // bench reads true, and the digits keep their order under the buyer's hand.
@@ -4096,8 +4164,8 @@ public sealed class Game
         return true;
     }
 
-    /// <summary>Most vials the satchel keeps whole on the road (D-090).</summary>
-    public const int DraughtCap = 2;
+    /// <summary>Most vials the satchel keeps whole on the road (D-090); one more while the stillroom's wing racks it (D-135).</summary>
+    public int DraughtCap => 2 + (StillwingStands ? SteadFacilities.StillwingRack : 0);
 
     /// <summary>Sprigs one hale-draught steeps from (D-090): the herb lane's first sink.</summary>
     public const int DraughtHerbs = 3;
@@ -5809,6 +5877,7 @@ public sealed class Game
             SkillId.Warding => $"You take the blow where the iron is thickest. (Warding rises to {after})",
             SkillId.Spellcraft => $"The words come steadier now, and cost you less of yourself to hold. (Spellcraft rises to {after})",
             SkillId.Sleight => $"Your fingers have learned the weight of a purse without asking the eyes. (Sleight rises to {after})",
+            SkillId.Smithing => $"The file stops skating and starts cutting; the iron answers your hands now. (Smithing rises to {after})",
             _ => $"Your craft deepens. ({SkillSet.NameOf(id)} rises to {after})",
         }, LogTone.Reward);
 
@@ -8218,6 +8287,8 @@ public sealed class Game
         TowerStands: TowerStands,
         GranaryStands: GranaryStands,
         StoresMax: StoresMax,
+        StillwingStands: StillwingStands,
+        SmithyStands: SmithyStands,
         Shame: Shame,
         ShameTitle: SteadShame.TitleOf(Shame),
         Grudge: Grudge,
@@ -8382,6 +8453,8 @@ public sealed record Snapshot(
     bool TowerStands,
     bool GranaryStands,
     int StoresMax,
+    bool StillwingStands,
+    bool SmithyStands,
     int Shame,
     string ShameTitle,
     int Grudge,

@@ -8,8 +8,12 @@ namespace Aegis.Core.Tests;
 /// once per world and each modifying a system that already runs. The
 /// palisade blunts every greedy raiding night to a plain one, the watchtower
 /// spares the watch its bread, and the granary deepens the lofts by two
-/// measures. A funded work pays regard exactly once (D-131's guard), and
-/// like every stead thing the works are gone at the crossing.
+/// measures. The second rung (D-135) adds the stillroom's new wing (a third
+/// vial racked) and the smithy bench, the one work whose standing digit is a
+/// verb: it files wear off the bearer's own iron and seeds the Smithing
+/// craft. A funded work pays regard exactly once (D-131's guard), and like
+/// every stead thing the works are gone at the crossing; the craft is the
+/// bearer's, and crosses.
 /// </summary>
 public class SteadFacilityTests
 {
@@ -145,6 +149,98 @@ public class SteadFacilityTests
         Assert.False(game.PalisadeStands);
         Assert.False(game.GranaryStands);
         Assert.Equal(SteadStores.Max, game.StoresMax);
+    }
+
+    [Fact]
+    public void TheStillroomWing_RacksAThirdVial()
+    {
+        var game = new Game(42);
+        game.Debug_HoldTheDeck();
+        game.Player.Coin = 60;
+        game.Player.Herb = 3 * Game.DraughtHerbs;
+
+        Draw(game);
+        Draw(game);
+        Assert.Equal(2, game.Player.Draughts);
+        Draw(game); // the satchel holds two: the pot stays cold
+        Assert.Equal(2, game.Player.Draughts);
+        Assert.Equal(Game.DraughtHerbs, game.Player.Herb);
+
+        Fund(game, "stillwing");
+        Assert.True(game.StillwingStands);
+        Assert.Equal(2 + SteadFacilities.StillwingRack, game.DraughtCap);
+        var snap = game.TakeSnapshot();
+        Assert.True(snap.StillwingStands);
+
+        Draw(game); // the racked third vial
+        Assert.Equal(3, game.Player.Draughts);
+        Assert.Equal(0, game.Player.Herb);
+    }
+
+    [Fact]
+    public void TheBench_FilesTheWornIron_AndSeedsTheCraft()
+    {
+        var game = new Game(42);
+        game.Debug_HoldTheDeck();
+        game.Player.Coin = 60;
+        var axe = GearCatalog.Create("woodaxe");
+        axe.Wear = 10;
+        game.Player.Weapon = axe;
+        Fund(game, "smithy");
+        Assert.True(game.SmithyStands);
+        Assert.True(game.TakeSnapshot().SmithyStands);
+
+        Fund(game, "smithy"); // the standing digit is the bench itself: one sitting
+        Assert.Equal(10 - SteadFacilities.BenchBase, axe.Wear);
+        Assert.Equal(1, game.Player.Skills.Uses(SkillId.Smithing));
+
+        Fund(game, "smithy");
+        Fund(game, "smithy"); // 6, 2, then true
+        Assert.Equal(0, axe.Wear);
+        Assert.Equal(3, game.Player.Skills.Uses(SkillId.Smithing));
+
+        Fund(game, "smithy"); // nothing for the file: no use counted
+        Assert.Equal(3, game.Player.Skills.Uses(SkillId.Smithing));
+        Assert.Contains(game.Log.Recent(4), e => e.Text.Contains("nothing for the file"));
+    }
+
+    [Fact]
+    public void TheCrossing_TakesTheBench_TheCraftCrosses()
+    {
+        var game = new Game(42);
+        game.Player.Coin = 100;
+        var axe = GearCatalog.Create("woodaxe");
+        axe.Wear = SteadFacilities.BenchBase;
+        game.Player.Weapon = axe;
+        Fund(game, "stillwing");
+        Fund(game, "smithy");
+        Fund(game, "smithy"); // one sitting before the road
+        Assert.Equal(1, game.Player.Skills.Uses(SkillId.Smithing));
+
+        game.Debug_ClearCamp();
+        game.Debug_SetPlayerPos(game.World.GatePos);
+        game.Apply(Command.Enter);
+        game.Apply(Command.Enter);
+        Assert.Equal(2, game.Cycle);
+
+        Assert.False(game.StillwingStands);
+        Assert.False(game.SmithyStands);
+        Assert.Equal(2, game.DraughtCap);
+        // The wing and the bench were the world's; the hands are the bearer's.
+        Assert.Equal(1, game.Player.Skills.Uses(SkillId.Smithing));
+    }
+
+    /// <summary>Draws a draught at the herbwife's stillroom through the real key surface.</summary>
+    private static void Draw(Game game)
+    {
+        var wife = game.World.Npcs.First(n => n.Id == "npc_herbwife");
+        NpcTests.BumpNpc(game, wife);
+        int trade = game.Offers.ToList().FindIndex(o => o.Good == TradeGood.Trade);
+        game.ApplyKey((char)('1' + game.Topics.Count + trade));
+        Assert.True(game.InTradeMenu);
+        int digit = game.TradeOffers.ToList().FindIndex(o => o.Good == TradeGood.Draught);
+        game.ApplyKey((char)('1' + digit));
+        game.ApplyKey('z');
     }
 
     /// <summary>Walks the real key surface: the steadholder's bench opened from talk, the work's own digit pressed, the bench left.</summary>

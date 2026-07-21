@@ -270,10 +270,13 @@ namespace Aegis.Core;
 /// v75 when D-134 raised the stead's works: digits at the steadholder's board
 /// that fell dead under a v74 journal now open the works bench and move coin,
 /// facts, and the raids' own arithmetic.
+/// v76 when D-135 grew the ladder's second rung: two bench digits a v75
+/// journal never held now raise the stillroom's wing and the smithy, deepen
+/// the satchel's vials, file wear off iron, and feed the Smithing craft.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 75;
+    public const int Version = 76;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

@@ -10,9 +10,11 @@ namespace Aegis.Core;
 /// Survival (D-074) is the wider wilderness lore, fed for now by foraging the wood;
 /// Spellcraft (D-091) is the said words' craft, fed only by workings that did work;
 /// Sleight (D-107) is the light hand's craft, the crime family's first skill, fed
-/// only by lifts that came away unseen.
+/// only by lifts that came away unseen;
+/// Smithing (D-135) is the iron's craft, seeded at the stead's own bench, fed
+/// only by sittings that truly moved wear off a piece.
 /// </summary>
-public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting, Cooking, Survival, Spellcraft, Sleight }
+public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting, Cooking, Survival, Spellcraft, Sleight, Smithing }
 
 /// <summary>
 /// Counted uses are the only state; levels are derived, never granted. A skill
@@ -22,7 +24,7 @@ public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting, Cookin
 /// </summary>
 public sealed class SkillSet
 {
-    public const int Count = 10;
+    public const int Count = 11;
 
     private readonly int[] _uses = new int[Count];
 
@@ -61,6 +63,7 @@ public sealed class SkillSet
         SkillId.Survival => "Survival",
         SkillId.Spellcraft => "Spellcraft",
         SkillId.Sleight => "Sleight",
+        SkillId.Smithing => "Smithing",
         _ => id.ToString(),
     };
 }

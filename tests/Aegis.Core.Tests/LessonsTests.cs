@@ -265,7 +265,8 @@ public class LessonsTests
                 $"{id} holds {game.Topics.Count} topics + {game.Offers.Count} offers");
             // The bench keeps its own nine (D-071): the vendor menu behind the woodward's
             // trade digit must fit too, or the sell path has simply moved the wall.
-            if (id == "npc_woodward")
+            // The steadholder's works bench (D-134, grown by D-135) answers the same law.
+            if (id == "npc_woodward" || id == "npc_steadholder")
             {
                 game.ApplyKey(OfferKey(game, TradeGood.Trade));
                 Assert.True(game.TradeOffers.Count <= 9,

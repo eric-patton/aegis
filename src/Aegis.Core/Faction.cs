@@ -289,7 +289,9 @@ public static class SteadDeck
 /// work is funded once per world through the steadholder, coin to timber,
 /// and modifies a system that already runs: the palisade blunts the greedy
 /// raiding nights, the watchtower spares the watch its bread, the granary
-/// deepens the lofts. A funded work pays regard exactly once (D-131's
+/// deepens the lofts, the stillroom's new wing racks a third vial, and the
+/// smithy bench puts the bearer's own iron under the bearer's own hands
+/// (D-135). A funded work pays regard exactly once (D-131's
 /// guard: coin never becomes a recurring reputation channel), and like
 /// every stead thing it is this world's alone, gone at the crossing.
 /// </summary>
@@ -306,6 +308,19 @@ public static class SteadFacilities
 
     /// <summary>What the granary adds to the lofts' brim.</summary>
     public const int GranaryRaise = 2;
+
+    /// <summary>Shelf-room off the old stillroom: what the herbwife's new wing costs to raise (D-135).</summary>
+    public const int StillwingCoin = 35;
+
+    /// <summary>The extra vial the wing keeps racked for the road.</summary>
+    public const int StillwingRack = 1;
+
+    /// <summary>Anvil, stone, and a rack of files: what the smithy bench costs to raise (D-135).</summary>
+    public const int SmithyCoin = 45;
+
+    /// <summary>Wear a green hand files off in one sitting at the bench; each Smithing level adds BenchPerLevel.</summary>
+    public const int BenchBase = 4;
+    public const int BenchPerLevel = 2;
 }
 
 /// <summary>

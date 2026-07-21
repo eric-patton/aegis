@@ -22,6 +22,22 @@ public static class StoryletCatalog
             ],
         },
 
+        // The signs read at the well (D-132): the winter omen's reader, alive
+        // only in the gap between the warning and the weather: a future the
+        // stead can see coming is a future the stead talks about.
+        new Storylet
+        {
+            Id = "the-signs-read",
+            Trigger = StoryletTrigger.NearHouse,
+            Requires = [new FactPattern("omen", "hard_winter")],
+            Forbids = [new FactPattern("event", "hard_winter")],
+            Lines =
+            [
+                ("An old man on a bench is splitting withies and not looking at the sky, in the way of a man who has already looked. \"Geese knew first,\" he says. \"They always do. Get your wood in, whoever you are.\"", LogTone.Info),
+                ("\"A stead that can see winter coming is already spending the warning, bearer. Watch what they do with it. It is the same craft I am teaching you.\"", LogTone.Aegis),
+            ],
+        },
+
         // Visiting the settlement before the deed: the grievance gets a human voice,
         // and the meeting is written to the graph for later content to build on.
         // The first dialogue-tree scene (D-117): the same beat, now answered instead

@@ -47,9 +47,11 @@ public class RaidsTests
     {
         // Since D-105 the stead is not passive on the way down: the second
         // raid comes greedy and posts the watch, so the later nights are
-        // turned away, and it is the watch's own upkeep that walks the lofts
-        // to the boards. The dark exit still closes the tick, by the stead's
-        // own move now rather than the raiders' last ride.
+        // turned away and the watch's upkeep walks the lofts toward the
+        // boards. Since D-132 the season itself has the last word on this
+        // seed: the hard winter lands on the final measure, bares the lofts,
+        // and stands the unfeedable watch down. The dark exit still closes
+        // the tick, by the weather's road now.
         var game = new Game(42);
         int priceBefore = game.RationPrice;
         Wait(game, SteadRaids.TickTurns * 6);
@@ -58,7 +60,9 @@ public class RaidsTests
         Assert.Equal(0, game.Stores);
         Assert.Equal(priceBefore + 3, game.RationPrice);
         Assert.True(game.World.Facts.Exists("event", "lofts_bare"));
-        Assert.Contains(game.Log.Entries, e => e.Text.Contains("eaten the stead bare"));
+        Assert.Contains(game.Log.Entries, e => e.Text.Contains("the winter has eaten what the season had left"));
+        Assert.Contains(game.Log.Entries, e => e.Text.Contains("no bread to feed it"));
+        Assert.False(game.WatchStands);
     }
 
     [Fact]
@@ -78,9 +82,12 @@ public class RaidsTests
         Assert.True(game.World.Facts.Exists("event", "dens_cowed"));
         Assert.Contains(game.Log.Entries, e => e.Text.Contains("no torch shows on the hills"));
 
-        // The quiet holds, and it is named only the once.
+        // The cull that cowed them also set their answer mustering (D-132);
+        // the camp emptied breaks it, and the quiet holds, named only the once.
+        game.Debug_ClearCamp();
         Wait(game, SteadRaids.TickTurns);
         Assert.Equal(0, game.Raids);
+        Assert.False(game.MusterLooms);
         Assert.Single(game.Log.Entries, e => e.Text.Contains("no torch shows on the hills"));
     }
 

@@ -163,7 +163,10 @@ public class SteadMovesTests
         Assert.True(game.LevyStands);
 
         game.Debug_ClearCamp();
-        Wait(game, SteadRaids.TickTurns); // the first cart home clears the line
+        // The hard winter claims this seed's next tick (D-132) and takes the
+        // last measure with it, so the season needs two carts, not one, to
+        // climb clear of the levy line.
+        Wait(game, SteadRaids.TickTurns * 3);
 
         Assert.False(game.LevyStands);
         Assert.True(game.World.Facts.Exists("event", "levy_met"));

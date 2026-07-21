@@ -260,10 +260,14 @@ namespace Aegis.Core;
 /// v72 when D-130 gave the pool its sixth spine: the Long Siege binds to the
 /// fen-leaguer, so tier-6+ worlds draw their story from six candidates where
 /// a v71 journal drew from five, and every late world's cast re-deals.
+/// v73 when D-132 gave the world a calendar: every valley's hard winter thins
+/// the stores on its seed-drawn tick (prices, levies, and storylet draws all
+/// move under a v72 journal), and the cull's muster adds a raiding night no
+/// v72 world ever kept.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 72;
+    public const int Version = 73;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

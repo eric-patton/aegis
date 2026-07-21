@@ -345,6 +345,22 @@ public sealed class Game
     /// <summary>The turn this world began: the raid tick counts from here, not from cycle 1.</summary>
     private int _worldStartTurn;
 
+    /// <summary>
+    /// The world's calendar (D-132): scheduled future facts, checked on the
+    /// coarse tick. Rebuilt by replay (entries come from the world's seed or
+    /// from replayed deeds), never serialized, cleared at the crossing.
+    /// </summary>
+    private readonly List<ScheduledFact> _schedule = [];
+
+    /// <summary>Whether a scheduled future already spoke for this tick's raiding night (D-132).</summary>
+    private bool _nightSpokenFor;
+
+    /// <summary>The futures on the world's calendar (D-132): observers and tests read the timeline here.</summary>
+    public IEnumerable<(string Key, int DueTick)> Upcoming => _schedule.Select(f => (f.Key, f.DueTick));
+
+    /// <summary>Whether the dens' answer is still coming (D-132): the raids topic reads the hills by this.</summary>
+    public bool MusterLooms => _schedule.Any(f => f.Key == "dens_muster");
+
     /// <summary>Whether this world's steadholder has named the friend's price aloud (D-080); once per stead.</summary>
     private bool _friendsPriceNamed;
 
@@ -530,6 +546,7 @@ public sealed class Game
         _storylets = new StoryletEngine(World.Seed, FullCatalog());
         Player.Pos = World.ShrinePos;
         SpawnMonsters();
+        ScheduleWorldFuture();
 
         Log.Add(0, $"You wake at the shrine of {World.SettlementName}, in the world called {World.Name}.");
         if (firstWake)
@@ -1633,6 +1650,9 @@ public sealed class Game
         BonesNet = 0;
         RoundStood = false; // the next hearth has met no one's generosity
         _worldStartTurn = Turn;
+        // The calendar is the World bucket's (D-132): the far gate leaves the
+        // old world its futures, and the new world sets its own.
+        ScheduleWorldFuture();
         _friendsPriceNamed = false;
         _cartsBreadNamed = false; // a fresh world's cart has said nothing yet
         // A fresh world's roster (D-110): these dens have not met the bearer.
@@ -2388,7 +2408,12 @@ public sealed class Game
                 : CampChief is null && World.Facts.Exists("nemesis", "chief")
                     ? " And no voice leads them now, if the night-fires are read right. Leaderless is not gone; it is only quieter about its plans."
                     : "";
-            topics.Add(("The goblin raids", $"\"{grievance.Detail} We have fed them to keep the peace. It has not bought much peace.{raided}{crowded}{order}\""));
+            // The calendar read from the doors (D-132): a muster still coming
+            // is a thing the stead can see, and says so.
+            string muster = MusterLooms
+                ? " And the hills show more fires this month, not fewer. Mustering over their dead, the wanderers say. When that comes down on us it will not come gentle."
+                : "";
+            topics.Add(("The goblin raids", $"\"{grievance.Detail} We have fed them to keep the peace. It has not bought much peace.{raided}{crowded}{order}{muster}\""));
         }
 
         if (World.Facts.Find("rest_point", "shrine") is { } shrine)
@@ -5851,6 +5876,10 @@ public sealed class Game
                 2 => "Dread has entered the raiders' work: their blows come feared now, and land the weaker for it.",
                 _ => "You are past hate with the raiders now. To the dens you are weather: a thing to be survived, not fought.",
             }, LogTone.Danger);
+            // The cull is answered (D-132): the first time dread enters the
+            // dens' work, the hills begin to muster, and the stead sees it.
+            if (rungBefore < RaiderWrath.DreadRung && rungAfter >= RaiderWrath.DreadRung && !CampCleared)
+                ScheduleMuster();
         }
         if (!Player.WrathLineHeard)
         {
@@ -5919,17 +5948,21 @@ public sealed class Game
     /// the world remembers it happened. Lofts bared to nothing are the raids'
     /// own dark exit, named the moment it closes.
     /// </summary>
-    private void RaidTheStead()
+    private void RaidTheStead(bool mustered = false)
     {
-        bool bold = Boldness >= RaiderBoldness.BoldAt;
+        // A mustered night (D-132) comes greedy by force of numbers, whatever
+        // the dens' nerve stood at when the answer was sworn.
+        bool bold = mustered || Boldness >= RaiderBoldness.BoldAt;
         int take = Math.Min(Stores, bold ? SteadStores.BoldRaidTake : SteadStores.RaidTake);
         Raids++;
         Stores -= take;
         World.Facts.Add("event", "raid", World.SettlementName,
             $"Raiders came down on {World.SettlementName} by night and left with grain.");
-        Log.Add(Turn, bold
-            ? $"By night the raiders come down on {World.SettlementName} again, and they come greedy now: two lofts opened, grain gone by the sackful, no one dead but no one unshaken."
-            : $"By night the raiders come down on {World.SettlementName} again: grain gone, a byre-door split, no one dead but no one unshaken.", LogTone.Danger);
+        Log.Add(Turn, mustered
+            ? $"The night the hills promised arrives: the mustered dens come down on {World.SettlementName} in numbers, torches at three fences at once. Two lofts opened, grain gone by the sackful, and no one pretending they did not see it coming."
+            : bold
+                ? $"By night the raiders come down on {World.SettlementName} again, and they come greedy now: two lofts opened, grain gone by the sackful, no one dead but no one unshaken."
+                : $"By night the raiders come down on {World.SettlementName} again: grain gone, a byre-door split, no one dead but no one unshaken.", LogTone.Danger);
         if (Stores == 0)
         {
             if (!World.Facts.Exists("event", "lofts_bare"))
@@ -6081,6 +6114,171 @@ public sealed class Game
         }
     }
 
+    /// <summary>
+    /// The world's own calendar entries (D-132), set the day the bearer
+    /// arrives. One so far: the hard winter. Every valley gets one, its tick
+    /// drawn from the world's own seed, so the season is worldgen's fact,
+    /// not the replay's.
+    /// </summary>
+    private void ScheduleWorldFuture()
+    {
+        _schedule.Clear();
+        var rng = new Rng(SeedTree.Derive(World.Seed, "winter"));
+        int due = 3 + rng.Next(3);
+        _schedule.Add(new ScheduledFact
+        {
+            Key = "hard_winter",
+            DueTick = due,
+            ForeshadowTick = due - 1,
+            Foreshadow = g => g.ForeshadowWinter(),
+            Fire = g => g.WinterComesDown(),
+        });
+    }
+
+    /// <summary>
+    /// The calendar's tick (D-132): cancellations first (a future the world
+    /// has outrun is unscheduled, narrated), then due futures fire, then
+    /// standing omens speak. Iterates a copy so a firing may schedule more.
+    /// </summary>
+    private void RunSchedule(int tick)
+    {
+        foreach (var future in _schedule.ToList())
+        {
+            if (future.CancelWhen is not null && future.CancelWhen(this))
+            {
+                _schedule.Remove(future);
+                future.Cancelled?.Invoke(this);
+            }
+            else if (tick >= future.DueTick)
+            {
+                if (future.HoldWhen is not null && future.HoldWhen(this)) continue;
+                _schedule.Remove(future);
+                future.Fire(this);
+            }
+            else if (!future.ForeshadowSpoken && future.ForeshadowTick >= 0 && tick >= future.ForeshadowTick)
+            {
+                future.ForeshadowSpoken = true;
+                future.Foreshadow?.Invoke(this);
+            }
+        }
+    }
+
+    /// <summary>
+    /// The signs read a hard winter coming (D-132): the first scheduled
+    /// future's omen. The warning is the point: a bearer who reads it has a
+    /// tick to fatten the lofts (answer a levy, clear the camp so the season
+    /// recovers) before the snow prices anything.
+    /// </summary>
+    private void ForeshadowWinter()
+    {
+        World.Facts.Add("omen", "hard_winter", World.SettlementName,
+            $"The geese went south a month early over {World.SettlementName}, and the old men read a hard winter in the sky's iron color.");
+        Log.Add(Turn, $"The talk at the well has gone all weather: the geese went south a month early, and the old men are reading the sky's iron color. A hard winter is coming, and {World.SettlementName} eyes its lofts and counts.", LogTone.Info);
+        Log.Add(Turn, "\"Mark it, bearer. Most of what happens to a stead arrives unannounced. This one is sending word ahead, and what sends word ahead can be met.\"", LogTone.Aegis);
+    }
+
+    /// <summary>
+    /// The hard winter lands (D-132): the season the signs promised, the
+    /// first scheduled future to fire. It eats the lofts the way the war
+    /// does (bread's price rides the same stores), can call the levy at the
+    /// last measure, and bares the lofts under its own narration if it takes
+    /// them to the boards. Weather is not the war: it cares nothing for
+    /// camps, watches, or where the bearer stands, and nothing cancels it;
+    /// the counterplay lived in the omen's tick.
+    /// </summary>
+    private void WinterComesDown()
+    {
+        _nightSpokenFor = true; // no raid rides through a blizzard, and no carts creak in behind one
+        int take = Math.Min(Stores, 2);
+        Stores -= take;
+        World.Facts.Add("event", "hard_winter", World.SettlementName,
+            $"The hard winter the signs promised came down on {World.SettlementName}: snow to the sills, and the lofts feeding every mouth through it.");
+        Log.Add(Turn, take switch
+        {
+            0 => $"The hard winter the signs promised comes down on {World.SettlementName}: snow to the sills, stock byred, the fords iced shut. The lofts were already at the boards, and the stead tightens its belt around nothing.",
+            1 => $"The hard winter the signs promised comes down on {World.SettlementName}: snow to the sills, stock byred, the fords iced shut. The last measure but one goes to getting man and beast through it.",
+            _ => $"The hard winter the signs promised comes down on {World.SettlementName}: snow to the sills, stock byred, the fords iced shut. Two measures go out of the lofts getting man and beast through it.",
+        }, LogTone.Danger);
+        if (take > 0 && Stores > 0)
+            Log.Add(Turn, "Bread will be dearer for it until the lofts are made good.", LogTone.Info);
+        if (take > 0 && Stores == 0)
+        {
+            if (!World.Facts.Exists("event", "lofts_bare"))
+                World.Facts.Add("event", "lofts_bare", World.SettlementName,
+                    $"{World.SettlementName}'s lofts went to the boards in the hard winter; there is nothing left worth a night's ride.");
+            Log.Add(Turn, "And with that the lofts are down to the boards: the winter has eaten what the season had left, and there is nothing in this stead now worth a night's ride.", LogTone.Danger);
+            // A watch cannot be fed from boards (D-105's own rule, reached by
+            // the weather's road): the spears stand down with nothing to guard.
+            if (WatchStands)
+            {
+                WatchStands = false;
+                Log.Add(Turn, $"And {World.SettlementName}'s watch comes in from the fold walls for good: there is no bread to feed it and nothing left for it to guard.", LogTone.Info);
+            }
+        }
+        if (!LevyStands && Stores <= SteadLevy.CalledAt) CallLevy();
+    }
+
+    /// <summary>
+    /// The dens set their answer on the calendar (D-132): the cull that
+    /// taught them dread (D-078) is also an insult, and an insult is
+    /// answered. The muster is announced the day it begins (the stead reads
+    /// the hills), due two ticks out, and cancelled the only way such things
+    /// are: the camp emptied before it rides. The first scheduled future
+    /// with a designed exit, which is the machinery's whole point: a threat
+    /// seen coming, and a bearer with time to act on it.
+    /// </summary>
+    private void ScheduleMuster()
+    {
+        if (World.Facts.Exists("omen", "dens_muster")) return; // one answer per world's dens
+        World.Facts.Add("omen", "dens_muster", World.SettlementName,
+            $"The hills above {World.SettlementName} showed more fires, not fewer, after the raiders' dead were counted: the dens are mustering.");
+        _schedule.Add(new ScheduledFact
+        {
+            Key = "dens_muster",
+            DueTick = (Turn - _worldStartTurn) / SteadRaids.TickTurns + 2,
+            CancelWhen = g => g.CampCleared,
+            HoldWhen = g => g.CurrentSite?.Kind == SiteKind.GoblinCamp,
+            Fire = g => g.MusterComesDown(),
+            Cancelled = g => g.MusterBreaks(),
+        });
+        Log.Add(Turn, $"By dusk the word is at {World.SettlementName}'s well: the hills show more fires tonight, not fewer. The dens are mustering over their dead, and when that comes down it will not come gentle.", LogTone.Danger);
+        Log.Add(Turn, "\"You taught the dens to fear your hand, bearer, and fear is answered while there are still hands to answer with. It is coming. But you can see it coming, and there is a first time for that too.\"", LogTone.Aegis);
+    }
+
+    /// <summary>
+    /// The muster comes down (D-132): the scheduled reprisal fires as that
+    /// night's raid, greedy by force of numbers whatever the dens' nerve,
+    /// riding every rule a raiding night already keeps: a posted watch meets
+    /// it at the walls, and bared lofts leave it nothing to carry.
+    /// </summary>
+    private void MusterComesDown()
+    {
+        _nightSpokenFor = true;
+        if (Stores == 0)
+        {
+            World.Facts.Add("event", "muster_broken", World.SettlementName,
+                $"The dens' muster came down on {World.SettlementName} and found the lofts already bare; even hate will not ride twice for boards.");
+            Log.Add(Turn, $"The muster comes down off the hills at last and finds what everything else already found: boards. Torches circle {World.SettlementName} once, and the hills take them back. Even hate will not ride twice for nothing.", LogTone.Info);
+            return;
+        }
+        if (WatchStands)
+        {
+            Log.Add(Turn, "The night the hills promised arrives: the muster comes down in numbers on a stead that has been counting too.", LogTone.Danger);
+            WatchHoldsTheNight();
+            return;
+        }
+        RaidTheStead(mustered: true);
+    }
+
+    /// <summary>The muster dies with the camp (D-132): the first cancelled future, narrated like any exit.</summary>
+    private void MusterBreaks()
+    {
+        World.Facts.Add("event", "muster_broken", World.SettlementName,
+            $"The muster in the hills above {World.SettlementName} broke up over its dead fires: the camp it gathered to avenge is gone.");
+        Log.Add(Turn, "Word comes down with the wanderers: the fires in the high hills are going out one by one. The muster has broken up over what is left of the camp it gathered for. A raid that was coming, now, is not.", LogTone.Reward);
+        Log.Add(Turn, "\"That is what it looks like when a thing that was going to happen, does not. Almost nothing. Remember the shape of it anyway, bearer: you made that nothing.\"", LogTone.Aegis);
+    }
+
     private void CheckSiteCleared(Site site)
     {
         if (site.Cleared || Monsters.Any(m => m.Alive && m.SiteId == site.Id)) return;
@@ -6192,7 +6390,15 @@ public sealed class Game
         // dark exit: nothing left worth a night's ride.
         if (Turn > _worldStartTurn && (Turn - _worldStartTurn) % SteadRaids.TickTurns == 0)
         {
-            if (!CampCleared && Stores > 0 && CurrentSite?.Kind != SiteKind.GoblinCamp)
+            // The calendar speaks first (D-132): scheduled futures cancel,
+            // land, or foreshadow before the cadence acts, and a future that
+            // raids (the dens' muster) is that night's raid, not a second one.
+            // A night a future claimed is claimed whole: no raid rides through
+            // the muster's own snowless dark or the winter's blizzard, and no
+            // carts creak in on the night the drifts close the fords.
+            _nightSpokenFor = false;
+            RunSchedule((Turn - _worldStartTurn) / SteadRaids.TickTurns);
+            if (!CampCleared && Stores > 0 && !_nightSpokenFor && CurrentSite?.Kind != SiteKind.GoblinCamp)
             {
                 if (WatchStands && Boldness < RaiderBoldness.BoldAt)
                 {
@@ -6203,7 +6409,7 @@ public sealed class Game
                 else if (Boldness >= RaiderBoldness.RaidingAt) RaidTheStead();
                 else NoteCowedDens();
             }
-            else if (CampCleared && Stores < SteadStores.Max)
+            else if (CampCleared && Stores < SteadStores.Max && !_nightSpokenFor)
                 RecoverStores();
 
             // The mound seethes (D-106): grave-goods in a living pack while

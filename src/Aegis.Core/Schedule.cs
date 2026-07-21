@@ -50,3 +50,26 @@ public sealed class ScheduledFact
     /// <summary>Whether the omen has spoken (foreshadow fires once).</summary>
     internal bool ForeshadowSpoken;
 }
+
+/// <summary>
+/// One card of the stead's season deck (D-133, plan 2026-07 A2): a small
+/// fortune or misfortune of the home valley's own, beyond the raids' war and
+/// the calendar's weather. When gates eligibility (every card is dealt once
+/// per world, guarded by the fact it writes); Draw either lands the event at
+/// once or writes an omen and puts the event itself on the calendar (D-132),
+/// so part of the deck is always seen coming.
+/// </summary>
+public sealed class SteadEvent
+{
+    /// <summary>Stable key: what this card is called in code, facts, and tests.</summary>
+    public required string Key { get; init; }
+
+    /// <summary>Relative draw weight among the tick's eligible cards.</summary>
+    public int Weight { get; init; } = 10;
+
+    /// <summary>Whether this tick could deal the card at all.</summary>
+    public required Func<Game, bool> When { get; init; }
+
+    /// <summary>The dealing: fire now, or foreshadow and schedule (the mandatory narration hook rides both roads).</summary>
+    public required Action<Game> Draw { get; init; }
+}

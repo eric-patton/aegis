@@ -33,6 +33,7 @@ public class RaidsTests
     public void TheDens_Embolden_AsThePlunderGoesUnanswered()
     {
         var game = new Game(42);
+        game.Debug_HoldTheDeck(); // choreographed ticks: the season's own deals stay in the box
         Wait(game, SteadRaids.TickTurns);
         Assert.Equal(SteadStores.Max - 1, game.Stores); // the first raid takes a measure
 
@@ -53,6 +54,7 @@ public class RaidsTests
         // and stands the unfeedable watch down. The dark exit still closes
         // the tick, by the weather's road now.
         var game = new Game(42);
+        game.Debug_HoldTheDeck();
         int priceBefore = game.RationPrice;
         Wait(game, SteadRaids.TickTurns * 6);
 
@@ -95,6 +97,7 @@ public class RaidsTests
     public void TheStores_Recover_OnceTheCampFalls()
     {
         var game = new Game(42);
+        game.Debug_HoldTheDeck();
         int priceBefore = game.RationPrice;
         Wait(game, SteadRaids.TickTurns); // one raid lands
         Assert.Equal(priceBefore + 1, game.RationPrice);
@@ -154,6 +157,7 @@ public class RaidsTests
         // raiders are pinned at their own door. The raid comes once the bearer
         // walks out and leaves them their nights again.
         var game = new Game(42);
+        game.Debug_HoldTheDeck();
         game.Debug_SetMode(MapMode.Site);
         foreach (var m in game.Monsters) m.Hp = 0; // quiet the camp without clearing it
 

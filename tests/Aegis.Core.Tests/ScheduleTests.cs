@@ -83,6 +83,7 @@ public class ScheduleTests
     public void TheMuster_ComesDown_TwoTicksOut_GreedyByNumbers()
     {
         var game = WrathTests.ArrangeCamp(42);
+        game.Debug_HoldTheDeck(); // choreographed ticks: the season's own deals stay in the box
         WrathTests.SlayNext(game);
         WrathTests.SlayNext(game);
         game.Debug_SetMode(MapMode.Overworld);

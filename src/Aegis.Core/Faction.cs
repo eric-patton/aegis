@@ -263,6 +263,27 @@ public static class SteadWatch
 }
 
 /// <summary>
+/// The stead's season deck (D-133, plan 2026-07 A2): the home valley's own
+/// news beyond the raids' war and the calendar's weather (D-132). On any
+/// tick night no scheduled future has claimed, the season may deal one card:
+/// small, mixed-valence, consequence-dense (the fanfic test). Every card
+/// moves the stores axis or the calendar, writes a fact, and is narrated as
+/// it lands; each is dealt once per world, guarded by what it writes, so the
+/// deck stays news and never becomes wallpaper.
+/// </summary>
+public static class SteadDeck
+{
+    /// <summary>The chance a tick's open night deals a card at all.</summary>
+    public const double DrawChance = 1.0 / 3;
+
+    /// <summary>Lofts below this sell no measure to the drovers: the stead keeps its own line above the levy's.</summary>
+    public const int DroversKeep = 3;
+
+    /// <summary>What the wedding feast needs standing in the lofts, at the banns and on the day.</summary>
+    public const int FeastNeeds = 3;
+}
+
+/// <summary>
 /// The named of the dens (D-110): D-023's bounded Nemesis-style roster, begun
 /// where the fighting is. Every camp's world seed names a chief and two
 /// lieutenants; the stead's rumor carries the chief's name from the first

@@ -355,6 +355,12 @@ public sealed class Game
     /// <summary>Whether a scheduled future already spoke for this tick's raiding night (D-132).</summary>
     private bool _nightSpokenFor;
 
+    /// <summary>The season deck's stream (D-133): per-world, re-derived at the crossing with the calendar.</summary>
+    private Rng _steadDeckRng;
+
+    /// <summary>Test-only (D-133): a held deck deals nothing, so choreographed tick tests stay about the cadence.</summary>
+    private bool _deckHeld;
+
     /// <summary>The futures on the world's calendar (D-132): observers and tests read the timeline here.</summary>
     public IEnumerable<(string Key, int DueTick)> Upcoming => _schedule.Select(f => (f.Key, f.DueTick));
 
@@ -2415,6 +2421,24 @@ public sealed class Game
                 : "";
             topics.Add(("The goblin raids", $"\"{grievance.Detail} We have fed them to keep the peace. It has not bought much peace.{raided}{crowded}{order}{muster}\""));
         }
+
+        // The season remembered from the doors (D-133): the deck's news and
+        // the calendar's spent futures (D-132), spoken after the fact, newest
+        // first, so no stead event outlives its narration unread (every fact
+        // gets a reader, the D-109 discipline).
+        if (World.Facts.All.LastOrDefault(f => f.Type == "event" && f.Subject
+                is "hard_winter" or "muster_broken" or "far_fields" or "drovers"
+                or "fords_washout" or "wedding" or "wedding_put_off") is { } news)
+            topics.Add(("The season's news", news.Subject switch
+            {
+                "hard_winter" => "\"That winter was a fist. Snow to the sills and the fords iced shut; we fed every mouth from the lofts and burned green wood, and we are still counting what it cost us.\"",
+                "muster_broken" => "\"The hills were all fires one week and dark the next. Whatever gathered up there over its dead broke up before it came down on us, and we sleep the easier for never learning that night.\"",
+                "far_fields" => "\"The far fields came good when nothing else did. One cart under guard, but a cart. We do not ask the season why it relents; we get it in the lofts quick and say nothing.\"",
+                "drovers" => "\"Drovers came through off the high road and paid hill prices for a measure. Coin in the stead's box and dearer bread on every board. The steadholder calls it trade. The ovens have another word.\"",
+                "fords_washout" => "\"The river took the fords the way the old men said it would. What the low granary held went down the valley with the fence rails. We listen to the old men now. For a while, anyway.\"",
+                "wedding" => "\"There was a wedding, if you can believe it, with everything else this season has done. Two households under one roof-tree now, and the lanes still smell faintly of beer. Nobody is sorry.\"",
+                _ => "\"The banns were read, but the lofts had the last word: no stead feasts at the boards. They will stand up together in a better season. We say that about a lot of things now.\"",
+            }));
 
         if (World.Facts.Find("rest_point", "shrine") is { } shrine)
             topics.Add(("The shrine", $"{shrine.Detail} \"Old past knowing. We keep it swept all the same.\""));
@@ -6118,11 +6142,13 @@ public sealed class Game
     /// The world's own calendar entries (D-132), set the day the bearer
     /// arrives. One so far: the hard winter. Every valley gets one, its tick
     /// drawn from the world's own seed, so the season is worldgen's fact,
-    /// not the replay's.
+    /// not the replay's. The season deck's stream (D-133) re-derives here
+    /// too: a new world is dealt a new deck.
     /// </summary>
     private void ScheduleWorldFuture()
     {
         _schedule.Clear();
+        _steadDeckRng = new Rng(SeedTree.Derive(World.Seed, "stead_deck"));
         var rng = new Rng(SeedTree.Derive(World.Seed, "winter"));
         int due = 3 + rng.Next(3);
         _schedule.Add(new ScheduledFact
@@ -6202,19 +6228,9 @@ public sealed class Game
         if (take > 0 && Stores > 0)
             Log.Add(Turn, "Bread will be dearer for it until the lofts are made good.", LogTone.Info);
         if (take > 0 && Stores == 0)
-        {
-            if (!World.Facts.Exists("event", "lofts_bare"))
-                World.Facts.Add("event", "lofts_bare", World.SettlementName,
-                    $"{World.SettlementName}'s lofts went to the boards in the hard winter; there is nothing left worth a night's ride.");
-            Log.Add(Turn, "And with that the lofts are down to the boards: the winter has eaten what the season had left, and there is nothing in this stead now worth a night's ride.", LogTone.Danger);
-            // A watch cannot be fed from boards (D-105's own rule, reached by
-            // the weather's road): the spears stand down with nothing to guard.
-            if (WatchStands)
-            {
-                WatchStands = false;
-                Log.Add(Turn, $"And {World.SettlementName}'s watch comes in from the fold walls for good: there is no bread to feed it and nothing left for it to guard.", LogTone.Info);
-            }
-        }
+            LoftsBareOut(
+                $"{World.SettlementName}'s lofts went to the boards in the hard winter; there is nothing left worth a night's ride.",
+                "And with that the lofts are down to the boards: the winter has eaten what the season had left, and there is nothing in this stead now worth a night's ride.");
         if (!LevyStands && Stores <= SteadLevy.CalledAt) CallLevy();
     }
 
@@ -6277,6 +6293,207 @@ public sealed class Game
             $"The muster in the hills above {World.SettlementName} broke up over its dead fires: the camp it gathered to avenge is gone.");
         Log.Add(Turn, "Word comes down with the wanderers: the fires in the high hills are going out one by one. The muster has broken up over what is left of the camp it gathered for. A raid that was coming, now, is not.", LogTone.Reward);
         Log.Add(Turn, "\"That is what it looks like when a thing that was going to happen, does not. Almost nothing. Remember the shape of it anyway, bearer: you made that nothing.\"", LogTone.Aegis);
+    }
+
+    /// <summary>
+    /// The season deck itself (D-133, plan 2026-07 A2): four cards to open.
+    /// A fortune (the far fields), a trade with two faces (the drovers), and
+    /// two futures dealt through the calendar (D-132): the washout, weather
+    /// like the winter, and the wedding, the calendar's first cancellable
+    /// promise. Every card is dealt once per world, guarded by what it writes.
+    /// </summary>
+    private static readonly SteadEvent[] TheSeasonDeck =
+    [
+        new SteadEvent
+        {
+            Key = "far_fields",
+            When = g => !g.World.Facts.Exists("event", "far_fields") && !g.CampCleared && g.Stores < SteadStores.Max,
+            Draw = g => g.FarFieldsComeGood(),
+        },
+        new SteadEvent
+        {
+            Key = "drovers",
+            When = g => !g.World.Facts.Exists("event", "drovers") && !g.LevyStands && g.Stores >= SteadDeck.DroversKeep,
+            Draw = g => g.DroversComeThrough(),
+        },
+        new SteadEvent
+        {
+            Key = "fords_washout",
+            Weight = 8,
+            When = g => !g.World.Facts.Exists("omen", "fords_washout"),
+            Draw = g => g.ForeshadowWashout(),
+        },
+        new SteadEvent
+        {
+            Key = "wedding",
+            Weight = 8,
+            When = g => !g.World.Facts.Exists("omen", "banns_read") && g.Stores >= SteadDeck.FeastNeeds,
+            Draw = g => g.ForeshadowWedding(),
+        },
+    ];
+
+    /// <summary>
+    /// A draw from the season deck (D-133): collect the cards this tick could
+    /// deal and pick one by weight from the deck's own stream. The tick has
+    /// already paid its chance roll; an empty hand deals nothing.
+    /// </summary>
+    private void DrawFromTheDeck()
+    {
+        var hand = TheSeasonDeck.Where(e => e.When(this)).ToList();
+        if (hand.Count == 0) return;
+        int roll = _steadDeckRng.Next(hand.Sum(e => e.Weight));
+        foreach (var card in hand)
+        {
+            roll -= card.Weight;
+            if (roll < 0) { card.Draw(this); return; }
+        }
+    }
+
+    /// <summary>
+    /// The far fields come good (D-133): an outlying farm the raiders never
+    /// found sends its cart in, a measure the season did not promise. The
+    /// deck's plain fortune, dealt only while the war still prices the lofts
+    /// (a recovered season climbs on its own, D-089), and mercy enough to
+    /// lift a standing levy the way the recovery does.
+    /// </summary>
+    private void FarFieldsComeGood()
+    {
+        int bumpBefore = SteadStores.PriceBump(Stores);
+        Stores++;
+        World.Facts.Add("event", "far_fields", World.SettlementName,
+            $"An outlying farm the raiders never found sent its cart in under guard; {World.SettlementName}'s lofts took a measure the season had not promised.");
+        Log.Add(Turn, $"A cart comes in under guard from the far fields, from an outlying farm the raiders never found: {World.SettlementName}'s lofts take a measure the season had not promised, and nobody asks the luck why.", LogTone.Reward);
+        if (SteadStores.PriceBump(Stores) < bumpBefore)
+            Log.Add(Turn, "Bread comes a coin back down for it.", LogTone.Info);
+        if (LevyStands && Stores >= SteadLevy.LiftedAt) LiftLevy();
+    }
+
+    /// <summary>
+    /// Drovers on the high road (D-133): the deck's card with two faces. The
+    /// stead sells a measure at a hill price, so the news is coin in the
+    /// stead's box and dearer bread on the bearer's board. Dealt only while
+    /// the lofts can spare it: the stead keeps its own line above the levy's.
+    /// </summary>
+    private void DroversComeThrough()
+    {
+        int bumpBefore = SteadStores.PriceBump(Stores);
+        Stores--;
+        World.Facts.Add("event", "drovers", World.SettlementName,
+            $"A drover's string came through {World.SettlementName} off the high road and paid hill prices for a measure of the lofts' grain.");
+        Log.Add(Turn, $"A drover's string comes through {World.SettlementName} off the high road, hungry from the hills, and the stead weighs its lofts against their coin and sells: a measure gone at a hill price, and news gone down the road with it.", LogTone.Info);
+        if (SteadStores.PriceBump(Stores) > bumpBefore)
+            Log.Add(Turn, "Bread is a coin dearer for it until the lofts are made good. The steadholder calls it trade; the ovens have another word.", LogTone.Info);
+    }
+
+    /// <summary>
+    /// The river read (D-133): the washout's omen, the deck's second
+    /// foreshadowed weather after the winter (D-132). Rain on the high fells
+    /// today is fords under water next tick, and the stead says so out loud,
+    /// so the flood, like the winter, arrives already spent.
+    /// </summary>
+    private void ForeshadowWashout()
+    {
+        World.Facts.Add("omen", "fords_washout", World.SettlementName,
+            $"Three days of rain on the high fells sent the river past {World.SettlementName} down brown and full of trees; the old men gave the fords a week.");
+        _schedule.Add(new ScheduledFact
+        {
+            Key = "fords_washout",
+            DueTick = (Turn - _worldStartTurn) / SteadRaids.TickTurns + 1,
+            Fire = g => g.WashoutComesDown(),
+        });
+        Log.Add(Turn, $"Three days of rain on the high fells, and the river past {World.SettlementName} runs brown and full of trees. The old men stand on the bank giving the fords a week, and nobody is laughing at them.", LogTone.Info);
+        Log.Add(Turn, "\"Water sends word ahead the same as winter does, bearer. The stead is listening. So should you.\"", LogTone.Aegis);
+    }
+
+    /// <summary>
+    /// The washout comes down (D-133): the flood the river promised. Like the
+    /// winter it claims its night whole (nothing rides drowned fords, in
+    /// either direction), takes what the low granary held, and can walk the
+    /// lofts to the boards by water where the raids walk them by theft.
+    /// Nothing cancels weather; the counterplay lived in the omen's tick.
+    /// </summary>
+    private void WashoutComesDown()
+    {
+        _nightSpokenFor = true;
+        int take = Math.Min(Stores, 1);
+        Stores -= take;
+        World.Facts.Add("event", "fords_washout", World.SettlementName,
+            $"The river took {World.SettlementName}'s fords the way the old men said it would, and what the low granary held went with them.");
+        Log.Add(Turn, take switch
+        {
+            0 => $"The river comes up in the night and takes {World.SettlementName}'s fords, the way the old men said it would. The low granary floods to the lintel, and for once being bare is a mercy: there was nothing left in it to spoil.",
+            _ => $"The river comes up in the night and takes {World.SettlementName}'s fords, the way the old men said it would. The low granary floods to the lintel, and a measure of the lofts' grain goes down the valley with the fence rails.",
+        }, LogTone.Danger);
+        if (take > 0 && Stores > 0)
+            Log.Add(Turn, "Bread will be dearer for it until the lofts are made good.", LogTone.Info);
+        if (take > 0 && Stores == 0)
+            LoftsBareOut(
+                $"{World.SettlementName}'s lofts went to the boards when the river took the low granary; there is nothing left worth a night's ride.",
+                "And with that the lofts are down to the boards: what the raids and the season left, the river has taken, and there is nothing in this stead now worth a night's ride.");
+        if (!LevyStands && Stores <= SteadLevy.CalledAt) CallLevy();
+    }
+
+    /// <summary>
+    /// The banns read (D-133): the deck's good future, and the calendar's
+    /// first cancellable promise: the muster (D-132) showed a threat with an
+    /// exit, this shows the exit runs both ways. The feast needs full enough
+    /// lofts; if the season eats them below the line before the day, the
+    /// wedding is put off, narrated like any future the world outran.
+    /// </summary>
+    private void ForeshadowWedding()
+    {
+        World.Facts.Add("omen", "banns_read", World.SettlementName,
+            $"Banns were read at {World.SettlementName}'s well: a match between two households, and a feast promised if the lofts can stand it.");
+        _schedule.Add(new ScheduledFact
+        {
+            Key = "wedding",
+            DueTick = (Turn - _worldStartTurn) / SteadRaids.TickTurns + 1,
+            CancelWhen = g => g.Stores < SteadDeck.FeastNeeds,
+            Fire = g => g.WeddingComesOff(),
+            Cancelled = g => g.WeddingPutOff(),
+        });
+        Log.Add(Turn, $"Banns are read at {World.SettlementName}'s well: two households to come under one roof-tree, and a feast promised if the lofts can stand it. For one evening the talk is not raids and it is not weather.", LogTone.Info);
+        Log.Add(Turn, "\"Mark this one too, bearer. The calendar is not only for what is coming to hurt them. They put their own days on it, and defend those the harder.\"", LogTone.Aegis);
+    }
+
+    /// <summary>
+    /// The wedding comes off (D-133): a measure spent on purpose, and the
+    /// stead the better for it. It does not claim the night: the dens do not
+    /// check the banns, and a raid riding through the feast is the season's
+    /// own kind of story.
+    /// </summary>
+    private void WeddingComesOff()
+    {
+        Stores--;
+        World.Facts.Add("event", "wedding", World.SettlementName,
+            $"{World.SettlementName} held its wedding: two households under one roof-tree, a measure of the lofts spent on the feast, and the whole stead danced.");
+        Log.Add(Turn, $"The wedding comes off at {World.SettlementName}: trestles in the lanes, a measure of the lofts gone to bread and beer on purpose for once, and dancing until the tallow burns down. Whatever else this season is, it has this in it now.", LogTone.Reward);
+    }
+
+    /// <summary>The wedding put off (D-133): the promise cancelled, narrated; no stead feasts at the boards.</summary>
+    private void WeddingPutOff()
+    {
+        World.Facts.Add("event", "wedding_put_off", World.SettlementName,
+            $"The wedding at {World.SettlementName} was put off: the banns were read, but the lofts had the last word, and no stead feasts at the boards.");
+        Log.Add(Turn, $"Word goes around the well, quieter than the banns did: the wedding is put off. The lofts had the last word, and no stead feasts at the boards. They will stand up together in a better season, if one comes.", LogTone.Info);
+    }
+
+    /// <summary>
+    /// The lofts bared by something other than a raid (D-132, D-133): the
+    /// season's own road to the raids' dark exit. Writes the fact once,
+    /// narrates the baring, and stands down a watch nothing can feed
+    /// (D-105's rule, reached without a raider in sight).
+    /// </summary>
+    private void LoftsBareOut(string detail, string narration)
+    {
+        if (!World.Facts.Exists("event", "lofts_bare"))
+            World.Facts.Add("event", "lofts_bare", World.SettlementName, detail);
+        Log.Add(Turn, narration, LogTone.Danger);
+        if (WatchStands)
+        {
+            WatchStands = false;
+            Log.Add(Turn, $"And {World.SettlementName}'s watch comes in from the fold walls for good: there is no bread to feed it and nothing left for it to guard.", LogTone.Info);
+        }
     }
 
     private void CheckSiteCleared(Site site)
@@ -6411,6 +6628,15 @@ public sealed class Game
             }
             else if (CampCleared && Stores < SteadStores.Max && !_nightSpokenFor)
                 RecoverStores();
+
+            // The season deals its own news (D-133): at most one card a tick,
+            // none on a night a scheduled future claimed, and none while a
+            // dealt future is still on the calendar (one omen speaks at a
+            // time). The chance rolls first and every tick, so the deck's
+            // stream advances the same way whatever the night held.
+            if (!_deckHeld && _steadDeckRng.Chance(SteadDeck.DrawChance) && !_nightSpokenFor
+                && !_schedule.Any(f => f.Key is "fords_washout" or "wedding"))
+                DrawFromTheDeck();
 
             // The mound seethes (D-106): grave-goods in a living pack while
             // the barrow stands unstilled do not go unanswered. On its tick
@@ -7777,6 +8003,9 @@ public sealed class Game
     internal void Debug_ForceDeathCheck() { if (Player.Hp <= 0) HandleDeath(); }
     internal void Debug_BurnCombatRoll() => _combatRng.Chance(0.5);
     internal void Debug_Raid() => RaidTheStead();
+    internal void Debug_SetStores(int stores) => Stores = stores;
+    internal void Debug_DrawSteadEvent(string key) => TheSeasonDeck.First(e => e.Key == key).Draw(this);
+    internal void Debug_HoldTheDeck() => _deckHeld = true;
     internal void Debug_SetMount(Mount? mount) => Mount = mount;
     internal void Debug_ClearCamp() => Debug_ClearSite(SiteKind.GoblinCamp);
     internal void Debug_ClearSite(SiteKind kind)

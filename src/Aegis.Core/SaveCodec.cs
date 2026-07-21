@@ -264,10 +264,13 @@ namespace Aegis.Core;
 /// the stores on its seed-drawn tick (prices, levies, and storylet draws all
 /// move under a v72 journal), and the cull's muster adds a raiding night no
 /// v72 world ever kept.
+/// v74 when D-133 dealt the season its deck: tick nights may now deal a stead
+/// event from a per-world stream (stores, prices, and the calendar all move
+/// under a v73 journal), so every replay's season re-deals.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 73;
+    public const int Version = 74;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

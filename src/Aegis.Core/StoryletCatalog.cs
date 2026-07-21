@@ -38,6 +38,36 @@ public static class StoryletCatalog
             ],
         },
 
+        // The river read at the bank (D-133): the washout omen's reader,
+        // alive only in the gap between the warning and the water.
+        new Storylet
+        {
+            Id = "the-river-read",
+            Trigger = StoryletTrigger.NearHouse,
+            Requires = [new FactPattern("omen", "fords_washout")],
+            Forbids = [new FactPattern("event", "fords_washout")],
+            Lines =
+            [
+                ("Two boys run up from the river with the day's news: the water has eaten the sandbar and is working on the willow. A woman carrying sacks uphill from the low granary does not stop to hear it. \"Told you,\" she says, to nobody in particular.", LogTone.Info),
+                ("\"Count who is carrying sacks uphill, bearer. That is a stead spending a warning while it is still worth something.\"", LogTone.Aegis),
+            ],
+        },
+
+        // The banns at the well (D-133): the wedding omen's reader, alive in
+        // the gap between the promise and the feast, or the putting-off.
+        new Storylet
+        {
+            Id = "the-banns-heard",
+            Trigger = StoryletTrigger.NearHouse,
+            Requires = [new FactPattern("omen", "banns_read")],
+            Forbids = [new FactPattern("event", "wedding"), new FactPattern("event", "wedding_put_off")],
+            Lines =
+            [
+                ("An argument drifts over a fence: geese, and whose beer, and whether the smith's trestles will bear dancing. It is the first argument you have heard in this stead that nobody needed to win.", LogTone.Info),
+                ("\"They have put a good day on the calendar next to the hard ones, bearer. Watch how they defend it. A stead fights differently when one of the things behind the wall is a date.\"", LogTone.Aegis),
+            ],
+        },
+
         // Visiting the settlement before the deed: the grievance gets a human voice,
         // and the meeting is written to the graph for later content to build on.
         // The first dialogue-tree scene (D-117): the same beat, now answered instead

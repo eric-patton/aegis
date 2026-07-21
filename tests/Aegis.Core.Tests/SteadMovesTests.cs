@@ -16,6 +16,7 @@ public class SteadMovesTests
     public void AGreedyRaid_PostsTheWatch()
     {
         var game = new Game(42);
+        game.Debug_HoldTheDeck(); // choreographed ticks: the season's own deals stay in the box
         Wait(game, SteadRaids.TickTurns);
         Assert.False(game.WatchStands); // a plain raid does not move the stead
 
@@ -31,6 +32,7 @@ public class SteadMovesTests
     public void TheWatch_TurnsTheRaid_AndEatsAMeasure()
     {
         var game = new Game(42);
+        game.Debug_HoldTheDeck();
         Wait(game, SteadRaids.TickTurns * 2); // watch posted, stores 3
         int raids = game.Raids;
         int stores = game.Stores;
@@ -52,6 +54,7 @@ public class SteadMovesTests
         // same night a plain raid can land again: the watch guarded against
         // greed, not against raiding itself.
         var game = new Game(42);
+        game.Debug_HoldTheDeck();
         Wait(game, SteadRaids.TickTurns * 2);
         Assert.True(game.WatchStands);
 
@@ -72,6 +75,7 @@ public class SteadMovesTests
     public void TheWatch_StandsDown_WhenTheCampFalls()
     {
         var game = new Game(42);
+        game.Debug_HoldTheDeck();
         Wait(game, SteadRaids.TickTurns * 2);
         Assert.True(game.WatchStands);
 

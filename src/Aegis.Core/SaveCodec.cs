@@ -267,10 +267,13 @@ namespace Aegis.Core;
 /// v74 when D-133 dealt the season its deck: tick nights may now deal a stead
 /// event from a per-world stream (stores, prices, and the calendar all move
 /// under a v73 journal), so every replay's season re-deals.
+/// v75 when D-134 raised the stead's works: digits at the steadholder's board
+/// that fell dead under a v74 journal now open the works bench and move coin,
+/// facts, and the raids' own arithmetic.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 74;
+    public const int Version = 75;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

@@ -200,8 +200,10 @@ public class UnbinderTests
     [Fact]
     public void VillagersPointTheWay_ToTheWanderer()
     {
+        // Not the steadholder's topic since D-134 (the works bench took the
+        // digit); every other door still points the way.
         var game = new Game(42);
-        NpcTests.BumpNpc(game, game.World.Npcs.First(n => n.Kind == NpcKind.Villager));
+        NpcTests.BumpNpc(game, game.World.Npcs.First(n => n.Kind == NpcKind.Villager && n.Id != "npc_steadholder"));
 
         var topic = game.Topics.FirstOrDefault(t => t.Label == "The wanderer");
         Assert.NotEqual(default, topic);

@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility }
 
 /// <summary>
 /// The cart's counter (D-124): the road's prices. The ration a coin or two
@@ -327,6 +327,22 @@ public sealed class Game
 
     /// <summary>The dens' boldness (D-089): derived, causal, replay-free. Plunder emboldens; dead raiders cow.</summary>
     public int Boldness => RaiderBoldness.Of(Raids, Wrath);
+
+    // The stead's works (D-134): each read straight off the fact its funding
+    // writes, so replay rebuilds them and the crossing clears them with the
+    // World bucket, no reset code at all.
+
+    /// <summary>Whether the palisade stands (D-134): no raiding night comes over it greedy.</summary>
+    public bool PalisadeStands => World.Facts.Exists("event", "palisade_built");
+
+    /// <summary>Whether the watchtower stands (D-134): a watch with eyes on the hills eats nothing.</summary>
+    public bool TowerStands => World.Facts.Exists("event", "watchtower_built");
+
+    /// <summary>Whether the granary stands (D-134): the lofts hold two measures the deeper.</summary>
+    public bool GranaryStands => World.Facts.Exists("event", "granary_built");
+
+    /// <summary>The lofts' brim (D-134): the season's ceiling, raised while the granary stands.</summary>
+    public int StoresMax => SteadStores.Max + (GranaryStands ? SteadFacilities.GranaryRaise : 0);
 
     /// <summary>
     /// Whether the stead's levy stands (D-105): the lofts down to the last
@@ -2425,8 +2441,12 @@ public sealed class Game
         // The season remembered from the doors (D-133): the deck's news and
         // the calendar's spent futures (D-132), spoken after the fact, newest
         // first, so no stead event outlives its narration unread (every fact
-        // gets a reader, the D-109 discipline).
-        if (World.Facts.All.LastOrDefault(f => f.Type == "event" && f.Subject
+        // gets a reader, the D-109 discipline). Not at the steadholder's door
+        // (D-134): the steadholder makes the season's news and keeps the works
+        // bench besides, and the shared nine digits only stretch so far; the
+        // retrospective gossip lives at the other doors.
+        if (npc.Id != "npc_steadholder"
+            && World.Facts.All.LastOrDefault(f => f.Type == "event" && f.Subject
                 is "hard_winter" or "muster_broken" or "far_fields" or "drovers"
                 or "fords_washout" or "wedding" or "wedding_put_off") is { } news)
             topics.Add(("The season's news", news.Subject switch
@@ -2468,7 +2488,10 @@ public sealed class Game
                 ? " \"The fire up there is out. First time in anyone's memory. We are not sure we are glad.\""
                 : " \"Leave it be, stranger. Whoever keeps that fire has kept it longer than the stead has stood.\"")));
 
-        if (World.Facts.Find("wanderer", "npc_unbinder") is { } wanderer)
+        // Pointing the way to a passing stranger is the well's talk, not the
+        // steadholder's (D-134): the digit ceded pays for the works bench, and
+        // every other door still points true.
+        if (npc.Id != "npc_steadholder" && World.Facts.Find("wanderer", "npc_unbinder") is { } wanderer)
             topics.Add(("The wanderer", $"\"{wanderer.Detail} Not the first such to pass through, if the old folk are believed.\""));
 
         if (World.Facts.OfType("echo").FirstOrDefault() is { } echo)
@@ -2648,6 +2671,11 @@ public sealed class Game
                 : LevyStands
                     ? $"Answer the stead's levy ({SteadLevy.AnswerCoin} coin against a carted measure)"
                     : $"Buy a ration ({RationPrice} coin{(FriendsPrice ? ", a friend's price" : "")})"));
+        // The stead's works (D-134): the facility ladder keeps a bench of its
+        // own behind one talk digit, the woodward's pattern (D-071), so the
+        // villagers' shared digits are never crowded however the ladder grows.
+        if (npc.Id == "npc_steadholder")
+            offers.Add((TradeGood.Trade, "", "The stead's works (coin to timber)"));
         // The herbwife keeps a stillroom (D-081): the second bench, proving the
         // wood's-edge pattern (D-071) generalizes. She is the simples' true
         // buyer, and pays the apothecary's price where the woodward pays a
@@ -2886,7 +2914,76 @@ public sealed class Game
             // listed, so the older digits hold (D-041's law).
             offers.Add((TradeGood.Surgery, "", SurgeryLabel()));
         }
+        // The stead's works (D-134): the facility ladder, each entry always
+        // listed with a state-read label so no digit ever shifts (D-041).
+        if (npc.Id == "npc_steadholder")
+        {
+            offers.Add((TradeGood.Facility, "palisade", FacilityLabel("palisade")));
+            offers.Add((TradeGood.Facility, "watchtower", FacilityLabel("watchtower")));
+            offers.Add((TradeGood.Facility, "granary", FacilityLabel("granary")));
+        }
         return offers;
+    }
+
+    /// <summary>A work's entry at the steadholder's bench (D-134): the price while it wants raising, the standing read after.</summary>
+    private string FacilityLabel(string id) => id switch
+    {
+        "palisade" => PalisadeStands
+            ? "The palisade (standing, your coin in its timber)"
+            : $"Fund the palisade ({SteadFacilities.PalisadeCoin} coin: sharpened timber against the greedy nights)",
+        "watchtower" => TowerStands
+            ? "The watchtower (standing, your coin in its beams)"
+            : $"Fund the watchtower ({SteadFacilities.TowerCoin} coin: eyes that spare the watch its bread)",
+        _ => GranaryStands
+            ? "The granary (standing, your coin in its boards)"
+            : $"Fund the granary ({SteadFacilities.GranaryCoin} coin: lofts two measures the deeper)",
+    };
+
+    /// <summary>
+    /// A work is funded (D-134): the bearer's coin becomes the stead's timber.
+    /// Once per world apiece, the fact its effect hangs off written at the
+    /// raising, and regard paid exactly once per work (D-131's guard: a
+    /// coin-priced ladder must never become a recurring reputation channel).
+    /// </summary>
+    private void TryFundFacility(string id)
+    {
+        var (fact, coin, name) = id switch
+        {
+            "palisade" => ("palisade_built", SteadFacilities.PalisadeCoin, "palisade"),
+            "watchtower" => ("watchtower_built", SteadFacilities.TowerCoin, "watchtower"),
+            _ => ("granary_built", SteadFacilities.GranaryCoin, "granary"),
+        };
+        if (World.Facts.Exists("event", fact))
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"It stands, and it stands on your coin. The stead does not sell a thing twice.\"");
+            return;
+        }
+        if (Player.Coin < coin)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Timber and hands come to {coin} coin, and you hold {Player.Coin}. The stead does not build on promises.\"");
+            return;
+        }
+
+        Player.Coin -= coin;
+        switch (id)
+        {
+            case "palisade":
+                World.Facts.Add("event", fact, World.SettlementName,
+                    $"{World.SettlementName} raised a palisade on the bearer's coin: sharpened timber around the lofts and the fold walls, and no raiding night comes over it greedy.");
+                Log.Add(Turn, $"You count {coin} coin onto the board, and inside a week the stead's axes are in the coppice: sharpened timber goes up around the lofts and the fold walls, ditch and bank under it. {World.SettlementName} has a palisade now, and it has your name in its timber.", LogTone.Reward);
+                break;
+            case "watchtower":
+                World.Facts.Add("event", fact, World.SettlementName,
+                    $"{World.SettlementName} raised a watchtower on the bearer's coin: eyes on the hills from first dark, and the watch spared its bread.");
+                Log.Add(Turn, $"You count {coin} coin onto the board, and the stead raises its tower where the lanes cross: beams, a ladder, and a roofed platform with the whole run of the hills under it. A watch with eyes like that needs half the bodies and none of the bread.", LogTone.Reward);
+                break;
+            default:
+                World.Facts.Add("event", fact, World.SettlementName,
+                    $"{World.SettlementName} raised a granary on the bearer's coin: lofts two measures the deeper, a season's spare against the bad nights.");
+                Log.Add(Turn, $"You count {coin} coin onto the board, and the stead builds at last what it always meant to: a granary on staddle stones, board-tight against the damp and the rats. {World.SettlementName}'s lofts hold two measures the deeper now.", LogTone.Reward);
+                break;
+        }
+        RaiseRegard(1, $"The stead walks past the new {name} every morning, and every morning it remembers whose coin raised it.");
     }
 
     /// <summary>The draught entry (D-090): the simples steeped, priced in sprigs, never in coin.</summary>
@@ -3113,7 +3210,9 @@ public sealed class Game
         _tradeOffers.AddRange(BuildTradeOffers(TalkNpc!));
         Log.Add(Turn, TalkNpc!.Id == "npc_herbwife"
             ? $"{TalkNpc.Name} leads you into the stillroom, low-beamed and sharp with green smells, the simples hanging in ranked bunches to dry."
-            : $"{TalkNpc.Name} leads you to the bench at the wood's edge, where the hides hang to cure and the wood's own lessons are kept.");
+            : TalkNpc.Id == "npc_steadholder"
+                ? $"{TalkNpc.Name} walks you out along the fold walls, staking out with a flat hand what {World.SettlementName} would raise if the coin were ever there."
+                : $"{TalkNpc.Name} leads you to the bench at the wood's edge, where the hides hang to cure and the wood's own lessons are kept.");
     }
 
     private void HandleTradeMenuKey(char key)
@@ -3132,6 +3231,7 @@ public sealed class Game
                 case TradeGood.Surgery: TryEyeSurgery(); break; // the eye's road back (D-098)
                 case TradeGood.Beast: TryBuyMule(); break;      // the stead's beast (D-100)
                 case TradeGood.Stable: TryStableSwap(); break;  // the gathered beasts (D-100 stage 2)
+                case TradeGood.Facility: TryFundFacility(arg); break; // the stead's works (D-134)
             }
             // The labels move with the state (hides sold, lesson taken); rebuild so the
             // bench reads true, and the digits keep their order under the buyer's hand.
@@ -3143,7 +3243,9 @@ public sealed class Game
         InTradeMenu = false;
         Log.Add(Turn, TalkNpc!.Id == "npc_herbwife"
             ? $"You leave the stillroom. {TalkNpc.Name} turns back to her hanging simples."
-            : $"You leave the bench. {TalkNpc.Name} turns back to the day's hides.");
+            : TalkNpc.Id == "npc_steadholder"
+                ? $"You step back from the fold walls. {TalkNpc.Name} turns back to the stead's accounts."
+                : $"You leave the bench. {TalkNpc.Name} turns back to the day's hides.");
         TalkNpc = null;
     }
 
@@ -3266,7 +3368,7 @@ public sealed class Game
                 return;
             }
             Player.Coin -= SteadLevy.AnswerCoin;
-            Stores = Math.Min(SteadStores.Max, Stores + 1);
+            Stores = Math.Min(StoresMax, Stores + 1);
             Log.Add(Turn, $"You count {SteadLevy.AnswerCoin} coin onto the larder board, and by the next cart it is grain: a measure carried up to {World.SettlementName}'s lofts under your name.", LogTone.Reward);
             RaiseRegard(1, $"The tally at the well gains a mark, and the mark has your name by it. {World.SettlementName} knows who answered its levy.");
             if (Stores >= SteadLevy.LiftedAt) LiftLevy();
@@ -5975,18 +6077,25 @@ public sealed class Game
     private void RaidTheStead(bool mustered = false)
     {
         // A mustered night (D-132) comes greedy by force of numbers, whatever
-        // the dens' nerve stood at when the answer was sworn.
+        // the dens' nerve stood at when the answer was sworn. A standing
+        // palisade (D-134) blunts every greedy night to a plain one: torches
+        // reach the timber, sacks do not come over it.
         bool bold = mustered || Boldness >= RaiderBoldness.BoldAt;
-        int take = Math.Min(Stores, bold ? SteadStores.BoldRaidTake : SteadStores.RaidTake);
+        bool blunted = bold && PalisadeStands;
+        int take = Math.Min(Stores, bold && !blunted ? SteadStores.BoldRaidTake : SteadStores.RaidTake);
         Raids++;
         Stores -= take;
         World.Facts.Add("event", "raid", World.SettlementName,
             $"Raiders came down on {World.SettlementName} by night and left with grain.");
         Log.Add(Turn, mustered
-            ? $"The night the hills promised arrives: the mustered dens come down on {World.SettlementName} in numbers, torches at three fences at once. Two lofts opened, grain gone by the sackful, and no one pretending they did not see it coming."
-            : bold
-                ? $"By night the raiders come down on {World.SettlementName} again, and they come greedy now: two lofts opened, grain gone by the sackful, no one dead but no one unshaken."
-                : $"By night the raiders come down on {World.SettlementName} again: grain gone, a byre-door split, no one dead but no one unshaken.", LogTone.Danger);
+            ? blunted
+                ? $"The night the hills promised arrives and meets the timber: the mustered dens come down on {World.SettlementName} in numbers and the palisade holds them to one loft. Grain gone, the gate scarred, and the stead awake behind its wall."
+                : $"The night the hills promised arrives: the mustered dens come down on {World.SettlementName} in numbers, torches at three fences at once. Two lofts opened, grain gone by the sackful, and no one pretending they did not see it coming."
+            : blunted
+                ? $"By night the raiders come down on {World.SettlementName} greedy, and find sharpened timber where the open fold walls were: one loft reached before the palisade turns them, and the sackful night they wanted denied them."
+                : bold
+                    ? $"By night the raiders come down on {World.SettlementName} again, and they come greedy now: two lofts opened, grain gone by the sackful, no one dead but no one unshaken."
+                    : $"By night the raiders come down on {World.SettlementName} again: grain gone, a byre-door split, no one dead but no one unshaken.", LogTone.Danger);
         if (Stores == 0)
         {
             if (!World.Facts.Exists("event", "lofts_bare"))
@@ -6041,8 +6150,17 @@ public sealed class Game
     /// </summary>
     private void WatchHoldsTheNight()
     {
-        Stores -= SteadWatch.Upkeep;
         Log.Add(Turn, $"By night torches stand along {World.SettlementName}'s fold walls, and the raiders find the lofts watched: shouts, one thrown spear, and they melt back into the hills with nothing.", LogTone.Reward);
+        // The watchtower spares the watch its bread (D-134): eyes on the
+        // hills from first dark need half the bodies, so the turned night
+        // costs the lofts nothing and the watch can no longer eat the stead
+        // bare guarding it.
+        if (TowerStands)
+        {
+            Log.Add(Turn, "The tower saw them on the hills long before the walls did, and half the watch slept in its own beds for it: the lofts fed no one extra tonight.", LogTone.Info);
+            return;
+        }
+        Stores -= SteadWatch.Upkeep;
         Log.Add(Turn, "The watch must eat, though, and it is the lofts that feed it. Bread stays dear while the spears stand under the eaves.", LogTone.Info);
         if (Stores == 0)
         {
@@ -6130,7 +6248,7 @@ public sealed class Game
         // The season's own recovery lifts a standing levy (D-105) the moment
         // the lofts climb clear of the last measure.
         if (LevyStands && Stores >= SteadLevy.LiftedAt) LiftLevy();
-        if (Stores == SteadStores.Max)
+        if (Stores == StoresMax)
         {
             World.Facts.Add("event", "lofts_full", World.SettlementName,
                 $"{World.SettlementName}'s lofts stand full again; the raided season is made good.");
@@ -6307,7 +6425,7 @@ public sealed class Game
         new SteadEvent
         {
             Key = "far_fields",
-            When = g => !g.World.Facts.Exists("event", "far_fields") && !g.CampCleared && g.Stores < SteadStores.Max,
+            When = g => !g.World.Facts.Exists("event", "far_fields") && !g.CampCleared && g.Stores < g.StoresMax,
             Draw = g => g.FarFieldsComeGood(),
         },
         new SteadEvent
@@ -6626,7 +6744,7 @@ public sealed class Game
                 else if (Boldness >= RaiderBoldness.RaidingAt) RaidTheStead();
                 else NoteCowedDens();
             }
-            else if (CampCleared && Stores < SteadStores.Max && !_nightSpokenFor)
+            else if (CampCleared && Stores < StoresMax && !_nightSpokenFor)
                 RecoverStores();
 
             // The season deals its own news (D-133): at most one card a tick,
@@ -8096,6 +8214,10 @@ public sealed class Game
         Boldness: Boldness,
         LevyStands: LevyStands,
         WatchStands: WatchStands,
+        PalisadeStands: PalisadeStands,
+        TowerStands: TowerStands,
+        GranaryStands: GranaryStands,
+        StoresMax: StoresMax,
         Shame: Shame,
         ShameTitle: SteadShame.TitleOf(Shame),
         Grudge: Grudge,
@@ -8256,6 +8378,10 @@ public sealed record Snapshot(
     int Boldness,
     bool LevyStands,
     bool WatchStands,
+    bool PalisadeStands,
+    bool TowerStands,
+    bool GranaryStands,
+    int StoresMax,
     int Shame,
     string ShameTitle,
     int Grudge,

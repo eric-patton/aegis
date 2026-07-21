@@ -284,6 +284,31 @@ public static class SteadDeck
 }
 
 /// <summary>
+/// The stead's works (D-134, plan 2026-07 A3): the facility ladder's first
+/// rung, the stead half of the D-025/D-036 aspirational sink ladder. Each
+/// work is funded once per world through the steadholder, coin to timber,
+/// and modifies a system that already runs: the palisade blunts the greedy
+/// raiding nights, the watchtower spares the watch its bread, the granary
+/// deepens the lofts. A funded work pays regard exactly once (D-131's
+/// guard: coin never becomes a recurring reputation channel), and like
+/// every stead thing it is this world's alone, gone at the crossing.
+/// </summary>
+public static class SteadFacilities
+{
+    /// <summary>Sharpened timber around the lofts: what the palisade costs to raise.</summary>
+    public const int PalisadeCoin = 40;
+
+    /// <summary>Eyes on the hills: what the watchtower costs to raise.</summary>
+    public const int TowerCoin = 30;
+
+    /// <summary>Deeper lofts: what the granary costs to raise.</summary>
+    public const int GranaryCoin = 25;
+
+    /// <summary>What the granary adds to the lofts' brim.</summary>
+    public const int GranaryRaise = 2;
+}
+
+/// <summary>
 /// The named of the dens (D-110): D-023's bounded Nemesis-style roster, begun
 /// where the fighting is. Every camp's world seed names a chief and two
 /// lieutenants; the stead's rumor carries the chief's name from the first

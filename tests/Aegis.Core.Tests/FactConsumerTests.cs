@@ -9,7 +9,10 @@ namespace Aegis.Core.Tests;
 /// D-088 and the caught hand of D-107, gated on live shame back at zero);
 /// the cellar secret matters in a raid's morning (gated on both facts, the
 /// showing and the raid); and the lifted purse collides with trust when the
-/// fence opens to a friend whose hand has been inside it unseen.
+/// fence opens to a friend whose hand has been inside it unseen. D-128 pays
+/// the family's last two: the burgled house read off the lane's new iron
+/// (silenced forever once the lane has a face for it), and the fenced
+/// heirloom grieved to the very hand that sent it down the road.
 /// </summary>
 public class FactConsumerTests
 {
@@ -196,6 +199,106 @@ public class FactConsumerTests
         Assert.Contains(game.Log.Entries,
             e => e.Text.Contains("come down that hill to settle one") && e.Text.Contains(heir.Epithet!));
     }
+
+    [Fact]
+    public void TheBoltedDark_ReadsTheLane_AfterTheCleanEntry()
+    {
+        var game = new Game(1); // pinned: the first entry comes out unwoken
+        game.Debug_SetPlayerPos(game.World.ShrinePos.Plus(0, -2));
+        game.Apply(Command.Burgle);
+        Assert.True(game.World.Facts.Exists("secret", "burgled_house"));
+        Assert.Equal(0, game.Shame);
+
+        for (int i = 0; i < 6 && !game.Log.Entries.Any(e => e.Text.Contains("louder than a cry of thief")); i++)
+            ShameTests.StepStillNearAHouse(game);
+        Assert.Contains(game.Log.Entries, e => e.Text.Contains("louder than a cry of thief"));
+        Assert.Contains(game.Log.Entries, e => e.Text.Contains("my ledgers stay shut"));
+
+        // Once per world: the lane's iron is read a single time.
+        ShameTests.StepStillNearAHouse(game);
+        Assert.Single(game.Log.Entries, e => e.Text.Contains("louder than a cry of thief"));
+    }
+
+    [Fact]
+    public void TheBoltedDark_FallsSilent_WhenTheLaneHasAFace()
+    {
+        // Pinned on seed 1: the first entry is clean (the secret stands), the
+        // second is caught (housebroken stands). A lane that has seen a face
+        // come out of a doorway has a name for its trouble, and the beat's
+        // whole weight was the lack of one: the forbid holds for the world.
+        var game = new Game(1);
+        game.Debug_SetPlayerPos(game.World.ShrinePos.Plus(0, -2));
+        game.Apply(Command.Burgle);
+        game.Apply(Command.Burgle);
+        Assert.True(game.World.Facts.Exists("secret", "burgled_house"));
+        Assert.True(game.World.Facts.Exists("shame", "housebroken"));
+
+        for (int i = 0; i < 6; i++) ShameTests.StepStillNearAHouse(game);
+        Assert.DoesNotContain(game.Log.Entries, e => e.Text.Contains("louder than a cry of thief"));
+    }
+
+    [Fact]
+    public void TheHeirloomMissed_IsGrievedToTheVeryHand()
+    {
+        var game = new Game(1); // pinned: the entry is clean, the hands stay unpriced
+        game.Debug_SetPlayerPos(game.World.ShrinePos.Plus(0, -2));
+        game.Apply(Command.Burgle);
+        Assert.Equal(1, game.Player.Trinket);
+
+        NpcTests.BumpNpc(game, game.World.Peddler);
+        game.ApplyKey(OfferDigit(game, TradeGood.Fence));
+        Assert.True(game.World.Facts.Exists("secret", "fenced_goods"));
+        game.ApplyKey(' ');
+
+        var villagers = game.World.Npcs.Where(n => n.Kind == NpcKind.Villager).Take(2).ToList();
+        TalkUntil(game, villagers, "Things do not leave a valley like this one");
+        Assert.Contains(game.Log.Entries, e => e.Text.Contains("heaviest thing still here"));
+    }
+
+    [Fact]
+    public void TheHeirloomMissed_WaitsForTheSale()
+    {
+        // The trinket in the pack is not yet an absence the lane can grieve:
+        // the beat rides the sale's fact, not the taking's.
+        var game = new Game(1);
+        game.Debug_SetPlayerPos(game.World.ShrinePos.Plus(0, -2));
+        game.Apply(Command.Burgle);
+        Assert.Equal(1, game.Player.Trinket);
+
+        var villagers = game.World.Npcs.Where(n => n.Kind == NpcKind.Villager).Take(2).ToList();
+        for (int i = 0; i < 4; i++)
+        {
+            NpcTests.BumpNpc(game, villagers[i % villagers.Count]);
+            game.ApplyKey(' ');
+        }
+        Assert.DoesNotContain(game.Log.Entries, e => e.Text.Contains("Things do not leave a valley like this one"));
+    }
+
+    [Fact]
+    public void TheHeirloomMissed_IsNotSaidToAPricedFace()
+    {
+        // "Nobody here would take it" is only said to a face the stead is not
+        // currently pricing: live shame closes the confidence, same gate as
+        // the tale carried.
+        var game = new Game(42);
+        ShameTests.RobDoors(game, 1); // a trinket, and a rung of shame with it
+        NpcTests.BumpNpc(game, game.World.Peddler);
+        game.ApplyKey(OfferDigit(game, TradeGood.Fence));
+        Assert.True(game.World.Facts.Exists("secret", "fenced_goods"));
+        Assert.Equal(1, game.Shame);
+        game.ApplyKey(' ');
+
+        var villagers = game.World.Npcs.Where(n => n.Kind == NpcKind.Villager).Take(2).ToList();
+        for (int i = 0; i < 4; i++)
+        {
+            NpcTests.BumpNpc(game, villagers[i % villagers.Count]);
+            game.ApplyKey(' ');
+        }
+        Assert.DoesNotContain(game.Log.Entries, e => e.Text.Contains("Things do not leave a valley like this one"));
+    }
+
+    private static char OfferDigit(Game game, TradeGood good) =>
+        (char)('1' + game.Topics.Count + game.Offers.ToList().FindIndex(o => o.Good == good));
 
     /// <summary>A bearer named, confronted, and paid down to nothing: made_right stands.</summary>
     private static Game MadeRightGame()

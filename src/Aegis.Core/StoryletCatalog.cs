@@ -384,6 +384,50 @@ public static class StoryletCatalog
             ],
         },
 
+        // The bolted dark (D-128): the burgled house's consumer, the stead
+        // reading an entered house with no name to charge it to. The secret
+        // only exists for a clean entry, so the lane's answer is spent
+        // against a shape, not a face: bright iron on grey wood, a dog kept
+        // in, talk that stops at one door. Forbidden once shame/housebroken
+        // stands: a lane that has seen a face come out of a doorway has a
+        // name for its trouble, and this beat's whole weight is the lack of
+        // one. Pure perception, once per world, priority 6 in the
+        // two-ledgers register: the knowing is the payload.
+        new Storylet
+        {
+            Id = "the-bolted-dark",
+            Trigger = StoryletTrigger.NearHouse,
+            Priority = 6,
+            Requires = [new FactPattern("secret", "burgled_house")],
+            Forbids = [new FactPattern("shame", "housebroken")],
+            Lines =
+            [
+                ("There is new iron on the lane: a bolt bright as a coin on a door whose wood went grey forty winters ago, and the dog that used to sleep in the yard now sleeps behind it. Two women pause their talk as you pass, and it is not you they lower their voices for. The house knows it was entered. The lane knows the house knows. Nobody knows one thing more, and the not-knowing is louder than a cry of thief would have been.", LogTone.Info),
+                ("\"Count what one crossed sill is costing them, bearer: iron, a dog's outdoor warmth, and the ease of a lane that used to talk about weather. A stead spends hardest against the wrong it cannot name. Two of us in this valley could end the spending with a sentence, and my ledgers stay shut.\"", LogTone.Aegis),
+            ],
+        },
+
+        // The heirloom missed (D-128): the fenced goods' consumer, the
+        // roadmap's "heirloom missed on the lane." The cart's whole craft is
+        // distance, so the stead's search aims the only ways a valley can
+        // aim: down, under, behind, never up the road. Gated on live shame
+        // at zero like the tale carried: "nobody here would take it" is only
+        // said to a face the stead is not currently pricing. Once per world,
+        // priority 6, no mechanics: the grief is spoken to the very hand.
+        new Storylet
+        {
+            Id = "the-heirloom-missed",
+            Trigger = StoryletTrigger.Talk,
+            Priority = 6,
+            Requires = [new FactPattern("secret", "fenced_goods")],
+            When = g => g.TalkNpc?.Kind == NpcKind.Villager && g.Shame == 0,
+            Lines =
+            [
+                ("\"You will think it a small thing.\" Their hands shape it in the air, a palm's width of nothing: a horse, or near enough, whittled by a grandfather with more love than eye. \"Off the mantel since I cannot say when. It has not walked off by itself, and nobody here would take it, so I have had the floor up twice thinking I mislaid it. It will turn up. Things do not leave a valley like this one.\"", LogTone.Info),
+                ("\"It has left the valley, bearer; that was what the buying bought. They will search down and under and behind for a thing that is miles gone and merely coin now, and they will search for years, because the one direction a stead cannot imagine is away. Of everything the cart carried off, the knowing where it went is the heaviest thing still here, and you are the one carrying it.\"", LogTone.Aegis),
+            ],
+        },
+
         // The boast come home (D-111): the slew_bearer fact's consumer on the
         // stead's side. The dens howled a kill the night the bearer fell, and
         // the stead heard the name in the howling; now the killed stands at

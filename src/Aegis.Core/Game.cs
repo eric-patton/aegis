@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed, Forge, Bond, Plea }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed, Forge, Bond, Plea, Salt }
 
 /// <summary>
 /// The cart's counter (D-124): the road's prices. The ration a coin or two
@@ -22,6 +22,18 @@ public static class Peddling
     public const int RationPrice = 6;
     public const int TrinketPrice = 7;
     public const int HideBonus = 1;
+
+    /// <summary>
+    /// The cart's salt (D-144): the exotic good D-124 deferred, and the
+    /// economy's first buy-to-resell leg (D-025's caravan seed). The cart
+    /// sells it cheap because the cart bought it cheaper where it is dug;
+    /// the town pays for the carrying. The stock is per world and grows
+    /// with the tier: deeper worlds sit on richer roads.
+    /// </summary>
+    public const int SaltPrice = 5;
+
+    /// <summary>Sacks on the cart per world: two and the tier, never more than six.</summary>
+    public static int SaltStock(int tier) => Math.Min(2 + tier, 6);
 }
 
 /// <summary>
@@ -65,6 +77,9 @@ public static class TownMarket
     public const int HidePrice = 5;
     public const int HerbPrice = 6;
     public const int RationPrice = 4;
+
+    /// <summary>What the provisioner pays a sack of salt (D-144): the margin over the cart's price is the walk east, carried.</summary>
+    public const int SaltPrice = 8;
 }
 
 /// <summary>
@@ -3234,6 +3249,10 @@ public sealed class Game
             {
                 case "npc_provisioner":
                     offers.Add((TradeGood.Ration, "", $"Buy a market loaf ({TownMarket.RationPrice} coin)"));
+                    // The caravan leg's far end (D-144): the provisioner buys
+                    // salt at the town's price, appended after the loaf so no
+                    // digit shifts (D-041), the label counting the pack.
+                    offers.Add((TradeGood.Salt, "", SaltSaleLabel()));
                     break;
                 case "npc_hidemonger":
                     offers.Add((TradeGood.Hide, "", HideSaleLabel()));
@@ -3276,9 +3295,23 @@ public sealed class Game
             offers.Add((TradeGood.Ration, "", $"Buy a ration ({Peddling.RationPrice} coin, the road's price)"));
             offers.Add((TradeGood.Hide, "", HideSaleLabel()));
             offers.Add((TradeGood.Fence, "", FenceLabel()));
+            // The cart's salt (D-144): the stock grown with the tier, the
+            // fourth digit appended after the three D-124 dealt (D-041), its
+            // label counting the sacks left.
+            offers.Add((TradeGood.Salt, "", SaltCartLabel()));
         }
         return offers;
     }
+
+    /// <summary>The cart's salt read true (D-144): the sacks left, or the sold-out board.</summary>
+    private string SaltCartLabel() => World.PeddlerSalt > 0
+        ? $"Buy a sack of salt ({Peddling.SaltPrice} coin; {World.PeddlerSalt} on the cart)"
+        : "Buy a sack of salt (the cart is sold through)";
+
+    /// <summary>The provisioner's salt board (D-144): what the pack carries, at the town's price.</summary>
+    private string SaltSaleLabel() => Player.Salt > 0
+        ? $"Sell your salt ({Player.Salt} sack{(Player.Salt == 1 ? "" : "s")} at {TownMarket.SaltPrice}c)"
+        : "Sell your salt (you carry none)";
 
     /// <summary>The fence's entry (D-124): what the pack holds with a past, at the cart's uncurious rate.</summary>
     private string FenceLabel() => Player.Trinket > 0
@@ -4255,6 +4288,62 @@ public sealed class Game
         _offers.AddRange(BuildOffers(TalkNpc!)); // the fence's label counts the pack
     }
 
+    /// <summary>
+    /// A sack off the cart (D-144): the caravan leg's buy end. One sack a
+    /// press, the road's whole trade in two numbers: the cart sells at 5
+    /// because it bought cheaper where the salt is dug, and the town pays 8
+    /// because nobody carried any east this month. The bearer is the caravan;
+    /// the margin is the walk, which is D-025's productive capital at its
+    /// smallest possible size.
+    /// </summary>
+    private void TryBuySalt()
+    {
+        if (World.PeddlerSalt == 0)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name} turns a palm up over the empty boards. \"Sold through. The roads eat salt faster than the pans make it. Next world of walking, maybe.\"");
+            return;
+        }
+        if (Player.Coin < Peddling.SaltPrice)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"{Peddling.SaltPrice} coin the sack, and you hold {Player.Coin}. The cart runs no slates; a slate is a thing that needs finding again.\"");
+            return;
+        }
+
+        Player.Coin -= Peddling.SaltPrice;
+        Player.Salt++;
+        World.PeddlerSalt--;
+        Log.Add(Turn, $"A sack of salt off the cart's boards, coarse and grey and heavier than it looks. ({Player.Salt} carried, {World.PeddlerSalt} left on the cart; {Player.Coin} coin now)", LogTone.Reward);
+        if (Player.Salt == 1 && !Player.SaltLineHeard)
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"East of here they cure hides and lay down pork and never see a pan of it dug. Carry it where it is wanted and the road pays you for walking it. That is the whole trade, friend; everything else is wheels.\"");
+    }
+
+    /// <summary>
+    /// The salt sold on (D-144): the caravan leg's far end, a lot like the
+    /// hides and herbs (TownHaggle rides it, the guild's mark and all), and
+    /// Commerce fed the same honest way: the margin was earned by the walk.
+    /// </summary>
+    private void TrySellSalt()
+    {
+        if (TownCounterBarred()) return;
+        if (Player.Salt == 0)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Salt I will buy at {TownMarket.SaltPrice} the sack, any day the road brings it. It has not brought any in your pack today.\"");
+            return;
+        }
+
+        int sacks = Player.Salt;
+        int paid = sacks * TownMarket.SaltPrice + TownHaggle();
+        Player.Salt = 0;
+        Player.Coin += paid;
+        Log.Add(Turn, $"You heft {sacks} sack{(sacks == 1 ? "" : "s")} of salt onto the board. {TalkNpc!.Name} thumbs a pinch from each, nods at the grey of it, and pays {paid} coin. ({Player.Coin} now)", LogTone.Reward);
+        FeedCommerce();
+        if (!Player.SaltLineHeard)
+        {
+            Player.SaltLineHeard = true;
+            Log.Add(Turn, "\"Bought in one country and sold in another, and the difference is yours for the carrying. That is coin the road itself paid you, bearer: the first you have earned by knowing where things are wanted.\"", LogTone.Aegis);
+        }
+    }
+
     private void TryBuyMending()
     {
         if (Player.WoundedTurns == 0)
@@ -4534,6 +4623,14 @@ public sealed class Game
                 // marks, and the digit leaves the board when the book is even.
                 case TradeGood.Plea:
                     TryPleadCase();
+                    _offers.Clear();
+                    _offers.AddRange(BuildOffers(TalkNpc!));
+                    break;
+                // The caravan leg (D-144): the same digit buys at the cart and
+                // sells at the town counter, and both labels count, so the
+                // menu refreshes read-true either end (D-041).
+                case TradeGood.Salt:
+                    if (TalkNpc!.Kind == NpcKind.Peddler) TryBuySalt(); else TrySellSalt();
                     _offers.Clear();
                     _offers.AddRange(BuildOffers(TalkNpc!));
                     break;

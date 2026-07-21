@@ -37,10 +37,11 @@ public class PeddlerTests
         Assert.True(game.InTalkMenu);
         Assert.True(game.World.Facts.Exists("met", "npc_peddler"));
         Assert.Equal(2, game.Topics.Count);
-        Assert.Equal(3, game.Offers.Count);
+        Assert.Equal(4, game.Offers.Count); // D-124's three, and the salt (D-144)
         Assert.Contains(game.Offers, o => o.Good == TradeGood.Ration);
         Assert.Contains(game.Offers, o => o.Good == TradeGood.Hide);
         Assert.Contains(game.Offers, o => o.Good == TradeGood.Fence);
+        Assert.Contains(game.Offers, o => o.Good == TradeGood.Salt);
         Assert.Contains(game.Log.Recent(4), e => e.Text.Contains("weighs your pack before your face"));
     }
 

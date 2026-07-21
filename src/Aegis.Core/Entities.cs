@@ -183,6 +183,13 @@ public sealed class Player
     /// </summary>
     public int Trinket { get; set; }
 
+    /// <summary>
+    /// Sacks of salt off the peddler's cart (D-144): the first good bought to
+    /// resell, the caravan leg's freight. On your person like the hides,
+    /// surviving death and the crossing; the town counter is where it pays.
+    /// </summary>
+    public int Salt { get; set; }
+
     // Gear (D-041): the other half of the build. Banked like attributes: the
     // remnant never takes it, and it crosses waygates untouched (vision secs 8, 10).
 
@@ -257,6 +264,9 @@ public sealed class Player
 
     /// <summary>The Aegis marks the first hide sold at the bench (D-071); once only.</summary>
     public bool HideLineHeard { get; set; }
+
+    /// <summary>The Aegis marks the first salt lot resold at the town counter (D-144); once only.</summary>
+    public bool SaltLineHeard { get; set; }
 
     /// <summary>The Aegis marks the first regard a stead ever holds for the bearer (D-076); once only.</summary>
     public bool RegardLineHeard { get; set; }

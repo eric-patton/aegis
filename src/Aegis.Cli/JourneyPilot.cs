@@ -117,6 +117,11 @@ public static class JourneyPilot
         // counter is sold to, one lot a press, then the talk is left.
         if (g.InTalkMenu && g.TalkNpc?.Kind == NpcKind.Towner)
             return TownSellDigit(g) ?? 'z';
+        // The cart's counter (D-144): with the salt errand standing, buy a
+        // sack a press until the stock or the spare coin runs out, then step
+        // back. The same predicate that sent the walk, so no shuttle.
+        if (g.InTalkMenu && g.TalkNpc?.Kind == NpcKind.Peddler)
+            return (SaltBuyErrand(g) ? OfferDigit(g, TradeGood.Salt) : null) ?? 'z';
         if (g.InAim) return AimDirection(g) ?? 'z';
         // The words (D-091, D-099): the open cast menu is driven toward the one
         // working wanted now (release, calling, or ward); anything else closes it.
@@ -317,6 +322,16 @@ public static class JourneyPilot
             return NavKey(g, g.World.Overworld, p.Pos, target.OverworldPos, OverworldBlocked(g));
         }
 
+        // The cart before the mouth (D-144): with the valley settled and the
+        // road trip still ahead, load salt at the peddler's boards so the
+        // walk east carries the caravan leg's freight. The bump opens the
+        // talk; the handler above buys sack by sack and steps back.
+        if (SaltBuyErrand(g) && RoadTripWanted(g, skip) && g.World.Peddler is { } cart)
+        {
+            var toCart = NavKey(g, g.World.Overworld, p.Pos, cart.Pos, OverworldBlocked(g));
+            if (toCart is not null) return toCart;
+        }
+
         // The east road walked once per world (D-138): with the valley's sites
         // settled, take the mouth and work the road's own ground. The trip
         // exercises travel, the hunt half a journey out, the camp's cooking
@@ -452,8 +467,9 @@ public static class JourneyPilot
         // while there is anything to sell and then falls through to home.
         // The school and the bond (D-141) ride the same leg: worn iron or an
         // unsworn proven name sends the walk through the gate too, and both
-        // errands clear themselves inside.
-        if (g.Player.Hide > 0 || g.Player.Herb > 0 || ForgeErrand(g) || BondErrand(g))
+        // errands clear themselves inside. Salt in the pack (D-144) is the
+        // caravan leg's whole reason to exist: it sells only in there.
+        if (g.Player.Hide > 0 || g.Player.Herb > 0 || g.Player.Salt > 0 || ForgeErrand(g) || BondErrand(g))
         {
             var gate = g.World.TownSite.OverworldPos;
             if (p.Pos == gate) return '>';
@@ -479,6 +495,9 @@ public static class JourneyPilot
         Npc? stall = null;
         if (g.Player.Hide > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_hidemonger");
         else if (g.Player.Herb > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_herbmonger");
+        // The caravan leg's far end (D-144): salt in the pack sells at the
+        // provisioner's board, the same one-press lot as the hides.
+        else if (g.Player.Salt > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_provisioner");
         // The town school (D-141): with worn iron and coin to spare past the
         // sitting's price, a turn at the forge. The predicate must match
         // TownSellDigit's exactly, or the errand shuttles.
@@ -504,6 +523,8 @@ public static class JourneyPilot
     {
         if (g.TalkNpc!.Id == "npc_hidemonger" && g.Player.Hide > 0) return OfferDigit(g, TradeGood.Hide);
         if (g.TalkNpc.Id == "npc_herbmonger" && g.Player.Herb > 0) return OfferDigit(g, TradeGood.Herb);
+        // The salt lot (D-144): the same predicate that sent the walk.
+        if (g.TalkNpc.Id == "npc_provisioner" && g.Player.Salt > 0) return OfferDigit(g, TradeGood.Salt);
         // The forge and the bond (D-141): the same predicates that sent the
         // walk, so the menu closes the moment the errand's condition clears.
         if (g.TalkNpc.Id == "npc_townsmith" && ForgeErrand(g)) return OfferDigit(g, TradeGood.Forge);
@@ -519,6 +540,10 @@ public static class JourneyPilot
     private static bool BondErrand(Game g) =>
         !g.GuildSworn && g.Player.Skills.Level(SkillId.Commerce) >= 1
         && g.Player.Coin >= CarriersGuild.BondCoin + 10;
+
+    /// <summary>Sacks still on the cart, and coin enough to load one and still eat (D-144).</summary>
+    private static bool SaltBuyErrand(Game g) =>
+        g.World.PeddlerSalt > 0 && g.Player.Coin >= Peddling.SaltPrice + 10;
 
     /// <summary>A talk-level offer's digit, topics counted in front (D-041's stable order).</summary>
     private static char? OfferDigit(Game g, TradeGood good)

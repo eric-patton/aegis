@@ -146,6 +146,13 @@ public sealed class World
     public int WildPonyFed { get; set; }
 
     /// <summary>
+    /// Sacks of salt left on the peddler's cart (D-144): the caravan leg's
+    /// supply end, dealt from the tier alone (no RNG), sold down through the
+    /// world and restocked whole with the next world's cart.
+    /// </summary>
+    public int PeddlerSalt { get; set; }
+
+    /// <summary>
     /// Doors already robbed this world (D-086): a house gives its ration's worth
     /// once. Runtime state like a looted chest, rebuilt by replay, regenerated
     /// whole (and innocent) with everything else at the crossing.
@@ -1222,6 +1229,7 @@ public static class WorldGen
             RoadHerbs = roadHerbs,
             TownName = townName,
             Regions = regions,
+            PeddlerSalt = Peddling.SaltStock(tier),
             Oaths = oaths,
         };
     }

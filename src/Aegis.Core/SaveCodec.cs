@@ -295,10 +295,13 @@ namespace Aegis.Core;
 /// name or a barred one now puts news on the calendar, and once the word
 /// lands the town's haggle coin dies while home shame stands, so a v81
 /// journal's lot prices (and everything bought after them) drift.
+/// v83 when D-144 put salt on the cart: a fourth digit at the peddler and a
+/// second at the provisioner buy and resell the caravan leg's freight, moving
+/// coin, goods, and the Commerce craft where a v82 journal's presses fell dead.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 82;
+    public const int Version = 83;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

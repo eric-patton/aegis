@@ -147,6 +147,9 @@ public static class JourneyRunner
         // The school and the bond (D-141): forge sittings, and bonds sworn world by world.
         int forgeSittings = 0;
         int bondsSworn = 0;
+        // The caravan leg (D-144): sacks loaded at the cart, sacks sold at the counter.
+        int saltBought = 0;
+        int saltSold = 0;
         // The stead's regard at its height (D-076): a per-world Fame, reset at every
         // crossing, so the run's peak is the warmest any one stead came to hold the
         // bearer, watched by the counter's high-water mark on every key.
@@ -228,6 +231,7 @@ public static class JourneyRunner
             bool inTownBefore = game.CurrentSite?.Kind == SiteKind.Town;
             int smithUsesBefore = game.Player.Skills.Uses(SkillId.Smithing);
             bool swornBefore = game.GuildSworn;
+            int saltBefore = game.Player.Salt;
             game.ApplyKey(key.Value);
             keys.Append(key.Value);
             totalKeys++;
@@ -320,6 +324,10 @@ public static class JourneyRunner
             // and the bond flipping on is one swearing, counted world by world.
             if (inTownBefore && game.Player.Skills.Uses(SkillId.Smithing) > smithUsesBefore) forgeSittings++;
             if (!swornBefore && game.GuildSworn) bondsSworn++;
+            // The caravan leg's two ends (D-144): salt only ever rises at the
+            // cart and only ever falls at the town counter.
+            if (game.Player.Salt > saltBefore) saltBought += game.Player.Salt - saltBefore;
+            if (game.Player.Salt < saltBefore && game.Cycle == cycleBefore) saltSold += saltBefore - game.Player.Salt;
             // The stead's regard, at its high-water mark (D-076): it resets at each
             // crossing, so the peak is the warmest one stead ever came to hold the bearer.
             maxRegard = Math.Max(maxRegard, game.Regard);
@@ -412,6 +420,8 @@ public static class JourneyRunner
                 LotsSoldInTown: game.Player.Skills.Uses(SkillId.Commerce),
                 ForgeSittings: forgeSittings,
                 BondsSworn: bondsSworn,
+                SaltBought: saltBought,
+                SaltSold: saltSold,
                 MaxRegard: maxRegard,
                 RegardTitle: SteadRegard.TitleOf(maxRegard),
                 MaxWrath: maxWrath,
@@ -448,6 +458,7 @@ public static class JourneyRunner
             roadsTaken, nightsCamped,
             marketsWalked, game.Player.Skills.Uses(SkillId.Commerce), game.Player.Skills.Level(SkillId.Commerce),
             forgeSittings, bondsSworn, game.Player.Skills.Level(SkillId.Smithing),
+            saltBought, saltSold,
             maxRegard, maxWrath, raidsSuffered);
         return 0;
     }
@@ -532,6 +543,7 @@ public static class JourneyRunner
         int roadsTaken, int nightsCamped,
         int marketsWalked, int lotsSold, int commerceLevel,
         int forgeSittings, int bondsSworn, int smithingLevel,
+        int saltBought, int saltSold,
         int maxRegard, int maxWrath, int raidsSuffered)
     {
         var w = Console.Out;
@@ -619,6 +631,8 @@ public static class JourneyRunner
             w.WriteLine($"         the market: walked {marketsWalked} town gate(s) and sold {lotsSold} lot(s) at town prices; Commerce stands at level {commerceLevel} (D-140).");
         if (forgeSittings + bondsSworn > 0)
             w.WriteLine($"         the town school: {forgeSittings} sitting(s) at the forge under the smith's eye (Smithing stands at level {smithingLevel}); the carriers' bond sworn {bondsSworn} time(s) across the worlds (D-141).");
+        if (saltBought + saltSold > 0)
+            w.WriteLine($"         the caravan leg: loaded {saltBought} sack(s) of salt at the cart and sold {saltSold} at the town counter, the margin earned by the walk (D-144).");
         w.WriteLine($"         the stead: came to hold the bearer as {(maxRegard > 0 ? SteadRegard.TitleOf(maxRegard) : "a stranger")} at its warmest "
                     + $"(peak regard {maxRegard}, reset at every crossing) (D-076).");
         w.WriteLine($"         the dens: came to hold the bearer as {(maxWrath > 0 ? RaiderWrath.TitleOf(maxWrath) : "no one at all")} at their most fearful "
@@ -673,6 +687,7 @@ internal sealed record JourneyReport(
     int RoadsTaken, int NightsCamped,
     int MarketsWalked, int LotsSoldInTown,
     int ForgeSittings, int BondsSworn,
+    int SaltBought, int SaltSold,
     int MaxRegard, string RegardTitle, int MaxWrath, string WrathTitle, int RaidsSuffered,
     string? Keys,
     List<JourneyCrossingDto> Crossings);

@@ -1191,7 +1191,10 @@ public static class WorldGen
     /// two worlds' towns share their parts and never their arrangement.
     /// Chunk legend: '#' house, '.' street, '~' water, 't' tree; letters are
     /// people anchored to their plot (P provisioner, H hidemonger, B herbman,
-    /// W the moot-warden), standing on street ground wherever the plot lands.
+    /// W the moot-warden, S the forge-smith, G the guildmaster), standing on
+    /// street ground wherever the plot lands. Since D-141 the forge and the
+    /// guildhall are always dealt beside the market and the moot: the town's
+    /// four working institutions, the reason a wall was worth raising.
     /// </summary>
     private static (GameMap Map, Pos Entry, List<Npc> Folk) GenerateTown(ref Rng townRng, string townName)
     {
@@ -1267,6 +1270,8 @@ public static class WorldGen
             ".t...t........",
             "..............",
         ];
+        // The carriers' guildhall (D-141): the door cut and the guildmaster
+        // standing his yard, because step 10 opened what D-140 authored shut.
         string[] guildhall =
         [
             "..............",
@@ -1274,11 +1279,27 @@ public static class WorldGen
             "..#......#....",
             "..#......#....",
             "..#......#....",
-            "..########....",
-            "..............",
+            "..####.###....",
+            "......G.......",
             "......##......",
             "......##......",
             "..............",
+            "..............",
+        ];
+        // The town forge (D-141): the school for D-135's home-seeded craft.
+        // The smith works the forecourt, under the open lean-to's south gap.
+        string[] forge =
+        [
+            "..............",
+            "..######......",
+            "..#....#......",
+            "..#....#......",
+            "..###.##......",
+            "......S.......",
+            "....t.....##..",
+            "..........##..",
+            "..............",
+            "..##..........",
             "..............",
         ];
 
@@ -1287,10 +1308,11 @@ public static class WorldGen
         for (int x = 0; x < townW; x++) { town[new Pos(x, 0)] = Terrain.House; town[new Pos(x, townH - 1)] = Terrain.House; }
         for (int y = 0; y < townH; y++) { town[new Pos(0, y)] = Terrain.House; town[new Pos(townW - 1, y)] = Terrain.House; }
 
-        // The stitch: market and moot always dealt, the rest drawn from the
-        // library, then the six plots shuffled onto the six slots.
-        var optional = new List<string[]> { lane, well, gardens, guildhall, lane };
-        var plots = new List<string[]> { market, moot };
+        // The stitch: the four working institutions always dealt (market and
+        // moot since D-140, forge and guildhall since D-141), the last two
+        // plots drawn from the library, then all six shuffled onto the slots.
+        var optional = new List<string[]> { lane, well, gardens, lane };
+        var plots = new List<string[]> { market, moot, forge, guildhall };
         while (plots.Count < 6)
         {
             var pick = optional[townRng.Range(0, optional.Count)];
@@ -1326,6 +1348,8 @@ public static class WorldGen
                         'H' => ("npc_hidemonger", "hidemonger"),
                         'B' => ("npc_herbmonger", "herbmonger"),
                         'W' => ("npc_mootwarden", "moot-warden"),
+                        'S' => ("npc_townsmith", "forge-smith"),
+                        'G' => ("npc_guildmaster", "guildmaster"),
                         _ => null,
                     };
                     if (anchor is { } a)

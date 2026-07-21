@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed, Forge, Bond }
 
 /// <summary>
 /// The cart's counter (D-124): the road's prices. The ration a coin or two
@@ -65,6 +65,31 @@ public static class TownMarket
     public const int HidePrice = 5;
     public const int HerbPrice = 6;
     public const int RationPrice = 4;
+}
+
+/// <summary>
+/// The town forge (D-141, plan 2026-07 step 10): the school for D-135's
+/// home-seeded craft. A sitting under the smith's eye files the same iron the
+/// stead's bench does and feeds Smithing the same honest way, but it costs
+/// coin (coal, the wheel, and the eye), which is what keeps the town's copy
+/// of the verb cost-gated where the home bench is gated by the walk home.
+/// </summary>
+public static class TownForge
+{
+    public const int WorkCoin = 3;
+}
+
+/// <summary>
+/// The carriers' guild (D-141): the town's first faction with a real ledger
+/// on the bearer. The bond is sworn once per world, coin down, and only on a
+/// proven name (Commerce 1: the market must know the hand before the guild
+/// bonds it). Sworn weights command trust: a member's lots sell a coin over
+/// the chalked price at every town counter.
+/// </summary>
+public static class CarriersGuild
+{
+    public const int BondCoin = 10;
+    public const int LotBonus = 1;
 }
 
 /// <summary>
@@ -412,6 +437,12 @@ public sealed class Game
 
     /// <summary>Whether the smithy bench stands (D-135): the bearer's iron seen to at home, by the bearer's own hands.</summary>
     public bool SmithyStands => World.Facts.Exists("event", "smithy_built");
+
+    /// <summary>Whether the carriers' bond is sworn (D-141): the town's first ledger opened on the bearer, per-world like every ledger.</summary>
+    public bool GuildSworn => World.Facts.Exists("guild", "guild_sworn");
+
+    /// <summary>Whether any owned piece carries wear a file could move (D-141): the forge's and the pilot's shared read.</summary>
+    public bool IronNeedsWork => BenchTarget() is not null;
 
     /// <summary>
     /// Whether the stead's levy stands (D-105): the lofts down to the last
@@ -3022,7 +3053,19 @@ public sealed class Game
                 break;
             case "npc_mootwarden":
                 topics.Add(("The moot", "\"Disputes are heard at the moot-stone on law-days, and what is sworn there binds inside the wall. You are not in anyone's book yet, which is its own kind of standing: spend it carefully. The town remembers faces the way the hills remember weather.\""));
-                topics.Add(("The guild", "\"The carriers' guild holds the yard by the east gate: bonded loads, sworn weights, and a closed door to anyone unsworn. They are hiring hands and buying trust, in that order. Come back when you have carried something worth bonding.\""));
+                // The guild's door opened in step 10 (D-141): the warden now
+                // points at the hall instead of describing a closed one.
+                topics.Add(("The guild", GuildSworn
+                    ? "\"The carriers' guild, which you would know, since their mark is on your loads now. Sworn weights buy a better price and a shorter argument, town after town. The guild is most of why the roads stay honest, and it would say so itself, twice.\""
+                    : "\"The carriers' guild keeps its hall here: bonded loads, sworn weights, and a door that opens to a sworn hand and no other. The guildmaster does the swearing, not I, and takes no name the market has not learned first. That is not unfriendliness. That is what a bond is.\""));
+                break;
+            case "npc_townsmith":
+                topics.Add(("The forge", "\"The stead smiths west of here do good plain work, and I will say so to their faces. What I keep that they do not is a school: coal, the wheel, and my eye on your hands while you work your own iron. You pay for the sitting. The learning comes free with the sweat.\""));
+                break;
+            case "npc_guildmaster":
+                topics.Add(("The carriers", GuildSworn
+                    ? "\"Your bond stands in the book with the rest. Sworn weights, bonded loads: sell under our mark and no counter in this town argues your scales. Walk far, carry honest, and the mark walks ahead of you.\""
+                    : "\"Every load that crosses this country worth crossing it goes under the guild's mark: sworn weights, bonded loads, and a hand the moot can hold to account. We bond names the market already trusts, coin down at the swearing. The market's chalk will tell me if yours is one.\""));
                 break;
         }
         return topics;
@@ -3137,6 +3180,22 @@ public sealed class Game
                 case "npc_herbmonger":
                     offers.Add((TradeGood.Herb, "", HerbSaleLabel()));
                     break;
+                // The town school (D-141): the sitting always listed with a
+                // state-read label (D-041); the showing appended only once the
+                // iron answers the hands (Smithing 1), the one gated digit,
+                // and gated at the END of the list so nothing shifts under it.
+                case "npc_townsmith":
+                    offers.Add((TradeGood.Forge, "", ForgeLabel()));
+                    if (Player.Skills.Level(SkillId.Smithing) >= 1)
+                        offers.Add((TradeGood.Lesson, LessonCatalog.IdOf(LessonId.DrawnTemper), LessonLabel(LessonId.DrawnTemper)));
+                    break;
+                // The guild's one digit (D-141): always listed, the label
+                // reading the bond's state true (D-041), because a ledger a
+                // town keeps on you is exactly the thing that should be
+                // readable at the door.
+                case "npc_guildmaster":
+                    offers.Add((TradeGood.Bond, "", BondLabel()));
+                    break;
             }
         // The cart's counter (D-124): the road's three digits. Bread at the
         // road's price (sold to anyone; the cart keeps no stead's books), the
@@ -3238,8 +3297,10 @@ public sealed class Game
         }
         // The stead's teaching (D-087): to the stead's own, the price is waved off
         // before the showing starts. The refusal of the coin is itself narrated,
-        // so the boon is felt at the moment it pays (D-023's rule).
-        int price = SteadsTeaching ? 0 : def.Price;
+        // so the boon is felt at the moment it pays (D-023's rule). The town's
+        // school (D-141) waves nothing: the stead's regard does not reach a
+        // town counter, and the forge-smith's secret is priced like his coal.
+        int price = SteadsTeaching && TalkNpc!.Kind != NpcKind.Towner ? 0 : def.Price;
         if (Player.Coin < price)
         {
             Log.Add(Turn, $"{TalkNpc!.Name}: \"Knowing has a price like anything else: {def.Price} coin, and you hold {Player.Coin}.\"");
@@ -3263,6 +3324,10 @@ public sealed class Game
             case LessonId.Stillcraft:
                 Log.Add(Turn, $"{TalkNpc!.Name} walks you through the steeping with her hands over yours: which sprigs to bruise and which to leave whole, how slow is slow enough, when the green goes right. \"Any fire and a patient hour. The simples do the rest.\"");
                 Log.Add(Turn, "(The stillcraft is yours: resting with sprigs enough in the satchel will steep a draught of your own, any shrine, any world.)", LogTone.Reward);
+                break;
+            case LessonId.DrawnTemper:
+                Log.Add(Turn, $"{TalkNpc!.Name} heats a scrap to straw-color and makes you watch it, not the fire: when to draw it out, how the color runs ahead of the heat, why hurried iron remembers being hurried. \"Every smith's secret is the same secret. Slower than you think, and then a little slower.\"");
+                Log.Add(Turn, "(The drawn temper is yours: every sitting at bench or forge takes more wear off, any bench, any world.)", LogTone.Reward);
                 break;
         }
         HearLessonLineOnce();
@@ -3375,12 +3440,93 @@ public sealed class Game
             return;
         }
 
-        int off = Math.Min(worn.Wear, SteadFacilities.BenchBase + SteadFacilities.BenchPerLevel * Player.Skills.Level(SkillId.Smithing));
+        int off = Math.Min(worn.Wear, FileRate());
         worn.Wear -= off;
         Log.Add(Turn, worn.Wear == 0
             ? $"File, stone, and patience at the stead's bench, and the {worn.Name} comes back to true: no wear left that your hands can find."
             : $"You set the {worn.Name} on the stead's bench and work it with file and stone, the way iron likes: slow. ({worn.Wear}/{worn.MaxWear} wear now)", LogTone.Info);
         GainSkill(SkillId.Smithing);
+    }
+
+    /// <summary>
+    /// What one sitting files off, bench or forge (D-135, D-141): the green
+    /// hand's base, the craft's levels, and the drawn temper's showing if the
+    /// town school ever taught it.
+    /// </summary>
+    private int FileRate() =>
+        SteadFacilities.BenchBase
+        + SteadFacilities.BenchPerLevel * Player.Skills.Level(SkillId.Smithing)
+        + (Player.HasLesson(LessonId.DrawnTemper) ? SteadFacilities.TemperBonus : 0);
+
+    /// <summary>The forge's entry (D-141): the sitting priced, the label reading the iron's true state.</summary>
+    private string ForgeLabel() =>
+        BenchTarget() is { } worn
+            ? $"Work your iron under the smith's eye ({TownForge.WorkCoin} coin; the {worn.Name}, wear {worn.Wear}/{worn.MaxWear})"
+            : $"Work your iron under the smith's eye ({TownForge.WorkCoin} coin; your iron stands true)";
+
+    /// <summary>
+    /// A sitting at the town forge (D-141): the same iron, the same honest
+    /// feed as the stead's bench (D-135), bought for coin instead of the walk
+    /// home. The smith takes nothing when there is nothing to file: a school
+    /// that charged for watching you hold true iron would not keep pupils.
+    /// </summary>
+    private void WorkTheForge()
+    {
+        if (BenchTarget() is not { } worn)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name} turns each piece once against the light and hands it back. \"True, all of it. Come back when the road has had its say; the road always gets its say.\"");
+            return;
+        }
+        if (Player.Coin < TownForge.WorkCoin)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Coal and the wheel come to {TownForge.WorkCoin} coin the sitting, and you hold {Player.Coin}. The forge runs no slates; the moot has opinions about slates.\"");
+            return;
+        }
+
+        Player.Coin -= TownForge.WorkCoin;
+        int off = Math.Min(worn.Wear, FileRate());
+        worn.Wear -= off;
+        Log.Add(Turn, worn.Wear == 0
+            ? $"You work the {worn.Name} at the town forge, the smith's eye on your hands the whole while, a word only where a word saves an hour. It comes back to true. ({Player.Coin} coin left)"
+            : $"You work the {worn.Name} at the town forge under the smith's eye: the wheel where you would have filed, the file where you would have guessed. ({worn.Wear}/{worn.MaxWear} wear now, {Player.Coin} coin left)", LogTone.Info);
+        GainSkill(SkillId.Smithing);
+    }
+
+    /// <summary>The guild's entry (D-141): one digit, the label reading the bond's state true (D-041).</summary>
+    private string BondLabel() =>
+        GuildSworn ? "The carriers' bond (sworn; your lots sell under the guild's mark)"
+        : Player.Skills.Level(SkillId.Commerce) < 1 ? $"Swear the carriers' bond ({CarriersGuild.BondCoin} coin; the guild bonds no unproven hand)"
+        : $"Swear the carriers' bond ({CarriersGuild.BondCoin} coin)";
+
+    /// <summary>
+    /// The carriers' bond sworn (D-141): the town's first ledger opened on the
+    /// bearer, per-world like every ledger, and only on a proven name: the
+    /// market's chalk (Commerce 1) is the reference, coin down is the bond.
+    /// The keep is the mark: a member's lots sell a coin over the chalked
+    /// price at every town counter, which is what sworn weights are worth.
+    /// </summary>
+    private void TrySwearBond()
+    {
+        if (GuildSworn)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Sworn is sworn. The book does not take a name twice, and the mark does not wear off. Go and carry.\"");
+            return;
+        }
+        if (Player.Skills.Level(SkillId.Commerce) < 1)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The market's chalk has no weight against your name yet. Sell at the counters until it does, then bring me the same hand. The guild bonds trades, not intentions.\"");
+            return;
+        }
+        if (Player.Coin < CarriersGuild.BondCoin)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The bond is {CarriersGuild.BondCoin} coin down, and you hold {Player.Coin}. A bond the sworn hand did not feel is not one the guild can lean on.\"");
+            return;
+        }
+
+        Player.Coin -= CarriersGuild.BondCoin;
+        World.Facts.Add("guild", "guild_sworn", World.TownName,
+            $"The bearer swore the carriers' bond in {World.TownName}: sworn weights, bonded loads, and the guild's mark on every lot thereafter.");
+        Log.Add(Turn, $"You count {CarriersGuild.BondCoin} coin onto the guild's book and say the words after {TalkNpc!.Name}: weights sworn, loads bonded, the moot to hold you to both. The guildmaster enters your name without ceremony, which is itself the ceremony. Your lots sell under the guild's mark now, a coin the better at every counter in {World.TownName}.", LogTone.Reward);
     }
 
     /// <summary>
@@ -3762,10 +3908,12 @@ public sealed class Game
     /// <summary>
     /// The practiced tongue's coin (D-140): at a town counter, Commerce adds
     /// its level to the lot. Flat per sale, not per unit, so the craft
-    /// seasons the trade without ever outweighing the goods.
+    /// seasons the trade without ever outweighing the goods. The sworn bond
+    /// (D-141) rides the same lot the same flat way: the guild's mark is
+    /// trust, and trust is worth a coin at a counter that knows the mark.
     /// </summary>
     private int TownHaggle() => TalkNpc?.Kind == NpcKind.Towner
-        ? Player.Skills.Level(SkillId.Commerce) : 0;
+        ? Player.Skills.Level(SkillId.Commerce) + (GuildSworn ? CarriersGuild.LotBonus : 0) : 0;
 
     /// <summary>
     /// Commerce fed (D-140): one use per lot sold at a town counter, and only
@@ -4239,6 +4387,19 @@ public sealed class Game
                     break;
                 case TradeGood.Fence: TryFenceTrinkets(); break;
                 case TradeGood.Bed: TryBedDown(); break;        // the wayhouse's roof (D-138)
+                // The town school's sitting (D-141): the label reads the
+                // iron's wear, so the menu refreshes like the hide sale does.
+                case TradeGood.Forge:
+                    WorkTheForge();
+                    _offers.Clear();
+                    _offers.AddRange(BuildOffers(TalkNpc!));
+                    break;
+                // The carriers' bond (D-141): the same read-true refresh.
+                case TradeGood.Bond:
+                    TrySwearBond();
+                    _offers.Clear();
+                    _offers.AddRange(BuildOffers(TalkNpc!));
+                    break;
             }
             return;
         }
@@ -6541,7 +6702,9 @@ public sealed class Game
             Log.Add(Turn, $"What {World.SettlementName} knows, it shows its own freely; so the saying goes. It is not said to you. The folk count their doors, and keep their craft behind them.", LogTone.Info);
             return;
         }
-        Log.Add(Turn, LessonCatalog.All.Any(l => l.Price > 0 && !Player.HasLesson(l.Id))
+        // The town's showing (D-141) is not the stead's to wave or to count:
+        // the stock the folk take here is of what the VALLEY could show.
+        Log.Add(Turn, LessonCatalog.All.Any(l => l.Price > 0 && l.Id != LessonId.DrawnTemper && !Player.HasLesson(l.Id))
             ? $"What {World.SettlementName} knows is yours for the asking now. Nothing its folk can show is sold to the stead's own; it is only shown."
             : $"What {World.SettlementName} knows is yours for the asking now, though its folk find, taking stock, that there is little left they could show you.", LogTone.Reward);
     }

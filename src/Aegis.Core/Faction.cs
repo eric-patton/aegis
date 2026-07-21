@@ -321,6 +321,9 @@ public static class SteadFacilities
     /// <summary>Wear a green hand files off in one sitting at the bench; each Smithing level adds BenchPerLevel.</summary>
     public const int BenchBase = 4;
     public const int BenchPerLevel = 2;
+
+    /// <summary>What the drawn temper (D-141, the town school's lesson) adds to every sitting's file.</summary>
+    public const int TemperBonus = 2;
 }
 
 /// <summary>

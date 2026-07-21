@@ -283,10 +283,14 @@ namespace Aegis.Core;
 /// v79 when D-140 opened the market town at the east road's end: a gate a
 /// v78 journal never held now walks the town's lanes, and its stalls' digits
 /// move coin, goods, and the Commerce craft.
+/// v80 when D-141 gave the town its forge and its guild: the stitch deals the
+/// forge and the guildhall in every town (a v79 journal's town walks different
+/// lanes), and digits a v79 journal never held file iron for coin, teach the
+/// drawn temper, and swear the carriers' bond.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 79;
+    public const int Version = 80;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

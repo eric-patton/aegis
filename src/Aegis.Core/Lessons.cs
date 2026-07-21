@@ -6,6 +6,7 @@ public enum LessonId
     TendedIron,
     Gleaning,
     Stillcraft,
+    DrawnTemper,
 }
 
 /// <summary>One lesson's catalog entry: the full name for prose, the short for the sheet.</summary>
@@ -31,6 +32,11 @@ public static class LessonCatalog
         // out for a worthwhile effect. Its keep is independence: a taught bearer
         // steeps their own draught at any shrine in any world, herbwife or none.
         new(LessonId.Stillcraft, "the stillcraft", "stillcraft", 12),
+        // The town school's showing (D-141): the forge-smith's trade secret,
+        // taught only to hands the iron already answers (Smithing 1). Its keep
+        // is the file's reach: a drawn temper takes more wear off every sitting,
+        // at any bench in any world.
+        new(LessonId.DrawnTemper, "the drawn temper", "drawn temper", 14),
     ];
 
     public static LessonDef Def(LessonId id) => All.First(l => l.Id == id);
@@ -42,6 +48,7 @@ public static class LessonCatalog
         LessonId.TendedIron => "tended_iron",
         LessonId.Gleaning => "gleaning",
         LessonId.Stillcraft => "stillcraft",
+        LessonId.DrawnTemper => "drawn_temper",
         _ => id.ToString().ToLowerInvariant(),
     };
 

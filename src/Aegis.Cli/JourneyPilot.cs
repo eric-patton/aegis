@@ -450,7 +450,10 @@ public static class JourneyPilot
         // the town at the east end pays the world's best coin for it and the
         // sales feed Commerce. Selling empties the pack, so the leg fires
         // while there is anything to sell and then falls through to home.
-        if (g.Player.Hide > 0 || g.Player.Herb > 0)
+        // The school and the bond (D-141) ride the same leg: worn iron or an
+        // unsworn proven name sends the walk through the gate too, and both
+        // errands clear themselves inside.
+        if (g.Player.Hide > 0 || g.Player.Herb > 0 || ForgeErrand(g) || BondErrand(g))
         {
             var gate = g.World.TownSite.OverworldPos;
             if (p.Pos == gate) return '>';
@@ -476,6 +479,13 @@ public static class JourneyPilot
         Npc? stall = null;
         if (g.Player.Hide > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_hidemonger");
         else if (g.Player.Herb > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_herbmonger");
+        // The town school (D-141): with worn iron and coin to spare past the
+        // sitting's price, a turn at the forge. The predicate must match
+        // TownSellDigit's exactly, or the errand shuttles.
+        else if (ForgeErrand(g)) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_townsmith");
+        // The carriers' bond (D-141): sworn once per world, on a proven name,
+        // with coin to spare past the bond.
+        else if (BondErrand(g)) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_guildmaster");
         if (stall is not null)
         {
             if (NavKey(g, town, p.Pos, stall.Pos, blocked) is { } toStall) return toStall;
@@ -494,8 +504,21 @@ public static class JourneyPilot
     {
         if (g.TalkNpc!.Id == "npc_hidemonger" && g.Player.Hide > 0) return OfferDigit(g, TradeGood.Hide);
         if (g.TalkNpc.Id == "npc_herbmonger" && g.Player.Herb > 0) return OfferDigit(g, TradeGood.Herb);
+        // The forge and the bond (D-141): the same predicates that sent the
+        // walk, so the menu closes the moment the errand's condition clears.
+        if (g.TalkNpc.Id == "npc_townsmith" && ForgeErrand(g)) return OfferDigit(g, TradeGood.Forge);
+        if (g.TalkNpc.Id == "npc_guildmaster" && BondErrand(g)) return OfferDigit(g, TradeGood.Bond);
         return null;
     }
+
+    /// <summary>Worn iron, and coin enough to pay the smith and still eat (D-141).</summary>
+    private static bool ForgeErrand(Game g) =>
+        g.IronNeedsWork && g.Player.Coin >= TownForge.WorkCoin + 5;
+
+    /// <summary>An unsworn proven name, and coin enough to bond and still eat (D-141).</summary>
+    private static bool BondErrand(Game g) =>
+        !g.GuildSworn && g.Player.Skills.Level(SkillId.Commerce) >= 1
+        && g.Player.Coin >= CarriersGuild.BondCoin + 10;
 
     /// <summary>A talk-level offer's digit, topics counted in front (D-041's stable order).</summary>
     private static char? OfferDigit(Game g, TradeGood good)

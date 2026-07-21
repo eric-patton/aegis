@@ -725,6 +725,7 @@ public static class Presenter
                 MonsterKind.Warder => 'v',
                 MonsterKind.Thegn => 't',
                 MonsterKind.Wolf => 'f',
+                MonsterKind.GreatWolf => 'F',
                 _ => 'g',
             };
             // The chief told apart on the map (D-113): the roster's leader is a
@@ -748,6 +749,7 @@ public static class Presenter
                 MonsterKind.Thegn => Hue.Gray,
                 // The moor-wolf in heath-grey (D-146): part of the ground until it moves.
                 MonsterKind.Wolf => Hue.Gray,
+                MonsterKind.GreatWolf => Hue.White,
                 _ => Hue.Red,
             };
             PutWorld(monster.Pos, ch, monster.Intent is null ? calm : Hue.White,
@@ -803,6 +805,7 @@ public static class Presenter
         Terrain.Scree => ('%', Hue.DarkGray, Hue.Black),
         Terrain.FellMouth => ('=', Hue.Gray, Hue.Black),
         Terrain.CairnEntrance => ('n', Hue.Gray, Hue.Black),
+        Terrain.GillEntrance => ('%', Hue.White, Hue.Black),
         _ => ('?', Hue.Magenta, Hue.Black),
     };
 
@@ -987,6 +990,7 @@ public static class Presenter
             if (here == Terrain.LeaguerEntrance) Line("Leaguer banks: > enters", Hue.Blue);
             if (here == Terrain.WildsEntrance) Line("Game-trail: > enters", Hue.Green);
             if (here == Terrain.CairnEntrance) Line("Kerb gap: > stoops in", Hue.Gray);
+            if (here == Terrain.GillEntrance) Line("Bone-gill: > climbs down", Hue.White);
             if (here == Terrain.SonghallEntrance) Line("Songhall door: > enters", Hue.Cyan);
             if (here == Terrain.HarrowEntrance) Line("Harrow door: > enters", Hue.White);
             if (here == Terrain.ThresholdEntrance)

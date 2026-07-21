@@ -1404,12 +1404,16 @@ public sealed class Game
         }
 
         // Stepping into one who walks with you (D-097, D-099) trades places:
-        // a doorway is never a standoff between friends.
+        // a doorway is never a standoff between friends. The traded-onto
+        // ground still gathers (D-150's mending of a latent gap): a bearer
+        // standing on a herb spot has reached it, however the step went, and
+        // the pilot's herb walk spun forever on a spot its own mule held.
         if (Fellows.FirstOrDefault(f => f.Pos == target) is { } fellow)
         {
             (fellow.Pos, Player.Pos) = (Player.Pos, target);
             StepRegen();
             Log.Add(Turn, $"You and {fellow.Name} trade places in a step.");
+            GatherAt(target);
             return true;
         }
 
@@ -1419,6 +1423,7 @@ public sealed class Game
             (led.Pos, Player.Pos) = (Player.Pos, target);
             StepRegen();
             Log.Add(Turn, $"You push past {led.Name} with a hand on its neck, trading places in a step.");
+            GatherAt(target);
             return true;
         }
 
@@ -1586,6 +1591,10 @@ public sealed class Game
                 Log.Add(Turn, SiteHere(p)!.Cleared
                     ? "The high cairn. Its stones are only stones now, and the wind counts them and moves on."
                     : "A kerbed cairn of piled grey stone crowns the rise, older than any road under it. A gap in the kerb breathes cold that owes nothing to the wind. Press > to stoop in.", LogTone.Danger);
+            else if (t == Terrain.GillEntrance)
+                Log.Add(Turn, SiteHere(p)!.Cleared
+                    ? "The wolf-gill. Bone still whitens its floor, but nothing moves down there now except what the wind does."
+                    : "The ground opens at your feet: a gill cut deep through the scree, its floor strewn white with old bone, drove-years of it. Something down there keeps a clean larder. Press > to climb down.", LogTone.Danger);
             else if (t == Terrain.FellMouth)
                 Log.Add(Turn, Area == Area.Fells
                     ? "The drovers' track drops off the fells' edge here, and the road shows below, thin as a drawn line. Press > to climb down."
@@ -1615,6 +1624,7 @@ public sealed class Game
                     SiteKind.Ringfort => "An arms-chest sits at the heart of the ward, its lid sound under an age of dust. Press g to open it.",
                     SiteKind.Leaguer => "A cist of stacked stone sits on the holm's crown, its capstone set square against the weather. Press g to lift it.",
                     SiteKind.Cairn => "The cist: a stone box at the chamber's deep end, its lid slid a hand's width open by somebody who never finished. Press g to lift it clear.",
+                    SiteKind.Gill => "A drover's pack lies among the bones, leather scoured but whole, the straps still buckled the way a living man left them. Press g to open it.",
                     _ => "A battered strongbox sits here. Press g to open it.",
                 }, LogTone.Reward);
             else if (CurrentSite is { StonePos: { } sp, StoneRead: false } && p == sp)
@@ -1948,8 +1958,12 @@ public sealed class Game
         int heal = RoadLife.CampHealBase + RoadLife.CampHealPerSurvival * Player.Skills.Level(SkillId.Survival);
         if (foul) heal /= 2;
         // The fells' cold has no lee (D-146): the frontier's exposure bites a
-        // second time, so a cold night up there mends a quarter at best.
-        if (Area == Area.Fells && Sky == RoadSky.Cold) heal /= 2;
+        // second time, so a cold night up there mends a quarter at best,
+        // unless the great pelt (D-150) is in the bedroll doing its one work.
+        bool peltHolds = Area == Area.Fells && Sky == RoadSky.Cold && Player.WolfPelt;
+        if (Area == Area.Fells && Sky == RoadSky.Cold && !Player.WolfPelt) heal /= 2;
+        if (peltHolds)
+            Log.Add(Turn, "The great pelt goes over the bedroll, and the fells' cold stays on its own side of it all night.", LogTone.Info);
         Player.Hp = Math.Min(Player.EffectiveMaxHp, Player.Hp + heal);
         Player.Stamina = Player.MaxStamina;
         Player.Focus = Player.MaxFocus;
@@ -2325,6 +2339,7 @@ public sealed class Game
                 SiteKind.Ringfort => _combatRng.Range(15, 28),
                 SiteKind.Leaguer => _combatRng.Range(16, 30),
                 SiteKind.Cairn => _combatRng.Range(14, 26),
+                SiteKind.Gill => _combatRng.Range(6, 14),
                 _ => _combatRng.Range(10, 21),
             };
             Player.Coin += coin;
@@ -2338,6 +2353,7 @@ public sealed class Game
                 SiteKind.Ringfort => $"The watch's pay-chest, tallied and locked against a paymaster who never rode in: {coin} coin, every wage accounted.",
                 SiteKind.Leaguer => $"Under the capstone, packed in wool: {coin} coin of the holm-holder's hoard, laid by against a spending day that never came.",
                 SiteKind.Cairn => $"Cist-gold: {coin} coin laid under the lid for a chief of the tops, in a mint the fells outlived.",
+                SiteKind.Gill => $"A drover's whole season, buckled shut against a homecoming that never happened: {coin} coin, and a child's whistle carved from horn that you leave where it lay.",
                 _ => $"The strongbox yields {coin} coin.",
             }, LogTone.Reward);
 
@@ -3054,6 +3070,10 @@ public sealed class Game
                 + (World.FellCairnSite.Cleared
                 ? " And the old cairn on the tops sits quiet now, they tell me. First time in anyone's telling."
                 : " And give the old cairn on the tops its room: the drovers water anywhere but its lee, and drovers are not careful people.")
+                // The gill's word (D-150): the she-wolf priced at the same door.
+                + (World.FellGillSite.Cleared
+                ? " The bone-gill is settled too, if the talk is true: the old she-wolf is a pelt at last, and every drover on this road drinks to the hand that made her one."
+                : " And there is a gill up there strewn white with bone, where the old she-wolf dens. She has outlived every man who swore to bring her pelt down; mind she does not outlive you.")
                 // The winter read at the climb's own door (D-149): the
                 // waykeeper prices the season the way they price everything.
                 + (FellWinterStands
@@ -6191,6 +6211,7 @@ public sealed class Game
             MonsterKind.Thegn => _combatRng.Range(3, 7),
             MonsterKind.Hart => 0,
             MonsterKind.Wolf => 0,
+            MonsterKind.GreatWolf => 0,
             _ => _combatRng.Range(2, 7),
         };
         int essence = target.Kind switch
@@ -6205,6 +6226,7 @@ public sealed class Game
             MonsterKind.Thegn => 12,
             MonsterKind.Hart => 0,
             MonsterKind.Wolf => 0,
+            MonsterKind.GreatWolf => 0,
             _ => 5,
         };
         // The lean dark (D-051): the dark yields half its essence, rounded
@@ -6219,12 +6241,14 @@ public sealed class Game
         // The moor-wolf is the hunt's second head (D-146): game like the hart,
         // essence-less and purse-less, all hide and meat: the fells pay their
         // way down the same ladder the glade opened.
-        bool game = target.Kind is MonsterKind.Hart or MonsterKind.Wolf;
+        bool game = target.Kind is MonsterKind.Hart or MonsterKind.Wolf or MonsterKind.GreatWolf;
         int hides = 0;
         if (game)
         {
             // The heathborn take one more from every kill worth skinning (D-092).
-            hides = 1 + Player.Skills.Bonus(SkillId.Hunting) + (Player.Folk == FolkId.Heathborn ? 1 : 0);
+            // The she-wolf (D-150) carries two hides' worth of beast besides her pelt.
+            hides = 1 + Player.Skills.Bonus(SkillId.Hunting) + (Player.Folk == FolkId.Heathborn ? 1 : 0)
+                + (target.Kind == MonsterKind.GreatWolf ? 2 : 0);
             Player.Hide += hides;
             GainSkill(SkillId.Hunting);
             // The hunt yields raw cuts, not a road-ration (D-073): they cook into
@@ -6232,6 +6256,11 @@ public sealed class Game
             // like the hide, since the cooking (bounded by the ration cap) is the sink.
             Player.RawMeat++;
         }
+        // The great pelt (D-150): the she-wolf's coat, taken once ever and
+        // carried like the keepsakes are. Its keep is the fells' cold
+        // answered: a camp under it mends through a cold night whole.
+        bool peltTaken = target.Kind == MonsterKind.GreatWolf && !Player.WolfPelt;
+        if (peltTaken) Player.WolfPelt = true;
         // The war-boar still pays its field-ration (D-053), the meat taken in the
         // thick of a fight: only the dedicated hunt, the hart, yields raw cuts to
         // carry to a fire. The knife takes a ration if a walking body can hold one.
@@ -6251,8 +6280,11 @@ public sealed class Game
             MonsterKind.Thegn => $"The sword-thegn lowers its point and folds down without a sound, the way it did everything: unhurried, and at last relieved of a watch no one remembered setting. You take {coin} coin and {essence} essence.",
             MonsterKind.Hart => $"The hart drops at the end of its run. You take the hide{(hides > 1 ? $", {hides} good pieces," : "")} and the raw meat, to cook at a fire. ({Player.Hide} hides, {Player.RawMeat} raw meat)",
             MonsterKind.Wolf => $"The moor-wolf goes down snapping and is still. A thick winter pelt{(hides > 1 ? $", {hides} good pieces," : "")} and the raw meat, dark and lean, for a braver fire than most. ({Player.Hide} hides, {Player.RawMeat} raw meat)",
+            MonsterKind.GreatWolf => $"The great she-wolf goes down at last the way a hillside goes, slowly and all at once, and the gill is quiet in a way it has not been in living drovers' memory. {hides} good hides off her frame, and the raw meat besides. ({Player.Hide} hides, {Player.RawMeat} raw meat)",
             _ => $"The {target.Name} falls. You take {coin} coin and {essence} essence.",
         }, LogTone.Reward);
+        if (peltTaken)
+            Log.Add(Turn, "And the pelt itself, whole: gray shading to winter-white across the shoulders, heavier than any hide the benches weigh. No counter is getting this one. A coat like this is the fells' own answer to the fells' own cold.", LogTone.Reward);
         // The dens count their dead (D-078): every raider felled deepens the
         // raiders' wrath, the enemy half of the ledger the stead's regard opened.
         if (target.Kind == MonsterKind.Goblin) RaiseWrath(1);
@@ -8429,8 +8461,10 @@ public sealed class Game
                     IntentKind.ThroatLunge => _combatRng.Range(6, 10),
                     IntentKind.SeaxStab => _combatRng.Range(6, 10),
                     IntentKind.MeasuredCut => _combatRng.Range(5, 9),
-                    // The wolf-winter's hunger (D-149) rides the spring too.
-                    IntentKind.Pounce => _combatRng.Range(5, 9) + (FellWinterStands ? FellWinter.Fang : 0),
+                    // The wolf-winter's hunger (D-149) rides the spring too,
+                    // and the she-wolf's weight (D-150) arrives with hers.
+                    IntentKind.Pounce => _combatRng.Range(5, 9) + (FellWinterStands ? FellWinter.Fang : 0)
+                        + (monster.Kind == MonsterKind.GreatWolf ? 2 : 0),
                     _ => _combatRng.Range(4, 7),
                 };
                 if (intent.Kind == IntentKind.BoarCharge)
@@ -8521,7 +8555,7 @@ public sealed class Game
                         IntentKind.HurledStone => $"The hurled stone takes you square for {damage}!",
                         IntentKind.GravenFist => $"The graven fist comes down like a falling lintel for {damage}!",
                         IntentKind.ThroatLunge => $"The iron hound hits you full-length, jaws first, for {damage}!",
-                        IntentKind.Pounce => $"The moor-wolf comes off the ground whole, and its weight and its teeth arrive together for {damage}!",
+                        IntentKind.Pounce => $"The {monster.Name} comes off the ground whole, and its weight and its teeth arrive together for {damage}!",
                         IntentKind.SeaxStab => $"The seax comes over the board's rim and finds you for {damage}!",
                         IntentKind.MeasuredCut => intent.FeintCell is not null
                             ? $"The mark was the lie. The thegn's point was always coming here, and it opens you for {damage}!"
@@ -8627,7 +8661,7 @@ public sealed class Game
         if (monster.Kind == MonsterKind.Carl) { ActCarl(monster); return; }
         if (monster.Kind == MonsterKind.Boar) { ActBoar(monster); return; }
         if (monster.Kind == MonsterKind.Hart) { ActHart(monster); return; }
-        if (monster.Kind == MonsterKind.Wolf) { ActWolf(monster); return; }
+        if (monster.Kind is MonsterKind.Wolf or MonsterKind.GreatWolf) { ActWolf(monster); return; }
         if (monster.Kind == MonsterKind.Warder) { ActWarder(monster); return; }
         if (monster.Kind == MonsterKind.Thegn) { ActThegn(monster); return; }
 
@@ -9193,31 +9227,36 @@ public sealed class Game
     /// </summary>
     private void ActWolf(Monster monster)
     {
+        // The gill's mother runs with her pack (D-150): the great she-wolf
+        // keeps every pack rule and counts as company for the rest; only her
+        // jaw is heavier, and the whole hierarchy stays one behavior.
+        bool packKind(Monster m) => m.Kind is MonsterKind.Wolf or MonsterKind.GreatWolf;
+        int jaw = monster.Kind == MonsterKind.GreatWolf ? 2 : 0;
         int dist = monster.Pos.Chebyshev(Player.Pos);
-        int packNear = Monsters.Count(m => m.Alive && m != monster && m.Kind == MonsterKind.Wolf
+        int packNear = Monsters.Count(m => m.Alive && m != monster && packKind(m)
             && m.SiteId == monster.SiteId && m.Pos.Chebyshev(Player.Pos) <= 3);
-        int atTheThroat = Monsters.Count(m => m.Alive && m != monster && m.Kind == MonsterKind.Wolf
+        int atTheThroat = Monsters.Count(m => m.Alive && m != monster && packKind(m)
             && m.SiteId == monster.SiteId && m.Pos.Chebyshev(Player.Pos) == 1);
-        bool lastOfPack = !Monsters.Any(m => m.Alive && m != monster && m.Kind == MonsterKind.Wolf
+        bool lastOfPack = !Monsters.Any(m => m.Alive && m != monster && packKind(m)
             && m.SiteId == monster.SiteId);
 
         if (dist == 1)
         {
             if (_combatRng.Chance(Player.DodgeChance))
             {
-                Log.Add(Turn, "The moor-wolf's teeth close on the hem of your coat and nothing else.", LogTone.Combat);
+                Log.Add(Turn, $"The {monster.Name}'s teeth close on the hem of your coat and nothing else.", LogTone.Combat);
             }
             else
             {
                 // The bite worries worse in company, but wolves work a prey in
                 // shifts, not a pile: the bonus is capped where the closing is.
                 // A wolf-winter's hunger (D-149) drives the jaw a point deeper.
-                int damage = Absorb(_combatRng.Range(2, 4) + Math.Min(packNear, 2)
+                int damage = Absorb(_combatRng.Range(2, 4) + jaw + Math.Min(packNear, 2)
                     + (FellWinterStands ? FellWinter.Fang : 0));
                 Player.Hp -= damage;
                 Log.Add(Turn, packNear > 0
                     ? $"Teeth from the side you were not watching: the pack works you for {damage}."
-                    : $"The moor-wolf's bite worries you for {damage}.", LogTone.Combat);
+                    : $"The {monster.Name}'s bite worries you for {damage}.", LogTone.Combat);
             }
             return;
         }
@@ -9226,7 +9265,9 @@ public sealed class Game
             && atTheThroat < 2 && _combatRng.Chance(0.5))
         {
             monster.Intent = new Intent { Kind = IntentKind.Pounce, TargetCell = Player.Pos };
-            Log.Add(Turn, "The moor-wolf drops low, haunches gathering: the spring is coming!", LogTone.Danger);
+            Log.Add(Turn, monster.Kind == MonsterKind.GreatWolf
+                ? "The great she-wolf drops low, a winter's worth of shoulder gathering: the spring is coming!"
+                : "The moor-wolf drops low, haunches gathering: the spring is coming!", LogTone.Danger);
             return;
         }
 
@@ -9685,12 +9726,13 @@ public sealed class Game
         if (CurrentSite is { Kind: SiteKind.GoblinCamp }) MarkTheScarred();
         // The pack draws off with its kill (D-146): wolves that pulled the
         // bearer down go home to their own ground, so the walk back in is
-        // the walk it was the first time, never a door ambush.
+        // the walk it was the first time, never a door ambush. The gill's
+        // pack and its mother (D-150) keep the same habit.
         if (CurrentSite is { } combe
-            && Monsters.Any(m => m.Alive && m.SiteId == combe.Id && m.Kind == MonsterKind.Wolf))
+            && Monsters.Any(m => m.Alive && m.SiteId == combe.Id && m.Kind is MonsterKind.Wolf or MonsterKind.GreatWolf))
         {
             var taken = new HashSet<Pos>();
-            foreach (var wolf in Monsters.Where(m => m.Alive && m.SiteId == combe.Id && m.Kind == MonsterKind.Wolf))
+            foreach (var wolf in Monsters.Where(m => m.Alive && m.SiteId == combe.Id && m.Kind is MonsterKind.Wolf or MonsterKind.GreatWolf))
             {
                 var den = combe.Spawns.Select(s => s.Pos)
                     .Where(sp => !taken.Contains(sp))
@@ -9700,7 +9742,9 @@ public sealed class Game
                 taken.Add(den);
                 wolf.Pos = den;
             }
-            Log.Add(Turn, "What the pack wanted, it has. The wolves draw off to their own ground with it, and the combe goes quiet behind you.", LogTone.Info);
+            Log.Add(Turn, combe.Kind == SiteKind.Gill
+                ? "What the pack wanted, it has. The wolves draw off among the bones with it, and the gill goes quiet behind you."
+                : "What the pack wanted, it has. The wolves draw off to their own ground with it, and the combe goes quiet behind you.", LogTone.Info);
         }
         // Death lines carry register, never plot (arc sec 4): worried once the
         // ledger is known, candid between equals once the threshold is answered.
@@ -9865,6 +9909,7 @@ public sealed class Game
         SmithyStands: SmithyStands,
         FellWinterStands: FellWinterStands,
         WolfWordStands: WolfWordStands,
+        WolfPelt: Player.WolfPelt,
         Shame: Shame,
         ShameTitle: SteadShame.TitleOf(Shame),
         Grudge: Grudge,
@@ -10038,6 +10083,7 @@ public sealed record Snapshot(
     bool SmithyStands,
     bool FellWinterStands,
     bool WolfWordStands,
+    bool WolfPelt,
     int Shame,
     string ShameTitle,
     int Grudge,

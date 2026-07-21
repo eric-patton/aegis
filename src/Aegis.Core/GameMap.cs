@@ -38,6 +38,7 @@ public enum Terrain : byte
     Scree,
     FellMouth,
     CairnEntrance,
+    GillEntrance,
 }
 
 /// <summary>

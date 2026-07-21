@@ -282,6 +282,13 @@ public sealed class Player
     /// <summary>The lay's one Legend payment (D-148) has been made at a crossing; never again.</summary>
     public bool LayHonored { get; set; }
 
+    /// <summary>
+    /// The great pelt (D-150): the she-wolf of the gill's own coat, taken
+    /// once and carried like the keepsakes are. Its keep is the fells' cold
+    /// answered: a camp under the pelt mends through a cold night whole.
+    /// </summary>
+    public bool WolfPelt { get; set; }
+
     /// <summary>The Aegis speaks once at the first book finished; never again.</summary>
     public bool BookLineHeard { get; set; }
 
@@ -502,7 +509,7 @@ public sealed class Player
 /// <summary>How the threshold resolved (D-039): unresolved, the keeping taken up, or laid down.</summary>
 public enum Resolution { None, Kept, Refused }
 
-public enum MonsterKind { Goblin, Wight, Severed, Graven, Hound, Carl, Boar, Warder, Thegn, Hart, Wolf }
+public enum MonsterKind { Goblin, Wight, Severed, Graven, Hound, Carl, Boar, Warder, Thegn, Hart, Wolf, GreatWolf }
 
 public sealed class Monster
 {
@@ -555,6 +562,7 @@ public sealed class Monster
         MonsterKind.Wolf => 4,
         MonsterKind.Hound => 5,
         MonsterKind.Warder => 5,
+        MonsterKind.GreatWolf => 6,
         MonsterKind.Boar => 6,
         MonsterKind.Wight => 6,
         MonsterKind.Carl => 8,
@@ -611,6 +619,7 @@ public sealed class Monster
         MonsterKind.Thegn => "sword-thegn",
         MonsterKind.Hart => "hart",
         MonsterKind.Wolf => "moor-wolf",
+        MonsterKind.GreatWolf => "great she-wolf",
         _ => "creature",
     };
 }

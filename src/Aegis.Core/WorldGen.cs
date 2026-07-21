@@ -1,6 +1,6 @@
 namespace Aegis.Core;
 
-public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort, Songhall, Leaguer, Wilds, Harrow, Town, Cairn }
+public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort, Songhall, Leaguer, Wilds, Harrow, Town, Cairn, Gill }
 
 /// <summary>A monster placed at generation time: kind, cell, and generated stats (D-011).</summary>
 public readonly record struct MonsterSpawn(MonsterKind Kind, Pos Pos, int Hp, string? Epithet = null, bool Chief = false);
@@ -144,6 +144,8 @@ public sealed class World
 
     /// <summary>The high cairn (D-147): the old dead on the tops, the fells' second site.</summary>
     public Site FellCairnSite => Sites.First(s => s.Id == "fell-cairn");
+
+    public Site FellGillSite => Sites.First(s => s.Id == "fell-gill");
     public required List<Site> Sites { get; init; }
     public required List<Npc> Npcs { get; init; }
 
@@ -1325,8 +1327,53 @@ public static class WorldGen
             StonePos = cairnStone,
         });
 
+        // The wolf-gill (D-150): the fells' third site and the pack's own
+        // source, a scree-walled ravine strewn with the drove-years' bones.
+        // Drawn on its own streams after every D-146/D-147 draw, so the
+        // fells' lie, the combe, the herbs, and the cairn all hold to the
+        // tile in prior worlds; the tops only gain a scar. The tenant the
+        // ground was named for waits at the deep end: the great she-wolf,
+        // her pelt the fells' one trophy, and a lost drover's pack among the
+        // bones the only coin a wolf ever kept.
+        var gillRng = new Rng(SeedTree.Derive(fellSeed, "gill"));
+        Pos gillPos = default;
+        bool gillFound = false;
+        for (int attempt = 0; attempt < 600 && !gillFound; attempt++)
+        {
+            var p = new Pos(gillRng.Range(4, FellsW - 4), gillRng.Range(2, FellsH - 3));
+            if (fells[p] is not (Terrain.Heath or Terrain.Hills)
+                || p.Manhattan(fellWildsPos) < 8 || p.Manhattan(cairnPos) < 6
+                || fellHerbs.Contains(p)) continue;
+            gillPos = p;
+            gillFound = true;
+        }
+        if (!gillFound) gillPos = new Pos(FellsW * 3 / 4, FellsH - 3);
+        fells[gillPos] = Terrain.GillEntrance;
+        CarvePathIfDisconnected(fells, fellHome, gillPos);
+        int gillWolfCount = Math.Min(3 + (tier - 1) / 2, 6);
+        int gillWolfHp = 8 + tier / 2;
+        int sheWolfHp = 16 + tier;
+        var (gillMap, gillEntry, gillWolves, sheWolfPos, gillCache) = GenerateGill(fellSeed, gillWolfCount);
+        sites.Add(new Site
+        {
+            Id = "fell-gill",
+            Kind = SiteKind.Gill,
+            Map = gillMap,
+            OverworldPos = gillPos,
+            EntryPos = gillEntry,
+            Area = Area.Fells,
+            Spawns = [.. gillWolves.Select(p => new MonsterSpawn(MonsterKind.Wolf, p, gillWolfHp)),
+                new MonsterSpawn(MonsterKind.GreatWolf, sheWolfPos, sheWolfHp)],
+            // The drover's cache: a taken man's pack among the bones, the
+            // one coin a wolf's ground honestly holds (the wolves keep
+            // nothing; the dead drover kept it for them).
+            ChestPos = gillCache,
+        });
+
         facts.Add("site", "fells", $"{fellTrack.X},{fellTrack.Y}",
             "A drovers' track climbs off the road's north shoulder onto the high fells: heath and scree and no roof anywhere, wolf-country by every account that comes down with the hides to prove it.");
+        facts.Add("site", "fell-gill", $"{gillPos.X},{gillPos.Y}",
+            "A gill cuts the tops above the drovers' track, scree-walled and strewn white with old bone. The drovers count their dogs twice passing it, and the old she-wolf the tale gives it has outlived every man who swore to bring her pelt down.");
         facts.Add("site", "fell-cairn", $"{cairnPos.X},{cairnPos.Y}",
             "On the tops above the drovers' track stands a kerbed cairn older than any road under it. The drovers water anywhere but its lee, and none of them will say why in daylight.");
 
@@ -2308,6 +2355,71 @@ public static class WorldGen
 
         map[entry] = Terrain.ExitLadder;
         return (map, entry, wights, chest, stone);
+    }
+
+    public const int GillW = 30;
+    public const int GillH = 12;
+
+    /// <summary>
+    /// The wolf-gill (D-150): a scree-walled ravine, the fells' third site.
+    /// One meandering gully two strides wide is carved through solid scree,
+    /// with denned pockets off it and the bone-hollow at the deep end, so the
+    /// whole map is connected by construction. Scree stops feet, never eyes
+    /// (D-057's distinction, the combe's rule): the bow draws down the gully's
+    /// line and the pack closes along the same floor. The she-wolf keeps the
+    /// bone-hollow, the lost drover's pack beside her.
+    /// </summary>
+    private static (GameMap Map, Pos Entry, List<Pos> Wolves, Pos SheWolf, Pos Cache) GenerateGill(ulong fellSeed, int wolfCount)
+    {
+        var rng = new Rng(SeedTree.Derive(fellSeed, "site-gill"));
+        var map = new GameMap("fell-gill", GillW, GillH, Terrain.Scree);
+
+        // The gully: carved west to east, wandering, always two cells tall so
+        // two bodies can pass and the pack can work its shifts.
+        var entry = new Pos(2, GillH / 2);
+        int y0 = entry.Y;
+        var carved = new List<Pos>();
+        for (int x = 2; x <= GillW - 7; x++)
+        {
+            y0 = Math.Clamp(y0 + rng.Range(-1, 2), 2, GillH - 4);
+            foreach (int dy in (int[])[0, 1])
+            {
+                var p = new Pos(x, y0 + dy);
+                if (map[p] == Terrain.Scree) { map[p] = Terrain.Heath; carved.Add(p); }
+            }
+            // Denned pockets off the gully at the thirds: where wolves lie up.
+            if (x == GillW / 3 || x == GillW * 2 / 3)
+                for (int py = Math.Max(2, y0 - 1); py <= Math.Min(GillH - 3, y0 + 2); py++)
+                    for (int px = x - 1; px <= x + 1; px++)
+                    {
+                        var p = new Pos(px, py);
+                        if (map[p] == Terrain.Scree) { map[p] = Terrain.Heath; carved.Add(p); }
+                    }
+        }
+
+        // The bone-hollow: the wide place at the deep end where the drove
+        // roads' losses ended up, and where the she-wolf dens.
+        for (int y = Math.Max(2, y0 - 2); y <= Math.Min(GillH - 3, y0 + 3); y++)
+            for (int x = GillW - 7; x <= GillW - 3; x++)
+            {
+                var p = new Pos(x, y);
+                if (map[p] == Terrain.Scree) { map[p] = Terrain.Heath; carved.Add(p); }
+            }
+        var cache = new Pos(GillW - 3, Math.Clamp(y0 + 1, 2, GillH - 3));
+        var sheWolf = new Pos(GillW - 5, Math.Clamp(y0, 2, GillH - 3));
+
+        var wolves = new List<Pos>();
+        int guard = 2000;
+        var deep = carved.Where(p => p != cache && p != sheWolf && p.Manhattan(entry) > 8).ToList();
+        while (wolves.Count < wolfCount && deep.Count > 0 && guard > 0)
+        {
+            var p = rng.Pick(deep);
+            bool spaced = guard-- <= 0 || wolves.All(q => q.Manhattan(p) >= 3);
+            if (!wolves.Contains(p) && spaced) wolves.Add(p);
+        }
+
+        map[entry] = Terrain.ExitLadder;
+        return (map, entry, wolves, sheWolf, cache);
     }
 
     public const int HallW = 34;

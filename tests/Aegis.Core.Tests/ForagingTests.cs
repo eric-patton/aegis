@@ -82,6 +82,42 @@ public class ForagingTests
         Assert.DoesNotContain(mid, game.World.Herbs);
     }
 
+    [Fact]
+    public void TheTradedStep_StillStoopsForTheSpot()
+    {
+        // The same seam's second face, closed at D-150: stepping into your own
+        // beast trades places, and the traded-onto ground must still gather,
+        // or a bearer whose mule parks on a herb spot can swap with it forever
+        // (found live: the pilot burning a world's key budget doing exactly that).
+        var game = new Game(42);
+        var map = game.World.Overworld;
+        (Pos start, Pos spot)? run = null;
+        for (int x = 2; x < map.Width - 2 && run is null; x++)
+            for (int y = 2; y < map.Height - 2 && run is null; y++)
+            {
+                var a = new Pos(x, y);
+                var b = a.Plus(1, 0);
+                if (map[a] != Terrain.Grass || map[b] != Terrain.Grass) continue;
+                if (game.World.Npcs.Any(n => !n.OnRoad && (n.Pos == a || n.Pos == b))) continue;
+                if (game.World.Herbs.Contains(b) || game.World.Gleanings.Contains(b)) continue;
+                run = (a, b);
+            }
+        Assert.NotNull(run);
+        var (start, spot) = run!.Value;
+
+        game.Debug_SetPlayerPos(start);
+        game.Debug_SetMount(new Mount { Kind = MountKind.Mule, Pos = spot });
+        game.World.Herbs.Add(spot);
+        game.Player.Herb = 0;
+
+        game.ApplyKey('l');
+
+        Assert.Equal(spot, game.Player.Pos);                // the trade landed the step
+        Assert.Equal(start, game.Mount!.Pos);
+        Assert.True(game.Player.Herb > 0, "the traded step skipped the spot under it");
+        Assert.DoesNotContain(spot, game.World.Herbs);
+    }
+
     private static char KeyFor(int dx, int dy) => (dx, dy) switch
     {
         (0, -1) => 'k',

@@ -314,10 +314,13 @@ namespace Aegis.Core;
 /// winter now reaches the fells a tick behind it, the pack bites a point
 /// hungrier under it, and its word prices hides in the town two ticks later,
 /// so a v86 journal's fights and sales replay to different state.
+/// v88 when D-150 cut the wolf-gill into the tops: a third fells site a v87
+/// walk crossed as plain heath, the great she-wolf and her pack drawing new
+/// combat dice, a drover's cache, and the pelt that mends cold camps whole.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 87;
+    public const int Version = 88;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

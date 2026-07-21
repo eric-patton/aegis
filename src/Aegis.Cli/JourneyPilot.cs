@@ -450,11 +450,14 @@ public static class JourneyPilot
     {
         // Armed for the frontier, or not at all: the waykeeper's warning taken
         // as policy. A bare hand against a pack is a death budget, not a hunt.
-        // The cairn (D-147) rides the same gate: the old dead ask no less.
+        // The cairn (D-147) and the gill (D-150) ride the same gate: the old
+        // dead and the old she-wolf both ask no less.
         var combe = g.World.FellWildsSite;
         var cairn = g.World.FellCairnSite;
+        var gill = g.World.FellGillSite;
         bool owed = (!combe.Cleared && !skip.Contains(combe.Id))
-            || (!cairn.Cleared && !skip.Contains(cairn.Id));
+            || (!cairn.Cleared && !skip.Contains(cairn.Id))
+            || (!gill.Cleared && !skip.Contains(gill.Id));
         return owed
             && g.Player.Bow is not null && g.Player.Weapon is not null && g.Player.Armor is not null;
     }
@@ -558,6 +561,15 @@ public static class JourneyPilot
         {
             if (p.Pos == cairn.OverworldPos) return '>';
             if (NavKey(g, fells, p.Pos, cairn.OverworldPos, blocked) is { } toCairn) return toCairn;
+        }
+
+        // The wolf-gill (D-150): the she-wolf last, when the world's climb has
+        // already paid for the camps her toll will ask for.
+        var gill = g.World.FellGillSite;
+        if (!gill.Cleared && !skip.Contains(gill.Id))
+        {
+            if (p.Pos == gill.OverworldPos) return '>';
+            if (NavKey(g, fells, p.Pos, gill.OverworldPos, blocked) is { } toGill) return toGill;
         }
 
         if (RoadCampWanted(g) && fells[p.Pos] is Terrain.Heath or Terrain.Grass or Terrain.Hills)
@@ -749,7 +761,7 @@ public static class JourneyPilot
         // beyond arm's reach and the wind allows; the melee below finishes
         // whatever reaches the throat.
         if (p.Bow is not null && p.Stamina >= LooseCost(p)
-            && foes.Any(m => m.Kind == MonsterKind.Wolf && Chebyshev(p.Pos, m.Pos) > 1))
+            && foes.Any(m => m.Kind is MonsterKind.Wolf or MonsterKind.GreatWolf && Chebyshev(p.Pos, m.Pos) > 1))
         {
             var (damaging, _, _) = ScanRays(g);
             if (damaging is not null) return 'f';

@@ -216,8 +216,9 @@ public class FrontierTests
         game.Debug_SetPlayerPos(combe.OverworldPos);
         game.ApplyKey('>');
 
-        // The pack at the door, the way a lost fight leaves it.
-        var wolves = game.Monsters.Where(m => m.Alive && m.Kind == MonsterKind.Wolf).ToList();
+        // The pack at the door, the way a lost fight leaves it. The combe's
+        // own pack only: the gill (D-150) keeps its own wolves on its own ground.
+        var wolves = game.Monsters.Where(m => m.Alive && m.Kind == MonsterKind.Wolf && m.SiteId == combe.Id).ToList();
         foreach (var w in wolves) w.Pos = game.Player.Pos;
         game.Debug_HurtPlayer(999);
         game.Debug_ForceDeathCheck();

@@ -375,8 +375,12 @@ between them as play. Starts after the stead layer's core lands.
   the camp is the only rest, cold quartering the mend, the hunt ladder doubled through
   it, pilot leg live); filled in D-147 (the combe recut from the fells' own stone, and
   the high cairn: new site kind on the tops, wights over grave-gold and a graven word,
-  the pilot's climb taking both errands); still open: more fell sites and kinds toward
-  full density, then further regions one at a time (D-131, D-146, D-147)
+  the pilot's climb taking both errands); the season and its news D-149 (the wolf-winter
+  chained off the valley's hard winter, the fang, and scarcity pricing hides in town at
+  freight speed); the third site D-150 (the wolf-gill, the great she-wolf as the first
+  elite beast, the pelt answering the fells' cold, the drover's cache); still open: a
+  possible fourth site or the region's own goods, then further regions one at a time
+  (D-131, D-146, D-147, D-149, D-150)
 
 ### Magic (v1 shipped, D-091)
 

@@ -207,7 +207,7 @@ public sealed class Game
     public List<Mount> Stable { get; } = [];
 
     /// <summary>The beast's cell counts only where the beast is (D-100): its coordinates live on the overworld alone.</summary>
-    private bool MountAt(Pos p) => Mode == MapMode.Overworld && Mount is { } m && m.OnRoad == OnRoad && m.Pos == p;
+    private bool MountAt(Pos p) => Mode == MapMode.Overworld && Mount is { } m && m.Area == Area && m.Pos == p;
 
     /// <summary>
     /// What the pool will actually answer with (D-099): the calling is held,
@@ -247,11 +247,15 @@ public sealed class Game
     public bool Running { get; private set; } = true;
 
     /// <summary>
-    /// Which overworld the bearer walks (D-138): false is the valley, true the
-    /// east road. Site mode remembers it underneath, so climbing out of the
-    /// road's game-trail comes back up on the road.
+    /// Which overworld the bearer walks (D-138, generalized D-146): the
+    /// valley, the east road, or the high fells. Site mode remembers it
+    /// underneath, so climbing out of a game-trail comes back up on the
+    /// ground its mouth opens on.
     /// </summary>
-    public bool OnRoad { get; private set; }
+    public Area Area { get; private set; }
+
+    /// <summary>Legacy read (D-146): true exactly on the road, as the D-138 bool meant it.</summary>
+    public bool OnRoad => Area == Area.Road;
 
     /// <summary>
     /// The people standing on THIS ground (D-138, D-140): every bump, block,
@@ -261,10 +265,15 @@ public sealed class Game
     /// </summary>
     public IEnumerable<Npc> NpcsHere => Mode == MapMode.Site
         ? World.Npcs.Where(n => n.SiteId == CurrentSite!.Id)
-        : World.Npcs.Where(n => n.SiteId is null && n.OnRoad == OnRoad);
+        : World.Npcs.Where(n => n.SiteId is null && n.Area == Area);
 
-    /// <summary>The herb spots of the overworld underfoot (D-138): the valley's or the road's own.</summary>
-    public List<Pos> HerbsHere => OnRoad ? World.RoadHerbs : World.Herbs;
+    /// <summary>The herb spots of the overworld underfoot (D-138, D-146): each country's own.</summary>
+    public List<Pos> HerbsHere => Area switch
+    {
+        Area.Road => World.RoadHerbs,
+        Area.Fells => World.FellHerbs,
+        _ => World.Herbs,
+    };
 
     /// <summary>The site the player is inside, null on the overworld.</summary>
     public Site? CurrentSite { get; private set; }
@@ -1133,7 +1142,7 @@ public sealed class Game
     }
 
     public GameMap CurrentMap => Mode == MapMode.Overworld
-        ? (OnRoad ? World.Road : World.Overworld)
+        ? Area switch { Area.Road => World.Road, Area.Fells => World.Fells, _ => World.Overworld }
         : CurrentSite!.Map;
 
     private string CurrentMapId => CurrentMap.Id;
@@ -1390,13 +1399,13 @@ public sealed class Game
         // The stead's lanes are the valley's (D-138): the wayhouse's walls are
         // a roof on the road, not a neighbor, and the near-house beats are the
         // stead's own talk.
-        if (Mode == MapMode.Overworld && !OnRoad && Directions.All8.Any(d =>
+        if (Mode == MapMode.Overworld && Area == Area.Valley && Directions.All8.Any(d =>
                 map.InBounds(target.Plus(d.dx, d.dy)) && map[target.Plus(d.dx, d.dy)] == Terrain.House))
             _storylets.TryFire(this, StoryletTrigger.NearHouse);
 
         // The high ground's watcher (D-100 stage 2): the wild pony named once,
         // the first time the road brings the bearer close enough to see it see them.
-        if (Mode == MapMode.Overworld && !OnRoad && World.WildPonyPos is { } watcher
+        if (Mode == MapMode.Overworld && Area == Area.Valley && World.WildPonyPos is { } watcher
             && watcher.Chebyshev(target) <= 2 && !World.Facts.Exists("met", "fell_pony"))
         {
             World.Facts.Add("met", "fell_pony", World.SettlementName,
@@ -1415,7 +1424,7 @@ public sealed class Game
         // passes two strides to a key: the same clocks (toll, wounds, the
         // raiders' tick) count half the turns for the distance. The far cell
         // must be plain ground with no one standing on it.
-        if (Mode == MapMode.Overworld && Mount is { } steed && steed.OnRoad == OnRoad
+        if (Mode == MapMode.Overworld && Mount is { } steed && steed.Area == Area
             && steed.Pos.Chebyshev(Player.Pos) <= 2)
         {
             var far = target.Plus(dx, dy);
@@ -1457,7 +1466,7 @@ public sealed class Game
         // The gleaning (D-052): the spots exist in every world; the lesson is
         // what makes them visible and takeable. An untaught step gathers nothing.
         // Valley-taught, valley-found (D-138): the road's verges grow herbs, not caches.
-        if (!OnRoad && Player.HasLesson(LessonId.Gleaning) && World.Gleanings.Contains(tile))
+        if (Area == Area.Valley && Player.HasLesson(LessonId.Gleaning) && World.Gleanings.Contains(tile))
         {
             if (Player.Rations < RationCap)
             {
@@ -1523,15 +1532,23 @@ public sealed class Game
                     ? "The leaguer stands empty around its mere. Wind riffles the black water, and the causeway is only a road now."
                     : "Earth-banks ring a broad black mere, dug by an army and never filled in. On the banks stand figures with boards up and slings hanging ready, and every one of them faces the bare holm at the water's middle. Press > to walk the works.", LogTone.Danger);
             else if (t == Terrain.WildsEntrance)
-                Log.Add(Turn, SiteHere(p)!.Cleared
-                    ? "The game-trail, hunted out for now: cropped grass and old slots, and nothing moving in the glade."
-                    : "A break in the trees where the deer come down to graze. Slots pressed in the mud, a run worn through the treeline, and the light going gold. Press > to hunt.", LogTone.Info);
+                Log.Add(Turn, Area == Area.Fells
+                    ? (SiteHere(p)!.Cleared
+                        ? "The wolves' combe, hunted quiet for now: scattered bones going grey, and the wind owning the ground again."
+                        : "A combe drops out of the heath here, its slopes tracked over and over with broad four-toed prints. Something below answers the wind with a long low note. Press > to go down.")
+                    : (SiteHere(p)!.Cleared
+                        ? "The game-trail, hunted out for now: cropped grass and old slots, and nothing moving in the glade."
+                        : "A break in the trees where the deer come down to graze. Slots pressed in the mud, a run worn through the treeline, and the light going gold. Press > to hunt."), LogTone.Info);
             else if (t == Terrain.RoadMouth)
                 Log.Add(Turn, OnRoad
                     ? "The road bends down off the tops here, and the valley shows between the shoulders of the hills. Press > to turn for home."
                     : "The old drove road leaves the valley here, climbing east between walked-thin banks. Press > to take the road.", LogTone.Info);
             else if (t == Terrain.TownGate)
                 Log.Add(Turn, $"A gate arch of dressed stone in a dry-stone wall, the drove road running under it into lanes and stall-smoke. Over the arch, a worn carving of a laden cart. {World.TownName}. Press > to go in.", LogTone.Info);
+            else if (t == Terrain.FellMouth)
+                Log.Add(Turn, Area == Area.Fells
+                    ? "The drovers' track drops off the fells' edge here, and the road shows below, thin as a drawn line. Press > to climb down."
+                    : $"A drovers' track climbs off the road's shoulder here, up between scree banks onto the {World.FellRegion.Name}. Old pens at the foot of it, long empty. Press > to climb.", LogTone.Info);
             else if (t == Terrain.SonghallEntrance)
                 Log.Add(Turn, "The stead's songhall: turf roof, smoke at the roof-hole, and low singing sometimes when the wind sits right. Press > to step in.", LogTone.Info);
             else if (t == Terrain.HarrowEntrance)
@@ -1654,12 +1671,12 @@ public sealed class Game
     /// </summary>
     private void StepRegen()
     {
-        if (OnRoad && Mode == MapMode.Overworld && Sky != RoadSky.Clear) return;
+        if (Area != Area.Valley && Mode == MapMode.Overworld && Sky != RoadSky.Clear) return;
         Player.Stamina = Math.Min(Player.MaxStamina, Player.Stamina + 1);
     }
 
     /// <summary>The site whose mouth is at this position on THIS overworld (D-138).</summary>
-    private Site? SiteHere(Pos p) => World.Sites.FirstOrDefault(s => s.OnRoad == OnRoad && s.OverworldPos == p);
+    private Site? SiteHere(Pos p) => World.Sites.FirstOrDefault(s => s.Area == Area && s.OverworldPos == p);
 
     /// <summary>The sky read aloud (D-138): said on taking the road, and again whenever the tick turns it.</summary>
     private string SkyLine() => Sky switch
@@ -1682,6 +1699,9 @@ public sealed class Game
         // way east, and the way home again.
         if (Mode == MapMode.Overworld && CurrentMap[Player.Pos] == Terrain.RoadMouth)
             return TakeTheRoad();
+        // The drovers' track (D-146): the way up onto the fells, and down again.
+        if (Mode == MapMode.Overworld && CurrentMap[Player.Pos] == Terrain.FellMouth)
+            return TakeTheTrack();
 
         if (Mode == MapMode.Overworld && SiteHere(Player.Pos) is { } site)
         {
@@ -1710,7 +1730,7 @@ public sealed class Game
                 }
                 else
                     Log.Add(Turn, $"{Cap(spooked.Name)} will not stand this ground: ears flat, it turns and is gone for home.", LogTone.Info);
-                spooked.OnRoad = false; // home is the stead's byre, whatever ground it bolted from (D-138)
+                spooked.Area = Area.Valley; // home is the stead's byre, whatever ground it bolted from (D-138)
                 Stable.Add(spooked);
                 Mount = null;
             }
@@ -1751,7 +1771,7 @@ public sealed class Game
             if (site.Kind == SiteKind.GoblinCamp) GreetTheRoster();
             return true;
         }
-        if (Mode == MapMode.Overworld && !OnRoad && Player.Pos == World.GatePos)
+        if (Mode == MapMode.Overworld && Area == Area.Valley && Player.Pos == World.GatePos)
         {
             if (!CampCleared)
             {
@@ -1783,14 +1803,14 @@ public sealed class Game
     /// </summary>
     private bool TakeTheRoad()
     {
-        bool toRoad = !OnRoad;
+        bool toRoad = Area == Area.Valley;
         var steed = Mount;
-        bool steedComes = steed is not null && steed.OnRoad == OnRoad && steed.Pos.Chebyshev(Player.Pos) <= 2;
-        OnRoad = toRoad;
+        bool steedComes = steed is not null && steed.Area == Area && steed.Pos.Chebyshev(Player.Pos) <= 2;
+        Area = toRoad ? Area.Road : Area.Valley;
         Player.Pos = toRoad ? World.RoadHomePos : World.RoadMouthPos;
         if (steedComes)
             PlaceMountBeside(Player.Pos);
-        else if (steed is not null && steed.OnRoad != OnRoad)
+        else if (steed is not null && steed.Area != Area)
             Log.Add(Turn, $"{Cap(steed.Name)} is not at your side for the crossing of the mouth; it keeps its own ground, grazing, and will be there when you come back this way.", LogTone.Info);
         PlaceFellowsBeside(Player.Pos);
         if (toRoad)
@@ -1801,6 +1821,35 @@ public sealed class Game
         else
         {
             Log.Add(Turn, $"You come down off the drove road into the {World.ValleyRegion.Name}, and the valley opens under you: {World.SettlementName}'s smoke standing where it always stood.", LogTone.Info);
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// The drovers' track taken, either direction (D-146): the bearer climbs
+    /// between the road and the high fells at the track's mouth. The beasts'
+    /// lane holds here exactly as at the road mouth (D-100, D-138).
+    /// </summary>
+    private bool TakeTheTrack()
+    {
+        bool toFells = Area == Area.Road;
+        var steed = Mount;
+        bool steedComes = steed is not null && steed.Area == Area && steed.Pos.Chebyshev(Player.Pos) <= 2;
+        Area = toFells ? Area.Fells : Area.Road;
+        Player.Pos = toFells ? World.FellHomePos : World.FellMouthPos;
+        if (steedComes)
+            PlaceMountBeside(Player.Pos);
+        else if (steed is not null && steed.Area != Area)
+            Log.Add(Turn, $"{Cap(steed.Name)} is not at your side for the climb; it keeps its own ground, grazing, and will be there when you come back down.", LogTone.Info);
+        PlaceFellowsBeside(Player.Pos);
+        if (toFells)
+        {
+            Log.Add(Turn, $"You take the drovers' track up off the road's shoulder and onto the {World.FellRegion.Name}: heath to every horizon, scree walling the ways, and not a roof in any of it. Whatever the night wants up here, a camp is the only answer you carry.", LogTone.Info);
+            Log.Add(Turn, SkyLine(), LogTone.Info);
+        }
+        else
+        {
+            Log.Add(Turn, $"You come down off the {World.FellRegion.Name} with the wind at your back, and the road takes you again: cart ruts, mile-worn ground, the {World.RoadRegion.Name}'s own long line east and west.", LogTone.Info);
         }
         return true;
     }
@@ -1821,16 +1870,16 @@ public sealed class Game
             Log.Add(Turn, "No camp is made below ground. The dark is not for sleeping in.");
             return false;
         }
-        if (CurrentMap[Player.Pos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills))
+        if (CurrentMap[Player.Pos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills or Terrain.Heath))
         {
-            Log.Add(Turn, "Not here. A camp wants plain ground: grass, the wood's edge, or the lee of a hill.");
+            Log.Add(Turn, "Not here. A camp wants plain ground: grass, heath, the wood's edge, or the lee of a hill.");
             return false;
         }
 
         var (meat, made) = CookPlan();
         if (Player.Rations == 0 && (meat == 0 || made == 0))
         {
-            if (OnRoad && Sky == RoadSky.Cold)
+            if (Area != Area.Valley && Sky == RoadSky.Cold)
             {
                 Log.Add(Turn, "A supperless camp under this wind is how walkers are found at the spring thaw. You keep your feet instead.", LogTone.Danger);
                 return false;
@@ -1849,11 +1898,14 @@ public sealed class Game
             Log.Add(Turn, $"You build the fire up and spit {meat} cut{(meat == 1 ? "" : "s")} over it, the way the woodward would: {made} ration{(made == 1 ? "" : "s")} for the road. ({Player.Rations} carried, {Player.RawMeat} raw left)", LogTone.Reward);
         }
 
-        bool foul = OnRoad && Sky != RoadSky.Clear;
+        bool foul = Area != Area.Valley && Sky != RoadSky.Clear;
         Player.Rations--;
         int hpBefore = Player.Hp;
         int heal = RoadLife.CampHealBase + RoadLife.CampHealPerSurvival * Player.Skills.Level(SkillId.Survival);
         if (foul) heal /= 2;
+        // The fells' cold has no lee (D-146): the frontier's exposure bites a
+        // second time, so a cold night up there mends a quarter at best.
+        if (Area == Area.Fells && Sky == RoadSky.Cold) heal /= 2;
         Player.Hp = Math.Min(Player.EffectiveMaxHp, Player.Hp + heal);
         Player.Stamina = Player.MaxStamina;
         Player.Focus = Player.MaxFocus;
@@ -2008,7 +2060,7 @@ public sealed class Game
         _deathHand = null;
 
         Mode = MapMode.Overworld;
-        OnRoad = false; // every world is entered from its own valley (D-138)
+        Area = Area.Valley; // every world is entered from its own valley (D-138)
         Player.Pos = World.ShrinePos;
         Player.WoundedTurns = 0;
         // The crossing wipes the count clean (D-098): a fresh world, a rested
@@ -2299,7 +2351,7 @@ public sealed class Game
         // wants the next door must find an angle their conscience is not standing on.
         // The wayhouse is not the stead's larder (D-138): its walls are a roof,
         // not a door ledger, and the crime family's ground stays the valley's.
-        if (Mode == MapMode.Overworld && !OnRoad)
+        if (Mode == MapMode.Overworld && Area == Area.Valley)
         {
             foreach (var (dx, dy) in Directions.All8)
             {
@@ -2931,6 +2983,9 @@ public sealed class Game
             ("The road", $"\"{sky} {trail}\""),
             ("The wayhouse", "\"Older than me, older than the stead down the valley, and it will outlast us both. A wayhouse is not built, walker, it accretes: every roof-tree in it was carried up by someone who swore once was enough.\""),
             ("The far country", $"\"{World.TownName}, they call it: the gate is a few steps past my door, you can smell the ovens from the yard on a west wind. Market, moot-stone, a wall with opinions. I sleep out here. A town is a fine thing to stand next to.\""),
+            ("The fells", World.FellWildsSite.Cleared
+                ? $"\"The {World.FellRegion.Name}, up the drovers' track north of the road. Quiet lately, I hear: somebody thinned the pack. It will not stay thinned. Wolf-country never does.\""
+                : $"\"The {World.FellRegion.Name}, up the drovers' track north of the road. No roof, no law, and wolves that hunt in company. The hides come down worth the climb, when the climber comes down with them. Take a supper you can burn.\""),
         ];
     }
 
@@ -5397,10 +5452,10 @@ public sealed class Game
         // The wild fell pony (D-100 stage 2): bread offered on the high ground,
         // before every other meaning of the key: a taming in progress is not
         // interrupted by anyone's saddlebags.
-        if (Mode == MapMode.Overworld && !OnRoad && World.WildPonyPos is { } wildPos && wildPos.Chebyshev(Player.Pos) == 1)
+        if (Mode == MapMode.Overworld && Area == Area.Valley && World.WildPonyPos is { } wildPos && wildPos.Chebyshev(Player.Pos) == 1)
             return DoFeedWildPony(wildPos);
 
-        bool muleBeside = Mode == MapMode.Overworld && Mount is { } steed && steed.OnRoad == OnRoad
+        bool muleBeside = Mode == MapMode.Overworld && Mount is { } steed && steed.Area == Area
             && steed.Pos.Chebyshev(Player.Pos) == 1;
         var fellow = Guest is { Alive: true } ? Guest : Shade;
         if (fellow is not { Alive: true } guest)
@@ -5853,6 +5908,7 @@ public sealed class Game
             MonsterKind.Warder => _combatRng.Range(2, 6),
             MonsterKind.Thegn => _combatRng.Range(3, 7),
             MonsterKind.Hart => 0,
+            MonsterKind.Wolf => 0,
             _ => _combatRng.Range(2, 7),
         };
         int essence = target.Kind switch
@@ -5866,6 +5922,7 @@ public sealed class Game
             MonsterKind.Warder => 9,
             MonsterKind.Thegn => 12,
             MonsterKind.Hart => 0,
+            MonsterKind.Wolf => 0,
             _ => 5,
         };
         // The lean dark (D-051): the dark yields half its essence, rounded
@@ -5877,7 +5934,10 @@ public sealed class Game
         // a hide for the woodward and meat for the pot, and the woodcraft of having
         // taken it. The Hunting skill fattens the take, a hide or two more the higher
         // it climbs. The skill-use is granted here, the one place every kill-path meets.
-        bool game = target.Kind == MonsterKind.Hart;
+        // The moor-wolf is the hunt's second head (D-146): game like the hart,
+        // essence-less and purse-less, all hide and meat: the fells pay their
+        // way down the same ladder the glade opened.
+        bool game = target.Kind is MonsterKind.Hart or MonsterKind.Wolf;
         int hides = 0;
         if (game)
         {
@@ -5908,6 +5968,7 @@ public sealed class Game
             MonsterKind.Warder => $"The sling-warder sits down against the bank like a man at the end of a long watch, and does not get up. You take {coin} coin and {essence} essence.",
             MonsterKind.Thegn => $"The sword-thegn lowers its point and folds down without a sound, the way it did everything: unhurried, and at last relieved of a watch no one remembered setting. You take {coin} coin and {essence} essence.",
             MonsterKind.Hart => $"The hart drops at the end of its run. You take the hide{(hides > 1 ? $", {hides} good pieces," : "")} and the raw meat, to cook at a fire. ({Player.Hide} hides, {Player.RawMeat} raw meat)",
+            MonsterKind.Wolf => $"The moor-wolf goes down snapping and is still. A thick winter pelt{(hides > 1 ? $", {hides} good pieces," : "")} and the raw meat, dark and lean, for a braver fire than most. ({Player.Hide} hides, {Player.RawMeat} raw meat)",
             _ => $"The {target.Name} falls. You take {coin} coin and {essence} essence.",
         }, LogTone.Reward);
         // The dens count their dead (D-078): every raider felled deepens the
@@ -7889,7 +7950,7 @@ public sealed class Game
             if (sky != Sky)
             {
                 Sky = sky;
-                if (OnRoad && Mode == MapMode.Overworld)
+                if (Area != Area.Valley && Mode == MapMode.Overworld)
                     Log.Add(Turn, SkyLine(), LogTone.Info);
             }
 
@@ -8013,6 +8074,7 @@ public sealed class Game
                     IntentKind.ThroatLunge => _combatRng.Range(6, 10),
                     IntentKind.SeaxStab => _combatRng.Range(6, 10),
                     IntentKind.MeasuredCut => _combatRng.Range(5, 9),
+                    IntentKind.Pounce => _combatRng.Range(5, 9),
                     _ => _combatRng.Range(4, 7),
                 };
                 if (intent.Kind == IntentKind.BoarCharge)
@@ -8103,6 +8165,7 @@ public sealed class Game
                         IntentKind.HurledStone => $"The hurled stone takes you square for {damage}!",
                         IntentKind.GravenFist => $"The graven fist comes down like a falling lintel for {damage}!",
                         IntentKind.ThroatLunge => $"The iron hound hits you full-length, jaws first, for {damage}!",
+                        IntentKind.Pounce => $"The moor-wolf comes off the ground whole, and its weight and its teeth arrive together for {damage}!",
                         IntentKind.SeaxStab => $"The seax comes over the board's rim and finds you for {damage}!",
                         IntentKind.MeasuredCut => intent.FeintCell is not null
                             ? $"The mark was the lie. The thegn's point was always coming here, and it opens you for {damage}!"
@@ -8208,6 +8271,7 @@ public sealed class Game
         if (monster.Kind == MonsterKind.Carl) { ActCarl(monster); return; }
         if (monster.Kind == MonsterKind.Boar) { ActBoar(monster); return; }
         if (monster.Kind == MonsterKind.Hart) { ActHart(monster); return; }
+        if (monster.Kind == MonsterKind.Wolf) { ActWolf(monster); return; }
         if (monster.Kind == MonsterKind.Warder) { ActWarder(monster); return; }
         if (monster.Kind == MonsterKind.Thegn) { ActThegn(monster); return; }
 
@@ -8397,7 +8461,7 @@ public sealed class Game
         if (Mode != MapMode.Overworld || Mount is not { } steed) return;
         // A beast on the other overworld (D-138) is grazing, not following:
         // its position means nothing on the map underfoot.
-        if (steed.OnRoad != OnRoad) return;
+        if (steed.Area != Area) return;
         if (steed.Pos.Chebyshev(Player.Pos) <= 1) return;
         var map = CurrentMap;
         var best = steed.Pos;
@@ -8421,8 +8485,8 @@ public sealed class Game
         var steed = Mount!;
         // The beast is set down on the overworld underfoot (D-138): beside the
         // bearer is beside the bearer, whichever map that is.
-        steed.OnRoad = OnRoad;
-        var map = OnRoad ? World.Road : World.Overworld;
+        steed.Area = Area;
+        var map = Area switch { Area.Road => World.Road, Area.Fells => World.Fells, _ => World.Overworld };
         foreach (var (dx, dy) in Directions.All8)
         {
             var cell = anchor.Plus(dx, dy);
@@ -8758,6 +8822,62 @@ public sealed class Game
             Log.Add(Turn, "The hart finds a run in the treeline and takes it, and the wood closes behind it. Lost.", LogTone.Info);
             CheckSiteCleared(CurrentSite!);
         }
+    }
+
+    /// <summary>
+    /// The fells' pack (D-146): the moor-wolf, the frontier's own beast and
+    /// the hunt's first prey that hunts back. Three rules make the pack read
+    /// as a pack. It closes from far off. At the ring's edge it commits only
+    /// in company: a wolf within reach of the bearer holds off until a
+    /// packmate stands near too (the last wolf alive is past caring and
+    /// commits alone). And its committed blow is the pounce, a telegraphed
+    /// spring from a stride out (a new tell for the bestiary, D-059's lane),
+    /// where the hound only ever lunges from touch. At touch it bites plain,
+    /// worse for every packmate at the bearer's back.
+    /// </summary>
+    private void ActWolf(Monster monster)
+    {
+        int dist = monster.Pos.Chebyshev(Player.Pos);
+        int packNear = Monsters.Count(m => m.Alive && m != monster && m.Kind == MonsterKind.Wolf
+            && m.SiteId == monster.SiteId && m.Pos.Chebyshev(Player.Pos) <= 3);
+        int atTheThroat = Monsters.Count(m => m.Alive && m != monster && m.Kind == MonsterKind.Wolf
+            && m.SiteId == monster.SiteId && m.Pos.Chebyshev(Player.Pos) == 1);
+        bool lastOfPack = !Monsters.Any(m => m.Alive && m != monster && m.Kind == MonsterKind.Wolf
+            && m.SiteId == monster.SiteId);
+
+        if (dist == 1)
+        {
+            if (_combatRng.Chance(Player.DodgeChance))
+            {
+                Log.Add(Turn, "The moor-wolf's teeth close on the hem of your coat and nothing else.", LogTone.Combat);
+            }
+            else
+            {
+                // The bite worries worse in company, but wolves work a prey in
+                // shifts, not a pile: the bonus is capped where the closing is.
+                int damage = Absorb(_combatRng.Range(2, 4) + Math.Min(packNear, 2));
+                Player.Hp -= damage;
+                Log.Add(Turn, packNear > 0
+                    ? $"Teeth from the side you were not watching: the pack works you for {damage}."
+                    : $"The moor-wolf's bite worries you for {damage}.", LogTone.Combat);
+            }
+            return;
+        }
+
+        if (monster.Intent is null && dist == 2 && (packNear >= 1 || lastOfPack)
+            && atTheThroat < 2 && _combatRng.Chance(0.5))
+        {
+            monster.Intent = new Intent { Kind = IntentKind.Pounce, TargetCell = Player.Pos };
+            Log.Add(Turn, "The moor-wolf drops low, haunches gathering: the spring is coming!", LogTone.Danger);
+            return;
+        }
+
+        // The pack works in shifts (the wolves' own mercy, and the fight's
+        // fairness): with two already at the throat, the rest hold the ring.
+        if (dist <= 12 && (packNear >= 1 || lastOfPack || dist > 3)
+            && (atTheThroat < 2 || dist > 3))
+            StepBfsToward(monster);
+        // A lone wolf at the ring's edge holds, circling, and waits for the pack.
     }
 
     /// <summary>The flee (D-070): a greedy step keeping the most distance from the bearer, the mirror of <see cref="StepToward"/>. No open step that gains distance means cornered: the hart holds, and a bump ends it.</summary>
@@ -9205,6 +9325,25 @@ public sealed class Game
         // Dying in the camp leaves the bloodied breathing (D-110): the scars
         // are remembered on this exit like any other.
         if (CurrentSite is { Kind: SiteKind.GoblinCamp }) MarkTheScarred();
+        // The pack draws off with its kill (D-146): wolves that pulled the
+        // bearer down go home to their own ground, so the walk back in is
+        // the walk it was the first time, never a door ambush.
+        if (CurrentSite is { } combe
+            && Monsters.Any(m => m.Alive && m.SiteId == combe.Id && m.Kind == MonsterKind.Wolf))
+        {
+            var taken = new HashSet<Pos>();
+            foreach (var wolf in Monsters.Where(m => m.Alive && m.SiteId == combe.Id && m.Kind == MonsterKind.Wolf))
+            {
+                var den = combe.Spawns.Select(s => s.Pos)
+                    .Where(sp => !taken.Contains(sp))
+                    .OrderBy(sp => sp.Manhattan(wolf.Pos))
+                    .DefaultIfEmpty(wolf.Pos)
+                    .First();
+                taken.Add(den);
+                wolf.Pos = den;
+            }
+            Log.Add(Turn, "What the pack wanted, it has. The wolves draw off to their own ground with it, and the combe goes quiet behind you.", LogTone.Info);
+        }
         // Death lines carry register, never plot (arc sec 4): worried once the
         // ledger is known, candid between equals once the threshold is answered.
         int register = Player.Resolution != Resolution.None ? 3 : Player.LedgerHeard ? 2 : 1;
@@ -9212,7 +9351,7 @@ public sealed class Game
 
         Mode = MapMode.Overworld;
         CurrentSite = null;
-        OnRoad = false; // the Aegis catches the bearer where it anchors (D-138)
+        Area = Area.Valley; // the Aegis catches the bearer where it anchors (D-138)
         Player.Pos = World.ShrinePos;
         // Whoever still walked with you kept the road home (D-097): the guest
         // is at the shrine when you wake, and says nothing about the carrying.
@@ -9449,6 +9588,7 @@ public sealed class Game
         StoryletsFired: StoryletsFired,
         CampCleared: CampCleared,
         OnRoad: OnRoad,
+        Area: Area.ToString().ToLowerInvariant(),
         RoadSky: Sky.ToString().ToLowerInvariant(),
         RemnantExists: Remnant is not null,
         RemnantMap: Remnant?.MapId ?? "",
@@ -9614,6 +9754,7 @@ public sealed record Snapshot(
     int StoryletsFired,
     bool CampCleared,
     bool OnRoad,
+    string Area,
     string RoadSky,
     bool RemnantExists,
     string RemnantMap,

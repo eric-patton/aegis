@@ -12,9 +12,9 @@ public class BarrowTests
             var t1 = WorldGen.Generate(seed);
             Assert.Null(t1.BarrowSite);
             // A first world's valley holds the camp, the songhall (D-054), and
-            // the harrow (D-114), and no den deeper; the road keeps its own
-            // sites off the valley's count (D-138).
-            Assert.Equal(3, t1.Sites.Count(s => !s.OnRoad));
+            // the harrow (D-114), and no den deeper; the road and the fells
+            // keep their own sites off the valley's count (D-138, D-146).
+            Assert.Equal(3, t1.Sites.Count(s => s.Area == Area.Valley));
             Assert.False(t1.Facts.Exists("site", "barrow"));
 
             var t2 = WorldGen.Generate(seed, tier: 2);

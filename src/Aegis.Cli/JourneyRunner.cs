@@ -142,6 +142,8 @@ public static class JourneyRunner
         // The east road (D-138): mouths taken and nights camped, travel-as-play's own tallies.
         int roadsTaken = 0;
         int nightsCamped = 0;
+        // The high fells (D-146): climbs onto the frontier, the third country's tally.
+        int fellsTaken = 0;
         // The market town (D-140): gates walked; the lots sold are Commerce's own uses.
         int marketsWalked = 0;
         // The school and the bond (D-141): forge sittings, and bonds sworn world by world.
@@ -189,6 +191,16 @@ public static class JourneyRunner
             }
 
             char? key = JourneyPilot.NextKey(game, skip, wits);
+            // The door counts as the site (D-146's lesson): a death on the very
+            // key that steps in (a pack waiting at the mouth) must land on the
+            // site's own death budget, or the give-up machinery never sees a
+            // site that kills at its threshold and the run loops on the door.
+            if (activeSite is null && key == '>' && game.Mode == MapMode.Overworld
+                && game.World.Sites.FirstOrDefault(s => s.Area == game.Area
+                    && s.OverworldPos == game.Player.Pos) is { } entering
+                && !entering.Cleared && !skip.Contains(entering.Id)
+                && entering.Kind != SiteKind.GoblinCamp)
+                activeSite = entering.Id;
             if (key is null)
             {
                 // Cannot win or even reach a foe here: write the site off and move on.
@@ -226,7 +238,7 @@ public static class JourneyRunner
             bool muleBefore = OwnsBeast(game, MountKind.Mule);
             bool courserBefore = OwnsBeast(game, MountKind.Courser);
             int bagsBefore = TotalBags(game);
-            bool onRoadBefore = game.OnRoad;
+            var areaBefore = game.Area;
             int turnBefore = game.Turn;
             bool inTownBefore = game.CurrentSite?.Kind == SiteKind.Town;
             int smithUsesBefore = game.Player.Skills.Uses(SkillId.Smithing);
@@ -315,7 +327,8 @@ public static class JourneyRunner
             coinBanked += Math.Max(0, TotalBags(game) - bagsBefore);
             // The east road (D-138): the mouth flips the flag, and a camp key
             // that took time is a night passed at the fire, cold or fed.
-            if (!onRoadBefore && game.OnRoad) roadsTaken++;
+            if (areaBefore == Area.Valley && game.Area == Area.Road) roadsTaken++;
+            if (areaBefore == Area.Road && game.Area == Area.Fells) fellsTaken++;
             if (key == 'm' && game.Turn > turnBefore) nightsCamped++;
             // The gate walked (D-140): each entry into the town is a market day.
             if (!inTownBefore && game.CurrentSite?.Kind == SiteKind.Town) marketsWalked++;
@@ -416,6 +429,7 @@ public static class JourneyRunner
                 CoinBanked: coinBanked,
                 RoadsTaken: roadsTaken,
                 NightsCamped: nightsCamped,
+                FellsTaken: fellsTaken,
                 MarketsWalked: marketsWalked,
                 LotsSoldInTown: game.Player.Skills.Uses(SkillId.Commerce),
                 ForgeSittings: forgeSittings,
@@ -460,7 +474,7 @@ public static class JourneyRunner
             herbsForaged, herbsSold, coinFromHerbs, draughtsDrawn, draughtsDrunk,
             wordsLearned, wardsSaid, shadesCalled,
             mulesBought, coursersTaken, coinBanked,
-            roadsTaken, nightsCamped,
+            roadsTaken, nightsCamped, fellsTaken,
             marketsWalked, game.Player.Skills.Uses(SkillId.Commerce), game.Player.Skills.Level(SkillId.Commerce),
             forgeSittings, bondsSworn, game.Player.Skills.Level(SkillId.Smithing),
             saltBought, saltSold,
@@ -545,7 +559,7 @@ public static class JourneyRunner
         int draughtsDrawn, int draughtsDrunk,
         int wordsLearned, int wardsSaid, int shadesCalled,
         int mulesBought, int coursersTaken, int coinBanked,
-        int roadsTaken, int nightsCamped,
+        int roadsTaken, int nightsCamped, int fellsTaken,
         int marketsWalked, int lotsSold, int commerceLevel,
         int forgeSittings, int bondsSworn, int smithingLevel,
         int saltBought, int saltSold,
@@ -632,6 +646,8 @@ public static class JourneyRunner
             w.WriteLine($"         the roads: bought the stead's mule {mulesBought} time(s); the raiders' courser answered the deed {coursersTaken} time(s); the saddlebags carried {coinBanked} coin all told (D-100).");
         if (roadsTaken > 0)
             w.WriteLine($"         the east road: took the mouth {roadsTaken} time(s) and camped {nightsCamped} night(s) on the way (D-138): travel as play, the D-006 box opened.");
+        if (fellsTaken > 0)
+            w.WriteLine($"         the frontier: climbed the drovers' track {fellsTaken} time(s) onto the high fells and hunted the pack's ground, the hides carried down to the town's counter (D-146).");
         if (marketsWalked > 0)
             w.WriteLine($"         the market: walked {marketsWalked} town gate(s) and sold {lotsSold} lot(s) at town prices; Commerce stands at level {commerceLevel} (D-140).");
         if (forgeSittings + bondsSworn > 0)
@@ -692,7 +708,7 @@ internal sealed record JourneyReport(
     int DraughtsDrawn, int DraughtsDrunk,
     int WordsLearned, int WardsSaid, int ShadesCalled,
     int MulesBought, int CoursersTaken, int CoinBanked,
-    int RoadsTaken, int NightsCamped,
+    int RoadsTaken, int NightsCamped, int FellsTaken,
     int MarketsWalked, int LotsSoldInTown,
     int ForgeSittings, int BondsSworn,
     int SaltBought, int SaltSold,

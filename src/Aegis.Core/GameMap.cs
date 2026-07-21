@@ -34,6 +34,22 @@ public enum Terrain : byte
     HarrowEntrance,
     RoadMouth,
     TownGate,
+    Heath,
+    Scree,
+    FellMouth,
+}
+
+/// <summary>
+/// Which overworld a thing stands on (D-146): the D-138 road promoted the
+/// question past "the valley or not", and the fells promote it past a bool.
+/// Sites, folk, beasts, and the bearer all carry one; the crossing of a mouth
+/// is the only thing that changes it.
+/// </summary>
+public enum Area : byte
+{
+    Valley,
+    Road,
+    Fells,
 }
 
 public static class TerrainInfo
@@ -43,6 +59,7 @@ public static class TerrainInfo
         Terrain.Water => false,
         Terrain.Wall => false,
         Terrain.House => false,
+        Terrain.Scree => false, // the fells' shattered rock (D-146): feet find no purchase.
         _ => true,
     };
 

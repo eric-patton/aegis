@@ -15,9 +15,11 @@ public class RegionTests
     public void TheWorld_NamesItsCountries()
     {
         var game = new Game(42);
-        Assert.Equal(2, game.World.Regions.Count);
+        // Two countries at D-143's landing; the fells made a third (D-146).
+        Assert.Equal(3, game.World.Regions.Count);
         Assert.Equal(game.World.Regions[0], game.World.ValleyRegion);
         Assert.Equal(game.World.Regions[1], game.World.RoadRegion);
+        Assert.Equal(game.World.Regions[2], game.World.FellRegion);
         Assert.False(string.IsNullOrEmpty(game.World.ValleyRegion.Name));
         Assert.False(string.IsNullOrEmpty(game.World.RoadRegion.Name));
 

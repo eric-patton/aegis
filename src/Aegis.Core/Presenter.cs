@@ -689,7 +689,7 @@ public static class Presenter
 
         // The gleanings (D-052): drawn only for a bearer taught to see them.
         // Valley caches are the valley's (D-138); the road grows only herbs.
-        if (game.Mode == MapMode.Overworld && !game.OnRoad && game.Player.HasLesson(LessonId.Gleaning))
+        if (game.Mode == MapMode.Overworld && game.Area == Area.Valley && game.Player.HasLesson(LessonId.Gleaning))
             foreach (var spot in game.World.Gleanings)
                 PutWorld(spot, '"', Hue.Green);
 
@@ -726,6 +726,7 @@ public static class Presenter
                 MonsterKind.Boar => 'b',
                 MonsterKind.Warder => 'v',
                 MonsterKind.Thegn => 't',
+                MonsterKind.Wolf => 'f',
                 _ => 'g',
             };
             // The chief told apart on the map (D-113): the roster's leader is a
@@ -747,6 +748,8 @@ public static class Presenter
                 MonsterKind.Warder => monster.Dormant && !(game.CurrentSite?.Unveiled ?? false) ? Hue.DarkGray : Hue.DarkGreen,
                 // The sword-thegn stands steel-grey and still, giving nothing away.
                 MonsterKind.Thegn => Hue.Gray,
+                // The moor-wolf in heath-grey (D-146): part of the ground until it moves.
+                MonsterKind.Wolf => Hue.Gray,
                 _ => Hue.Red,
             };
             PutWorld(monster.Pos, ch, monster.Intent is null ? calm : Hue.White,
@@ -763,9 +766,9 @@ public static class Presenter
         // The beast of the road (D-100): overworld only; below ground it is
         // exactly where it is drawn not to be. The wild pony in the watcher's
         // gray until it is won.
-        if (game.Mode == MapMode.Overworld && game.Mount is { } steed && steed.OnRoad == game.OnRoad)
+        if (game.Mode == MapMode.Overworld && game.Mount is { } steed && steed.Area == game.Area)
             PutWorld(steed.Pos, 'm', Hue.DarkYellow);
-        if (game.Mode == MapMode.Overworld && !game.OnRoad && game.World.WildPonyPos is { } wild)
+        if (game.Mode == MapMode.Overworld && game.Area == Area.Valley && game.World.WildPonyPos is { } wild)
             PutWorld(wild, 'm', Hue.DarkGray);
 
         PutWorld(game.Player.Pos, '@', Hue.White);
@@ -798,6 +801,9 @@ public static class Presenter
         Terrain.HarrowEntrance => ('A', Hue.White, Hue.Black),
         Terrain.RoadMouth => ('=', Hue.DarkYellow, Hue.Black),
         Terrain.TownGate => ('Q', Hue.Yellow, Hue.Black),
+        Terrain.Heath => (',', Hue.DarkYellow, Hue.Black),
+        Terrain.Scree => ('%', Hue.DarkGray, Hue.Black),
+        Terrain.FellMouth => ('=', Hue.Gray, Hue.Black),
         _ => ('?', Hue.Magenta, Hue.Black),
     };
 
@@ -941,6 +947,7 @@ public static class Presenter
                     IntentKind.GraveChill => "! grave-cold gathering",
                     IntentKind.MeasuredCut => "! the measured cut marked",
                     IntentKind.BoardCheck => "! the linden board squared to check",
+                    IntentKind.Pounce => "! the pounce gathering",
                     _ => "! crushing blow poised",
                 };
                 if (tier == ReadTier.Keen) named += Weight(monster.Intent!.Kind);
@@ -952,15 +959,16 @@ public static class Presenter
         }
         else
         {
-            // The road names itself and its sky (D-138): weather is a standing
-            // condition out east, and the panel says what the body feels.
-            if (game.OnRoad)
+            // The road names itself and its sky (D-138), and the fells theirs
+            // (D-146): weather is a standing condition off the valley, and
+            // the panel says what the body feels.
+            if (game.Area != Area.Valley)
             {
-                Line("The east road", Hue.White);
+                Line(game.Area == Area.Fells ? $"The {game.World.FellRegion.Name}" : "The east road", Hue.White);
                 Line(game.Sky switch
                 {
                     RoadSky.Rain => "Sky: rain, the road soaks",
-                    RoadSky.Cold => "Sky: cold wind off the tops",
+                    RoadSky.Cold => game.Area == Area.Fells ? "Sky: killing cold, no lee" : "Sky: cold wind off the tops",
                     _ => "Sky: clear, good walking",
                 }, game.Sky == RoadSky.Clear ? Hue.DarkGreen : Hue.DarkCyan);
             }
@@ -988,6 +996,8 @@ public static class Presenter
                 Line(game.OnRoad ? "Road mouth: > turns for home" : "Road mouth: > takes the road", Hue.DarkYellow);
             if (here == Terrain.TownGate)
                 Line($"{game.World.TownName}'s gate: > goes in", Hue.Yellow);
+            if (here == Terrain.FellMouth)
+                Line(game.Area == Area.Fells ? "Drovers' track: > climbs down" : "Drovers' track: > takes the fells", Hue.Gray);
             foreach (var npc in game.NpcsHere)
                 if (npc.Pos.Chebyshev(p.Pos) == 1)
                     Line($"{npc.Name}: bump to talk", Hue.Green);

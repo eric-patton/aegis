@@ -15,11 +15,14 @@ public sealed class Mount
     public required Pos Pos { get; set; }
 
     /// <summary>
-    /// Which overworld the beast stands on (D-138): a beast at the bearer's
-    /// side takes the road mouth with them; one left grazing keeps its own
-    /// map, and its position means nothing on the other.
+    /// Which overworld the beast stands on (D-138, generalized D-146): a
+    /// beast at the bearer's side takes a mouth with them; one left grazing
+    /// keeps its own map, and its position means nothing on another.
     /// </summary>
-    public bool OnRoad { get; set; }
+    public Area Area { get; set; }
+
+    /// <summary>Legacy read (D-146): true exactly on the road, as the D-138 bool meant it.</summary>
+    public bool OnRoad => Area == Area.Road;
 
     /// <summary>
     /// Coin ridden in the saddlebags (D-100): what the beast carries does not
@@ -56,7 +59,8 @@ public static class MountCatalog
     /// fastest road there is.
     /// </summary>
     public static bool Strides(MountKind kind, Terrain t) =>
-        t == Terrain.Grass || (kind == MountKind.Courser && t is Terrain.Hills or Terrain.Forest);
+        t == Terrain.Grass || (kind == MountKind.Courser && t is Terrain.Hills or Terrain.Forest)
+        || (kind == MountKind.FellPony && t == Terrain.Heath); // bred to the high ground (D-146)
 
     /// <summary>Only the fell pony keeps its nerve at an uncanny mouth (D-100 stage 2); the others bolt for home.</summary>
     public static bool Spooks(MountKind kind) => kind != MountKind.FellPony;

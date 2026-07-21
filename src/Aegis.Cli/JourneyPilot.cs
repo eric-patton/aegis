@@ -183,10 +183,13 @@ public static class JourneyPilot
                 return TownMove(g);
             // Still work to do here: clear it. The wilds is hunted, not fought (D-070):
             // game flees, so the generic close-and-bump never catches it; the hunt loosens
-            // a shaft at a hart on a clear line, or herds it into a corner. Otherwise climb
-            // back to daylight.
+            // a shaft at a hart on a clear line, or herds it into a corner. The fells'
+            // combe (D-146) is a wilds whose game hunts back: the pack is fought, bow
+            // first, not chased like deer. Otherwise climb back to daylight.
             if (!site.Cleared && !skip.Contains(site.Id))
-                return site.Kind == SiteKind.Wilds ? HuntMove(g) : FightOrApproach(g);
+                return site.Kind == SiteKind.Wilds
+                    && g.LiveMonstersHere.All(m => m.Kind != MonsterKind.Wolf)
+                    ? HuntMove(g) : FightOrApproach(g);
             // Held, foes down: open the site's own chest before leaving (D-066). It
             // holds coin and, in the deep sites, a piece of iron better than any the
             // smith draws, and it costs only the walk back over ground already won.
@@ -211,6 +214,11 @@ public static class JourneyPilot
         // toggle only ever adds a term here (it never presses a digit for one already lit),
         // so the set climbs to the sworn one and the cross fires exactly once, no oscillation.
         if (g.InCrossingMenu) return CrossingKey(g);
+
+        // Up on the fells (D-146) the errands are the frontier's own: hunt the
+        // wolves' combe, camp where the heath allows, pick the high herbs, and
+        // climb back down to the road.
+        if (g.Area == Area.Fells) return FellMove(g, skip);
 
         // Out east (D-138) the errands are the road's own: hunt the half-way
         // glade, camp on the kill, pick the verges, and come home. Everything
@@ -313,7 +321,7 @@ public static class JourneyPilot
         // bags at the bearer's side; what the beast carries does not fall with the
         // bearer, an uncanny mouth hands it back, and the bank reloads on the way out.
         if (target is not null && BankWanted(g) && g.Mount is { } steed
-            && steed.OnRoad == g.OnRoad && Chebyshev(p.Pos, steed.Pos) == 1)
+            && steed.Area == g.Area && Chebyshev(p.Pos, steed.Pos) == 1)
             return 'o';
 
         if (target is not null)
@@ -347,7 +355,7 @@ public static class JourneyPilot
         // coin is taken back into the purse (one press tops the bags up off the purse,
         // the next empties them whole) before the crossing would forfeit it. A laden
         // beast still in the stable is fetched through the bench's stable digit first.
-        if (g.Mount is { Bags: > 0 } laden && laden.OnRoad == g.OnRoad)
+        if (g.Mount is { Bags: > 0 } laden && laden.Area == g.Area)
         {
             if (Chebyshev(p.Pos, laden.Pos) == 1) return 'o';
             if (ApproachBeast(g, laden) is { } sidle) return sidle;
@@ -400,7 +408,7 @@ public static class JourneyPilot
     {
         var here = g.Player.Pos;
         return g.World.Sites
-            .Where(s => s.OnRoad == g.OnRoad && !s.Cleared && !skip.Contains(s.Id)
+            .Where(s => s.Area == g.Area && !s.Cleared && !skip.Contains(s.Id)
                         && g.Monsters.Any(m => m.Alive && m.SiteId == s.Id))
             .OrderBy(s => Chebyshev(here, s.OverworldPos))
             .ThenBy(s => s.Id, StringComparer.Ordinal)
@@ -419,7 +427,21 @@ public static class JourneyPilot
         // out, never chased from the valley: a herb the road's water pockets
         // sealed off must not become a shuttle the trip can never put down.
         var trail = g.World.RoadWildsSite;
-        return !trail.Cleared && !skip.Contains(trail.Id);
+        return (!trail.Cleared && !skip.Contains(trail.Id)) || FellTripWanted(g, skip);
+    }
+
+    /// <summary>
+    /// Whether the fells still owe this world's climb (D-146): the wolves'
+    /// combe untried. Like the glade, it terminates cleanly (cleared or
+    /// written off), so the arch is never held hostage by the heights.
+    /// </summary>
+    private static bool FellTripWanted(Game g, IReadOnlySet<string> skip)
+    {
+        // Armed for the frontier, or not at all: the waykeeper's warning taken
+        // as policy. A bare hand against a pack is a death budget, not a hunt.
+        var combe = g.World.FellWildsSite;
+        return !combe.Cleared && !skip.Contains(combe.Id)
+            && g.Player.Bow is not null && g.Player.Weapon is not null && g.Player.Armor is not null;
     }
 
     /// <summary>Camp is worth a night (D-138): raw meat to cook and room to carry what it makes.</summary>
@@ -457,6 +479,15 @@ public static class JourneyPilot
         if (RoadCampWanted(g) && road[p.Pos] is Terrain.Grass or Terrain.Forest or Terrain.Hills)
             return 'm';
 
+        // The climb (D-146): with the glade settled and the frontier's combe
+        // still owed, take the drovers' track up. The fells' own loop hunts,
+        // camps, picks, and brings the walk back down to this road.
+        if (FellTripWanted(g, skip))
+        {
+            if (p.Pos == g.World.FellMouthPos) return '>';
+            if (NavKey(g, road, p.Pos, g.World.FellMouthPos, blocked) is { } toTrack) return toTrack;
+        }
+
         foreach (var spot in g.World.RoadHerbs.OrderBy(h => Chebyshev(p.Pos, h))
                      .ThenBy(h => h.Y).ThenBy(h => h.X))
             if (NavKey(g, road, p.Pos, spot, blocked) is { } toHerb) return toHerb;
@@ -478,6 +509,42 @@ public static class JourneyPilot
 
         if (p.Pos == g.World.RoadHomePos) return '>';
         return NavKey(g, road, p.Pos, g.World.RoadHomePos, blocked);
+    }
+
+    /// <summary>
+    /// The fells' own errand loop (D-146): reclaim anything a fall left up
+    /// here, hunt the wolves' combe, camp on the kill where the heath is
+    /// plain, pick the high herbs, then take the track back down to the road.
+    /// The same shape as the road's loop, one country up.
+    /// </summary>
+    private static char? FellMove(Game g, IReadOnlySet<string> skip)
+    {
+        var p = g.Player;
+        var fells = g.World.Fells;
+        var blocked = OverworldBlocked(g);
+
+        if (g.Remnant is { } rem && rem.MapId == fells.Id && rem.Coin + rem.Essence > 0)
+        {
+            if (p.Pos == rem.Pos) return 'g';
+            if (NavKey(g, fells, p.Pos, rem.Pos, blocked) is { } toRem) return toRem;
+        }
+
+        var combe = g.World.FellWildsSite;
+        if (!combe.Cleared && !skip.Contains(combe.Id))
+        {
+            if (p.Pos == combe.OverworldPos) return '>';
+            if (NavKey(g, fells, p.Pos, combe.OverworldPos, blocked) is { } toCombe) return toCombe;
+        }
+
+        if (RoadCampWanted(g) && fells[p.Pos] is Terrain.Heath or Terrain.Grass or Terrain.Hills)
+            return 'm';
+
+        foreach (var spot in g.World.FellHerbs.OrderBy(h => Chebyshev(p.Pos, h))
+                     .ThenBy(h => h.Y).ThenBy(h => h.X))
+            if (NavKey(g, fells, p.Pos, spot, blocked) is { } toHerb) return toHerb;
+
+        if (p.Pos == g.World.FellHomePos) return '>';
+        return NavKey(g, fells, p.Pos, g.World.FellHomePos, blocked);
     }
 
     /// <summary>
@@ -613,6 +680,18 @@ public static class JourneyPilot
         {
             if (ChooseDodge(g, foes) is { } dodge) return dodge;
             // Nowhere safe to step: better to answer a blow than take it standing.
+        }
+
+        // The pack answered at range (D-146): wolves close on their own feet,
+        // so every shaft loosed while they cross the open is a wolf part-paid
+        // before its teeth arrive. Loose whenever one stands on a clear line
+        // beyond arm's reach and the wind allows; the melee below finishes
+        // whatever reaches the throat.
+        if (p.Bow is not null && p.Stamina >= LooseCost(p)
+            && foes.Any(m => m.Kind == MonsterKind.Wolf && Chebyshev(p.Pos, m.Pos) > 1))
+        {
+            var (damaging, _, _) = ScanRays(g);
+            if (damaging is not null) return 'f';
         }
 
         var nearest = foes.OrderBy(m => Chebyshev(p.Pos, m.Pos)).First();

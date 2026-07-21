@@ -298,10 +298,14 @@ namespace Aegis.Core;
 /// v83 when D-144 put salt on the cart: a fourth digit at the peddler and a
 /// second at the provisioner buy and resell the caravan leg's freight, moving
 /// coin, goods, and the Commerce craft where a v82 journal's presses fell dead.
+/// v84 when D-146 opened the high fells: a third overworld off the road's
+/// north shoulder behind a drovers' track a v83 journal's '>' fell dead on,
+/// with the moor-wolf's pack, its pounce drawing new combat dice, the fells'
+/// herbs and weather, and a fourth topic at the waykeeper's door.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 83;
+    public const int Version = 84;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

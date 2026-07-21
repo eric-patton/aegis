@@ -467,7 +467,7 @@ public sealed class Player
 /// <summary>How the threshold resolved (D-039): unresolved, the keeping taken up, or laid down.</summary>
 public enum Resolution { None, Kept, Refused }
 
-public enum MonsterKind { Goblin, Wight, Severed, Graven, Hound, Carl, Boar, Warder, Thegn, Hart }
+public enum MonsterKind { Goblin, Wight, Severed, Graven, Hound, Carl, Boar, Warder, Thegn, Hart, Wolf }
 
 public sealed class Monster
 {
@@ -517,6 +517,7 @@ public sealed class Monster
     {
         MonsterKind.Goblin => 4,
         MonsterKind.Hart => 4,
+        MonsterKind.Wolf => 4,
         MonsterKind.Hound => 5,
         MonsterKind.Warder => 5,
         MonsterKind.Boar => 6,
@@ -574,6 +575,7 @@ public sealed class Monster
         MonsterKind.Warder => "sling-warder",
         MonsterKind.Thegn => "sword-thegn",
         MonsterKind.Hart => "hart",
+        MonsterKind.Wolf => "moor-wolf",
         _ => "creature",
     };
 }
@@ -596,7 +598,7 @@ public sealed class Intent
     public Pos? FeintCell { get; init; }
 }
 
-public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut, HurledStone, GravenFist, ThroatLunge, SeaxStab, BoarCharge, LoftedStone, RallyCry, GraveChill, MeasuredCut, BoardCheck }
+public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut, HurledStone, GravenFist, ThroatLunge, SeaxStab, BoarCharge, LoftedStone, RallyCry, GraveChill, MeasuredCut, BoardCheck, Pounce }
 
 /// <summary>
 /// How clearly the bearer reads a kind's wind-up (D-059): a stranger's is a
@@ -630,10 +632,13 @@ public sealed class Npc
     public NpcKind Kind { get; init; } = NpcKind.Villager;
 
     /// <summary>
-    /// Which overworld this person stands on (D-138): the valley by default, or
-    /// the east road. Positions only mean anything within their own map.
+    /// Which overworld this person stands on (D-138, generalized D-146): the
+    /// valley by default. Positions only mean anything within their own map.
     /// </summary>
-    public bool OnRoad { get; init; }
+    public Area Area { get; init; }
+
+    /// <summary>Legacy read (D-146): true exactly on the road, as the D-138 bool meant it.</summary>
+    public bool OnRoad => Area == Area.Road;
 
     /// <summary>
     /// The site this person lives inside (D-140): null for the overworld folk,

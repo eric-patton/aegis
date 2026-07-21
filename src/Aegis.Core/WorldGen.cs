@@ -18,10 +18,14 @@ public sealed class Site
     public required Pos EntryPos { get; init; }
 
     /// <summary>
-    /// Which overworld the mouth opens on (D-138): the valley by default, or
-    /// the east road. An overworld position only means anything on its own map.
+    /// Which overworld the mouth opens on (D-138, generalized D-146): the
+    /// valley by default, the east road, or the high fells. An overworld
+    /// position only means anything on its own map.
     /// </summary>
-    public bool OnRoad { get; init; }
+    public Area Area { get; init; }
+
+    /// <summary>Legacy read (D-146): true exactly on the road, as the D-138 bool meant it.</summary>
+    public bool OnRoad => Area == Area.Road;
     public required List<MonsterSpawn> Spawns { get; init; }
     public required Pos ChestPos { get; init; }
     public bool ChestLooted { get; set; }
@@ -60,8 +64,8 @@ public sealed class Site
 /// and the region is the name the world knows them by, the subject that
 /// cross-country word travels under (news moves between regions on the
 /// drovers' clock, never between tiles), and the seam later regions (B4)
-/// hang from. Two per world for now: the home valley and the road's high
-/// country with the town at its end.
+/// hang from. Three per world (D-146): the home valley, the road's high
+/// country with the town at its end, and the fells above them both.
 /// </summary>
 public sealed class Region
 {
@@ -106,7 +110,7 @@ public sealed class World
     /// </summary>
     public required string TownName { get; init; }
 
-    /// <summary>The world's named countries (D-143): the valley first, the road's high country second.</summary>
+    /// <summary>The world's named countries (D-143, D-146): valley, road's high country, and the fells.</summary>
     public required IReadOnlyList<Region> Regions { get; init; }
 
     /// <summary>The home valley's region (D-143): the country the stead calls its own.</summary>
@@ -114,6 +118,29 @@ public sealed class World
 
     /// <summary>The road's high country (D-143): the region the town keeps its law in.</summary>
     public Region RoadRegion => Regions.First(r => r.Id == "road");
+
+    /// <summary>The frontier (D-146): the wild fells above the road, no law and no roofs.</summary>
+    public Region FellRegion => Regions.First(r => r.Id == "fells");
+
+    /// <summary>
+    /// The high fells (D-146, plan 2026-07 B4): the world's third overworld,
+    /// a trackless frontier off the road's north shoulder. New ground (heath
+    /// and scree), a new beast holding it, and no roof anywhere on it: the
+    /// camp is the only rest, which is what the wilderness lane is for.
+    /// </summary>
+    public required GameMap Fells { get; init; }
+
+    /// <summary>The track's mouth on the road map (D-146): where > climbs to the fells.</summary>
+    public required Pos FellMouthPos { get; init; }
+
+    /// <summary>The track's mouth on the fells map (D-146): where > drops back to the road.</summary>
+    public required Pos FellHomePos { get; init; }
+
+    /// <summary>What grows on the fells (D-146): herb spots on the heath, picked like the valley's.</summary>
+    public required List<Pos> FellHerbs { get; init; }
+
+    /// <summary>The wolves' ground (D-146): the fells' hunting site.</summary>
+    public Site FellWildsSite => Sites.First(s => s.Id == "fell-wilds");
     public required List<Site> Sites { get; init; }
     public required List<Npc> Npcs { get; init; }
 
@@ -227,7 +254,7 @@ public sealed class World
     public Site? LeaguerSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Leaguer);
 
     /// <summary>The valley's wilds (D-070): tier 2+, where the game runs. The road keeps its own trail (D-138), off this accessor.</summary>
-    public Site? WildsSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Wilds && !s.OnRoad);
+    public Site? WildsSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Wilds && s.Area == Area.Valley);
 
     /// <summary>The stead's smith (D-041): every world, every tier. Sells the plain three, mends what use has dulled.</summary>
     public Npc Smith => Npcs.First(n => n.Kind == NpcKind.Smith);
@@ -304,6 +331,11 @@ public static class WorldGen
     // valley is deep. A walk end to end is a real journey, not an errand.
     public const int RoadW = 72;
     public const int RoadH = 16;
+
+    // The high fells (D-146): the frontier off the road's north shoulder,
+    // broad and trackless where the road is a line. Scree walls the ways.
+    public const int FellsW = 48;
+    public const int FellsH = 20;
 
     /// <summary>
     /// Generates a world at a Hostility Tier (D-011): the tier is a GENERATION input
@@ -1116,7 +1148,7 @@ public static class WorldGen
             Role = "waykeeper",
             Pos = wayKeeperPos,
             Kind = NpcKind.Waykeeper,
-            OnRoad = true,
+            Area = Area.Road,
         });
 
         // The road's own game-trail, roughly midway: the hunt (D-070) half a
@@ -1135,7 +1167,7 @@ public static class WorldGen
             Map = roadWildsMap,
             OverworldPos = roadWildsPos,
             EntryPos = roadWildsEntry,
-            OnRoad = true,
+            Area = Area.Road,
             Spawns = [.. roadHartSpawns.Select(p => new MonsterSpawn(MonsterKind.Hart, p, 6))],
             ChestPos = roadWildsEntry,   // no chest on the trail: the yield is the game itself (D-070).
             ChestLooted = true,
@@ -1177,7 +1209,7 @@ public static class WorldGen
             Map = townMap,
             OverworldPos = townGatePos,
             EntryPos = townEntry,
-            OnRoad = true,
+            Area = Area.Road,
             Spawns = [],
             ChestPos = townEntry,   // no chest: a town's wealth sits behind counters, not lids.
             ChestLooted = true,
@@ -1188,6 +1220,72 @@ public static class WorldGen
         foreach (var tf in townFolk)
             facts.Add("person", tf.Id, tf.Name, $"{tf.Name}, {tf.Role} of {townName}.");
 
+        // The high fells (D-146, plan 2026-07 B4): the world's third
+        // overworld, the frontier off the road's north shoulder. Everything
+        // of it hangs off its own derived seed, drawn after every existing
+        // draw, so all prior worlds hold byte-identical and only gain a
+        // country upstairs. The track's mouth is a deterministic scan of the
+        // road's north verge: plain ground, nothing already standing on it.
+        ulong fellSeed = SeedTree.Derive(worldSeed, "fells");
+        Pos fellTrack = default;
+        bool trackFound = false;
+        for (int i = 0; i < RoadW - 8 && !trackFound; i++)
+        {
+            int fx = RoadW * 2 / 3 + (i % 2 == 0 ? i / 2 : -(i / 2 + 1));
+            var p = new Pos(fx, 1);
+            if (!road.InBounds(p)) continue;
+            if (road[p] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills)) continue;
+            fellTrack = p;
+            trackFound = true;
+        }
+        if (!trackFound) fellTrack = new Pos(RoadW * 2 / 3, 1);
+        road[fellTrack] = Terrain.FellMouth;
+        CarvePathIfDisconnected(road, roadHome, fellTrack);
+
+        var fells = GenerateFellsMap(fellSeed);
+        var fellHome = new Pos(FellsW / 2, FellsH - 2);
+        fells[fellHome] = Terrain.FellMouth;
+
+        // The wolves' ground: the fells' one tenanted site, a combe where the
+        // pack dens. The frontier's meaning is the hunt (D-070's lane at its
+        // richest): wolf hides and meat carried down to the road's market, so
+        // the region pays through the ladder the world already keeps.
+        var fellGroundRng = new Rng(SeedTree.Derive(fellSeed, "ground"));
+        var fellWildsPos = new Pos(fellGroundRng.Range(6, FellsW - 6), fellGroundRng.Range(2, FellsH / 2));
+        while (fells[fellWildsPos] is not (Terrain.Heath or Terrain.Grass or Terrain.Hills))
+            fellWildsPos = new Pos(fellGroundRng.Range(6, FellsW - 6), fellGroundRng.Range(2, FellsH / 2));
+        fells[fellWildsPos] = Terrain.WildsEntrance;
+        CarvePathIfDisconnected(fells, fellHome, fellWildsPos);
+        int wolfCount = Math.Min(4 + (tier - 1) / 2, 8);
+        int wolfHp = 8 + tier / 2;
+        var (fellWildsMap, fellWildsEntry, wolfSpawns) = GenerateWilds(fellSeed, wolfCount, id: "fell-wilds");
+        sites.Add(new Site
+        {
+            Id = "fell-wilds",
+            Kind = SiteKind.Wilds,
+            Map = fellWildsMap,
+            OverworldPos = fellWildsPos,
+            EntryPos = fellWildsEntry,
+            Area = Area.Fells,
+            Spawns = [.. wolfSpawns.Select(p => new MonsterSpawn(MonsterKind.Wolf, p, wolfHp))],
+            ChestPos = fellWildsEntry,   // no chest on the fells: the yield is the pack itself (D-070's rule).
+            ChestLooted = true,
+        });
+
+        // The fells' heath grows richer than the road's verges: six spots,
+        // the forage half of why a walker climbs (D-074's lane).
+        var fellHerbRng = new Rng(SeedTree.Derive(fellSeed, "herbs"));
+        var fellHerbs = new List<Pos>();
+        for (int attempt = 0; attempt < 400 && fellHerbs.Count < 6; attempt++)
+        {
+            var p = new Pos(fellHerbRng.Range(2, FellsW - 2), fellHerbRng.Range(2, FellsH - 2));
+            if (fells[p] != Terrain.Heath || fellHerbs.Any(h => h.Manhattan(p) < 5)) continue;
+            fellHerbs.Add(p);
+        }
+
+        facts.Add("site", "fells", $"{fellTrack.X},{fellTrack.Y}",
+            "A drovers' track climbs off the road's north shoulder onto the high fells: heath and scree and no roof anywhere, wolf-country by every account that comes down with the hides to prove it.");
+
         // The countries named (D-143, plan 2026-07 B3): the region becomes an
         // entity, on its own derived stream after every existing draw, so all
         // prior placement, casting, and story stay byte-identical. The valley
@@ -1197,15 +1295,21 @@ public static class WorldGen
         var regionRng = new Rng(SeedTree.Derive(worldSeed, "regions"));
         string valleyRegionName = NameGen.Region(ref regionRng);
         string roadRegionName = NameGen.Region(ref regionRng, [valleyRegionName]);
+        // The third country (D-146): drawn third on the same stream, so the
+        // first two names hold in every prior world.
+        string fellRegionName = NameGen.Region(ref regionRng, [valleyRegionName, roadRegionName]);
         var regions = new List<Region>
         {
             new() { Id = "valley", Name = valleyRegionName },
             new() { Id = "road", Name = roadRegionName },
+            new() { Id = "fells", Name = fellRegionName },
         };
         facts.Add("region", "valley", valleyRegionName,
             $"The {valleyRegionName}: the home valley, {settlementName}'s country, hills at its back and the drove road climbing out of it east.");
         facts.Add("region", "road", roadRegionName,
             $"The {roadRegionName}: the high country the east road crosses, {townName}'s country, where the drove roads meet and word and freight travel together.");
+        facts.Add("region", "fells", fellRegionName,
+            $"The {fellRegionName}: the fells above the road, nobody's country. No law runs there and no roof stands there; what it keeps, it keeps in hides and weather.");
 
         return new World
         {
@@ -1227,6 +1331,10 @@ public static class WorldGen
             RoadMouthPos = roadMouth,
             RoadHomePos = roadHome,
             RoadHerbs = roadHerbs,
+            Fells = fells,
+            FellMouthPos = fellTrack,
+            FellHomePos = fellHome,
+            FellHerbs = fellHerbs,
             TownName = townName,
             Regions = regions,
             PeddlerSalt = Peddling.SaltStock(tier),
@@ -1413,7 +1521,7 @@ public static class WorldGen
                             Role = a.Role,
                             Pos = cell,
                             Kind = NpcKind.Towner,
-                            OnRoad = true,
+                            Area = Area.Road,
                             SiteId = "town",
                         });
                 }
@@ -1534,6 +1642,35 @@ public static class WorldGen
         return map;
     }
 
+    /// <summary>
+    /// The high fells' own ground (D-146): the same noise on the fells' seed,
+    /// read as a different country. Treeless heath where the valley has
+    /// grass, rare black tarns, walkable hills, and shattered scree where the
+    /// valley's noise would raise a wood: the scree walls the ways, so the
+    /// fells are a maze of open ground rather than a field.
+    /// </summary>
+    private static GameMap GenerateFellsMap(ulong fellSeed)
+    {
+        ulong terrainSeed = SeedTree.Derive(fellSeed, "terrain");
+        var map = new GameMap("fells", FellsW, FellsH, Terrain.Heath);
+        for (int y = 0; y < FellsH; y++)
+        {
+            for (int x = 0; x < FellsW; x++)
+            {
+                double n = 0.65 * ValueNoise(terrainSeed, x / 9.0, y / 9.0)
+                         + 0.35 * ValueNoise(terrainSeed, x / 4.0, y / 4.0);
+                map[new Pos(x, y)] = n switch
+                {
+                    < 0.08 => Terrain.Water,
+                    < 0.52 => Terrain.Heath,
+                    < 0.74 => Terrain.Hills,
+                    _ => Terrain.Scree,
+                };
+            }
+        }
+        return map;
+    }
+
     private static double ValueNoise(ulong seed, double x, double y)
     {
         int x0 = (int)Math.Floor(x), y0 = (int)Math.Floor(y);
@@ -1617,7 +1754,7 @@ public static class WorldGen
         {
             if (p.X != to.X) p = p.Plus(Math.Sign(to.X - p.X), 0);
             else p = p.Plus(0, Math.Sign(to.Y - p.Y));
-            if (map[p] is Terrain.Water or Terrain.House) map[p] = Terrain.Grass;
+            if (map[p] is Terrain.Water or Terrain.House or Terrain.Scree) map[p] = Terrain.Grass;
         }
     }
 

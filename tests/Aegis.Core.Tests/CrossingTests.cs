@@ -173,7 +173,9 @@ public class CrossingTests
 
         if (game.Mode == MapMode.Site)
         {
-            var target = game.Monsters.Where(m => m.Alive)
+            // Only this site's tenants are huntable from inside it: the road's
+            // harts (D-138) live on another map and are no business of the camp's.
+            var target = game.Monsters.Where(m => m.Alive && m.SiteId == game.CurrentSite!.Id)
                 .OrderBy(m => m.Pos.Manhattan(game.Player.Pos)).FirstOrDefault();
             if (target is null)
             {
@@ -191,7 +193,7 @@ public class CrossingTests
         var goal = game.CampCleared ? game.World.GatePos : game.World.CampPos;
         if (game.Player.Pos == goal) return '>';
         return StepToward(game, game.World.Overworld, goal,
-            p => game.World.Overworld.Walkable(p) && !game.World.Npcs.Any(n => n.Pos == p));
+            p => game.World.Overworld.Walkable(p) && !game.World.Npcs.Any(n => !n.OnRoad && n.Pos == p));
     }
 
     private static Pos FindLadder(GameMap camp)

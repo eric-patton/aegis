@@ -16,6 +16,12 @@ public sealed class Site
     public required GameMap Map { get; init; }
     public required Pos OverworldPos { get; init; }
     public required Pos EntryPos { get; init; }
+
+    /// <summary>
+    /// Which overworld the mouth opens on (D-138): the valley by default, or
+    /// the east road. An overworld position only means anything on its own map.
+    /// </summary>
+    public bool OnRoad { get; init; }
     public required List<MonsterSpawn> Spawns { get; init; }
     public required Pos ChestPos { get; init; }
     public bool ChestLooted { get; set; }
@@ -57,6 +63,26 @@ public sealed class World
     public required GameMap Overworld { get; init; }
     public required Pos ShrinePos { get; init; }
     public required Pos GatePos { get; init; }
+
+    /// <summary>
+    /// The east road (D-138, plan 2026-07 B1): every world's second overworld,
+    /// a bounded drove road climbing out of the valley, with its own weather,
+    /// its own hunting, and a wayhouse at the far end. Travel is play, so the
+    /// road is a place, never a fade-to-black.
+    /// </summary>
+    public required GameMap Road { get; init; }
+
+    /// <summary>The road mouth on the valley map (D-138): where > takes the east road.</summary>
+    public required Pos RoadMouthPos { get; init; }
+
+    /// <summary>The home mouth on the road map (D-138): where > turns back for the valley.</summary>
+    public required Pos RoadHomePos { get; init; }
+
+    /// <summary>
+    /// What grows along the road's own verges (D-138): herb spots on the road
+    /// map, picked exactly like the valley's (D-074), regrown at the crossing.
+    /// </summary>
+    public required List<Pos> RoadHerbs { get; init; }
     public required List<Site> Sites { get; init; }
     public required List<Npc> Npcs { get; init; }
 
@@ -162,8 +188,8 @@ public sealed class World
     public Site? RingfortSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Ringfort);
     public Site? LeaguerSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Leaguer);
 
-    /// <summary>The wilds (D-070): tier 2+, where the game runs. The hunt's ground, not a fight; optional depth like the barrow.</summary>
-    public Site? WildsSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Wilds);
+    /// <summary>The valley's wilds (D-070): tier 2+, where the game runs. The road keeps its own trail (D-138), off this accessor.</summary>
+    public Site? WildsSite => Sites.FirstOrDefault(s => s.Kind == SiteKind.Wilds && !s.OnRoad);
 
     /// <summary>The stead's smith (D-041): every world, every tier. Sells the plain three, mends what use has dulled.</summary>
     public Npc Smith => Npcs.First(n => n.Kind == NpcKind.Smith);
@@ -185,6 +211,12 @@ public sealed class World
 
     /// <summary>The harrow's elder (D-114): the second faith's voice, at the order's door.</summary>
     public Npc HarrowElder => Npcs.First(n => n.Id == "npc_harrow_elder");
+
+    /// <summary>The wayhouse's keeper (D-138): every world, at the east road's far end.</summary>
+    public Npc Waykeeper => Npcs.First(n => n.Kind == NpcKind.Waykeeper);
+
+    /// <summary>The road's own game-trail (D-138): every world, the hunt half a journey out.</summary>
+    public Site RoadWildsSite => Sites.First(s => s.Id == "road-wilds");
 
     // Convenience views of the camp, the site every world has (and tests lean on).
     public GameMap Camp => CampSite.Map;
@@ -226,6 +258,11 @@ public static class WorldGen
     public const int OverworldH = 36;
     public const int CampW = 30;
     public const int CampH = 18;
+
+    // The east road (D-138): long where the valley is broad, narrow where the
+    // valley is deep. A walk end to end is a real journey, not an errand.
+    public const int RoadW = 72;
+    public const int RoadH = 16;
 
     /// <summary>
     /// Generates a world at a Hostility Tier (D-011): the tier is a GENERATION input
@@ -992,6 +1029,96 @@ public static class WorldGen
         facts.Add("wanderer", "npc_peddler", $"{peddlerPos.X},{peddlerPos.Y}",
             $"A peddler called {peddlerName} keeps a cart to the {Game.Compass(shrine, peddlerPos)}. Buys and sells, and is not curious.");
 
+        // The east road (D-138, plan 2026-07 B1): the world's second overworld,
+        // everything of it drawn off one derived seed so no existing stream
+        // moves and pinned valleys keep their layouts to the tile. The valley
+        // mouth itself is a deterministic scan of the east edge: plain ground,
+        // nobody standing on it, nothing already growing there.
+        ulong roadSeed = SeedTree.Derive(worldSeed, "road");
+        Pos roadMouth = default;
+        bool mouthFound = false;
+        for (int mx = OverworldW - 2; mx >= OverworldW - 6 && !mouthFound; mx--)
+            for (int i = 0; i < OverworldH - 4 && !mouthFound; i++)
+            {
+                int my = OverworldH / 2 + (i % 2 == 0 ? i / 2 : -(i / 2 + 1));
+                var p = new Pos(mx, my);
+                if (!overworld.InBounds(p)) continue;
+                if (overworld[p] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills)) continue;
+                if (npcs.Any(n => n.Pos == p) || gleanings.Contains(p) || herbs.Contains(p) || p == wildPony) continue;
+                roadMouth = p;
+                mouthFound = true;
+            }
+        if (!mouthFound) roadMouth = new Pos(OverworldW - 2, OverworldH / 2);
+        overworld[roadMouth] = Terrain.RoadMouth;
+        CarvePathIfDisconnected(overworld, shrine, roadMouth);
+
+        var road = GenerateRoadMap(roadSeed);
+        var roadHome = new Pos(1, RoadH / 2);
+        road[roadHome] = Terrain.RoadMouth;
+
+        // The wayhouse at the far end: a roof, a fire, and a keeper who has
+        // watched the road long enough to price it. The destination is a
+        // person and a bench, so the distance is never only distance.
+        var roadRng = new Rng(SeedTree.Derive(roadSeed, "wayhouse"));
+        string keeperWayName = NameGen.Person(ref roadRng);
+        int wy = RoadH / 2;
+        var wayKeeperPos = new Pos(RoadW - 3, wy);
+        road[new Pos(RoadW - 3, wy - 1)] = Terrain.House;
+        road[new Pos(RoadW - 2, wy - 1)] = Terrain.House;
+        road[wayKeeperPos] = Terrain.Grass;
+        road[new Pos(RoadW - 2, wy)] = Terrain.Grass;
+        road[new Pos(RoadW - 4, wy)] = Terrain.Grass;
+        npcs.Add(new Npc
+        {
+            Id = "npc_waykeeper",
+            Name = keeperWayName,
+            Role = "waykeeper",
+            Pos = wayKeeperPos,
+            Kind = NpcKind.Waykeeper,
+            OnRoad = true,
+        });
+
+        // The road's own game-trail, roughly midway: the hunt (D-070) half a
+        // journey from anyone's larder, which is what makes camp cooking a
+        // road skill and not a curiosity. Its own streams, its own map id, so
+        // a remnant dropped here is never confused with the valley trail's.
+        int roadWildsY = roadRng.Range(3, RoadH - 3);
+        var roadWildsPos = new Pos(RoadW / 2, roadWildsY);
+        road[roadWildsPos] = Terrain.WildsEntrance;
+        int roadHartCount = Math.Min(3 + (tier - 1) / 2, 6);
+        var (roadWildsMap, roadWildsEntry, roadHartSpawns) = GenerateWilds(roadSeed, roadHartCount, id: "road-wilds");
+        sites.Add(new Site
+        {
+            Id = "road-wilds",
+            Kind = SiteKind.Wilds,
+            Map = roadWildsMap,
+            OverworldPos = roadWildsPos,
+            EntryPos = roadWildsEntry,
+            OnRoad = true,
+            Spawns = [.. roadHartSpawns.Select(p => new MonsterSpawn(MonsterKind.Hart, p, 6))],
+            ChestPos = roadWildsEntry,   // no chest on the trail: the yield is the game itself (D-070).
+            ChestLooted = true,
+        });
+
+        CarvePathIfDisconnected(road, roadHome, roadWildsPos);
+        CarvePathIfDisconnected(road, roadHome, wayKeeperPos);
+
+        // The road's verges (D-074's herbs, the road's own stream): supplies
+        // grow along the way for the walker who looks down.
+        var roadHerbRng = new Rng(SeedTree.Derive(roadSeed, "herbs"));
+        var roadHerbs = new List<Pos>();
+        for (int attempt = 0; attempt < 400 && roadHerbs.Count < 4; attempt++)
+        {
+            var p = new Pos(roadHerbRng.Range(2, RoadW - 2), roadHerbRng.Range(2, RoadH - 2));
+            if (road[p] != Terrain.Forest || roadHerbs.Any(h => h.Manhattan(p) < 6)) continue;
+            roadHerbs.Add(p);
+        }
+
+        facts.Add("site", "road", $"{roadMouth.X},{roadMouth.Y}",
+            $"An old drove road climbs east out of the valley, walked thin long before {settlementName} raised a wall. A wayhouse keeps its far end, and the high stretches keep their own weather.");
+        facts.Add("person", "npc_waykeeper", keeperWayName,
+            $"{keeperWayName}, keeper of the wayhouse at the east road's far end.");
+
         return new World
         {
             Seed = worldSeed,
@@ -1008,6 +1135,10 @@ public static class WorldGen
             StoryStorylets = storyStorylets,
             Gleanings = gleanings,
             Herbs = herbs,
+            Road = road,
+            RoadMouthPos = roadMouth,
+            RoadHomePos = roadHome,
+            RoadHerbs = roadHerbs,
             Oaths = oaths,
         };
     }
@@ -1084,6 +1215,33 @@ public static class WorldGen
                     < 0.34 => Terrain.Water,
                     < 0.58 => Terrain.Grass,
                     < 0.76 => Terrain.Forest,
+                    _ => Terrain.Hills,
+                };
+            }
+        }
+        return map;
+    }
+
+    /// <summary>
+    /// The east road's own ground (D-138): the valley's noise recipe on the
+    /// road's own seed, tilted drier (less water, more high ground) because a
+    /// drove road runs where carts could: the ridge line, not the marsh.
+    /// </summary>
+    private static GameMap GenerateRoadMap(ulong roadSeed)
+    {
+        ulong terrainSeed = SeedTree.Derive(roadSeed, "terrain");
+        var map = new GameMap("road", RoadW, RoadH, Terrain.Grass);
+        for (int y = 0; y < RoadH; y++)
+        {
+            for (int x = 0; x < RoadW; x++)
+            {
+                double n = 0.65 * ValueNoise(terrainSeed, x / 9.0, y / 9.0)
+                         + 0.35 * ValueNoise(terrainSeed, x / 4.0, y / 4.0);
+                map[new Pos(x, y)] = n switch
+                {
+                    < 0.28 => Terrain.Water,
+                    < 0.55 => Terrain.Grass,
+                    < 0.74 => Terrain.Forest,
                     _ => Terrain.Hills,
                 };
             }
@@ -1482,10 +1640,10 @@ public static class WorldGen
     /// shot, or a herding into a corner, never a footrace (a hart runs at the bearer's
     /// own speed, so feet alone never close on one).
     /// </summary>
-    private static (GameMap Map, Pos Entry, List<Pos> Harts) GenerateWilds(ulong worldSeed, int hartCount)
+    private static (GameMap Map, Pos Entry, List<Pos> Harts) GenerateWilds(ulong worldSeed, int hartCount, string id = "wilds")
     {
         var rng = new Rng(SeedTree.Derive(worldSeed, "site-wilds"));
-        var map = new GameMap("wilds", WildsW, WildsH, Terrain.Floor);
+        var map = new GameMap(id, WildsW, WildsH, Terrain.Floor);
         for (int x = 0; x < WildsW; x++)
         {
             map[new Pos(x, 0)] = Terrain.Wall;

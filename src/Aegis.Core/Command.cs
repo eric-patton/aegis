@@ -22,6 +22,7 @@ public enum Command
     Stance,
     Parry,
     Order,
+    Camp,
     Quit,
 }
 
@@ -56,6 +57,7 @@ public static class CommandMap
         'x' => Command.Stance,
         'a' => Command.Parry,
         'o' => Command.Order,
+        'm' => Command.Camp,
         'q' => Command.Quit,
         _ => Command.None,
     };

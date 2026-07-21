@@ -15,6 +15,13 @@ public sealed class Mount
     public required Pos Pos { get; set; }
 
     /// <summary>
+    /// Which overworld the beast stands on (D-138): a beast at the bearer's
+    /// side takes the road mouth with them; one left grazing keeps its own
+    /// map, and its position means nothing on the other.
+    /// </summary>
+    public bool OnRoad { get; set; }
+
+    /// <summary>
     /// Coin ridden in the saddlebags (D-100): what the beast carries does not
     /// fall with the bearer, but a raid that lands while the bearer is below
     /// takes the beast whole, bags and all. Banking is a choice of risks.

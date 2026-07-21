@@ -139,6 +139,9 @@ public static class JourneyRunner
         int mulesBought = 0;
         int coursersTaken = 0;
         int coinBanked = 0;
+        // The east road (D-138): mouths taken and nights camped, travel-as-play's own tallies.
+        int roadsTaken = 0;
+        int nightsCamped = 0;
         // The stead's regard at its height (D-076): a per-world Fame, reset at every
         // crossing, so the run's peak is the warmest any one stead came to hold the
         // bearer, watched by the counter's high-water mark on every key.
@@ -215,6 +218,8 @@ public static class JourneyRunner
             bool muleBefore = OwnsBeast(game, MountKind.Mule);
             bool courserBefore = OwnsBeast(game, MountKind.Courser);
             int bagsBefore = TotalBags(game);
+            bool onRoadBefore = game.OnRoad;
+            int turnBefore = game.Turn;
             game.ApplyKey(key.Value);
             keys.Append(key.Value);
             totalKeys++;
@@ -296,6 +301,10 @@ public static class JourneyRunner
             if (!muleBefore && OwnsBeast(game, MountKind.Mule)) mulesBought++;
             if (!courserBefore && OwnsBeast(game, MountKind.Courser)) coursersTaken++;
             coinBanked += Math.Max(0, TotalBags(game) - bagsBefore);
+            // The east road (D-138): the mouth flips the flag, and a camp key
+            // that took time is a night passed at the fire, cold or fed.
+            if (!onRoadBefore && game.OnRoad) roadsTaken++;
+            if (key == 'm' && game.Turn > turnBefore) nightsCamped++;
             // The stead's regard, at its high-water mark (D-076): it resets at each
             // crossing, so the peak is the warmest one stead ever came to hold the bearer.
             maxRegard = Math.Max(maxRegard, game.Regard);
@@ -382,6 +391,8 @@ public static class JourneyRunner
                 MulesBought: mulesBought,
                 CoursersTaken: coursersTaken,
                 CoinBanked: coinBanked,
+                RoadsTaken: roadsTaken,
+                NightsCamped: nightsCamped,
                 MaxRegard: maxRegard,
                 RegardTitle: SteadRegard.TitleOf(maxRegard),
                 MaxWrath: maxWrath,
@@ -415,6 +426,7 @@ public static class JourneyRunner
             herbsForaged, herbsSold, coinFromHerbs, draughtsDrawn, draughtsDrunk,
             wordsLearned, wardsSaid, shadesCalled,
             mulesBought, coursersTaken, coinBanked,
+            roadsTaken, nightsCamped,
             maxRegard, maxWrath, raidsSuffered);
         return 0;
     }
@@ -496,6 +508,7 @@ public static class JourneyRunner
         int draughtsDrawn, int draughtsDrunk,
         int wordsLearned, int wardsSaid, int shadesCalled,
         int mulesBought, int coursersTaken, int coinBanked,
+        int roadsTaken, int nightsCamped,
         int maxRegard, int maxWrath, int raidsSuffered)
     {
         var w = Console.Out;
@@ -577,6 +590,8 @@ public static class JourneyRunner
             w.WriteLine($"         the words: took {wordsLearned} graven word(s) off the stones; said the ward {wardsSaid} time(s); the shade answered the calling {shadesCalled} time(s) (D-091, D-099).");
         if (mulesBought + coursersTaken > 0)
             w.WriteLine($"         the roads: bought the stead's mule {mulesBought} time(s); the raiders' courser answered the deed {coursersTaken} time(s); the saddlebags carried {coinBanked} coin all told (D-100).");
+        if (roadsTaken > 0)
+            w.WriteLine($"         the east road: took the mouth {roadsTaken} time(s) and camped {nightsCamped} night(s) on the way (D-138): travel as play, the D-006 box opened.");
         w.WriteLine($"         the stead: came to hold the bearer as {(maxRegard > 0 ? SteadRegard.TitleOf(maxRegard) : "a stranger")} at its warmest "
                     + $"(peak regard {maxRegard}, reset at every crossing) (D-076).");
         w.WriteLine($"         the dens: came to hold the bearer as {(maxWrath > 0 ? RaiderWrath.TitleOf(maxWrath) : "no one at all")} at their most fearful "
@@ -628,6 +643,7 @@ internal sealed record JourneyReport(
     int DraughtsDrawn, int DraughtsDrunk,
     int WordsLearned, int WardsSaid, int ShadesCalled,
     int MulesBought, int CoursersTaken, int CoinBanked,
+    int RoadsTaken, int NightsCamped,
     int MaxRegard, string RegardTitle, int MaxWrath, string WrathTitle, int RaidsSuffered,
     string? Keys,
     List<JourneyCrossingDto> Crossings);

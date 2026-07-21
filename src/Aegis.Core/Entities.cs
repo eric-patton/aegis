@@ -605,7 +605,7 @@ public enum ReadTier { Blur, Read, Keen }
 /// Harrowers keep the order's house up the valley: the two faiths' folk,
 /// each with their own menu for the same reason the Smith has one.
 /// </summary>
-public enum NpcKind { Villager, Unbinder, Severed, Smith, Skald, Keeper, Harrower, Peddler }
+public enum NpcKind { Villager, Unbinder, Severed, Smith, Skald, Keeper, Harrower, Peddler, Waykeeper }
 
 /// <summary>
 /// A named, placed person (D-031). Static in v1: they stand near their homes and
@@ -618,6 +618,12 @@ public sealed class Npc
     public required string Role { get; init; }
     public required Pos Pos { get; init; }
     public NpcKind Kind { get; init; } = NpcKind.Villager;
+
+    /// <summary>
+    /// Which overworld this person stands on (D-138): the valley by default, or
+    /// the east road. Positions only mean anything within their own map.
+    /// </summary>
+    public bool OnRoad { get; init; }
 }
 
 /// <summary>

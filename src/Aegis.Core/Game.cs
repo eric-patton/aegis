@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed }
 
 /// <summary>
 /// The cart's counter (D-124): the road's prices. The ration a coin or two
@@ -22,6 +22,29 @@ public static class Peddling
     public const int RationPrice = 6;
     public const int TrinketPrice = 7;
     public const int HideBonus = 1;
+}
+
+/// <summary>
+/// The road's own sky (D-138): weather as a standing condition, felt only on
+/// the east road where there is no roof to put between it and the walker.
+/// Redrawn on the coarse tick from its own stream, wherever the bearer stands,
+/// so replay always agrees on what the tops were doing.
+/// </summary>
+public enum RoadSky { Clear, Rain, Cold }
+
+/// <summary>
+/// The road's numbers (D-138, plan 2026-07 B1). The camp is the wilderness
+/// family's rest (D-006): weaker than any roof on purpose: a supper's ration
+/// buys the mending, Survival deepens it, foul sky halves it, and a cold camp
+/// (no supper at all) restores nothing but the legs. The wayhouse bed is the
+/// roof at the far end, flat-priced like everything the road sells.
+/// </summary>
+public static class RoadLife
+{
+    public const int CampTurns = 8;
+    public const int CampHealBase = 6;
+    public const int CampHealPerSurvival = 2;
+    public const int BedCoin = 4;
 }
 
 /// <summary>
@@ -124,7 +147,7 @@ public sealed class Game
     public List<Mount> Stable { get; } = [];
 
     /// <summary>The beast's cell counts only where the beast is (D-100): its coordinates live on the overworld alone.</summary>
-    private bool MountAt(Pos p) => Mode == MapMode.Overworld && Mount is { } m && m.Pos == p;
+    private bool MountAt(Pos p) => Mode == MapMode.Overworld && Mount is { } m && m.OnRoad == OnRoad && m.Pos == p;
 
     /// <summary>
     /// What the pool will actually answer with (D-099): the calling is held,
@@ -162,6 +185,19 @@ public sealed class Game
     public MapMode Mode { get; private set; } = MapMode.Overworld;
     public int Turn { get; private set; }
     public bool Running { get; private set; } = true;
+
+    /// <summary>
+    /// Which overworld the bearer walks (D-138): false is the valley, true the
+    /// east road. Site mode remembers it underneath, so climbing out of the
+    /// road's game-trail comes back up on the road.
+    /// </summary>
+    public bool OnRoad { get; private set; }
+
+    /// <summary>The people standing on THIS overworld (D-138): every bump, block, and draw reads through here.</summary>
+    public IEnumerable<Npc> NpcsHere => World.Npcs.Where(n => n.OnRoad == OnRoad);
+
+    /// <summary>The herb spots of the overworld underfoot (D-138): the valley's or the road's own.</summary>
+    public List<Pos> HerbsHere => OnRoad ? World.RoadHerbs : World.Herbs;
 
     /// <summary>The site the player is inside, null on the overworld.</summary>
     public Site? CurrentSite { get; private set; }
@@ -379,6 +415,12 @@ public sealed class Game
 
     /// <summary>The season deck's stream (D-133): per-world, re-derived at the crossing with the calendar.</summary>
     private Rng _steadDeckRng;
+
+    /// <summary>The road's sky stream (D-138): per-world, re-derived at the crossing beside the deck's.</summary>
+    private Rng _roadSkyRng;
+
+    /// <summary>What the tops are doing right now (D-138): felt on the road, redrawn each coarse tick.</summary>
+    public RoadSky Sky { get; private set; }
 
     /// <summary>Test-only (D-133): a held deck deals nothing, so choreographed tick tests stay about the cadence.</summary>
     private bool _deckHeld;
@@ -984,7 +1026,9 @@ public sealed class Game
         _storylets.TryFire(this, StoryletTrigger.Arrival);
     }
 
-    public GameMap CurrentMap => Mode == MapMode.Overworld ? World.Overworld : CurrentSite!.Map;
+    public GameMap CurrentMap => Mode == MapMode.Overworld
+        ? (OnRoad ? World.Road : World.Overworld)
+        : CurrentSite!.Map;
 
     private string CurrentMapId => CurrentMap.Id;
 
@@ -1177,6 +1221,7 @@ public sealed class Game
             Command.Stance => DoStance(),
             Command.Parry => DoParry(),
             Command.Order => DoOrder(),
+            Command.Camp => DoCamp(),
             _ => CommandMap.Delta(cmd) is { } d && DoMove(d.dx, d.dy),
         };
 
@@ -1200,7 +1245,7 @@ public sealed class Game
         }
         else
         {
-            var npc = World.Npcs.FirstOrDefault(n => n.Pos == target);
+            var npc = NpcsHere.FirstOrDefault(n => n.Pos == target);
             if (npc is not null) return StartTalk(npc);
         }
 
@@ -1209,7 +1254,7 @@ public sealed class Game
         if (Fellows.FirstOrDefault(f => f.Pos == target) is { } fellow)
         {
             (fellow.Pos, Player.Pos) = (Player.Pos, target);
-            Player.Stamina = Math.Min(Player.MaxStamina, Player.Stamina + 1);
+            StepRegen();
             Log.Add(Turn, $"You and {fellow.Name} trade places in a step.");
             return true;
         }
@@ -1218,7 +1263,7 @@ public sealed class Game
         if (MountAt(target) && Mount is { } led)
         {
             (led.Pos, Player.Pos) = (Player.Pos, target);
-            Player.Stamina = Math.Min(Player.MaxStamina, Player.Stamina + 1);
+            StepRegen();
             Log.Add(Turn, $"You push past {led.Name} with a hand on its neck, trading places in a step.");
             return true;
         }
@@ -1230,17 +1275,20 @@ public sealed class Game
         }
 
         Player.Pos = target;
-        Player.Stamina = Math.Min(Player.MaxStamina, Player.Stamina + 1);
+        StepRegen();
         DescribeTileIfNotable(target);
 
         _storylets.TryFire(this, StoryletTrigger.EnterTile, map[target]);
-        if (Mode == MapMode.Overworld && Directions.All8.Any(d =>
+        // The stead's lanes are the valley's (D-138): the wayhouse's walls are
+        // a roof on the road, not a neighbor, and the near-house beats are the
+        // stead's own talk.
+        if (Mode == MapMode.Overworld && !OnRoad && Directions.All8.Any(d =>
                 map.InBounds(target.Plus(d.dx, d.dy)) && map[target.Plus(d.dx, d.dy)] == Terrain.House))
             _storylets.TryFire(this, StoryletTrigger.NearHouse);
 
         // The high ground's watcher (D-100 stage 2): the wild pony named once,
         // the first time the road brings the bearer close enough to see it see them.
-        if (Mode == MapMode.Overworld && World.WildPonyPos is { } watcher
+        if (Mode == MapMode.Overworld && !OnRoad && World.WildPonyPos is { } watcher
             && watcher.Chebyshev(target) <= 2 && !World.Facts.Exists("met", "fell_pony"))
         {
             World.Facts.Add("met", "fell_pony", World.SettlementName,
@@ -1248,54 +1296,33 @@ public sealed class Game
             Log.Add(Turn, "A shaggy fell pony keeps this high ground, watching you with more patience than fear. It wears no halter and belongs to no one, and it does not leave. (bread, offered close, might change its mind)", LogTone.Info);
         }
 
+        // The ground gathered under the first tile, BEFORE any stride carries
+        // the body past it (D-138's fix of a latent D-100 seam): a ridden step
+        // crosses two cells, and a spot on the first of them was never checked,
+        // so a rider could pass a herb forever without ever picking it. Found
+        // live: the pilot orbiting a spot its own stride kept skipping.
+        GatherAt(target);
+
         // The ridden road (D-100): with the beast at your side, open grass
         // passes two strides to a key: the same clocks (toll, wounds, the
         // raiders' tick) count half the turns for the distance. The far cell
         // must be plain ground with no one standing on it.
-        if (Mode == MapMode.Overworld && Mount is { } steed && steed.Pos.Chebyshev(Player.Pos) <= 2)
+        if (Mode == MapMode.Overworld && Mount is { } steed && steed.OnRoad == OnRoad
+            && steed.Pos.Chebyshev(Player.Pos) <= 2)
         {
             var far = target.Plus(dx, dy);
             if (map.InBounds(far)
                 && MountCatalog.Strides(steed.Kind, map[target]) && MountCatalog.Strides(steed.Kind, map[far])
                 && far != steed.Pos && !FellowAt(far)
-                && !World.Npcs.Any(n => n.Pos == far))
+                && !NpcsHere.Any(n => n.Pos == far))
             {
                 target = far;
                 Player.Pos = far;
-                Player.Stamina = Math.Min(Player.MaxStamina, Player.Stamina + 1);
+                StepRegen();
                 DescribeTileIfNotable(far);
                 _storylets.TryFire(this, StoryletTrigger.EnterTile, map[far]);
+                GatherAt(far);
             }
-        }
-
-        // The gleaning (D-052): the spots exist in every world; the lesson is
-        // what makes them visible and takeable. An untaught step gathers nothing.
-        if (Mode == MapMode.Overworld && Player.HasLesson(LessonId.Gleaning)
-            && World.Gleanings.Contains(target))
-        {
-            if (Player.Rations < RationCap)
-            {
-                World.Gleanings.Remove(target);
-                Player.Rations++;
-                Log.Add(Turn, $"Sweet roots under the bracken, right where the lesson said to look. You take them for the road. ({Player.Rations} carried)", LogTone.Reward);
-            }
-            else
-            {
-                Log.Add(Turn, "Good gleaning here, but you carry all a walking body can. You mark the spot and leave it standing.", LogTone.Info);
-            }
-        }
-
-        // The forage (D-074): herbs anyone can stoop and pick, no lesson needed. The
-        // Survival skill fattens what a spot gives, and grows for the taking of it, the
-        // way Hunting grows off the hide. They bank like a trade-good, uncapped, to be
-        // sold at the wood's edge, so a full larder never turns the picking away.
-        if (Mode == MapMode.Overworld && World.Herbs.Contains(target))
-        {
-            World.Herbs.Remove(target);
-            int taken = 1 + Player.Skills.Bonus(SkillId.Survival) + (Player.Folk == FolkId.Heathborn ? 1 : 0);
-            Player.Herb += taken;
-            GainSkill(SkillId.Survival);
-            Log.Add(Turn, $"Wortcunning growth under the eaves: you pick {taken} good sprig{(taken == 1 ? "" : "s")} for the wood's-edge bench. ({Player.Herb} in the satchel)", LogTone.Reward);
         }
 
         // The keeping (D-039): stepping to the Hearth itself puts the choice on the
@@ -1309,6 +1336,45 @@ public sealed class Game
             Log.Add(Turn, "\"Here it is, bearer: what I was forged to bring you to, and yours to take up or to refuse. Take your time. Nothing in this room hurries.\"", LogTone.Aegis);
         }
         return true;
+    }
+
+    /// <summary>
+    /// What a tile underfoot gives up (D-052's gleanings, D-074's herbs), run
+    /// for every cell a step crosses: both tiles of a ridden stride (D-138).
+    /// </summary>
+    private void GatherAt(Pos tile)
+    {
+        if (Mode != MapMode.Overworld) return;
+
+        // The gleaning (D-052): the spots exist in every world; the lesson is
+        // what makes them visible and takeable. An untaught step gathers nothing.
+        // Valley-taught, valley-found (D-138): the road's verges grow herbs, not caches.
+        if (!OnRoad && Player.HasLesson(LessonId.Gleaning) && World.Gleanings.Contains(tile))
+        {
+            if (Player.Rations < RationCap)
+            {
+                World.Gleanings.Remove(tile);
+                Player.Rations++;
+                Log.Add(Turn, $"Sweet roots under the bracken, right where the lesson said to look. You take them for the road. ({Player.Rations} carried)", LogTone.Reward);
+            }
+            else
+            {
+                Log.Add(Turn, "Good gleaning here, but you carry all a walking body can. You mark the spot and leave it standing.", LogTone.Info);
+            }
+        }
+
+        // The forage (D-074): herbs anyone can stoop and pick, no lesson needed. The
+        // Survival skill fattens what a spot gives, and grows for the taking of it, the
+        // way Hunting grows off the hide. They bank like a trade-good, uncapped, to be
+        // sold at the wood's edge, so a full larder never turns the picking away.
+        if (HerbsHere.Contains(tile))
+        {
+            HerbsHere.Remove(tile);
+            int taken = 1 + Player.Skills.Bonus(SkillId.Survival) + (Player.Folk == FolkId.Heathborn ? 1 : 0);
+            Player.Herb += taken;
+            GainSkill(SkillId.Survival);
+            Log.Add(Turn, $"Wortcunning growth under the eaves: you pick {taken} good sprig{(taken == 1 ? "" : "s")} for the wood's-edge bench. ({Player.Herb} in the satchel)", LogTone.Reward);
+        }
     }
 
     private void DescribeTileIfNotable(Pos p)
@@ -1349,9 +1415,13 @@ public sealed class Game
                     ? "The leaguer stands empty around its mere. Wind riffles the black water, and the causeway is only a road now."
                     : "Earth-banks ring a broad black mere, dug by an army and never filled in. On the banks stand figures with boards up and slings hanging ready, and every one of them faces the bare holm at the water's middle. Press > to walk the works.", LogTone.Danger);
             else if (t == Terrain.WildsEntrance)
-                Log.Add(Turn, World.WildsSite!.Cleared
+                Log.Add(Turn, SiteHere(p)!.Cleared
                     ? "The game-trail, hunted out for now: cropped grass and old slots, and nothing moving in the glade."
                     : "A break in the trees where the deer come down to graze. Slots pressed in the mud, a run worn through the treeline, and the light going gold. Press > to hunt.", LogTone.Info);
+            else if (t == Terrain.RoadMouth)
+                Log.Add(Turn, OnRoad
+                    ? "The road bends down off the tops here, and the valley shows between the shoulders of the hills. Press > to turn for home."
+                    : "The old drove road leaves the valley here, climbing east between walked-thin banks. Press > to take the road.", LogTone.Info);
             else if (t == Terrain.SonghallEntrance)
                 Log.Add(Turn, "The stead's songhall: turf roof, smoke at the roof-hole, and low singing sometimes when the wind sits right. Press > to step in.", LogTone.Info);
             else if (t == Terrain.HarrowEntrance)
@@ -1466,9 +1536,44 @@ public sealed class Game
         return true;
     }
 
+    /// <summary>
+    /// The walking's small recovery (D-138 factors the old +1): under a foul
+    /// road sky the weather takes it, which is the whole of "exposure" in v1:
+    /// no meter, no damage, just a road that no longer pays for itself and a
+    /// camp that mends less. In the valley nothing changes.
+    /// </summary>
+    private void StepRegen()
+    {
+        if (OnRoad && Mode == MapMode.Overworld && Sky != RoadSky.Clear) return;
+        Player.Stamina = Math.Min(Player.MaxStamina, Player.Stamina + 1);
+    }
+
+    /// <summary>The site whose mouth is at this position on THIS overworld (D-138).</summary>
+    private Site? SiteHere(Pos p) => World.Sites.FirstOrDefault(s => s.OnRoad == OnRoad && s.OverworldPos == p);
+
+    /// <summary>The sky read aloud (D-138): said on taking the road, and again whenever the tick turns it.</summary>
+    private string SkyLine() => Sky switch
+    {
+        RoadSky.Rain => "The sky over the road is grey wool, and the rain comes fine and stays: soaking weather, the kind that runs down the neck and takes the spring out of a stride.",
+        RoadSky.Cold => "The wind off the tops has teeth today. Cold weather on the road: the kind a fire answers and nothing else does.",
+        _ => "The sky over the road stands clear, and the walking is as good as walking gets.",
+    };
+
+    private RoadSky DrawSky() => _roadSkyRng.Next(6) switch
+    {
+        <= 2 => RoadSky.Clear,
+        <= 4 => RoadSky.Rain,
+        _ => RoadSky.Cold,
+    };
+
     private bool DoEnter()
     {
-        if (Mode == MapMode.Overworld && World.Sites.FirstOrDefault(s => s.OverworldPos == Player.Pos) is { } site)
+        // The road mouth (D-138): the same key that opens every door opens the
+        // way east, and the way home again.
+        if (Mode == MapMode.Overworld && CurrentMap[Player.Pos] == Terrain.RoadMouth)
+            return TakeTheRoad();
+
+        if (Mode == MapMode.Overworld && SiteHere(Player.Pos) is { } site)
         {
             // The last stair (D-039): the door at its foot opens to the commission,
             // not to the map. Until then it is the arc's shut waygate: a promise.
@@ -1495,6 +1600,7 @@ public sealed class Game
                 }
                 else
                     Log.Add(Turn, $"{Cap(spooked.Name)} will not stand this ground: ears flat, it turns and is gone for home.", LogTone.Info);
+                spooked.OnRoad = false; // home is the stead's byre, whatever ground it bolted from (D-138)
                 Stable.Add(spooked);
                 Mount = null;
             }
@@ -1533,7 +1639,7 @@ public sealed class Game
             if (site.Kind == SiteKind.GoblinCamp) GreetTheRoster();
             return true;
         }
-        if (Mode == MapMode.Overworld && Player.Pos == World.GatePos)
+        if (Mode == MapMode.Overworld && !OnRoad && Player.Pos == World.GatePos)
         {
             if (!CampCleared)
             {
@@ -1555,6 +1661,101 @@ public sealed class Game
         }
         Log.Add(Turn, "There is nothing to enter here.");
         return false;
+    }
+
+    /// <summary>
+    /// The road taken, either direction (D-138): the bearer steps between the
+    /// valley and the east road at the mouth. A beast at the side comes along
+    /// (it is the beasts' own lane, D-100); one left grazing keeps its ground
+    /// and its map, and waits.
+    /// </summary>
+    private bool TakeTheRoad()
+    {
+        bool toRoad = !OnRoad;
+        var steed = Mount;
+        bool steedComes = steed is not null && steed.OnRoad == OnRoad && steed.Pos.Chebyshev(Player.Pos) <= 2;
+        OnRoad = toRoad;
+        Player.Pos = toRoad ? World.RoadHomePos : World.RoadMouthPos;
+        if (steedComes)
+            PlaceMountBeside(Player.Pos);
+        else if (steed is not null && steed.OnRoad != OnRoad)
+            Log.Add(Turn, $"{Cap(steed.Name)} is not at your side for the crossing of the mouth; it keeps its own ground, grazing, and will be there when you come back this way.", LogTone.Info);
+        PlaceFellowsBeside(Player.Pos);
+        if (toRoad)
+        {
+            Log.Add(Turn, "You take the drove road east, up out of the valley. The stead's smoke drops behind the shoulder of the hills, and the road settles into its own long rhythm.", LogTone.Info);
+            Log.Add(Turn, SkyLine(), LogTone.Info);
+        }
+        else
+        {
+            Log.Add(Turn, $"You come down off the drove road, and the valley opens under you: {World.SettlementName}'s smoke standing where it always stood.", LogTone.Info);
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Making camp (D-138, and the D-006 wilderness box opened): the road's own
+    /// rest, anywhere the ground is plain. The kill is cooked first (the craft
+    /// at the road's fire, D-073's plan on D-070's yield), then the supper's
+    /// ration buys the mending, Survival deepens it, and a foul road sky halves
+    /// it. No supper at all is a cold camp: the legs come back and nothing
+    /// else, and under the cold wind not even that is on offer. The night is
+    /// real time: the clocks at home keep counting while the fire burns down.
+    /// </summary>
+    private bool DoCamp()
+    {
+        if (Mode != MapMode.Overworld)
+        {
+            Log.Add(Turn, "No camp is made below ground. The dark is not for sleeping in.");
+            return false;
+        }
+        if (CurrentMap[Player.Pos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills))
+        {
+            Log.Add(Turn, "Not here. A camp wants plain ground: grass, the wood's edge, or the lee of a hill.");
+            return false;
+        }
+
+        var (meat, made) = CookPlan();
+        if (Player.Rations == 0 && (meat == 0 || made == 0))
+        {
+            if (OnRoad && Sky == RoadSky.Cold)
+            {
+                Log.Add(Turn, "A supperless camp under this wind is how walkers are found at the spring thaw. You keep your feet instead.", LogTone.Danger);
+                return false;
+            }
+            Player.Stamina = Player.MaxStamina;
+            for (int i = 1; i < RoadLife.CampTurns; i++) AdvanceTurn();
+            Log.Add(Turn, "A cold camp: no supper, a coat for a blanket, and the small hours counted awake. The legs get their spring back by morning; nothing else does.", LogTone.Info);
+            return true;
+        }
+
+        if (meat > 0 && made > 0)
+        {
+            Player.RawMeat -= meat;
+            Player.Rations += made;
+            GainSkill(SkillId.Cooking);
+            Log.Add(Turn, $"You build the fire up and spit {meat} cut{(meat == 1 ? "" : "s")} over it, the way the woodward would: {made} ration{(made == 1 ? "" : "s")} for the road. ({Player.Rations} carried, {Player.RawMeat} raw left)", LogTone.Reward);
+        }
+
+        bool foul = OnRoad && Sky != RoadSky.Clear;
+        Player.Rations--;
+        int hpBefore = Player.Hp;
+        int heal = RoadLife.CampHealBase + RoadLife.CampHealPerSurvival * Player.Skills.Level(SkillId.Survival);
+        if (foul) heal /= 2;
+        Player.Hp = Math.Min(Player.EffectiveMaxHp, Player.Hp + heal);
+        Player.Stamina = Player.MaxStamina;
+        Player.Focus = Player.MaxFocus;
+        foreach (var friend in Fellows)
+            friend.Hp = friend.MaxHp;
+        // The craft of sleeping out counts a use only when the night truly
+        // mended something (D-014's cost-gating): a whole body learns nothing
+        // from a comfortable evening.
+        if (Player.Hp > hpBefore) GainSkill(SkillId.Survival);
+        for (int i = 1; i < RoadLife.CampTurns; i++) AdvanceTurn();
+        Log.Add(Turn, foul
+            ? $"You camp in what shelter the ground gives, supper eaten under a dripping hood. Sleep comes thin under weather, but it comes. (+{Player.Hp - hpBefore} mended, {Player.Rations} ration{(Player.Rations == 1 ? "" : "s")} left)"
+            : $"You make camp: fire, supper, and the long quiet with the dark held off at arm's length. The road's ache goes out of you by morning. (+{Player.Hp - hpBefore} mended, {Player.Rations} ration{(Player.Rations == 1 ? "" : "s")} left)", LogTone.Reward);
+        return true;
     }
 
     /// <summary>
@@ -1695,6 +1896,7 @@ public sealed class Game
         _deathHand = null;
 
         Mode = MapMode.Overworld;
+        OnRoad = false; // every world is entered from its own valley (D-138)
         Player.Pos = World.ShrinePos;
         Player.WoundedTurns = 0;
         // The crossing wipes the count clean (D-098): a fresh world, a rested
@@ -1980,7 +2182,9 @@ public sealed class Game
         // hand that has learned to open things. Repayment outranks theft at a
         // shared corner: making right comes before more wrong, and a thief who
         // wants the next door must find an angle their conscience is not standing on.
-        if (Mode == MapMode.Overworld)
+        // The wayhouse is not the stead's larder (D-138): its walls are a roof,
+        // not a door ledger, and the crime family's ground stays the valley's.
+        if (Mode == MapMode.Overworld && !OnRoad)
         {
             foreach (var (dx, dy) in Directions.All8)
             {
@@ -2141,7 +2345,7 @@ public sealed class Game
         foreach (var (dx, dy) in Directions.All8)
         {
             var q = Player.Pos.Plus(dx, dy);
-            if (World.Npcs.FirstOrDefault(n => n.Pos == q && n.Kind == NpcKind.Villager) is { } npc)
+            if (NpcsHere.FirstOrDefault(n => n.Pos == q && n.Kind == NpcKind.Villager) is { } npc)
             {
                 mark = npc;
                 break;
@@ -2226,6 +2430,13 @@ public sealed class Game
         if (Mode != MapMode.Overworld)
         {
             Log.Add(Turn, "No door down here has a hearth behind it. What the deep places keep, they keep openly.");
+            return false;
+        }
+        // The road's one roof is watched by the one who lives under it (D-138):
+        // a keeper's fire never sleeps whole, and the door ledgers are the stead's.
+        if (OnRoad)
+        {
+            Log.Add(Turn, "The wayhouse's dark is a keeper's dark: someone is always half awake in it, and the road's one roof is worth more to you standing open.");
             return false;
         }
 
@@ -2347,10 +2558,11 @@ public sealed class Game
             NpcKind.Keeper => BuildKeeperTopics(),
             NpcKind.Harrower => BuildHarrowTopics(npc),
             NpcKind.Peddler => BuildPeddlerTopics(),
+            NpcKind.Waykeeper => BuildWaykeeperTopics(),
             _ => BuildTopics(npc),
         });
         _offers.Clear();
-        if (npc.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald or NpcKind.Peddler) _offers.AddRange(BuildOffers(npc));
+        if (npc.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald or NpcKind.Peddler or NpcKind.Waykeeper) _offers.AddRange(BuildOffers(npc));
 
         if (npc.Kind == NpcKind.Severed)
         {
@@ -2385,6 +2597,18 @@ public sealed class Game
                 World.Facts.Add("met", npc.Id, World.SettlementName,
                     $"{npc.Name}, the peddler camped on the road outside {World.SettlementName}, has spoken with the bearer.");
                 Log.Add(Turn, "\"Buying or selling? Both is best. Stand easy; the mule minds no one.\"");
+            }
+        }
+        else if (npc.Kind == NpcKind.Waykeeper)
+        {
+            // The waykeeper (D-138) is the road's, not the stead's: the greeting
+            // formula that names a settlement would put the house in the wrong valley.
+            Log.Add(Turn, $"{npc.Name} the waykeeper looks up from the fire, and reads the road off your boots before your face.");
+            if (!World.Facts.Exists("met", npc.Id))
+            {
+                World.Facts.Add("met", npc.Id, World.SettlementName,
+                    $"{npc.Name}, keeper of the wayhouse at the east road's far end, has spoken with the bearer.");
+                Log.Add(Turn, "\"Fire's lit, bread's priced, beds are dry. Walk in or walk on; the road takes either kindly.\"");
             }
         }
         else if (npc.Kind == NpcKind.Harrower)
@@ -2425,7 +2649,15 @@ public sealed class Game
         var topics = new List<(string, string)>();
 
         if (World.Facts.Find("settlement", World.SettlementName) is { } stead)
-            topics.Add(("The stead", $"{stead.Detail} \"We hold on. That is the whole craft of it.\""));
+        {
+            // The east road read from the doors (D-138): the site/road fact's
+            // reader rides the stead topic's own digit, because the shared nine
+            // are a wall (D-041) and a road is part of where a stead is.
+            string road = World.Facts.Find("site", "road") is not null
+                ? " And if it is roads you want: the old drove road climbs east over the tops. A wayhouse keeps its far end, they say, and the walking between is nobody's but yours."
+                : "";
+            topics.Add(("The stead", $"{stead.Detail} \"We hold on. That is the whole craft of it.{road}\""));
+        }
 
         if (CampCleared)
             topics.Add(("The quiet nights", $"\"The raids are ended, and everyone knows whose doing that was. {World.SettlementName} sleeps whole again.\""));
@@ -2530,6 +2762,31 @@ public sealed class Game
         }
 
         return topics;
+    }
+
+    /// <summary>
+    /// The waykeeper's topics (D-138): the road read by the one who watches it
+    /// for a living. The sky, the trail, the house, and the far country: the
+    /// last is B2's signpost, a town the road already knows about and the game
+    /// does not yet hold.
+    /// </summary>
+    private List<(string Label, string Answer)> BuildWaykeeperTopics()
+    {
+        string sky = Sky switch
+        {
+            RoadSky.Rain => "Soaking weather out there; it gets into everything but the bones, and it is working on those.",
+            RoadSky.Cold => "The wind has teeth today. Camp cold on the tops in this and the spring thaw finds you.",
+            _ => "Good walking weather, while it holds. It never holds.",
+        };
+        string trail = World.RoadWildsSite.Cleared
+            ? "The half-way glade is hunted quiet for now; the deer will forget, they always do."
+            : "Deer come down to the half-way glade most evenings, if your supper still walks on legs.";
+        return
+        [
+            ("The road", $"\"{sky} {trail}\""),
+            ("The wayhouse", "\"Older than me, older than the stead down the valley, and it will outlast us both. A wayhouse is not built, walker, it accretes: every roof-tree in it was carried up by someone who swore once was enough.\""),
+            ("The far country", "\"East of here the road drops to the fords and keeps going, and there is a market town out there at the end of somebody's else's week. Further than my fire reaches, and no business of mine. Roads go on. That is all they ever do.\""),
+        ];
     }
 
     /// <summary>
@@ -2760,6 +3017,13 @@ public sealed class Game
             offers.Add((TradeGood.Round, "", RoundStood
                 ? "Stand the room a round (the room drank your health tonight)"
                 : $"Stand the room a round ({Carousing.Price} coin)"));
+        }
+        // The wayhouse counter (D-138): the road's own two digits, always
+        // listed (D-041): bread at the road's flat price, and a dry bed.
+        if (npc.Kind == NpcKind.Waykeeper)
+        {
+            offers.Add((TradeGood.Ration, "", $"Buy road bread ({Peddling.RationPrice} coin)"));
+            offers.Add((TradeGood.Bed, "", $"A bed for the night ({RoadLife.BedCoin} coin)"));
         }
         // The cart's counter (D-124): the road's three digits. Bread at the
         // road's price (sold to anyone; the cart keeps no stead's books), the
@@ -3429,7 +3693,8 @@ public sealed class Game
     {
         // The cart sells bread too (D-124), at the road's price, and to anyone:
         // the larder's bars and the levy are the stead's books, not the cart's.
-        if (TalkNpc!.Kind == NpcKind.Peddler)
+        // The wayhouse keeps the same counter (D-138): road bread is road bread.
+        if (TalkNpc!.Kind is NpcKind.Peddler or NpcKind.Waykeeper)
         {
             TryBuyRoadRation();
             return;
@@ -3769,7 +4034,7 @@ public sealed class Game
             return;
         }
 
-        if (TalkNpc!.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald or NpcKind.Peddler
+        if (TalkNpc!.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald or NpcKind.Peddler or NpcKind.Waykeeper
             && key > '0' + _topics.Count && key <= '0' + _topics.Count + _offers.Count)
         {
             var (good, arg, _) = _offers[key - '1' - _topics.Count];
@@ -3795,6 +4060,7 @@ public sealed class Game
                     _offers.AddRange(BuildOffers(TalkNpc!));
                     break;
                 case TradeGood.Fence: TryFenceTrinkets(); break;
+                case TradeGood.Bed: TryBedDown(); break;        // the wayhouse's roof (D-138)
             }
             return;
         }
@@ -4548,10 +4814,11 @@ public sealed class Game
         // The wild fell pony (D-100 stage 2): bread offered on the high ground,
         // before every other meaning of the key: a taming in progress is not
         // interrupted by anyone's saddlebags.
-        if (Mode == MapMode.Overworld && World.WildPonyPos is { } wildPos && wildPos.Chebyshev(Player.Pos) == 1)
+        if (Mode == MapMode.Overworld && !OnRoad && World.WildPonyPos is { } wildPos && wildPos.Chebyshev(Player.Pos) == 1)
             return DoFeedWildPony(wildPos);
 
-        bool muleBeside = Mode == MapMode.Overworld && Mount is { } steed && steed.Pos.Chebyshev(Player.Pos) == 1;
+        bool muleBeside = Mode == MapMode.Overworld && Mount is { } steed && steed.OnRoad == OnRoad
+            && steed.Pos.Chebyshev(Player.Pos) == 1;
         var fellow = Guest is { Alive: true } ? Guest : Shade;
         if (fellow is not { Alive: true } guest)
         {
@@ -4677,31 +4944,8 @@ public sealed class Game
         Player.Stamina = Player.MaxStamina;
         Player.Focus = Player.MaxFocus;
 
-        // The tended iron (D-052): a taught bearer's rest holds their gear back
-        // from the worst of its wear. Only back to half: the deep wear is the
-        // wheel's business, so the smith's sink keeps its bottom half whole.
-        if (Player.HasLesson(LessonId.TendedIron))
-        {
-            bool tended = false;
-            foreach (var item in Player.AllGear)
-                if (item.Wear > item.MaxWear / 2)
-                {
-                    item.Wear = item.MaxWear / 2;
-                    tended = true;
-                }
-            if (tended)
-                Log.Add(Turn, "Before resting you see to your iron as the smith showed you: wax, stone, patience. The worst of the wear comes off; the deep wear waits for the wheel.", LogTone.Info);
-        }
-
-        // The stillcraft (D-090): a taught bearer's rest steeps a draught of
-        // their own, any shrine, any world: the lesson's keep is independence.
-        if (Player.HasLesson(LessonId.Stillcraft)
-            && Player.Draughts < DraughtCap && Player.Herb >= DraughtHerbs)
-        {
-            Player.Herb -= DraughtHerbs;
-            Player.Draughts++;
-            Log.Add(Turn, $"While the shrine hums you steep the simples as she showed you: bruised, slow, patient. A draught of your own goes stoppered into the pack. ({Player.Draughts} vial{(Player.Draughts == 1 ? "" : "s")} carried)", LogTone.Reward);
-        }
+        TendIronAtRest();
+        SteepAtRest();
 
         // Fireside words (D-097 stage 2): a rest with the guest beside mends
         // them whole, banks a beat, and gives up a little of who they are, one
@@ -4735,6 +4979,65 @@ public sealed class Game
             : "\"Sit. Count with me; the count answers to you now.\"", LogTone.Aegis);
         _storylets.TryFire(this, StoryletTrigger.Rest);
         return true;
+    }
+
+    /// <summary>
+    /// The tended iron (D-052): a taught bearer's real rest holds their gear
+    /// back from the worst of its wear. Only back to half: the deep wear is
+    /// the wheel's business, so the smith's sink keeps its bottom half whole.
+    /// A habit of the hands, so it travels (D-138): the shrine's rest and the
+    /// wayhouse's bed both give it the evening it needs; a camp does not.
+    /// </summary>
+    private void TendIronAtRest()
+    {
+        if (!Player.HasLesson(LessonId.TendedIron)) return;
+        bool tended = false;
+        foreach (var item in Player.AllGear)
+            if (item.Wear > item.MaxWear / 2)
+            {
+                item.Wear = item.MaxWear / 2;
+                tended = true;
+            }
+        if (tended)
+            Log.Add(Turn, "Before resting you see to your iron as the smith showed you: wax, stone, patience. The worst of the wear comes off; the deep wear waits for the wheel.", LogTone.Info);
+    }
+
+    /// <summary>
+    /// The stillcraft (D-090): a taught bearer's real rest steeps a draught of
+    /// their own: the lesson's keep is independence, and it rides any settled
+    /// evening with a fire and a table (D-138): shrine or wayhouse both.
+    /// </summary>
+    private void SteepAtRest(string where = "While the shrine hums")
+    {
+        if (!Player.HasLesson(LessonId.Stillcraft)
+            || Player.Draughts >= DraughtCap || Player.Herb < DraughtHerbs) return;
+        Player.Herb -= DraughtHerbs;
+        Player.Draughts++;
+        Log.Add(Turn, $"{where} you steep the simples as she showed you: bruised, slow, patient. A draught of your own goes stoppered into the pack. ({Player.Draughts} vial{(Player.Draughts == 1 ? "" : "s")} carried)", LogTone.Reward);
+    }
+
+    /// <summary>
+    /// The wayhouse bed (D-138): the roof at the road's far end. A full rest
+    /// for flat coin, the bearer's taught habits riding it like any settled
+    /// evening; no shrine menu opens, because no essence is counted here: the
+    /// Aegis anchors where it anchors.
+    /// </summary>
+    private void TryBedDown()
+    {
+        if (Player.Coin < RoadLife.BedCoin)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"{RoadLife.BedCoin} coin the bed, and you hold {Player.Coin}. The bench by the fire is free, and it is a bench.\"");
+            return;
+        }
+        Player.Coin -= RoadLife.BedCoin;
+        Player.Hp = Player.EffectiveMaxHp;
+        Player.Stamina = Player.MaxStamina;
+        Player.Focus = Player.MaxFocus;
+        TendIronAtRest();
+        SteepAtRest("While the house settles");
+        foreach (var friend in Fellows)
+            friend.Hp = friend.MaxHp;
+        Log.Add(Turn, "A straw tick, a stone-warmed wall, and a door between you and the weather: the wayhouse sells the deepest sleep on the road. You wake whole.", LogTone.Reward);
     }
 
     private void HandleShrineMenuKey(char key)
@@ -6352,6 +6655,11 @@ public sealed class Game
     {
         _schedule.Clear();
         _steadDeckRng = new Rng(SeedTree.Derive(World.Seed, "stead_deck"));
+        // The road's sky (D-138): its own per-world stream beside the deck's,
+        // first drawn at arrival, redrawn each coarse tick wherever the bearer
+        // stands, so replay always agrees on the weather.
+        _roadSkyRng = new Rng(SeedTree.Derive(World.Seed, "road_sky"));
+        Sky = DrawSky();
         var rng = new Rng(SeedTree.Derive(World.Seed, "winter"));
         int due = 3 + rng.Next(3);
         _schedule.Add(new ScheduledFact
@@ -6850,6 +7158,17 @@ public sealed class Game
                 && World.BarrowSite is { Cleared: false } mound && CurrentSite != mound
                 && Monsters.FirstOrDefault(m => !m.Alive && m.SiteId == mound.Id && m.Kind == MonsterKind.Wight) is { } fallen)
                 RaiseTheFallen(mound, fallen);
+
+            // The road's sky turns on the tick (D-138): the stream advances
+            // every tick wherever the bearer stands (replay's sameness), and
+            // the turning is narrated only where there is no roof against it.
+            var sky = DrawSky();
+            if (sky != Sky)
+            {
+                Sky = sky;
+                if (OnRoad && Mode == MapMode.Overworld)
+                    Log.Add(Turn, SkyLine(), LogTone.Info);
+            }
         }
 
         if (Mode == MapMode.Site)
@@ -7347,6 +7666,9 @@ public sealed class Game
     private void ActMount()
     {
         if (Mode != MapMode.Overworld || Mount is not { } steed) return;
+        // A beast on the other overworld (D-138) is grazing, not following:
+        // its position means nothing on the map underfoot.
+        if (steed.OnRoad != OnRoad) return;
         if (steed.Pos.Chebyshev(Player.Pos) <= 1) return;
         var map = CurrentMap;
         var best = steed.Pos;
@@ -7357,7 +7679,7 @@ public sealed class Game
             if (!map.Walkable(next)) continue;
             if (next == Player.Pos) continue;
             if (FellowAt(next)) continue;
-            if (World.Npcs.Any(n => n.Pos == next)) continue;
+            if (NpcsHere.Any(n => n.Pos == next)) continue;
             int d = next.Manhattan(Player.Pos);
             if (d < bestDist) { bestDist = d; best = next; }
         }
@@ -7368,13 +7690,16 @@ public sealed class Game
     private void PlaceMountBeside(Pos anchor)
     {
         var steed = Mount!;
-        var map = World.Overworld;
+        // The beast is set down on the overworld underfoot (D-138): beside the
+        // bearer is beside the bearer, whichever map that is.
+        steed.OnRoad = OnRoad;
+        var map = OnRoad ? World.Road : World.Overworld;
         foreach (var (dx, dy) in Directions.All8)
         {
             var cell = anchor.Plus(dx, dy);
             if (!map.Walkable(cell) || cell == Player.Pos) continue;
             if (Fellows.Any(f => f.Pos == cell)) continue;
-            if (World.Npcs.Any(n => n.Pos == cell)) continue;
+            if (NpcsHere.Any(n => n.Pos == cell)) continue;
             steed.Pos = cell;
             return;
         }
@@ -8158,6 +8483,7 @@ public sealed class Game
 
         Mode = MapMode.Overworld;
         CurrentSite = null;
+        OnRoad = false; // the Aegis catches the bearer where it anchors (D-138)
         Player.Pos = World.ShrinePos;
         // Whoever still walked with you kept the road home (D-097): the guest
         // is at the shrine when you wake, and says nothing about the carrying.
@@ -8197,6 +8523,7 @@ public sealed class Game
         CurrentSite = mode == MapMode.Site ? World.CampSite : null;
     }
     internal void Debug_HurtPlayer(int damage) => Player.Hp -= damage;
+    internal void Debug_SetSky(RoadSky sky) => Sky = sky; // the road's weather pinned (D-138), so camp tests stay about the camp
     internal void Debug_GrantGear(string id) => AcquireGear(GearCatalog.Create(id));
     internal void Debug_LearnSpell(SpellId id)
     {
@@ -8390,6 +8717,8 @@ public sealed class Game
         MonstersAlive: Monsters.Count(m => m.Alive),
         StoryletsFired: StoryletsFired,
         CampCleared: CampCleared,
+        OnRoad: OnRoad,
+        RoadSky: Sky.ToString().ToLowerInvariant(),
         RemnantExists: Remnant is not null,
         RemnantMap: Remnant?.MapId ?? "",
         RemnantX: Remnant?.Pos.X ?? 0,
@@ -8553,6 +8882,8 @@ public sealed record Snapshot(
     int MonstersAlive,
     int StoryletsFired,
     bool CampCleared,
+    bool OnRoad,
+    string RoadSky,
     bool RemnantExists,
     string RemnantMap,
     int RemnantX,

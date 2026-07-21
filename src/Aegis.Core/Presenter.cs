@@ -683,17 +683,19 @@ public static class Presenter
             PutWorld(cofferPos, '&', Hue.DarkYellow);
 
         // The gleanings (D-052): drawn only for a bearer taught to see them.
-        if (game.Mode == MapMode.Overworld && game.Player.HasLesson(LessonId.Gleaning))
+        // Valley caches are the valley's (D-138); the road grows only herbs.
+        if (game.Mode == MapMode.Overworld && !game.OnRoad && game.Player.HasLesson(LessonId.Gleaning))
             foreach (var spot in game.World.Gleanings)
                 PutWorld(spot, '"', Hue.Green);
 
-        // The herbs (D-074): plain to any eye, so drawn for everyone, unlike the gleanings.
+        // The herbs (D-074): plain to any eye, so drawn for everyone, unlike the
+        // gleanings. Whichever overworld is underfoot draws its own (D-138).
         if (game.Mode == MapMode.Overworld)
-            foreach (var spot in game.World.Herbs)
+            foreach (var spot in game.HerbsHere)
                 PutWorld(spot, '*', Hue.Green);
 
         if (game.Mode == MapMode.Overworld)
-            foreach (var npc in game.World.Npcs)
+            foreach (var npc in game.NpcsHere)
                 PutWorld(npc.Pos, 'p', npc.Kind switch
                 {
                     NpcKind.Severed => Hue.Magenta,
@@ -752,9 +754,9 @@ public static class Presenter
         // The beast of the road (D-100): overworld only; below ground it is
         // exactly where it is drawn not to be. The wild pony in the watcher's
         // gray until it is won.
-        if (game.Mode == MapMode.Overworld && game.Mount is { } steed)
+        if (game.Mode == MapMode.Overworld && game.Mount is { } steed && steed.OnRoad == game.OnRoad)
             PutWorld(steed.Pos, 'm', Hue.DarkYellow);
-        if (game.Mode == MapMode.Overworld && game.World.WildPonyPos is { } wild)
+        if (game.Mode == MapMode.Overworld && !game.OnRoad && game.World.WildPonyPos is { } wild)
             PutWorld(wild, 'm', Hue.DarkGray);
 
         PutWorld(game.Player.Pos, '@', Hue.White);
@@ -785,6 +787,7 @@ public static class Presenter
         Terrain.LeaguerEntrance => ('U', Hue.Blue, Hue.Black),
         Terrain.WildsEntrance => ('"', Hue.Green, Hue.Black),
         Terrain.HarrowEntrance => ('A', Hue.White, Hue.Black),
+        Terrain.RoadMouth => ('=', Hue.DarkYellow, Hue.Black),
         _ => ('?', Hue.Magenta, Hue.Black),
     };
 
@@ -926,7 +929,22 @@ public static class Presenter
         }
         else
         {
-            Line(game.World.SettlementName, Hue.White);
+            // The road names itself and its sky (D-138): weather is a standing
+            // condition out east, and the panel says what the body feels.
+            if (game.OnRoad)
+            {
+                Line("The east road", Hue.White);
+                Line(game.Sky switch
+                {
+                    RoadSky.Rain => "Sky: rain, the road soaks",
+                    RoadSky.Cold => "Sky: cold wind off the tops",
+                    _ => "Sky: clear, good walking",
+                }, game.Sky == RoadSky.Clear ? Hue.DarkGreen : Hue.DarkCyan);
+            }
+            else
+            {
+                Line(game.World.SettlementName, Hue.White);
+            }
             var here = game.CurrentMap[p.Pos];
             if (here == Terrain.Shrine) Line("At the shrine: r rests", Hue.Cyan);
             if (here == Terrain.CampEntrance) Line("Cave mouth: > enters", Hue.Red);
@@ -943,7 +961,9 @@ public static class Presenter
                 Line(game.Player.CommissionHeard ? "Deep stair: > descends" : "Deep stair: shut", Hue.Magenta);
             if (here == Terrain.Waygate)
                 Line(game.CampCleared ? "Waygate hums: > crosses" : "Waygate: shut", Hue.Magenta);
-            foreach (var npc in game.World.Npcs)
+            if (here == Terrain.RoadMouth)
+                Line(game.OnRoad ? "Road mouth: > turns for home" : "Road mouth: > takes the road", Hue.DarkYellow);
+            foreach (var npc in game.NpcsHere)
                 if (npc.Pos.Chebyshev(p.Pos) == 1)
                     Line($"{npc.Name}: bump to talk", Hue.Green);
         }
@@ -961,7 +981,7 @@ public static class Presenter
         Line("f loose  e eat  d drink", Hue.DarkGray);
         Line("z cast  i gear  c you", Hue.DarkGray);
         Line("x stance  a parry  o order", Hue.DarkGray);
-        Line("q quit", Hue.DarkGray);
+        Line("m camp  q quit", Hue.DarkGray);
     }
 
     private static string Bar(int value, int max, int slots)

@@ -42,6 +42,60 @@ public class ForagingTests
     }
 
     [Fact]
+    public void TheRiddenStride_StillStoopsForTheSpot()
+    {
+        // The latent D-100 seam D-138 closed: a ridden step crosses two cells,
+        // and a spot on the first of them must still be picked, or a rider can
+        // orbit a herb forever without ever taking it (found live: the pilot
+        // burning a whole world's key budget circling one).
+        var game = new Game(42);
+        var map = game.World.Overworld;
+        (Pos start, Pos mid, Pos far)? run = null;
+        for (int x = 2; x < map.Width - 2 && run is null; x++)
+            for (int y = 2; y < map.Height - 2 && run is null; y++)
+                foreach (var (dx, dy) in Directions.All8)
+                {
+                    var a = new Pos(x, y);
+                    var b = a.Plus(dx, dy);
+                    var c = b.Plus(dx, dy);
+                    if (!map.InBounds(c)) continue;
+                    if (map[a] != Terrain.Grass || map[b] != Terrain.Grass || map[c] != Terrain.Grass) continue;
+                    if (game.World.Npcs.Any(n => !n.OnRoad && (n.Pos == a || n.Pos == b || n.Pos == c))) continue;
+                    if (game.World.Herbs.Contains(b) || game.World.Herbs.Contains(c)) continue;
+                    if (game.World.Gleanings.Contains(b) || game.World.Gleanings.Contains(c)) continue;
+                    run = (a, b, c);
+                    break;
+                }
+        Assert.NotNull(run);
+        var (start, mid, far) = run!.Value;
+
+        game.Debug_SetPlayerPos(start);
+        // The stride only doubles with the beast within two: stand it at the side.
+        game.Debug_SetMount(new Mount { Kind = MountKind.Mule, Pos = start });
+        game.World.Herbs.Add(mid);
+        game.Player.Herb = 0;
+
+        game.ApplyKey(KeyFor(mid.X - start.X, mid.Y - start.Y));
+
+        Assert.Equal(far, game.Player.Pos);                 // the stride carried two cells
+        Assert.True(game.Player.Herb > 0, "the stride skipped the spot under it");
+        Assert.DoesNotContain(mid, game.World.Herbs);
+    }
+
+    private static char KeyFor(int dx, int dy) => (dx, dy) switch
+    {
+        (0, -1) => 'k',
+        (0, 1) => 'j',
+        (-1, 0) => 'h',
+        (1, 0) => 'l',
+        (-1, -1) => 'y',
+        (1, -1) => 'u',
+        (-1, 1) => 'b',
+        (1, 1) => 'n',
+        _ => '.',
+    };
+
+    [Fact]
     public void Survival_FattensTheForage()
     {
         var game = new Game(42);

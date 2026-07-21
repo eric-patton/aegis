@@ -32,6 +32,7 @@ public enum Terrain : byte
     LeaguerEntrance,
     WildsEntrance,
     HarrowEntrance,
+    RoadMouth,
 }
 
 public static class TerrainInfo

@@ -198,6 +198,11 @@ public static class JourneyPilot
         // so the set climbs to the sworn one and the cross fires exactly once, no oscillation.
         if (g.InCrossingMenu) return CrossingKey(g);
 
+        // Out east (D-138) the errands are the road's own: hunt the half-way
+        // glade, camp on the kill, pick the verges, and come home. Everything
+        // below this line is the valley's business and navigates the valley's map.
+        if (g.OnRoad) return RoadMove(g, skip);
+
         // The vision is a rung of the ladder taken by resting (D-068): once the guilt has
         // been spoken at a crossing, the next rest at the shrine pulls the bearer under
         // into the forging-memory. So rest even with nothing to raise or mend when that
@@ -294,7 +299,7 @@ public static class JourneyPilot
         // bags at the bearer's side; what the beast carries does not fall with the
         // bearer, an uncanny mouth hands it back, and the bank reloads on the way out.
         if (target is not null && BankWanted(g) && g.Mount is { } steed
-            && Chebyshev(p.Pos, steed.Pos) == 1)
+            && steed.OnRoad == g.OnRoad && Chebyshev(p.Pos, steed.Pos) == 1)
             return 'o';
 
         if (target is not null)
@@ -303,11 +308,22 @@ public static class JourneyPilot
             return NavKey(g, g.World.Overworld, p.Pos, target.OverworldPos, OverworldBlocked(g));
         }
 
+        // The east road walked once per world (D-138): with the valley's sites
+        // settled, take the mouth and work the road's own ground. The trip
+        // exercises travel, the hunt half a journey out, the camp's cooking
+        // and mending, and the verges' herbs, all through real keys.
+        if (RoadTripWanted(g, skip))
+        {
+            if (p.Pos == g.World.RoadMouthPos) return '>';
+            var toMouth = NavKey(g, g.World.Overworld, p.Pos, g.World.RoadMouthPos, OverworldBlocked(g));
+            if (toMouth is not null) return toMouth;
+        }
+
         // The bank comes home before the arch (D-100): the bags are world-bound, so the
         // coin is taken back into the purse (one press tops the bags up off the purse,
         // the next empties them whole) before the crossing would forfeit it. A laden
         // beast still in the stable is fetched through the bench's stable digit first.
-        if (g.Mount is { Bags: > 0 } laden)
+        if (g.Mount is { Bags: > 0 } laden && laden.OnRoad == g.OnRoad)
         {
             if (Chebyshev(p.Pos, laden.Pos) == 1) return 'o';
             if (ApproachBeast(g, laden) is { } sidle) return sidle;
@@ -360,11 +376,69 @@ public static class JourneyPilot
     {
         var here = g.Player.Pos;
         return g.World.Sites
-            .Where(s => !s.Cleared && !skip.Contains(s.Id)
+            .Where(s => s.OnRoad == g.OnRoad && !s.Cleared && !skip.Contains(s.Id)
                         && g.Monsters.Any(m => m.Alive && m.SiteId == s.Id))
             .OrderBy(s => Chebyshev(here, s.OverworldPos))
             .ThenBy(s => s.Id, StringComparer.Ordinal)
             .FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Whether the road still owes this world's trip (D-138): the half-way
+    /// glade untried, or verges still unpicked. Both empty out, so the trip
+    /// fires once per world and the arch is never held hostage by the east.
+    /// </summary>
+    private static bool RoadTripWanted(Game g, IReadOnlySet<string> skip)
+    {
+        // The glade is the trip's one driving errand, because it terminates
+        // cleanly (cleared or written off). The verges are picked on the way
+        // out, never chased from the valley: a herb the road's water pockets
+        // sealed off must not become a shuttle the trip can never put down.
+        var trail = g.World.RoadWildsSite;
+        return !trail.Cleared && !skip.Contains(trail.Id);
+    }
+
+    /// <summary>Camp is worth a night (D-138): raw meat to cook and room to carry what it makes.</summary>
+    private static bool RoadCampWanted(Game g) =>
+        g.Player.RawMeat > 0 && g.Player.Rations < Game.RationCap;
+
+    /// <summary>
+    /// The road's own errand loop (D-138): reclaim anything a fall left out
+    /// here, hunt the glade, camp on the kill where the ground is plain, pick
+    /// the verges, then take the mouth for home. Deterministic like everything
+    /// the pilot does: same seed, same road.
+    /// </summary>
+    private static char? RoadMove(Game g, IReadOnlySet<string> skip)
+    {
+        var p = g.Player;
+        var road = g.World.Road;
+        var blocked = OverworldBlocked(g);
+
+        if (g.Remnant is { } rem && rem.MapId == road.Id && rem.Coin + rem.Essence > 0)
+        {
+            if (p.Pos == rem.Pos) return 'g';
+            if (NavKey(g, road, p.Pos, rem.Pos, blocked) is { } toRem) return toRem;
+        }
+
+        var trail = g.World.RoadWildsSite;
+        if (!trail.Cleared && !skip.Contains(trail.Id))
+        {
+            if (p.Pos == trail.OverworldPos) return '>';
+            if (NavKey(g, road, p.Pos, trail.OverworldPos, blocked) is { } toTrail) return toTrail;
+        }
+
+        // The camp on the kill: only from plain ground (the mouth and the
+        // glade's own tile refuse a fire), so a step toward the next errand
+        // always precedes the night when the ground underfoot is wrong.
+        if (RoadCampWanted(g) && road[p.Pos] is Terrain.Grass or Terrain.Forest or Terrain.Hills)
+            return 'm';
+
+        foreach (var spot in g.World.RoadHerbs.OrderBy(h => Chebyshev(p.Pos, h))
+                     .ThenBy(h => h.Y).ThenBy(h => h.X))
+            if (NavKey(g, road, p.Pos, spot, blocked) is { } toHerb) return toHerb;
+
+        if (p.Pos == g.World.RoadHomePos) return '>';
+        return NavKey(g, road, p.Pos, g.World.RoadHomePos, blocked);
     }
 
     // ---- combat: the read, the dodge, the answer ----
@@ -1302,7 +1376,7 @@ public static class JourneyPilot
     }
 
     private static HashSet<Pos> OverworldBlocked(Game g) =>
-        g.World.Npcs.Select(n => n.Pos).ToHashSet(); // never bump a person into a menu.
+        g.NpcsHere.Select(n => n.Pos).ToHashSet(); // never bump a person into a menu; only this map's people block (D-138).
 
     private static HashSet<Pos> LiveFoeCells(Game g) =>
         g.LiveMonstersHere.Select(m => m.Pos).ToHashSet();

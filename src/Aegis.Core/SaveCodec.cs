@@ -273,10 +273,13 @@ namespace Aegis.Core;
 /// v76 when D-135 grew the ladder's second rung: two bench digits a v75
 /// journal never held now raise the stillroom's wing and the smithy, deepen
 /// the satchel's vials, file wear off iron, and feed the Smithing craft.
+/// v77 when D-138 opened the east road: '>' at a mouth a v76 journal never
+/// held now walks a second overworld, 'm' makes camp and passes real nights,
+/// and the wayhouse's digits move coin, rations, and rest.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 76;
+    public const int Version = 77;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

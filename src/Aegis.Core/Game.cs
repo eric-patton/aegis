@@ -519,6 +519,16 @@ public sealed class Game
     /// <summary>Test-only (D-133): a held deck deals nothing, so choreographed tick tests stay about the cadence.</summary>
     private bool _deckHeld;
 
+    /// <summary>
+    /// The storyteller above the tick (D-145): read-only, it watches every
+    /// tick night and records what it would have done. No RNG, no facts, no
+    /// narration, so replay cannot feel it; the journey report reads its book.
+    /// </summary>
+    public Storyteller Teller { get; } = new();
+
+    /// <summary>Whether the season dealt a card this tick (D-145): the teller's observed fact.</summary>
+    private bool _deckDealtThisTick;
+
     /// <summary>The futures on the world's calendar (D-132): observers and tests read the timeline here.</summary>
     public IEnumerable<(string Key, int DueTick)> Upcoming => _schedule.Select(f => (f.Key, f.DueTick));
 
@@ -7270,6 +7280,9 @@ public sealed class Game
     private void ScheduleWorldFuture()
     {
         _schedule.Clear();
+        // The teller starts each world cool (D-145): carried temperature and
+        // quiet streak reset with the World bucket; the book itself spans the run.
+        Teller.NewWorld(Player.Deaths);
         _steadDeckRng = new Rng(SeedTree.Derive(World.Seed, "stead_deck"));
         // The road's sky (D-138): its own per-world stream beside the deck's,
         // first drawn at arrival, redrawn each coarse tick wherever the bearer
@@ -7546,7 +7559,7 @@ public sealed class Game
         foreach (var card in hand)
         {
             roll -= card.Weight;
-            if (roll < 0) { card.Draw(this); return; }
+            if (roll < 0) { _deckDealtThisTick = true; card.Draw(this); return; }
         }
     }
 
@@ -7827,7 +7840,10 @@ public sealed class Game
             // the muster's own snowless dark or the winter's blizzard, and no
             // carts creak in on the night the drifts close the fords.
             _nightSpokenFor = false;
+            _deckDealtThisTick = false;
+            int raidsBeforeTick = Raids;
             RunSchedule((Turn - _worldStartTurn) / SteadRaids.TickTurns);
+            int storesBeforeCadence = Stores;
             if (!CampCleared && Stores > 0 && !_nightSpokenFor && CurrentSite?.Kind != SiteKind.GoblinCamp)
             {
                 if (WatchStands && Boldness < RaiderBoldness.BoldAt)
@@ -7841,6 +7857,11 @@ public sealed class Game
             }
             else if (CampCleared && Stores < StoresMax && !_nightSpokenFor)
                 RecoverStores();
+            // What the cadence took (D-145): the teller reads a raid's heat by
+            // its take. A mustered raid fires inside the schedule instead and
+            // heats as a claimed night plus the raid itself.
+            int raidTake = Raids > raidsBeforeTick
+                ? Math.Max(0, storesBeforeCadence - Stores) : 0;
 
             // The season deals its own news (D-133): at most one card a tick,
             // none on a night a scheduled future claimed, and none while a
@@ -7871,6 +7892,12 @@ public sealed class Game
                 if (OnRoad && Mode == MapMode.Overworld)
                     Log.Add(Turn, SkyLine(), LogTone.Info);
             }
+
+            // The teller writes its line last (D-145): the call it would have
+            // made before the night, then what the night actually held.
+            // Read-only by construction: nothing above reads it back.
+            Teller.Observe(Turn, Player.Deaths, _nightSpokenFor, _deckDealtThisTick,
+                Raids - raidsBeforeTick, raidTake);
         }
 
         if (Mode == MapMode.Site)

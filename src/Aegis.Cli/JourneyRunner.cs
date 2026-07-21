@@ -427,6 +427,11 @@ public static class JourneyRunner
                 MaxWrath: maxWrath,
                 WrathTitle: RaiderWrath.TitleOf(maxWrath),
                 RaidsSuffered: raidsSuffered,
+                PacingNights: game.Teller.Readings.Count,
+                PacingSpaceCalls: game.Teller.SpaceCalls,
+                PacingPressCalls: game.Teller.PressCalls,
+                PacingDealtUnderSpace: game.Teller.DealtUnderSpace,
+                PacingQuietUnderPress: game.Teller.QuietUnderPress,
                 Keys: emitKeys ? keys.ToString() : null,
                 Crossings: crossings.Select(c => new JourneyCrossingDto(
                     FromCycle: c.FromCycle,
@@ -459,7 +464,7 @@ public static class JourneyRunner
             marketsWalked, game.Player.Skills.Uses(SkillId.Commerce), game.Player.Skills.Level(SkillId.Commerce),
             forgeSittings, bondsSworn, game.Player.Skills.Level(SkillId.Smithing),
             saltBought, saltSold,
-            maxRegard, maxWrath, raidsSuffered);
+            maxRegard, maxWrath, raidsSuffered, game.Teller);
         return 0;
     }
 
@@ -544,7 +549,7 @@ public static class JourneyRunner
         int marketsWalked, int lotsSold, int commerceLevel,
         int forgeSittings, int bondsSworn, int smithingLevel,
         int saltBought, int saltSold,
-        int maxRegard, int maxWrath, int raidsSuffered)
+        int maxRegard, int maxWrath, int raidsSuffered, Storyteller teller)
     {
         var w = Console.Out;
         w.WriteLine($"AEGIS JOURNEY   seed {seed}   target {cycles} crossing(s)"
@@ -638,6 +643,9 @@ public static class JourneyRunner
         w.WriteLine($"         the dens: came to hold the bearer as {(maxWrath > 0 ? RaiderWrath.TitleOf(maxWrath) : "no one at all")} at their most fearful "
                     + $"(peak wrath {maxWrath}, reset at every crossing) (D-078).");
         w.WriteLine($"         the raids: the steads suffered {raidsSuffered} raid(s) while camps stood, each thinning the lofts bread is priced by (D-079, D-089).");
+        w.WriteLine($"         the teller's book (read-only): watched {teller.Readings.Count} tick night(s), "
+                    + $"called for air {teller.SpaceCalls} time(s) and for the screw {teller.PressCalls}; "
+                    + $"the season dealt through {teller.DealtUnderSpace} call(s) for air, and {teller.QuietUnderPress} pressed night(s) stayed quiet (D-145).");
         int sworn = crossings.Count(c => c.Sworn.Count > 0);
         if (sworn > 0)
         {
@@ -689,5 +697,7 @@ internal sealed record JourneyReport(
     int ForgeSittings, int BondsSworn,
     int SaltBought, int SaltSold,
     int MaxRegard, string RegardTitle, int MaxWrath, string WrathTitle, int RaidsSuffered,
+    int PacingNights, int PacingSpaceCalls, int PacingPressCalls,
+    int PacingDealtUnderSpace, int PacingQuietUnderPress,
     string? Keys,
     List<JourneyCrossingDto> Crossings);

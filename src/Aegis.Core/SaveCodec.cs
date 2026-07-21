@@ -254,10 +254,13 @@ namespace Aegis.Core;
 /// v70 when D-127 taught the hand to cross the sill: 's', once nothing, now
 /// slips a stead door's latch, draws Sleight dice, and moves coin, shame,
 /// heirlooms, and skill where a v69 key fell through as nothing.
+/// v71 when D-129 closed the guard war: the carl's board-check adds a draw
+/// beside every adjacent carl (a v70 journal's fort fights re-deal from
+/// there), and the drilled thegn answers the met parry with the bind.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 70;
+    public const int Version = 71;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

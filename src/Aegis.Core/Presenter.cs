@@ -892,6 +892,7 @@ public static class Presenter
                 IntentKind.RallyCry => " (a call, not a blow)",
                 IntentKind.GraveChill => " (cold, not iron)",
                 IntentKind.MeasuredCut => " (and the mark is honest)",
+                IntentKind.BoardCheck => " (mass, and it comes for your guard)",
                 _ => " (heavy)",
             };
             foreach (var monster in game.LiveMonstersHere.Where(m => m.Intent is not null))
@@ -913,6 +914,7 @@ public static class Presenter
                     IntentKind.RallyCry => "! a cry filling its lungs",
                     IntentKind.GraveChill => "! grave-cold gathering",
                     IntentKind.MeasuredCut => "! the measured cut marked",
+                    IntentKind.BoardCheck => "! the linden board squared to check",
                     _ => "! crushing blow poised",
                 };
                 if (tier == ReadTier.Keen) named += Weight(monster.Intent!.Kind);

@@ -586,7 +586,7 @@ public sealed class Intent
     public Pos? FeintCell { get; init; }
 }
 
-public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut, HurledStone, GravenFist, ThroatLunge, SeaxStab, BoarCharge, LoftedStone, RallyCry, GraveChill, MeasuredCut }
+public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut, HurledStone, GravenFist, ThroatLunge, SeaxStab, BoarCharge, LoftedStone, RallyCry, GraveChill, MeasuredCut, BoardCheck }
 
 /// <summary>
 /// How clearly the bearer reads a kind's wind-up (D-059): a stranger's is a

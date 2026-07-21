@@ -53,6 +53,14 @@ public static class GuardBreak
     // much deeper every blow finds a beaten-open guard.
     public const int BearerStagger = 3;
     public const int OpenGuardDeeper = 2;
+
+    // The guard war's coda (D-129): the carl's board-check is thrown mass
+    // along the guard's line, the charge's tier with no blood in it at all;
+    // and the drilled thegn answers the met parry, rolling off the bind with
+    // half its force kept while the crossed iron shoves back a point.
+    public const int CheckPressure = 3;
+    public const int DrilledParryPressure = 2;
+    public const int BindPressure = 1;
 }
 
 /// <summary>
@@ -4168,7 +4176,7 @@ public sealed class Game
     /// <summary>What iron can meet (D-125): a swung blow. Not a charging mass, a falling stone, a cry, or the cold.</summary>
     private static bool Parryable(IntentKind kind) => kind is IntentKind.CrushingBlow or IntentKind.BarrowBlade
         or IntentKind.SunderingCut or IntentKind.GravenFist or IntentKind.ThroatLunge or IntentKind.SeaxStab
-        or IntentKind.MeasuredCut;
+        or IntentKind.MeasuredCut or IntentKind.BoardCheck;
 
     /// <summary>
     /// The blow a parry could meet (D-125): an adjacent foe whose wind-up's
@@ -6350,13 +6358,40 @@ public sealed class Game
                 }
                 else if (parried)
                 {
-                    // The parry (D-125): the blow is turned whole, no dice, and
-                    // the striker's own committed force is what rocks its guard.
-                    // The turn was spent on the guard, not the kill: that is
-                    // the price, and the broken guard's riposte is the pay.
-                    Log.Add(Turn, $"The blow comes exactly as shown, and your guard is waiting: you turn it aside whole, and the force of its own swing rocks the {monster.Name}.", LogTone.Reward);
-                    RockGuard(monster, GuardBreak.ParryPressure);
+                    if (monster.Kind == MonsterKind.Thegn)
+                    {
+                        // The drilled hand (D-129): the one kind that answers
+                        // the met parry. It was taught the bind beside the
+                        // blow: it rolls off the set guard keeping half its
+                        // force, and the crossed iron shoves back a point
+                        // into the bearer's arms.
+                        Log.Add(Turn, "The blow comes as shown and your guard meets it, but the sword-thegn was drilled for the bind: it rolls off your guard with half its force kept, and the crossed iron shoves back into your arms.", LogTone.Reward);
+                        RockGuard(monster, GuardBreak.DrilledParryPressure);
+                        RockBearer(GuardBreak.BindPressure);
+                    }
+                    else
+                    {
+                        // The parry (D-125): the blow is turned whole, no dice, and
+                        // the striker's own committed force is what rocks its guard.
+                        // The turn was spent on the guard, not the kill: that is
+                        // the price, and the broken guard's riposte is the pay.
+                        Log.Add(Turn, $"The blow comes exactly as shown, and your guard is waiting: you turn it aside whole, and the force of its own swing rocks the {monster.Name}.", LogTone.Reward);
+                        RockGuard(monster, GuardBreak.ParryPressure);
+                    }
                     GainSkill(Player.Weapon?.Family ?? SkillId.Brawling);
+                }
+                else if (intent.Kind == IntentKind.BoardCheck)
+                {
+                    // The board-check (D-129): no dice and no blood at all;
+                    // the whole verb is thrown mass along the guard's line.
+                    // Dodged by feet like any shown blow, met by the parry.
+                    if (landed)
+                    {
+                        Log.Add(Turn, "The whole board takes you edge-on: no iron in it, but the weight shoves your guard wide of its line.", LogTone.Danger);
+                        RockBearer(GuardBreak.CheckPressure);
+                    }
+                    else
+                        Log.Add(Turn, "The board's full weight goes through the place you left, and the carl stamps to keep its feet.", LogTone.Combat);
                 }
                 else if (landed)
                 {
@@ -6941,7 +6976,15 @@ public sealed class Game
 
         if (dist == 1)
         {
-            if (_combatRng.Chance(0.4))
+            // The board-check (D-129): the guard war's own verb, the whole
+            // board put behind a shoulder and aimed at the guard's line, not
+            // the blood. A sundered board (D-095) has no check left in it.
+            if (!monster.BoardBroken && _combatRng.Chance(0.25))
+            {
+                monster.Intent = new Intent { Kind = IntentKind.BoardCheck, TargetCell = Player.Pos };
+                Log.Add(Turn, "The shield-carl squares the whole board behind its shoulder!", LogTone.Danger);
+            }
+            else if (_combatRng.Chance(0.4))
             {
                 monster.Intent = new Intent { Kind = IntentKind.SeaxStab, TargetCell = Player.Pos };
                 Log.Add(Turn, "The shield-carl locks its board and draws the seax back behind it!", LogTone.Danger);

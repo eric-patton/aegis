@@ -98,10 +98,14 @@ public class RingfortTests
         Quiet(game, m => m == carl);
 
         game.Debug_SetPlayerPos(AdjacentOpen(game, carl.Pos));
+        // The board-check (D-129) can come up first: let it resolve and keep
+        // waiting for the seax, whose window is what this test reads.
         int guard = 80;
-        while (carl.Intent is null && guard-- > 0)
+        while (carl.Intent?.Kind != IntentKind.SeaxStab && guard-- > 0)
         {
             game.Player.Hp = game.Player.MaxHp;
+            game.Player.PostureDmg = 0;
+            game.Player.StaggerTurns = 0;
             game.ApplyKey('.');
         }
         Assert.NotNull(carl.Intent);

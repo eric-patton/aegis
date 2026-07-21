@@ -2692,27 +2692,13 @@ public sealed class Game
             topics.Add(("The goblin raids", $"\"{grievance.Detail} We have fed them to keep the peace. It has not bought much peace.{raided}{crowded}{order}{muster}\""));
         }
 
-        // The season remembered from the doors (D-133): the deck's news and
-        // the calendar's spent futures (D-132), spoken after the fact, newest
-        // first, so no stead event outlives its narration unread (every fact
-        // gets a reader, the D-109 discipline). Not at the steadholder's door
-        // (D-134): the steadholder makes the season's news and keeps the works
-        // bench besides, and the shared nine digits only stretch so far; the
-        // retrospective gossip lives at the other doors.
-        if (npc.Id != "npc_steadholder"
-            && World.Facts.All.LastOrDefault(f => f.Type == "event" && f.Subject
-                is "hard_winter" or "muster_broken" or "far_fields" or "drovers"
-                or "fords_washout" or "wedding" or "wedding_put_off") is { } news)
-            topics.Add(("The season's news", news.Subject switch
-            {
-                "hard_winter" => "\"That winter was a fist. Snow to the sills and the fords iced shut; we fed every mouth from the lofts and burned green wood, and we are still counting what it cost us.\"",
-                "muster_broken" => "\"The hills were all fires one week and dark the next. Whatever gathered up there over its dead broke up before it came down on us, and we sleep the easier for never learning that night.\"",
-                "far_fields" => "\"The far fields came good when nothing else did. One cart under guard, but a cart. We do not ask the season why it relents; we get it in the lofts quick and say nothing.\"",
-                "drovers" => "\"Drovers came through off the high road and paid hill prices for a measure. Coin in the stead's box and dearer bread on every board. The steadholder calls it trade. The ovens have another word.\"",
-                "fords_washout" => "\"The river took the fords the way the old men said it would. What the low granary held went down the valley with the fence rails. We listen to the old men now. For a while, anyway.\"",
-                "wedding" => "\"There was a wedding, if you can believe it, with everything else this season has done. Two households under one roof-tree now, and the lanes still smell faintly of beer. Nobody is sorry.\"",
-                _ => "\"The banns were read, but the lofts had the last word: no stead feasts at the boards. They will stand up together in a better season. We say that about a lot of things now.\"",
-            }));
+        // The season's news is NOT on this list (D-139): the topic-budget
+        // audit found a full world fills all nine general digits (stead,
+        // raids, shrine, arch, mound, ring, wanderer, songs, and the news
+        // made nine), and every villager door is a named one carrying an
+        // offer digit besides, so a tenth entry had no key to live on. The
+        // retrospective gossip moved to the shrinekeeper's door, the one
+        // door with room, where the seasons are watched for a living.
 
         if (World.Facts.Find("rest_point", "shrine") is { } shrine)
             topics.Add(("The shrine", $"{shrine.Detail} \"Old past knowing. We keep it swept all the same.\""));
@@ -2892,12 +2878,37 @@ public sealed class Game
     /// </summary>
     private List<(string Label, string Answer)> BuildKeeperTopics()
     {
-        return
-        [
+        var topics = new List<(string, string)>
+        {
             ("The keeping", "\"Swept at dawn, tended at dusk, and never asked for more than that. What anchors here shelters us, and shelter is a gift. You do not bill a gift; you keep its house well. That is the whole of my office, and I want no deeper one.\""),
             ("The harrow", "\"The old hall up the valley. Their stone and ours were cut from one ring, that much is true, and they have kept their fire honestly. Where we part is what the power is. They say it holds an account, and everything given it is owed. We say it gives, and everything done for it is thanks. Same stone, two readings, and only one of them lets you sleep.\""),
             ("The harrow's claim", "\"They hold our stone went down the hill on loan, and that its keeping is theirs by right. Word at the well is their elder means to come down and say so, at the shrine itself, before the year turns. Let them come. The stone has stood our weather longer than any living memory of theirs, and it has not asked to go home.\""),
-        ];
+        };
+
+        // The season remembered (D-133, moved here by D-139): the deck's news
+        // and the calendar's spent futures (D-132), spoken after the fact,
+        // newest first, so no stead event outlives its narration unread
+        // (every fact gets a reader, the D-109 discipline). At this door
+        // because the villagers' shared nine are full in a full world and
+        // every villager door carries an offer digit besides; the keeper
+        // sweeps the stead's center, watches its seasons pass for a living,
+        // and keeps a board with room.
+        if (World.Facts.All.LastOrDefault(f => f.Type == "event" && f.Subject
+                is "hard_winter" or "muster_broken" or "far_fields" or "drovers"
+                or "fords_washout" or "washout_stood" or "wedding" or "wedding_put_off") is { } news)
+            topics.Add(("The season's news", news.Subject switch
+            {
+                "hard_winter" => "\"That winter was a fist. Snow to the sills and the fords iced shut; we fed every mouth from the lofts and burned green wood, and we are still counting what it cost us.\"",
+                "muster_broken" => "\"The hills were all fires one week and dark the next. Whatever gathered up there over its dead broke up before it came down on us, and we sleep the easier for never learning that night.\"",
+                "far_fields" => "\"The far fields came good when nothing else did. One cart under guard, but a cart. We do not ask the season why it relents; we get it in the lofts quick and say nothing.\"",
+                "drovers" => "\"Drovers came through off the high road and paid hill prices for a measure. Coin in the stead's box and dearer bread on every board. The steadholder calls it trade. The ovens have another word.\"",
+                "fords_washout" => "\"The river took the fords the way the old men said it would. What the low granary held went down the valley with the fence rails. We listen to the old men now. For a while, anyway.\"",
+                "washout_stood" => "\"The river took the fords the way the old men said it would, and the old men had their week of being right. But the new granary sat up on its staddle stones with the water talking underneath it, and not a measure went down the valley. Best boards ever bought in this stead, and the coin was not even ours.\"",
+                "wedding" => "\"There was a wedding, if you can believe it, with everything else this season has done. Two households under one roof-tree now, and the lanes still smell faintly of beer. Nobody is sorry.\"",
+                _ => "\"The banns were read, but the lofts had the last word: no stead feasts at the boards. They will stand up together in a better season. We say that about a lot of things now.\"",
+            }));
+
+        return topics;
     }
 
     /// <summary>
@@ -6926,6 +6937,18 @@ public sealed class Game
     private void WashoutComesDown()
     {
         _nightSpokenFor = true;
+        // The granary's teeth (D-139): the work the bearer's coin raised
+        // stands on staddle stones, above the water the old low granary could
+        // never argue with. The flood still claims its night whole; it just
+        // leaves with nothing, and the stead notices whose boards held.
+        if (GranaryStands)
+        {
+            World.Facts.Add("event", "washout_stood", World.SettlementName,
+                $"The river took {World.SettlementName}'s fords the way the old men said it would, but the granary on staddle stones held its grain above the brown water.");
+            Log.Add(Turn, $"The river comes up in the night and takes {World.SettlementName}'s fords, the way the old men said it would. The old low granary floods to the lintel, and stands empty: everything it used to hold sits dry in the new granary on its staddle stones, with the brown water talking underneath the boards and getting nothing.", LogTone.Danger);
+            Log.Add(Turn, "Not a measure lost. The stead spends the morning saying so, loudly, near the staddle stones your coin paid for.", LogTone.Reward);
+            return;
+        }
         int take = Math.Min(Stores, 1);
         Stores -= take;
         World.Facts.Add("event", "fords_washout", World.SettlementName,

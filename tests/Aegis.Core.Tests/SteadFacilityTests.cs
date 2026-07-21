@@ -105,6 +105,37 @@ public class SteadFacilityTests
     }
 
     [Fact]
+    public void TheGranary_TurnsTheFloodAway()
+    {
+        var game = new Game(42);
+        game.Debug_HoldTheDeck();
+        game.Player.Coin = 60;
+        Fund(game, "granary");
+        int stores = game.Stores;
+        int raids = game.Raids;
+
+        game.Debug_DrawSteadEvent("fords_washout");
+        Wait(game, SteadRaids.TickTurns);
+
+        // The flood still claims its night whole (no raid rides drowned
+        // fords), but the staddle stones hold the grain above the water:
+        // the take is nothing, and the stead says whose boards did it.
+        Assert.Equal(stores, game.Stores);
+        Assert.Equal(raids, game.Raids);
+        Assert.True(game.World.Facts.Exists("event", "washout_stood"));
+        Assert.False(game.World.Facts.Exists("event", "fords_washout"));
+        Assert.Contains(game.Log.Recent(6), e => e.Text.Contains("staddle stones"));
+
+        // And the keeper's door reads the granary's morning, not the low
+        // granary's loss (the news lives at the shrine since D-139).
+        NpcTests.BumpNpc(game, game.World.Keeper);
+        int key = game.Topics.ToList().FindIndex(t => t.Label == "The season's news");
+        Assert.True(key >= 0);
+        game.ApplyKey((char)('1' + key));
+        Assert.Contains(game.Log.Recent(3), e => e.Text.Contains("not a measure went down the valley"));
+    }
+
+    [Fact]
     public void AWork_IsFundedOnce_AndPaysRegardOnce()
     {
         var game = new Game(42);

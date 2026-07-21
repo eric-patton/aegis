@@ -276,10 +276,14 @@ namespace Aegis.Core;
 /// v77 when D-138 opened the east road: '>' at a mouth a v76 journal never
 /// held now walks a second overworld, 'm' makes camp and passes real nights,
 /// and the wayhouse's digits move coin, rations, and rest.
+/// v78 when D-139 gave the granary its flood teeth and moved the season's
+/// news to the shrinekeeper's door: a washout under a standing granary now
+/// takes nothing, and the talk digits at the villagers' and keeper's doors
+/// sit differently under a v77 journal wherever season news stood.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 77;
+    public const int Version = 78;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

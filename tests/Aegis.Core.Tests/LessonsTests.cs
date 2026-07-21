@@ -277,6 +277,53 @@ public class LessonsTests
     }
 
     [Fact]
+    public void TheFullestWorld_StillFitsEveryBoardOnNineKeys()
+    {
+        // The topic-budget audit (D-139, the D-134 follow-on): a full world's
+        // general villager list reaches eight topics by itself (stead, raids,
+        // shrine, arch, mound, ring, wanderer, songs), and every villager
+        // door is a named one carrying at least one offer digit besides, so
+        // the boards sit exactly at the wall and the season's news (D-133)
+        // had no key left to live on: it moved to the shrinekeeper's door.
+        // This test builds that fullest world deliberately and walks every
+        // talking door in it.
+        var game = new Game(42);
+        game.Debug_HoldTheDeck();
+        game.Debug_ClearCamp();
+        game.Debug_SetPlayerPos(game.World.GatePos);
+        game.Apply(Command.Enter);
+        game.Apply(Command.Enter);
+        Assert.Equal(2, game.World.Tier); // the mound and the ring both stand
+
+        // A song carried over the pass, and season news on the books.
+        game.World.Facts.Add("echo", "deed", game.World.SettlementName,
+            "A verse about a walker came over the pass ahead of the walker.");
+        game.Debug_DrawSteadEvent("drovers");
+
+        // The woodward proves the state is truly fullest: eight topics and
+        // the bench digit, the wall itself, with no key to spare.
+        NpcTests.BumpNpc(game, Npc(game, "npc_woodward"));
+        Assert.Equal(9, game.Topics.Count + game.Offers.Count);
+        game.ApplyKey(' ');
+
+        // The news found its reader at the door with room.
+        NpcTests.BumpNpc(game, game.World.Keeper);
+        Assert.Contains(game.Topics, t => t.Label == "The season's news");
+        Assert.True(game.Topics.Count + game.Offers.Count <= 9);
+        game.ApplyKey(' ');
+
+        // And every other talking door fits beside what it carries.
+        foreach (string id in (string[])["npc_steadholder", "npc_herbwife",
+            "npc_smith", "npc_skald", "npc_peddler"])
+        {
+            NpcTests.BumpNpc(game, Npc(game, id));
+            Assert.True(game.Topics.Count + game.Offers.Count <= 9,
+                $"{id} holds {game.Topics.Count} topics + {game.Offers.Count} offers");
+            game.ApplyKey(' ');
+        }
+    }
+
+    [Fact]
     public void TeachingSession_ReplaysIdenticallyFromJournal()
     {
         const ulong seed = 42;

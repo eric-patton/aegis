@@ -126,7 +126,10 @@ public class SteadDeckTests
     {
         var game = new Game(42);
         game.Debug_HoldTheDeck();
-        var villager = game.World.Npcs.First(n => n.Kind == NpcKind.Villager && n.Id != "npc_steadholder");
+        // The news lives at the shrinekeeper's door (D-139): every villager
+        // door carries an offer digit on a nine that a full world fills, so
+        // the retrospective gossip moved to the one board with room.
+        var villager = game.World.Keeper;
         NpcTests.BumpNpc(game, villager);
         Assert.DoesNotContain(game.Topics, t => t.Label == "The season's news");
         game.ApplyKey('z');

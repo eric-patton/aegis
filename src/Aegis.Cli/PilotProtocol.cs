@@ -34,6 +34,7 @@ internal partial class PilotJson : JsonSerializerContext;
 [JsonSerializable(typeof(Snapshot))]
 [JsonSerializable(typeof(SimResult))]
 [JsonSerializable(typeof(JourneyReport))] // the journey's machine-readable report (D-083)
+[JsonSerializable(typeof(WorldgenReport))] // the worldgen harness's report (D-137)
 internal partial class PilotJsonPretty : JsonSerializerContext;
 
 public sealed class SimResult

@@ -6,6 +6,7 @@ using Aegis.Cli;
 // aegis pilot <cmd>              client: screen | keys "<keys>" | state | quit | ping
 // aegis sim --seed N --keys ".." headless scripted run, JSON result on stdout
 // aegis journey --seed N --cycles K   autopilot: climb the ladder, report the crossings
+// aegis worldgen --seeds N --tiers A-B   batch-generate worlds, chart the expressive range (D-137)
 
 if (args.Length > 0 && args[0] == "pilot")
     return PilotClient.Run(args[1..]);
@@ -15,6 +16,9 @@ if (args.Length > 0 && args[0] == "sim")
 
 if (args.Length > 0 && args[0] == "journey")
     return JourneyRunner.Run(args[1..]);
+
+if (args.Length > 0 && args[0] == "worldgen")
+    return WorldgenRunner.Run(args[1..]);
 
 if (args.Length > 0 && args[0] == "saves")
     return ListSaves(args[1..]);
@@ -44,6 +48,7 @@ for (int i = 0; i < args.Length; i++)
                 aegis pilot <screen|keys "<keys>"|state|quit|ping> [--session name]
                 aegis sim --seed N --keys "<keys>" [--quiet]
                 aegis journey --seed N --cycles K [--emit-keys]
+                aegis worldgen [--seeds N] [--start S] [--tiers A-B] [--json|--dump]
 
                 --save      play in a named slot: loads it if it exists, creates it if not;
                             every action is journaled immediately (quit any time, nothing lost)

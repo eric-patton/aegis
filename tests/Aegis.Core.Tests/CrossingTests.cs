@@ -75,13 +75,15 @@ public class CrossingTests
 
         // Tier 2 generation input: one more goblin, each tougher, and the barrow band opens.
         var goblins = game.Monsters.Where(m => m.Kind == MonsterKind.Goblin).ToList();
-        var wights = game.Monsters.Where(m => m.Kind == MonsterKind.Wight).ToList();
+        var wights = game.Monsters.Where(m => m.Kind == MonsterKind.Wight && m.SiteId == "barrow").ToList();
         Assert.Equal(4, goblins.Count);
         // Rank worn as hide (D-110): the chief and lieutenants over the base 10.
         Assert.All(goblins, m => Assert.Equal(
             10 + (m.Chief ? RaiderRoster.ChiefHide : m.Epithet is not null ? RaiderRoster.LieutenantHide : 0), m.Hp));
         Assert.Equal(2, wights.Count);
         Assert.All(wights, m => Assert.Equal(12, m.Hp));
+        // The high cairn keeps its own dead, apart from the valley's (D-147).
+        Assert.Equal(2, game.Monsters.Count(m => m.Kind == MonsterKind.Wight && m.SiteId == "fell-cairn"));
 
         // The finished world is pressed into the new one as an echo (D-013).
         Assert.True(game.World.Facts.Exists("echo", "deed"));

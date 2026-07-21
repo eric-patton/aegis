@@ -37,6 +37,7 @@ public enum Terrain : byte
     Heath,
     Scree,
     FellMouth,
+    CairnEntrance,
 }
 
 /// <summary>

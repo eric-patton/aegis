@@ -1545,6 +1545,10 @@ public sealed class Game
                     : "The old drove road leaves the valley here, climbing east between walked-thin banks. Press > to take the road.", LogTone.Info);
             else if (t == Terrain.TownGate)
                 Log.Add(Turn, $"A gate arch of dressed stone in a dry-stone wall, the drove road running under it into lanes and stall-smoke. Over the arch, a worn carving of a laden cart. {World.TownName}. Press > to go in.", LogTone.Info);
+            else if (t == Terrain.CairnEntrance)
+                Log.Add(Turn, SiteHere(p)!.Cleared
+                    ? "The high cairn. Its stones are only stones now, and the wind counts them and moves on."
+                    : "A kerbed cairn of piled grey stone crowns the rise, older than any road under it. A gap in the kerb breathes cold that owes nothing to the wind. Press > to stoop in.", LogTone.Danger);
             else if (t == Terrain.FellMouth)
                 Log.Add(Turn, Area == Area.Fells
                     ? "The drovers' track drops off the fells' edge here, and the road shows below, thin as a drawn line. Press > to climb down."
@@ -1573,6 +1577,7 @@ public sealed class Game
                     SiteKind.Hall => "A warded coffer stands against the chamber wall, its clasp unrusted after an age. Press g to open it.",
                     SiteKind.Ringfort => "An arms-chest sits at the heart of the ward, its lid sound under an age of dust. Press g to open it.",
                     SiteKind.Leaguer => "A cist of stacked stone sits on the holm's crown, its capstone set square against the weather. Press g to lift it.",
+                    SiteKind.Cairn => "The cist: a stone box at the chamber's deep end, its lid slid a hand's width open by somebody who never finished. Press g to lift it clear.",
                     _ => "A battered strongbox sits here. Press g to open it.",
                 }, LogTone.Reward);
             else if (CurrentSite is { StonePos: { } sp, StoneRead: false } && p == sp)
@@ -2271,6 +2276,7 @@ public sealed class Game
                 SiteKind.Hall => _combatRng.Range(13, 25),
                 SiteKind.Ringfort => _combatRng.Range(15, 28),
                 SiteKind.Leaguer => _combatRng.Range(16, 30),
+                SiteKind.Cairn => _combatRng.Range(14, 26),
                 _ => _combatRng.Range(10, 21),
             };
             Player.Coin += coin;
@@ -2283,6 +2289,7 @@ public sealed class Game
                 SiteKind.Hall => $"Under an oiled cloth folded by patient hands: {coin} coin of a mint older than the quarry's wages.",
                 SiteKind.Ringfort => $"The watch's pay-chest, tallied and locked against a paymaster who never rode in: {coin} coin, every wage accounted.",
                 SiteKind.Leaguer => $"Under the capstone, packed in wool: {coin} coin of the holm-holder's hoard, laid by against a spending day that never came.",
+                SiteKind.Cairn => $"Cist-gold: {coin} coin laid under the lid for a chief of the tops, in a mint the fells outlived.",
                 _ => $"The strongbox yields {coin} coin.",
             }, LogTone.Reward);
 
@@ -2983,9 +2990,12 @@ public sealed class Game
             ("The road", $"\"{sky} {trail}\""),
             ("The wayhouse", "\"Older than me, older than the stead down the valley, and it will outlast us both. A wayhouse is not built, walker, it accretes: every roof-tree in it was carried up by someone who swore once was enough.\""),
             ("The far country", $"\"{World.TownName}, they call it: the gate is a few steps past my door, you can smell the ovens from the yard on a west wind. Market, moot-stone, a wall with opinions. I sleep out here. A town is a fine thing to stand next to.\""),
-            ("The fells", World.FellWildsSite.Cleared
-                ? $"\"The {World.FellRegion.Name}, up the drovers' track north of the road. Quiet lately, I hear: somebody thinned the pack. It will not stay thinned. Wolf-country never does.\""
-                : $"\"The {World.FellRegion.Name}, up the drovers' track north of the road. No roof, no law, and wolves that hunt in company. The hides come down worth the climb, when the climber comes down with them. Take a supper you can burn.\""),
+            ("The fells", (World.FellWildsSite.Cleared
+                ? $"\"The {World.FellRegion.Name}, up the drovers' track north of the road. Quiet lately, I hear: somebody thinned the pack. It will not stay thinned. Wolf-country never does."
+                : $"\"The {World.FellRegion.Name}, up the drovers' track north of the road. No roof, no law, and wolves that hunt in company. The hides come down worth the climb, when the climber comes down with them. Take a supper you can burn.")
+                + (World.FellCairnSite.Cleared
+                ? " And the old cairn on the tops sits quiet now, they tell me. First time in anyone's telling.\""
+                : " And give the old cairn on the tops its room: the drovers water anywhere but its lee, and drovers are not careful people.\"")),
         ];
     }
 

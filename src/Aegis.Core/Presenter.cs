@@ -804,6 +804,7 @@ public static class Presenter
         Terrain.Heath => (',', Hue.DarkYellow, Hue.Black),
         Terrain.Scree => ('%', Hue.DarkGray, Hue.Black),
         Terrain.FellMouth => ('=', Hue.Gray, Hue.Black),
+        Terrain.CairnEntrance => ('n', Hue.Gray, Hue.Black),
         _ => ('?', Hue.Magenta, Hue.Black),
     };
 
@@ -986,6 +987,7 @@ public static class Presenter
             if (here == Terrain.RingfortEntrance) Line("Fort gate: > enters", Hue.Yellow);
             if (here == Terrain.LeaguerEntrance) Line("Leaguer banks: > enters", Hue.Blue);
             if (here == Terrain.WildsEntrance) Line("Game-trail: > enters", Hue.Green);
+            if (here == Terrain.CairnEntrance) Line("Kerb gap: > stoops in", Hue.Gray);
             if (here == Terrain.SonghallEntrance) Line("Songhall door: > enters", Hue.Cyan);
             if (here == Terrain.HarrowEntrance) Line("Harrow door: > enters", Hue.White);
             if (here == Terrain.ThresholdEntrance)

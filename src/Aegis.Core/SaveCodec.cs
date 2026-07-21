@@ -302,10 +302,13 @@ namespace Aegis.Core;
 /// north shoulder behind a drovers' track a v83 journal's '>' fell dead on,
 /// with the moor-wolf's pack, its pounce drawing new combat dice, the fells'
 /// herbs and weather, and a fourth topic at the waykeeper's door.
+/// v85 when D-147 filled the fells in: the combe recut from the fells' own
+/// stone (a v84 journal's steps land on different ground) and the high cairn
+/// raised on the tops, a door, dice, and grave-gold no v84 journal knew.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 84;
+    public const int Version = 85;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

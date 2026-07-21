@@ -253,7 +253,110 @@ public class FrontierTests
         game.ApplyKey(KeyFor(keeper.Pos.X - beside.X, keeper.Pos.Y - beside.Y));
         var fells = game.Topics.First(t => t.Label == "The fells");
         Assert.Contains(game.World.FellRegion.Name, fells.Answer);
+        Assert.Contains("cairn", fells.Answer); // the tops' other landmark priced too (D-147)
         Assert.True(game.Topics.Count + game.Offers.Count <= 9); // the shared nine holds
+    }
+
+    [Fact]
+    public void TheCombe_IsCutFromTheFellsOwnStone()
+    {
+        for (ulong seed = 1; seed <= 20; seed++)
+        {
+            var a = WorldGen.Generate(seed);
+            var b = WorldGen.Generate(seed);
+            var combe = a.FellWildsSite;
+            Assert.Equal(combe.Map.ContentHash(), b.FellWildsSite.Map.ContentHash());
+
+            // The fells' own palette (D-147): heath, scree, black water, and
+            // the way out. No borrowed woodland left in it.
+            var seen = new HashSet<Terrain>();
+            for (int y = 0; y < combe.Map.Height; y++)
+                for (int x = 0; x < combe.Map.Width; x++)
+                    seen.Add(combe.Map[new Pos(x, y)]);
+            Assert.True(seen.IsSubsetOf([Terrain.Heath, Terrain.Scree, Terrain.Water, Terrain.ExitLadder]));
+            Assert.Contains(Terrain.Scree, seen);
+            Assert.Contains(Terrain.Water, seen); // the tarn stands in every combe
+
+            // Every den reachable from the mouth: no wolf sealed off its ground.
+            var inside = Reachable(combe.Map, combe.EntryPos);
+            Assert.All(combe.Spawns, s => Assert.Contains(s.Pos, inside));
+        }
+    }
+
+    [Fact]
+    public void TheCairn_CrownsTheTops_Deterministically()
+    {
+        for (ulong seed = 1; seed <= 20; seed++)
+        {
+            var a = WorldGen.Generate(seed);
+            var b = WorldGen.Generate(seed);
+            var cairn = a.FellCairnSite;
+            Assert.Equal(SiteKind.Cairn, cairn.Kind);
+            Assert.Equal(Area.Fells, cairn.Area);
+            Assert.Equal(cairn.Map.ContentHash(), b.FellCairnSite.Map.ContentHash());
+            Assert.Equal(cairn.OverworldPos, b.FellCairnSite.OverworldPos);
+
+            Assert.Equal(Terrain.CairnEntrance, a.Fells[cairn.OverworldPos]);
+            Assert.NotEmpty(cairn.Spawns);
+            Assert.All(cairn.Spawns, s => Assert.Equal(MonsterKind.Wight, s.Kind));
+
+            // The word waits deep (D-091), and the cist stands on real floor.
+            Assert.NotNull(cairn.StonePos);
+            Assert.Equal(Terrain.Floor, cairn.Map[cairn.ChestPos]);
+            Assert.Equal(Terrain.Floor, cairn.Map[cairn.StonePos!.Value]);
+
+            // Door and dead both reachable: over the fells from the track's
+            // mouth, and through the creep from the kerb gap.
+            Assert.Contains(cairn.OverworldPos, Reachable(a.Fells, a.FellHomePos));
+            var inside = Reachable(cairn.Map, cairn.EntryPos);
+            Assert.Contains(cairn.ChestPos, inside);
+            Assert.Contains(cairn.StonePos.Value, inside);
+            Assert.All(cairn.Spawns, s => Assert.Contains(s.Pos, inside));
+        }
+    }
+
+    [Fact]
+    public void TheCairn_IsEntered_AndPaysTheGraveGold()
+    {
+        var game = new Game(42);
+        ClimbFells(game);
+        var cairn = game.World.FellCairnSite;
+        game.Debug_SetPlayerPos(cairn.OverworldPos);
+        game.ApplyKey('>');
+        Assert.Equal(MapMode.Site, game.Mode);
+        Assert.Equal("fell-cairn", game.CurrentSite!.Id);
+        Assert.Contains(game.Monsters, m => m.Alive && m.Kind == MonsterKind.Wight && m.SiteId == "fell-cairn");
+
+        game.Debug_ClearSite(SiteKind.Cairn);
+        int coin = game.Player.Coin;
+        game.Debug_SetPlayerPos(cairn.ChestPos);
+        game.ApplyKey('g');
+        Assert.True(game.Player.Coin > coin, "the cist gave no gold");
+        Assert.True(cairn.ChestLooted);
+
+        // The word set in the cairn's fabric gives once (D-091).
+        game.Debug_SetPlayerPos(cairn.StonePos!.Value);
+        game.ApplyKey('g');
+        Assert.True(cairn.StoneRead);
+    }
+
+    /// <summary>Every cell walkable-reachable from a starting cell, 8-way like real feet.</summary>
+    private static HashSet<Pos> Reachable(GameMap map, Pos from)
+    {
+        var seen = new HashSet<Pos> { from };
+        var queue = new Queue<Pos>();
+        queue.Enqueue(from);
+        while (queue.Count > 0)
+        {
+            var p = queue.Dequeue();
+            for (int dy = -1; dy <= 1; dy++)
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    var q = p.Plus(dx, dy);
+                    if ((dx != 0 || dy != 0) && map.Walkable(q) && seen.Add(q)) queue.Enqueue(q);
+                }
+        }
+        return seen;
     }
 
     /// <summary>A walkable heath cell with walkable ground around it, for a camp.</summary>

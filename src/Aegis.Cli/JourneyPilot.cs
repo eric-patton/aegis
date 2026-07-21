@@ -439,8 +439,12 @@ public static class JourneyPilot
     {
         // Armed for the frontier, or not at all: the waykeeper's warning taken
         // as policy. A bare hand against a pack is a death budget, not a hunt.
+        // The cairn (D-147) rides the same gate: the old dead ask no less.
         var combe = g.World.FellWildsSite;
-        return !combe.Cleared && !skip.Contains(combe.Id)
+        var cairn = g.World.FellCairnSite;
+        bool owed = (!combe.Cleared && !skip.Contains(combe.Id))
+            || (!cairn.Cleared && !skip.Contains(cairn.Id));
+        return owed
             && g.Player.Bow is not null && g.Player.Weapon is not null && g.Player.Armor is not null;
     }
 
@@ -534,6 +538,15 @@ public static class JourneyPilot
         {
             if (p.Pos == combe.OverworldPos) return '>';
             if (NavKey(g, fells, p.Pos, combe.OverworldPos, blocked) is { } toCombe) return toCombe;
+        }
+
+        // The high cairn (D-147): the tops' other errand, taken after the pack
+        // so the hunt's meat funds the camp that mends the wights' toll.
+        var cairn = g.World.FellCairnSite;
+        if (!cairn.Cleared && !skip.Contains(cairn.Id))
+        {
+            if (p.Pos == cairn.OverworldPos) return '>';
+            if (NavKey(g, fells, p.Pos, cairn.OverworldPos, blocked) is { } toCairn) return toCairn;
         }
 
         if (RoadCampWanted(g) && fells[p.Pos] is Terrain.Heath or Terrain.Grass or Terrain.Hills)

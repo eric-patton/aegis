@@ -1,6 +1,6 @@
 namespace Aegis.Core;
 
-public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort, Songhall, Leaguer, Wilds, Harrow, Town }
+public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort, Songhall, Leaguer, Wilds, Harrow, Town, Cairn }
 
 /// <summary>A monster placed at generation time: kind, cell, and generated stats (D-011).</summary>
 public readonly record struct MonsterSpawn(MonsterKind Kind, Pos Pos, int Hp, string? Epithet = null, bool Chief = false);
@@ -141,6 +141,9 @@ public sealed class World
 
     /// <summary>The wolves' ground (D-146): the fells' hunting site.</summary>
     public Site FellWildsSite => Sites.First(s => s.Id == "fell-wilds");
+
+    /// <summary>The high cairn (D-147): the old dead on the tops, the fells' second site.</summary>
+    public Site FellCairnSite => Sites.First(s => s.Id == "fell-cairn");
     public required List<Site> Sites { get; init; }
     public required List<Npc> Npcs { get; init; }
 
@@ -1258,7 +1261,7 @@ public static class WorldGen
         CarvePathIfDisconnected(fells, fellHome, fellWildsPos);
         int wolfCount = Math.Min(4 + (tier - 1) / 2, 8);
         int wolfHp = 8 + tier / 2;
-        var (fellWildsMap, fellWildsEntry, wolfSpawns) = GenerateWilds(fellSeed, wolfCount, id: "fell-wilds");
+        var (fellWildsMap, fellWildsEntry, wolfSpawns) = GenerateCombe(fellSeed, wolfCount);
         sites.Add(new Site
         {
             Id = "fell-wilds",
@@ -1283,8 +1286,49 @@ public static class WorldGen
             fellHerbs.Add(p);
         }
 
+        // The high cairn (D-147): the fells' second site, the old dead on the
+        // tops. Drawn on its own streams after every D-146 draw, so the fells'
+        // lie, the combe's mouth, and the herb spots all hold to the tile in
+        // prior worlds; the tops only gain a door. The cairn is the frontier's
+        // other reason to climb: grave-gold and a graven word, guarded by the
+        // kind of tenant no hide comes off.
+        var cairnRng = new Rng(SeedTree.Derive(fellSeed, "cairn"));
+        Pos cairnPos = default;
+        bool cairnFound = false;
+        for (int attempt = 0; attempt < 600 && !cairnFound; attempt++)
+        {
+            var p = new Pos(cairnRng.Range(4, FellsW - 4), cairnRng.Range(2, FellsH / 2));
+            bool ground = attempt < 300 ? fells[p] == Terrain.Hills
+                : fells[p] is Terrain.Hills or Terrain.Heath;
+            if (!ground || p.Manhattan(fellWildsPos) < 8 || fellHerbs.Contains(p)) continue;
+            cairnPos = p;
+            cairnFound = true;
+        }
+        if (!cairnFound) cairnPos = new Pos(FellsW / 4, 2);
+        fells[cairnPos] = Terrain.CairnEntrance;
+        CarvePathIfDisconnected(fells, fellHome, cairnPos);
+        int cairnWightCount = Math.Min(2 + (tier - 1) / 2, 5);
+        int cairnWightHp = 10 + tier;
+        var (cairnMap, cairnEntry, cairnWights, cairnChest, cairnStone) = GenerateCairn(fellSeed, cairnWightCount);
+        sites.Add(new Site
+        {
+            Id = "fell-cairn",
+            Kind = SiteKind.Cairn,
+            Map = cairnMap,
+            OverworldPos = cairnPos,
+            EntryPos = cairnEntry,
+            Area = Area.Fells,
+            Spawns = [.. cairnWights.Select(p => new MonsterSpawn(MonsterKind.Wight, p, cairnWightHp))],
+            ChestPos = cairnChest,
+            // The graven word (D-091) set inline: the D-091 loop above ran
+            // before the fells grew, and a cairn's fabric predates everything.
+            StonePos = cairnStone,
+        });
+
         facts.Add("site", "fells", $"{fellTrack.X},{fellTrack.Y}",
             "A drovers' track climbs off the road's north shoulder onto the high fells: heath and scree and no roof anywhere, wolf-country by every account that comes down with the hides to prove it.");
+        facts.Add("site", "fell-cairn", $"{cairnPos.X},{cairnPos.Y}",
+            "On the tops above the drovers' track stands a kerbed cairn older than any road under it. The drovers water anywhere but its lee, and none of them will say why in daylight.");
 
         // The countries named (D-143, plan 2026-07 B3): the region becomes an
         // entity, on its own derived stream after every existing draw, so all
@@ -2133,6 +2177,134 @@ public static class WorldGen
 
         map[entry] = Terrain.ExitLadder;
         return (map, entry, harts);
+    }
+
+    /// <summary>
+    /// The wolves' combe (D-147): the fells' hunting ground cut from the fells'
+    /// own stone, where D-146 borrowed the glade's woodland. A bowl of heath
+    /// ringed in scree, a black tarn in its low end, and outcrops for the pack
+    /// to work around. Rock stops feet but not eyes (D-057's distinction), so
+    /// the bow still draws its lines and the wolves still close across them.
+    /// </summary>
+    private static (GameMap Map, Pos Entry, List<Pos> Wolves) GenerateCombe(ulong fellSeed, int wolfCount)
+    {
+        var rng = new Rng(SeedTree.Derive(fellSeed, "combe"));
+        var map = new GameMap("fell-wilds", WildsW, WildsH, Terrain.Heath);
+        for (int x = 0; x < WildsW; x++)
+        {
+            map[new Pos(x, 0)] = Terrain.Scree;
+            map[new Pos(x, WildsH - 1)] = Terrain.Scree;
+        }
+        for (int y = 0; y < WildsH; y++)
+        {
+            map[new Pos(0, y)] = Terrain.Scree;
+            map[new Pos(WildsW - 1, y)] = Terrain.Scree;
+        }
+
+        var entry = new Pos(2, WildsH / 2);
+
+        // The tarn: one pool of black water in the combe's low end, held off
+        // the rim so the shore always walks around it.
+        var tarn = new Pos(rng.Range(WildsW - 10, WildsW - 6), rng.Range(5, WildsH - 5));
+        for (int dy = -1; dy <= 1; dy++)
+            for (int dx = -2; dx <= 2; dx++)
+            {
+                var p = tarn.Plus(dx, dy);
+                if (dx * dx + 2 * dy * dy <= 6 && p.X < WildsW - 2 && p.Y > 1 && p.Y < WildsH - 2)
+                    map[p] = Terrain.Water;
+            }
+
+        // Outcrops: shattered rock the pack works around, under the quarry's
+        // placement rule (all nine cells open heath) so a clump can never seal
+        // ground off, and kept off the mouth's first steps.
+        int outcrops = 0;
+        for (int attempt = 0; attempt < 200 && outcrops < 10; attempt++)
+        {
+            var p = new Pos(rng.Range(4, WildsW - 3), rng.Range(2, WildsH - 2));
+            bool clear = p.Manhattan(entry) > 3;
+            for (int dy = -1; dy <= 1 && clear; dy++)
+                for (int dx = -1; dx <= 1 && clear; dx++)
+                    if (map[p.Plus(dx, dy)] != Terrain.Heath) clear = false;
+            if (!clear) continue;
+            map[p] = Terrain.Scree;
+            outcrops++;
+        }
+
+        // The pack dens deep, spaced, and never on the rim.
+        var open = new List<Pos>();
+        for (int y = 2; y < WildsH - 2; y++)
+            for (int x = 2; x < WildsW - 2; x++)
+            {
+                var p = new Pos(x, y);
+                if (map[p] == Terrain.Heath && p.Manhattan(entry) > 8) open.Add(p);
+            }
+
+        var wolves = new List<Pos>();
+        int guard = 4000;
+        while (wolves.Count < wolfCount && open.Count > 0)
+        {
+            var p = rng.Pick(open);
+            bool spaced = guard-- <= 0 || wolves.All(q => q.Manhattan(p) >= 3);
+            if (!wolves.Contains(p) && spaced) wolves.Add(p);
+        }
+
+        map[entry] = Terrain.ExitLadder;
+        return (map, entry, wolves);
+    }
+
+    public const int CairnW = 25;
+    public const int CairnH = 11;
+
+    /// <summary>
+    /// The high cairn (D-147): a creep of a passage under the kerb opening into
+    /// one corbelled chamber, the cist at its deep end. Mostly authored, the way
+    /// the dead like it; the rng places only the watchers and the word.
+    /// </summary>
+    private static (GameMap Map, Pos Entry, List<Pos> Wights, Pos Chest, Pos Stone) GenerateCairn(ulong fellSeed, int wightCount)
+    {
+        var rng = new Rng(SeedTree.Derive(fellSeed, "site-cairn"));
+        var map = new GameMap("fell-cairn", CairnW, CairnH, Terrain.Wall);
+        int mid = CairnH / 2;
+
+        var entry = new Pos(2, mid);
+        for (int x = 2; x <= 9; x++) map[new Pos(x, mid)] = Terrain.Floor;
+
+        // The chamber: a broad oval under the corbelled stones.
+        for (int y = 2; y <= CairnH - 3; y++)
+            for (int x = 10; x <= CairnW - 3; x++)
+            {
+                double ex = (x - 16) / 6.5, ey = (y - mid) / 3.2;
+                if (ex * ex + ey * ey <= 1.0) map[new Pos(x, y)] = Terrain.Floor;
+            }
+
+        // Kerb uprights the chamber was raised around: cover, and never a seal.
+        foreach (var p in (Pos[])[new(13, 3), new(19, 3), new(13, 7), new(19, 7)])
+            map[p] = Terrain.Wall;
+
+        var chest = new Pos(21, mid);   // the cist, deepest of all
+
+        var floor = new List<Pos>();
+        for (int y = 0; y < CairnH; y++)
+            for (int x = 0; x < CairnW; x++)
+            {
+                var p = new Pos(x, y);
+                if (map[p] == Terrain.Floor && p != chest) floor.Add(p);
+            }
+        int deepest = floor.Max(p => p.Manhattan(entry));
+        var stone = rng.Pick(floor.Where(p => p.Manhattan(entry) >= deepest - 2).ToList());
+
+        var wights = new List<Pos>();
+        int guard = 2000;
+        var deep = floor.Where(p => p != stone && p.Manhattan(entry) >= 12).ToList();
+        while (wights.Count < wightCount && deep.Count > 0)
+        {
+            var p = rng.Pick(deep);
+            bool spaced = guard-- <= 0 || wights.All(q => q.Manhattan(p) >= 2);
+            if (!wights.Contains(p) && spaced) wights.Add(p);
+        }
+
+        map[entry] = Terrain.ExitLadder;
+        return (map, entry, wights, chest, stone);
     }
 
     public const int HallW = 34;

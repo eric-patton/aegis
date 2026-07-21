@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-129); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-130); the research behind it lives in `../research/`.
 
 ---
 
@@ -135,7 +135,7 @@ Saves are part of the design: autosave fires at the instant of death, before the
 Two iron rules: no quest generates unless it traces to an existing fact, and important facts appear on multiple surfaces (quest, rumor, inscription) so the world reads as knowing things. Filler jobs stay honest ambient texture.
 
 ### The spine (two layers)
-Per world, the main quest is drawn from a growing pool of authored **world-story templates** (the usurped throne, the creeping blight, the war of faiths): structure and beats handwritten, cast and geography filled from the fact graph. A beeline takes 10-15 hours; the world holds 30+. Three compile today at slice scale (the raided stead, the creeping blight, and the usurped throne, the last cast on the dens' own seat with the named roster as its players, D-112); the war of faiths waits on a second faith-bearing institution.
+Per world, the main quest is drawn from a growing pool of authored **world-story templates** (the usurped throne, the creeping blight, the war of faiths): structure and beats handwritten, cast and geography filled from the fact graph. A beeline takes 10-15 hours; the world holds 30+. Six compile today at slice scale: the raided stead, the creeping blight, the usurped throne (cast on the dens' own seat with the named roster as its players, D-112), the war of faiths (cast by office on the valley's two institutions, D-116), the gold rush (the old quarry's kind lie, D-121), and the long siege (the fen-leaguer's grateful fear, D-130).
 
 Above all worlds runs the **Aegis arc**: the mystery of the thing that carries you, advancing at world completions and crossings, unfolding over the first several cycles before resolving into an earned steady state. Canon: The Ledger (D-026), fully specified in `story/aegis-arc.md`; template contract and launch templates in `story/world-story-templates.md`.
 
@@ -179,7 +179,7 @@ And the loop closes on itself: **your finished characters enter the mythology.**
 - Spell list growth past D-091's first four workings, and whether any school shape ever forms
 - Storylet external data-file format and condition/effect vocabulary (v1 C# format spec'd; see `storylets.md` sec. 6)
 - Scar, Legend-rung (D-048 landed five, hospitality-boon shaped), further-oath (D-047 landed four), and hostility-tier content catalogs (first tier band landed in D-033: the barrow at tier 2+; tiers 3+ still need their own)
-- Story content open items: bottle-episode playability, Unbinder guise tells, templates 4-5 (see `story/aegis-arc.md` sec. 11, `story/world-story-templates.md` sec. 9; final names settled by D-043; generated world, stead, and person naming rewoven in D-049 with worlds unique per character)
+- Story content open items: bottle-episode playability, Unbinder guise tells, template 7+ (see `story/aegis-arc.md` sec. 11, `story/world-story-templates.md` sec. 11; final names settled by D-043; generated world, stead, and person naming rewoven in D-049 with worlds unique per character)
 
 ## 13. Document Map
 
@@ -187,7 +187,7 @@ And the loop closes on itself: **your finished characters enter the mythology.**
 - `decisions.md`: the decision audit trail with rationale (77 and counting)
 - `storylets.md`: storylet format and fact-graph schema spec (D-030)
 - `story/aegis-arc.md`: the trans-world Aegis arc spec (Canon: The Ledger; D-026)
-- `story/world-story-templates.md`: the world-story template contract, iron rules, and three launch templates
+- `story/world-story-templates.md`: the world-story template contract, iron rules, and the template pool (six landed through D-130)
 - `../research/00-overview.md`: research synthesis; `01`-`06`: narrative, progression, death, NG+, tech, quests; `07`-`10`: magic, factions, companions, economy
 - `../research/11-ffxiv-storytelling/`: FFXIV storytelling study; `00-synthesis.md` is the playbook
 - `../_external_resources/ffxiv_good_story/`: FFXIV story summaries (user-provided reference)

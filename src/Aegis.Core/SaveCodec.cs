@@ -257,10 +257,13 @@ namespace Aegis.Core;
 /// v71 when D-129 closed the guard war: the carl's board-check adds a draw
 /// beside every adjacent carl (a v70 journal's fort fights re-deal from
 /// there), and the drilled thegn answers the met parry with the bind.
+/// v72 when D-130 gave the pool its sixth spine: the Long Siege binds to the
+/// fen-leaguer, so tier-6+ worlds draw their story from six candidates where
+/// a v71 journal drew from five, and every late world's cast re-deals.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 71;
+    public const int Version = 72;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

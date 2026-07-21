@@ -36,6 +36,7 @@ public static class WorldStories
         UsurpedThroneTemplate.Template,
         WarOfFaithsTemplate.Template,
         GoldRushTemplate.Template,
+        LongSiegeTemplate.Template,
     ];
 
     /// <summary>
@@ -1303,6 +1304,228 @@ public static class GoldRushTemplate
                 [
                     ($"{name} meets you at the well with a pick over one shoulder. \"The watch is down and the pit stands open. Whatever the stead decides about the digging, that door was shut my whole life, and you are the one who opened it.\"", LogTone.Reward),
                     ("\"A promise asked, kept, and witnessed. What comes out of the pit now is the stead's own story to quarry.\"", LogTone.Aegis),
+                ],
+                Effect = g => g.Player.Essence += 3,
+            },
+        ];
+    }
+}
+
+/// <summary>
+/// The Long Siege at slice scale (template 5 of
+/// design/story/world-story-templates.md sec 9, the pool's sixth spine): a
+/// siege that outlived its war, its besiegers, and its besieged, and the stead
+/// below is grateful for it. Bound to the fen-leaguer (tier 6+), the site
+/// D-057 built as the siege that outlived its object. The stead's telling has
+/// the leaguer as the valley's oldest mercy: the watch on the banks pens
+/// something hungry on the holm, and so long as stones fall on the causeway
+/// it stays there. The holm's bare turf flips it: nothing was ever penned.
+/// The besieged were a handful of families who slipped the leaguer across one
+/// winter's ice, went down into the valley, and raised the stead, and the
+/// penned-thing tale was theirs, told so no heir of the siege's setters would
+/// ever come asking what became of the quarry. The complication is the
+/// gratitude: the stead has spent its whole history thanking the works that
+/// were set to starve its own founders.
+/// </summary>
+public static class LongSiegeTemplate
+{
+    public const string Id = "long-siege";
+
+    public static readonly StoryTemplate Template = new(
+        Id,
+        ctx => ctx.Tier >= 6 && ctx.Villagers.Count > 0
+            && ctx.Sites.Any(s => s.Kind == SiteKind.Leaguer),
+        Compile);
+
+    public static List<Storylet> Compile(ref Rng rng, StoryTemplateContext ctx)
+    {
+        var fisher = rng.Pick(ctx.Villagers);
+        ctx.Facts.Add("role", "fisher", fisher.Id,
+            $"{fisher.Name} has watched the black mere be the best water in the valley their whole life, and never wet a net in it.");
+
+        // The accepted history: the penned-thing tale, the valley's oldest
+        // gratitude. Planted at compile, voiced by a beat, flipped by the
+        // holm's bare turf.
+        ctx.Facts.Add("history", "mere_penned", ctx.SettlementName,
+            "Under the holm's turf something old and hungry was walled by water in the first days, and the watch on the banks was set to keep it there. So long as stones fall on the causeway, what is on the holm stays on the holm. So it has always been told, and the stead sleeps the better for a watch it never had to post.");
+
+        string fisherId = fisher.Id;
+        string name = fisher.Name;
+        string settlementName = ctx.SettlementName;
+
+        return
+        [
+            // Act 1: the wanting, personally. Only from the fisher, only while
+            // the leaguer still stands. Asking is asking against the tale, and
+            // the fisher knows it.
+            new Storylet
+            {
+                Id = "ls-plea",
+                Trigger = StoryletTrigger.Talk,
+                Priority = 10,
+                Forbids = [new FactPattern("deed", "siege_lifted")],
+                When = g => g.TalkNpc?.Id == fisherId,
+                Lines =
+                [
+                    ($"{name} works a knot out of an old net that has never been wet. \"The best water in this valley is the black mere, and every fish in it dies of old age. My grandmother said the stones fall to keep the holm-thing in. I have watched that water my whole life, bearer, and it has never so much as taken a duck.\"", LogTone.Info),
+                    ("\"Put the watch down. If the old tale is true, I will be the first it eats, and I find I would rather be eaten than spend another year mending nets for other people's water.\"", LogTone.Info),
+                ],
+                Effect = g => g.World.Facts.Add("promise", "lift_the_leaguer", fisherId,
+                    $"{name} asked the bearer to lift the leaguer and open the black mere."),
+            },
+
+            // The accepted history gets a mouth: the stead thanks the works,
+            // the way a valley thanks a fence it did not build.
+            new Storylet
+            {
+                Id = "ls-accepted-history",
+                Trigger = StoryletTrigger.NearHouse,
+                Requires = [new FactPattern("history", "mere_penned")],
+                Forbids = [new FactPattern("deed", "siege_lifted")],
+                Lines =
+                [
+                    ("An old man mends a fence-rail with his back to the fen, which is how the fen is faced here. \"{r0.detail}\"", LogTone.Info),
+                    ("\"Never a boat on the black mere, and be glad of the stones falling. What is kept is kept, so long as the keeping holds.\"", LogTone.Info),
+                ],
+            },
+
+            // The mid-turn: the holm itself, read by standing on the besieged
+            // ground. The flip complicates twice: the penned horror was never
+            // anything but the stead's own founders, and the fear that wrongs
+            // them was their own gift, told to hide their tracks.
+            new Storylet
+            {
+                Id = "ls-evidence",
+                Trigger = StoryletTrigger.EnterTile,
+                Tile = Terrain.Floor,
+                Priority = 10,
+                When = g => g.CurrentSite?.Kind == SiteKind.Leaguer
+                    && g.Player.Pos.X >= WorldGen.HolmMinX && g.Player.Pos.X <= WorldGen.HolmMaxX
+                    && g.Player.Pos.Y >= WorldGen.HolmMinY && g.Player.Pos.Y <= WorldGen.HolmMaxY,
+                Lines =
+                [
+                    ("The holm is bare the way lived ground goes bare: hearth-rings in the turf, few and small; bed-hollows dug shoulder to shoulder against old winters; a child's game of counters still laid out by the reed line. Nothing was ever penned here. Someone was besieged here.", LogTone.Info),
+                    ("On the water-stone of the far shore, low where the reeds stand, a tally is cut: winters counted, mouths counted, the mouths fewer down the column. Then one mark cut deeper than all of it, the winter the mere froze, and the count simply stops. No grave was ever dug on this ground.", LogTone.Info),
+                    ($"The deep mark is no death-mark. It is the same house-mark {settlementName} cuts over its own door-stones to this day. The besieged did not yield and did not starve: they walked out across one winter's ice, went down into the valley, and raised a stead, and the first tale that stead ever told was the one that kept anyone from asking who they had been.", LogTone.Info),
+                    ("\"Count it, bearer: the stead has thanked these works its whole life for penning a horror that was never anything but its own grandmothers. The fear was the founders' own make, and it kept them safe, and it wrongs them still. It is counted.\"", LogTone.Aegis),
+                ],
+                Effect = g => g.World.Facts.Add("evidence", "mere_truth", settlementName,
+                    "Nothing was ever penned on the holm. The besieged were the stead's own founders, who slipped the leaguer across the frozen mere and told the penned-thing tale themselves so the siege's setters would never come asking after the quarry."),
+            },
+
+            // Act 3, ending A: the leaguer lifted with the truth in hand, a
+            // held moment on D-117's seam. The tale and the watch stood fence
+            // together; the watch is down, and what the stead is told now is
+            // the bearer's to choose. No check: nothing on the banks resists.
+            new Storylet
+            {
+                Id = "ls-ending-truth",
+                Trigger = StoryletTrigger.DeedWritten,
+                Priority = 10,
+                Requires =
+                [
+                    new FactPattern("deed", "siege_lifted"),
+                    new FactPattern("evidence", "mere_truth"),
+                ],
+                // A story ends once (D-112): a tally read only after the lifting
+                // must not fire this off some later deed's hook.
+                Forbids = [new FactPattern("story_complete", Id)],
+                Lines = [],
+                Scene = new Scene("the-ice-and-the-tally", "The ice and the tally",
+                [
+                    new SceneNode
+                    {
+                        Id = "open",
+                        Lines =
+                        [
+                            ($"The works are still and the mere lies open behind you. By nightfall {settlementName} will know the stones have stopped falling, and the old tale will do what a tale does when its fence comes down: grow teeth. A penned thing with no watch on it is a stead's worth of bad nights waiting to begin.", LogTone.Info),
+                            ("\"You read the tally, bearer: no horror under the holm, only the stead's own first winters, and a fear its founders built to hide their tracks. Carry it down and the gratitude turns true: they were the quarry, and the quarry got out. Leave it and the fear stands watch alone over its own dead hearths. Truth does not spend itself. I only keep the count.\"", LogTone.Aegis),
+                        ],
+                        Choices =
+                        [
+                            new SceneChoice("Carry the tally down the hill", "told"),
+                            new SceneChoice("Leave the founders their fear", "kept"),
+                        ],
+                    },
+
+                    // Publish: the gratitude turns into inheritance, and the
+                    // open mere is only water.
+                    new SceneNode
+                    {
+                        Id = "told",
+                        Lines =
+                        [
+                            ($"By the time this reaches {settlementName}, the leaguer will not be the valley's old mercy any longer. It will be a ledger: a siege set against their own blood, a winter's ice walked in the dark with children carried, and a fear told on purpose by the very mouths it was protecting.", LogTone.Info),
+                            ("\"So the stead learns it was the quarry, and the quarry got out, and every year since has been the getting-out still going. A people that knows what it outlived stands differently, bearer. Heavier and truer. That is the better ledger. It is counted.\"", LogTone.Aegis),
+                        ],
+                        OnEnter = g =>
+                        {
+                            g.World.Facts.Add("story_complete", Id, settlementName);
+                            g.World.Facts.Add("coda", "founding_carried", settlementName,
+                                "The stead learned the leaguer's truth: nothing was penned, the besieged were its own founders, and the penned-thing tale was theirs. The old gratitude turned into inheritance, and the mere is only water now.");
+                        },
+                    },
+
+                    // Suppress: the founders' fear stands its watch alone, and
+                    // the graph knows the silence was chosen.
+                    new SceneNode
+                    {
+                        Id = "kept",
+                        Lines =
+                        [
+                            ($"You come down off the banks with the only story {settlementName} has ever had about the mere: something old and hungry, walled by water, and now unwatched. They will fear the open water for another hundred years, and the fear will be wrong the way it has always been wrong, and it was their own grandmothers' gift to them.", LogTone.Info),
+                            ("\"Kept, then. The founders built that fear to hide their tracks, and hidden their tracks stay. But a fear with no watch under it holds no fence, bearer; it only holds the dark a little closer to the houses. I keep the count of unsaid things too, and this one was somebody's kindness first.\"", LogTone.Aegis),
+                        ],
+                        OnEnter = g =>
+                        {
+                            g.World.Facts.Add("story_complete", Id, settlementName);
+                            g.World.Facts.Add("coda", "fear_stands", settlementName,
+                                "The leaguer is lifted and the penned-thing tale stands its watch alone. The bearer read the holm's tally and left the founders' fear over the valley by choice.");
+                            g.World.Facts.Add("withheld", "mere_truth", settlementName,
+                                "At the siege's lifting the bearer held the holm's whole tally, the counted winters and the walked ice both, and carried none of it down: the stead's founding stayed hidden inside its own fear by choice, not ignorance.");
+                        },
+                    },
+                ]),
+            },
+
+            // Act 3, ending B: lifted without ever standing on the holm. The
+            // watch falls, and the tale is left to explain the quiet alone.
+            new Storylet
+            {
+                Id = "ls-ending-cold",
+                Trigger = StoryletTrigger.DeedWritten,
+                Priority = 10,
+                Requires = [new FactPattern("deed", "siege_lifted")],
+                Forbids = [new FactPattern("evidence", "mere_truth")],
+                Lines =
+                [
+                    ($"In {settlementName} they will say the old hunger under the holm must have starved at last, or that lifting the watch has loosed it, depending on the teller and the hour. Both tellings are wrong, and whatever the holm's bare turf could have said is still up there, unread in the reeds.", LogTone.Info),
+                ],
+                Effect = g =>
+                {
+                    g.World.Facts.Add("story_complete", Id, settlementName);
+                    g.World.Facts.Add("coda", "fear_stands", settlementName,
+                        "The leaguer is lifted and the penned-thing tale stands its watch alone. What the holm's turf held went unread.");
+                },
+            },
+
+            // Act 3, the kept promise: the asking was the water, not the truth,
+            // so the settling reads true on every path.
+            new Storylet
+            {
+                Id = "ls-kept-promise",
+                Trigger = StoryletTrigger.Talk,
+                Priority = 10,
+                Requires =
+                [
+                    new FactPattern("deed", "siege_lifted"),
+                    new FactPattern("promise", "lift_the_leaguer"),
+                ],
+                When = g => g.TalkNpc?.Id == fisherId,
+                Lines =
+                [
+                    ($"{name} meets you on the track with a coil of new-tarred net over one shoulder. \"The stones have stopped. Whatever else is true of that water, I will have a boat on it by summer, and my whole life I did not believe I would say that.\"", LogTone.Reward),
+                    ("\"A promise asked, kept, and witnessed. What comes off the mere now is the stead's own catch to count.\"", LogTone.Aegis),
                 ],
                 Effect = g => g.Player.Essence += 3,
             },

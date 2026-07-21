@@ -175,16 +175,75 @@ fence with the survey, or leave the founders' kind lie standing alone against si
 and the kept truth crossing as a pit_truth silence. The buyer/factor role and the live
 rush thread (arrivals, prices) are deferred with D-025's economy hooks.*
 
-## 9. Casting, eligibility, and variation
+## 9. Template 5: The Long Siege
+
+**Logline.** A siege has outlived its war, its besiegers' cause, and its besieged, and the
+land below is grateful for it. Dramatic question: what do you owe a fear that kept you
+safe?
+
+**Worldgen preconditions.** Standing siege-works around a site with generated history of
+an investment that never formally ended (a leaguer, a blockade, a ring-wall); a settlement
+in the siege's shadow that tells a story about what the works are *for*; the besieged
+ground reachable but shunned.
+
+**Accepted-history fact.** What the siege pens: something old and hungry walled in during
+the first days, held there by the watch. Told as gratitude rather than dread: the siege is
+the land's oldest mercy, a watch the settlement never had to post.
+
+**Roles.** The one who wants the besieged ground open (banked-ordinary companion register:
+a whole life's wanting, voiced against the tale and knowing it); the besieged themselves
+(dead or gone, speaking only through what living leaves on ground: the template's
+complicit authority is the founders, whose complicity was self-protection); the settlement
+as the debunked believer: its gratitude's object is disproved while the *safety* the fear
+produced is affirmed; optionally a besieger-remnant voice (one-note fixed-axis rival: the
+order that was never countermanded).
+
+**Threads.** (a) The wanting: the pressure to open the water or ground, voiced personally;
+(b) The turf: fieldwork on the besieged ground toward who was actually in there; (c) The
+watch: what the works do to whoever approaches them.
+
+**Mid-turn.** The besieged ground is empty and always was, in the tale's terms: nothing
+was penned. The besieged were people, and they got out, and they are the settlement: its
+founders slipped the siege and raised the town in its shadow, and the penned-thing tale
+was theirs, told so the siege's setters would never come asking what became of the
+quarry. The flip complicates twice: the fear that wrongs the founders was the founders'
+own make, and the settlement has spent its whole history thanking the works set to starve
+its own blood.
+
+**Climax.** At the lifted works with the truth in hand. Endings: carry the truth down
+(the gratitude turns into inheritance: they were the quarry, and the quarry got out);
+leave the founders their fear (the tale stands watch alone, wrong as it always was, and
+the tracks it hides stay hidden); without the truth, the watch simply falls, and the tale
+is left to explain the quiet by itself.
+
+**Coda writes.** What the settlement now believes it outlived; the asker's fate (the
+first boat on the water); a founding-truth fact with high mythology weight; the kept fear
+feeds the withheld/silence pipe (D-118/D-120) like every knowingly kept truth.
+
+**Arc attachment.** The material (a watch outliving its object, duty without a master) is
+the deep bands' own recurring story at its furthest turn; the stinger docks on the first
+crossing of the opened ground. A bottle episode, when this world is a milestone, uses the
+besieged ground itself.
+
+*Landed at slice scale in D-130, bound to the fen-leaguer (tier 6+), giving D-057's site
+its story: the stead's penned-thing tale as the accepted history (the holm-thing, walled
+by water, held by the falling stones), the holm's bare turf as the evidence (hearth-rings
+and bed-hollows, a tally of winters and mouths that stops at the frozen winter, and the
+stead's own house-mark cut last), the lifting with the truth in hand held as a scene
+(carry the tally down, or leave the founders their fear), and the kept truth crossing as
+a mere_truth silence. The besieger-remnant voice and the live watch thread are carried by
+the leaguer's existing content (D-057's warders and the bare-holm texture).*
+
+## 10. Casting, eligibility, and variation
 
 - **Eligibility filtering.** The generator scores each template against the world's fact graph and picks among eligible templates (weighted against recent repeats across the player's cycles). Every template's preconditions are deliberately modest; a world that fails all three should be effectively impossible at launch counts. *Landed as v1 in D-035: templates declare eligibility over a worldgen context, one is drawn per world from the world-story stream, and the Creeping Blight compiles at slice scale against the barrow (accepted-history flip and branching endings both proven). Repeat-weighting landed in D-040: the crossing passes the finished world's template id into the next draw as a generation input, and an eligible repeat carries half the weight of every other candidate (weighted, never excluded, so back-to-back repeats stay possible and strict alternation never sets in).*
 - **Fallback casting.** Every role slot defines a fallback chain (e.g. Claimant: surviving heir, then cadet-line cousin, then chartered pretender-institution). If a slot's whole chain fails, the template is ineligible; slots are never filled by inventing an unrooted stranger (D-018's traceability rule).
 - **Variation axes.** Per template, the axes procgen legitimately varies: scale (village to empire), institution skin (crown, guild, temple), tone tilt (tragic, hopeful, sardonic, set by the world's history), geography binding, and which optional roles cast. The spine's beats never vary; that is what "authored structure" means.
 - **Repeat encounters across cycles.** A player will eventually replay a template. Defenses: variation axes above, the accepted-history fact's *content* always comes from this world's unique history, endings branch on this world's facts, and the pool grows post-launch (D-020: launch 3, growing).
 
-## 10. Open questions for a future session
+## 11. Open questions for a future session
 
 - Storylet counts per act need real numbers once average storylet length is known (contract sets ratios, not totals).
 - Whether template selection is ever player-visible (a covenant that pins or excludes a template?) or always silent.
-- The sixth and later templates for the post-launch pool (remaining candidates from the research: the long siege, the succession of a dying god; the gold rush landed in D-121).
+- The seventh and later templates for the post-launch pool (remaining candidate from the research: the succession of a dying god; the gold rush landed in D-121, the long siege in D-130).
 - How hostility tiers tilt templates (higher tiers might unlock harsher template variants or grimmer default tones) without violating "harder by generation, not by multiplier."

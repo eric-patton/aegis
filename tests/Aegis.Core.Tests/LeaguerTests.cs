@@ -336,7 +336,16 @@ public class LeaguerTests
     [Fact]
     public void TheBareHolm_TellsTheFurthestTurn()
     {
-        var game = EnterLeaguer();
+        // A world whose story is the Long Siege (D-130) reads the holm as
+        // evidence instead, outranking this texture on purpose: master 1's
+        // sixth world tells another story, so the old line is what fires.
+        var game = new Game(1);
+        for (int i = 0; i < 5; i++) Cross(game);
+        Assert.Equal(6, game.Cycle);
+        Assert.NotEqual(LongSiegeTemplate.Id, game.World.Facts.OfType("story").Single().Subject);
+
+        game.Debug_SetPlayerPos(game.World.LeaguerSite!.OverworldPos);
+        game.Apply(Command.Enter);
         Quiet(game);
         game.Debug_SetPlayerPos(new Pos(WorldGen.HolmMinX - 1, WorldGen.LeaguerH / 2));
         game.ApplyKey('l');

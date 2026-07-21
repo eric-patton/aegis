@@ -280,10 +280,13 @@ namespace Aegis.Core;
 /// news to the shrinekeeper's door: a washout under a standing granary now
 /// takes nothing, and the talk digits at the villagers' and keeper's doors
 /// sit differently under a v77 journal wherever season news stood.
+/// v79 when D-140 opened the market town at the east road's end: a gate a
+/// v78 journal never held now walks the town's lanes, and its stalls' digits
+/// move coin, goods, and the Commerce craft.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 78;
+    public const int Version = 79;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

@@ -48,6 +48,26 @@ public static class RoadLife
 }
 
 /// <summary>
+/// The market town's counters (D-140, plan 2026-07 B2). The town pays the
+/// best prices in the world for what the wilds yield, because it is the one
+/// place the goods are wanted rather than merely handled: hides above the
+/// cart's coin (D-124), herbs above the stillroom's (D-081), the whole
+/// arbitrage ladder now three rungs long, priced in the walk east. Its bread
+/// is the market's own, cheaper than the road's flat loaf: a town at a
+/// crossroads eats better than anyone. Commerce (the 12th skill) is fed at
+/// these counters alone: a use per lot sold above the valley's own price,
+/// cost-gated by construction (the goods were earned where they grew, and
+/// the margin was earned by the walk), and the practiced tongue adds its
+/// level in coin to every town lot.
+/// </summary>
+public static class TownMarket
+{
+    public const int HidePrice = 5;
+    public const int HerbPrice = 6;
+    public const int RationPrice = 4;
+}
+
+/// <summary>
 /// The guard worn open (D-125): the second bar, and what wears it. Pressure is
 /// flat and legible like the footing's 2s (D-094): a paid blow rocks a point,
 /// the wall two, the heave's weight three, a parried blow most of all. The
@@ -193,8 +213,15 @@ public sealed class Game
     /// </summary>
     public bool OnRoad { get; private set; }
 
-    /// <summary>The people standing on THIS overworld (D-138): every bump, block, and draw reads through here.</summary>
-    public IEnumerable<Npc> NpcsHere => World.Npcs.Where(n => n.OnRoad == OnRoad);
+    /// <summary>
+    /// The people standing on THIS ground (D-138, D-140): every bump, block,
+    /// and draw reads through here. On an overworld, the folk of that
+    /// overworld; inside a site, whoever lives in it (the town's people, and
+    /// nobody at all in the fighting deeps).
+    /// </summary>
+    public IEnumerable<Npc> NpcsHere => Mode == MapMode.Site
+        ? World.Npcs.Where(n => n.SiteId == CurrentSite!.Id)
+        : World.Npcs.Where(n => n.SiteId is null && n.OnRoad == OnRoad);
 
     /// <summary>The herb spots of the overworld underfoot (D-138): the valley's or the road's own.</summary>
     public List<Pos> HerbsHere => OnRoad ? World.RoadHerbs : World.Herbs;
@@ -580,11 +607,13 @@ public sealed class Game
     /// <summary>What the herbwife pays a sprig at her stillroom (D-081): the apothecary's price, a coin over the wood's-edge middleman's.</summary>
     public int StillroomHerbPrice => 5;
 
-    /// <summary>The price the current buyer pays for herbs: the stillroom's if the herbwife is across the bench.</summary>
-    private int HerbPriceHere => TalkNpc?.Id == "npc_herbwife" ? StillroomHerbPrice : HerbPrice;
+    /// <summary>The price the current buyer pays for herbs: the stillroom's if the herbwife is across the bench, the market's best at the town's herb stall (D-140).</summary>
+    private int HerbPriceHere => TalkNpc?.Id == "npc_herbmonger" ? TownMarket.HerbPrice
+        : TalkNpc?.Id == "npc_herbwife" ? StillroomHerbPrice : HerbPrice;
 
-    /// <summary>The price the current buyer pays for hides (D-124): the cart's coin over the bench, since the cart resells where hides are wanted.</summary>
-    private int HidePriceHere => TalkNpc?.Kind == NpcKind.Peddler ? HidePrice + Peddling.HideBonus : HidePrice;
+    /// <summary>The price the current buyer pays for hides (D-124): the cart's coin over the bench, and the town's over the cart (D-140), since each stands a step closer to where hides are wanted.</summary>
+    private int HidePriceHere => TalkNpc?.Id == "npc_hidemonger" ? TownMarket.HidePrice
+        : TalkNpc?.Kind == NpcKind.Peddler ? HidePrice + Peddling.HideBonus : HidePrice;
 
     /// <summary>
     /// Fired for every key that reached the engine while running (including menu keys
@@ -1243,7 +1272,9 @@ public sealed class Game
                 return AttackMonster(blocker);
             }
         }
-        else
+        // The bump opens the talk wherever people stand (D-140): the
+        // overworld's folk, or a site's own (the town's stalls; the fighting
+        // deeps house no one, so this finds nothing there).
         {
             var npc = NpcsHere.FirstOrDefault(n => n.Pos == target);
             if (npc is not null) return StartTalk(npc);
@@ -1422,6 +1453,8 @@ public sealed class Game
                 Log.Add(Turn, OnRoad
                     ? "The road bends down off the tops here, and the valley shows between the shoulders of the hills. Press > to turn for home."
                     : "The old drove road leaves the valley here, climbing east between walked-thin banks. Press > to take the road.", LogTone.Info);
+            else if (t == Terrain.TownGate)
+                Log.Add(Turn, $"A gate arch of dressed stone in a dry-stone wall, the drove road running under it into lanes and stall-smoke. Over the arch, a worn carving of a laden cart. {World.TownName}. Press > to go in.", LogTone.Info);
             else if (t == Terrain.SonghallEntrance)
                 Log.Add(Turn, "The stead's songhall: turf roof, smoke at the roof-hole, and low singing sometimes when the wind sits right. Press > to step in.", LogTone.Info);
             else if (t == Terrain.HarrowEntrance)
@@ -1618,6 +1651,8 @@ public sealed class Game
                 Log.Add(Turn, "You step in under the turf roof. Woodsmoke, wax, and under both the smell of cut oak: the hall keeps its songs the way a granary keeps seed.", LogTone.Info);
             else if (site.Kind == SiteKind.Harrow)
                 Log.Add(Turn, "You step in under the harrow's roof. Tallow-smoke, raked ash, and old stone: the room is bare the way a thing is bare on purpose.", LogTone.Info);
+            else if (site.Kind == SiteKind.Town)
+                Log.Add(Turn, $"You pass under the gate arch into {World.TownName}. Lanes, smoke, stall-cloth, and more faces in one look than the stead shows in a season, none of them yours to know yet.", LogTone.Info);
             else
                 Log.Add(Turn, site.Kind switch
                 {
@@ -2060,10 +2095,13 @@ public sealed class Game
         if (Mode == MapMode.Site && CurrentSite!.Map[Player.Pos] == Terrain.ExitLadder)
         {
             bool leftTheCamp = CurrentSite.Kind == SiteKind.GoblinCamp;
+            bool leftTheTown = CurrentSite.Kind == SiteKind.Town;
             Mode = MapMode.Overworld;
             Player.Pos = CurrentSite.OverworldPos;
             CurrentSite = null;
-            Log.Add(Turn, "You climb back into daylight.");
+            Log.Add(Turn, leftTheTown
+                ? "You pass back out under the gate arch, and the town's noise closes behind you like a door. The road west is the same road it was."
+                : "You climb back into daylight.");
             // The scar remembered (D-110): what was bloodied and left breathing
             // behind you keeps the wound's author.
             if (leftTheCamp) MarkTheScarred();
@@ -2559,10 +2597,11 @@ public sealed class Game
             NpcKind.Harrower => BuildHarrowTopics(npc),
             NpcKind.Peddler => BuildPeddlerTopics(),
             NpcKind.Waykeeper => BuildWaykeeperTopics(),
+            NpcKind.Towner => BuildTownerTopics(npc),
             _ => BuildTopics(npc),
         });
         _offers.Clear();
-        if (npc.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald or NpcKind.Peddler or NpcKind.Waykeeper) _offers.AddRange(BuildOffers(npc));
+        if (npc.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald or NpcKind.Peddler or NpcKind.Waykeeper or NpcKind.Towner) _offers.AddRange(BuildOffers(npc));
 
         if (npc.Kind == NpcKind.Severed)
         {
@@ -2609,6 +2648,19 @@ public sealed class Game
                 World.Facts.Add("met", npc.Id, World.SettlementName,
                     $"{npc.Name}, keeper of the wayhouse at the east road's far end, has spoken with the bearer.");
                 Log.Add(Turn, "\"Fire's lit, bread's priced, beds are dry. Walk in or walk on; the road takes either kindly.\"");
+            }
+        }
+        else if (npc.Kind == NpcKind.Towner)
+        {
+            // The town's folk (D-140) are the town's: a market greeting, and
+            // no stead's regard reaching ahead, because the town keeps its own
+            // books and has not opened one on the bearer yet.
+            Log.Add(Turn, $"{npc.Name}, {npc.Role} of {World.TownName}, gives you the market's own welcome: brisk, priced, and not unfriendly.");
+            if (!World.Facts.Exists("met", npc.Id))
+            {
+                World.Facts.Add("met", npc.Id, World.TownName,
+                    $"{npc.Name}, {npc.Role} of {World.TownName}, has spoken with the bearer.");
+                Log.Add(Turn, "\"New face off the west road. Coin spends the same whoever carries it; that is the whole of this town's doctrine.\"");
             }
         }
         else if (npc.Kind == NpcKind.Harrower)
@@ -2753,8 +2805,8 @@ public sealed class Game
     /// <summary>
     /// The waykeeper's topics (D-138): the road read by the one who watches it
     /// for a living. The sky, the trail, the house, and the far country: the
-    /// last is B2's signpost, a town the road already knows about and the game
-    /// does not yet hold.
+    /// last was B2's signpost, and since D-140 the gate it pointed at stands
+    /// open a few steps past the house.
     /// </summary>
     private List<(string Label, string Answer)> BuildWaykeeperTopics()
     {
@@ -2771,7 +2823,7 @@ public sealed class Game
         [
             ("The road", $"\"{sky} {trail}\""),
             ("The wayhouse", "\"Older than me, older than the stead down the valley, and it will outlast us both. A wayhouse is not built, walker, it accretes: every roof-tree in it was carried up by someone who swore once was enough.\""),
-            ("The far country", "\"East of here the road drops to the fords and keeps going, and there is a market town out there at the end of somebody's else's week. Further than my fire reaches, and no business of mine. Roads go on. That is all they ever do.\""),
+            ("The far country", $"\"{World.TownName}, they call it: the gate is a few steps past my door, you can smell the ovens from the yard on a west wind. Market, moot-stone, a wall with opinions. I sleep out here. A town is a fine thing to stand next to.\""),
         ];
     }
 
@@ -2945,6 +2997,38 @@ public sealed class Game
         ];
 
     /// <summary>
+    /// The town's talk (D-140): each stall has its own short list, the smith's
+    /// register (a working door, not a gossip's). The warden alone speaks for
+    /// the town entire: the market, the moot, and the guild, which is the law
+    /// and reputation web surfaced in a mouth (research/11's missed lesson),
+    /// with its machinery deliberately left for the next cut.
+    /// </summary>
+    private List<(string Label, string Answer)> BuildTownerTopics(Npc npc)
+    {
+        var topics = new List<(string, string)>
+        {
+            ("The town", $"\"{World.TownName}? Three drove roads and a wall, and everything else follows: where roads cross, things change hands, and where things change hands you get a market, a moot, and more locks than either. You will find us honest. It is cheaper.\""),
+        };
+        switch (npc.Id)
+        {
+            case "npc_provisioner":
+                topics.Add(("The market", "\"Oven-row behind me, shambles past the well, and my own board here for the walking trade. Prices are chalked and nobody haggles a chalked price but everybody tries. You will want the loaf; the road west is longer going back, everyone says so.\""));
+                break;
+            case "npc_hidemonger":
+                topics.Add(("The trade", "\"Hides come off the hills and go out east as boots, jacks, and harness, and this stall is the narrows they all swim through. I pay the best coin on this road because I can sell for better, and I will tell you that to your face: that is the whole trick of trade, knowing both numbers.\""));
+                break;
+            case "npc_herbmonger":
+                topics.Add(("The simples", "\"Half of what is on this cloth I could not grow if I prayed. It walks in off the hills in satchels like yours, and walks out priced for town ailments, which pay better than country ones. The sample-book keeps us both honest.\""));
+                break;
+            case "npc_mootwarden":
+                topics.Add(("The moot", "\"Disputes are heard at the moot-stone on law-days, and what is sworn there binds inside the wall. You are not in anyone's book yet, which is its own kind of standing: spend it carefully. The town remembers faces the way the hills remember weather.\""));
+                topics.Add(("The guild", "\"The carriers' guild holds the yard by the east gate: bonded loads, sworn weights, and a closed door to anyone unsworn. They are hiring hands and buying trust, in that order. Come back when you have carried something worth bonding.\""));
+                break;
+        }
+        return topics;
+    }
+
+    /// <summary>
     /// The stead's trade surface (D-036): each seller offers what their role would
     /// actually have. Purchases are talk-menu entries, not a separate mode, and the
     /// menu stays open so buying twice is two key presses. The smith (D-041) sells
@@ -3036,6 +3120,24 @@ public sealed class Game
             offers.Add((TradeGood.Ration, "", $"Buy road bread ({Peddling.RationPrice} coin)"));
             offers.Add((TradeGood.Bed, "", $"A bed for the night ({RoadLife.BedCoin} coin)"));
         }
+        // The market's stalls (D-140): each keeps its own counter, one or two
+        // digits, always listed (D-041). The mongers buy what the wilds
+        // yield at the best prices on the road; the provisioner sells the
+        // market's loaf; the warden keeps no counter at all: the law is not
+        // for sale, which is rather the point of it.
+        if (npc.Kind == NpcKind.Towner)
+            switch (npc.Id)
+            {
+                case "npc_provisioner":
+                    offers.Add((TradeGood.Ration, "", $"Buy a market loaf ({TownMarket.RationPrice} coin)"));
+                    break;
+                case "npc_hidemonger":
+                    offers.Add((TradeGood.Hide, "", HideSaleLabel()));
+                    break;
+                case "npc_herbmonger":
+                    offers.Add((TradeGood.Herb, "", HerbSaleLabel()));
+                    break;
+            }
         // The cart's counter (D-124): the road's three digits. Bread at the
         // road's price (sold to anyone; the cart keeps no stead's books), the
         // hides a coin over the wood's-edge bench (D-025's arbitrage, first
@@ -3621,10 +3723,11 @@ public sealed class Game
             return;
         }
         int hides = Player.Hide;
-        int paid = hides * HidePriceHere;
+        int paid = hides * HidePriceHere + TownHaggle();
         Player.Hide = 0;
         Player.Coin += paid;
         Log.Add(Turn, $"You lay {hides} hide{(hides == 1 ? "" : "s")} across the bench. {TalkNpc!.Name} runs a thumb over each, counts, and pays {paid} coin. ({Player.Coin} now)", LogTone.Reward);
+        FeedCommerce();
         if (!Player.HideLineHeard)
         {
             Player.HideLineHeard = true;
@@ -3645,12 +3748,39 @@ public sealed class Game
             return;
         }
         int herbs = Player.Herb;
-        int paid = herbs * HerbPriceHere; // the stillroom pays the apothecary's price (D-081)
+        int paid = herbs * HerbPriceHere + TownHaggle(); // the stillroom pays the apothecary's price (D-081); the town stall the market's (D-140)
         Player.Herb = 0;
         Player.Coin += paid;
         Log.Add(Turn, TalkNpc!.Id == "npc_herbwife"
             ? $"You empty {herbs} sprig{(herbs == 1 ? "" : "s")} onto the stillroom's table. {TalkNpc.Name} names each one without looking twice and pays {paid} coin, full worth. ({Player.Coin} now)"
-            : $"You empty {herbs} sprig{(herbs == 1 ? "" : "s")} onto the bench. {TalkNpc.Name} sorts them with a herb-wife's quickness and pays {paid} coin. ({Player.Coin} now)", LogTone.Reward);
+            : TalkNpc.Id == "npc_herbmonger"
+                ? $"You empty {herbs} sprig{(herbs == 1 ? "" : "s")} onto the stall's cloth. {TalkNpc.Name} grades each against a folded sample-book and pays {paid} coin, the market's price. ({Player.Coin} now)"
+                : $"You empty {herbs} sprig{(herbs == 1 ? "" : "s")} onto the bench. {TalkNpc.Name} sorts them with a herb-wife's quickness and pays {paid} coin. ({Player.Coin} now)", LogTone.Reward);
+        FeedCommerce();
+    }
+
+    /// <summary>
+    /// The practiced tongue's coin (D-140): at a town counter, Commerce adds
+    /// its level to the lot. Flat per sale, not per unit, so the craft
+    /// seasons the trade without ever outweighing the goods.
+    /// </summary>
+    private int TownHaggle() => TalkNpc?.Kind == NpcKind.Towner
+        ? Player.Skills.Level(SkillId.Commerce) : 0;
+
+    /// <summary>
+    /// Commerce fed (D-140): one use per lot sold at a town counter, and only
+    /// there, because the town's prices stand above the valley's own by
+    /// construction: the margin is the walk east, and the use is the margin's
+    /// (D-014's cost-gating in trade goods). Called after every sale; the
+    /// non-town benches feed nothing.
+    /// </summary>
+    private void FeedCommerce()
+    {
+        if (TalkNpc?.Kind != NpcKind.Towner) return;
+        int before = Player.Skills.Level(SkillId.Commerce);
+        Player.Skills.AddUse(SkillId.Commerce);
+        if (Player.Skills.Level(SkillId.Commerce) > before)
+            Log.Add(Turn, $"(Commerce rises to {Player.Skills.Level(SkillId.Commerce)}: you are learning what things are worth where, which is most of what a trader knows.)", LogTone.Reward);
     }
 
     /// <summary>
@@ -3708,6 +3838,13 @@ public sealed class Game
         if (TalkNpc!.Kind is NpcKind.Peddler or NpcKind.Waykeeper)
         {
             TryBuyRoadRation();
+            return;
+        }
+        // The market's bread (D-140): the town at the crossroads eats better
+        // and cheaper than anyone, and keeps no stead's books on the buyer.
+        if (TalkNpc!.Kind == NpcKind.Towner)
+        {
+            TryBuyTownRation();
             return;
         }
         // The barred larder (D-086): a named thief is not sold bread. The refusal
@@ -3786,6 +3923,30 @@ public sealed class Game
             _cartsBreadNamed = true;
             Log.Add(Turn, $"{TalkNpc!.Name}: \"The stead bars its larder to whom it likes. A cart keeps no such books; it prices bread, not conduct.\"");
         }
+    }
+
+    /// <summary>
+    /// The provisioner's board (D-140): the market's own loaf at the market's
+    /// own price, under the road's and under the stead's best day. The walk
+    /// east is the real price, which is why this does not undercut the levy:
+    /// nobody carts bread two days home a loaf at a time.
+    /// </summary>
+    private void TryBuyTownRation()
+    {
+        if (Player.Rations >= RationCap)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Your pack is full, friend. The stall will be here when it is not.\"");
+            return;
+        }
+        if (Player.Coin < TownMarket.RationPrice)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"{TownMarket.RationPrice} coin the loaf, and you hold {Player.Coin}. The market runs no slates for new faces.\"");
+            return;
+        }
+
+        Player.Coin -= TownMarket.RationPrice;
+        Player.Rations++;
+        Log.Add(Turn, $"A market loaf still warm from the oven-row, and change from the road's price. ({Player.Rations} carried)", LogTone.Reward);
     }
 
     /// <summary>
@@ -4045,7 +4206,7 @@ public sealed class Game
             return;
         }
 
-        if (TalkNpc!.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald or NpcKind.Peddler or NpcKind.Waykeeper
+        if (TalkNpc!.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald or NpcKind.Peddler or NpcKind.Waykeeper or NpcKind.Towner
             && key > '0' + _topics.Count && key <= '0' + _topics.Count + _offers.Count)
         {
             var (good, arg, _) = _offers[key - '1' - _topics.Count];
@@ -4067,6 +4228,12 @@ public sealed class Game
                 // since the label counts the pack (the D-041 read-true rule).
                 case TradeGood.Hide:
                     TrySellHides();
+                    _offers.Clear();
+                    _offers.AddRange(BuildOffers(TalkNpc!));
+                    break;
+                // The town's herb stall (D-140): the same read-true refresh.
+                case TradeGood.Herb:
+                    TrySellHerbs();
                     _offers.Clear();
                     _offers.AddRange(BuildOffers(TalkNpc!));
                     break;

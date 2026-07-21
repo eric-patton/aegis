@@ -113,6 +113,10 @@ public static class JourneyPilot
         // moment the soul can pay for it; with nothing to lay, step back out.
         if (g.InTalkMenu && g.TalkNpc?.Kind == NpcKind.Skald)
             return (LayingWanted(g) ? LayingOfferDigit(g) : null) ?? 'z';
+        // The market's stalls (D-140): a monger with our goods across the
+        // counter is sold to, one lot a press, then the talk is left.
+        if (g.InTalkMenu && g.TalkNpc?.Kind == NpcKind.Towner)
+            return TownSellDigit(g) ?? 'z';
         if (g.InAim) return AimDirection(g) ?? 'z';
         // The words (D-091, D-099): the open cast menu is driven toward the one
         // working wanted now (release, calling, or ward); anything else closes it.
@@ -167,6 +171,11 @@ public static class JourneyPilot
             // the site loop, so the resolve-goal below is the only thing that comes here.
             if (site.Kind == SiteKind.Threshold)
                 return ThresholdSiteMove(g, site);
+            // The market town (D-140): a street, not a delve. Sell what the
+            // road yielded at the stalls that pay the world's best coin (the
+            // sales feed Commerce), then leave by the gate.
+            if (site.Kind == SiteKind.Town)
+                return TownMove(g);
             // Still work to do here: clear it. The wilds is hunted, not fought (D-070):
             // game flees, so the generic close-and-bump never catches it; the hunt loosens
             // a shaft at a hart on a clear line, or herds it into a corner. Otherwise climb
@@ -437,8 +446,64 @@ public static class JourneyPilot
                      .ThenBy(h => h.Y).ThenBy(h => h.X))
             if (NavKey(g, road, p.Pos, spot, blocked) is { } toHerb) return toHerb;
 
+        // The market before the mouth (D-140): with the road's yield in hand,
+        // the town at the east end pays the world's best coin for it and the
+        // sales feed Commerce. Selling empties the pack, so the leg fires
+        // while there is anything to sell and then falls through to home.
+        if (g.Player.Hide > 0 || g.Player.Herb > 0)
+        {
+            var gate = g.World.TownSite.OverworldPos;
+            if (p.Pos == gate) return '>';
+            if (NavKey(g, road, p.Pos, gate, blocked) is { } toGate) return toGate;
+        }
+
         if (p.Pos == g.World.RoadHomePos) return '>';
         return NavKey(g, road, p.Pos, g.World.RoadHomePos, blocked);
+    }
+
+    /// <summary>
+    /// The town walked (D-140): to each stall that buys what we carry, sell
+    /// (the bump opens the talk, the digit above sells the lot), then out by
+    /// the gate arch. People block like people everywhere; the goal cell is
+    /// the monger, so the bump lands the talk.
+    /// </summary>
+    private static char? TownMove(Game g)
+    {
+        var p = g.Player;
+        var town = g.CurrentMap;
+        var blocked = g.NpcsHere.Select(n => n.Pos).ToHashSet();
+
+        Npc? stall = null;
+        if (g.Player.Hide > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_hidemonger");
+        else if (g.Player.Herb > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_herbmonger");
+        if (stall is not null)
+        {
+            if (NavKey(g, town, p.Pos, stall.Pos, blocked) is { } toStall) return toStall;
+            // A stall walled off from the gate would spin the errand forever:
+            // drop the goods' errand and leave rather than shuttle.
+        }
+
+        var arch = g.CurrentSite!.EntryPos;
+        if (p.Pos == arch) return '<';
+        return NavKey(g, town, p.Pos, arch, blocked)
+            ?? NavKey(g, town, p.Pos, arch, Empty);
+    }
+
+    /// <summary>The stall's digit (D-140): sell the lot the counter buys, or nothing.</summary>
+    private static char? TownSellDigit(Game g)
+    {
+        if (g.TalkNpc!.Id == "npc_hidemonger" && g.Player.Hide > 0) return OfferDigit(g, TradeGood.Hide);
+        if (g.TalkNpc.Id == "npc_herbmonger" && g.Player.Herb > 0) return OfferDigit(g, TradeGood.Herb);
+        return null;
+    }
+
+    /// <summary>A talk-level offer's digit, topics counted in front (D-041's stable order).</summary>
+    private static char? OfferDigit(Game g, TradeGood good)
+    {
+        for (int i = 0; i < g.Offers.Count; i++)
+            if (g.Offers[i].Good == good)
+                return (char)('1' + g.Topics.Count + i);
+        return null;
     }
 
     // ---- combat: the read, the dodge, the answer ----

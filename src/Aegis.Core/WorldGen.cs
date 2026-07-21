@@ -1,6 +1,6 @@
 namespace Aegis.Core;
 
-public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort, Songhall, Leaguer, Wilds, Harrow }
+public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort, Songhall, Leaguer, Wilds, Harrow, Town }
 
 /// <summary>A monster placed at generation time: kind, cell, and generated stats (D-011).</summary>
 public readonly record struct MonsterSpawn(MonsterKind Kind, Pos Pos, int Hp, string? Epithet = null, bool Chief = false);
@@ -83,6 +83,12 @@ public sealed class World
     /// map, picked exactly like the valley's (D-074), regrown at the crossing.
     /// </summary>
     public required List<Pos> RoadHerbs { get; init; }
+
+    /// <summary>
+    /// The market town's name (D-140, plan 2026-07 B2): the far country the
+    /// waykeeper shrugged at, standing behind its gate at the road's east end.
+    /// </summary>
+    public required string TownName { get; init; }
     public required List<Site> Sites { get; init; }
     public required List<Npc> Npcs { get; init; }
 
@@ -217,6 +223,9 @@ public sealed class World
 
     /// <summary>The road's own game-trail (D-138): every world, the hunt half a journey out.</summary>
     public Site RoadWildsSite => Sites.First(s => s.Id == "road-wilds");
+
+    /// <summary>The market town (D-140): every world, behind its gate at the road's east end.</summary>
+    public Site TownSite => Sites.First(s => s.Kind == SiteKind.Town);
 
     // Convenience views of the camp, the site every world has (and tests lean on).
     public GameMap Camp => CampSite.Map;
@@ -1119,6 +1128,34 @@ public static class WorldGen
         facts.Add("person", "npc_waykeeper", keeperWayName,
             $"{keeperWayName}, keeper of the wayhouse at the east road's far end.");
 
+        // The market town (D-140, plan 2026-07 B2): the far country the
+        // wayhouse signposted, standing behind its own gate a few steps past
+        // the house. Everything of it hangs off its own derived stream, so
+        // every road laid before this block is byte-identical.
+        var townRng = new Rng(SeedTree.Derive(roadSeed, "town"));
+        string townName = NameGen.Settlement(ref townRng);
+        var townGatePos = new Pos(RoadW - 2, wy);
+        road[townGatePos] = Terrain.TownGate;
+        CarvePathIfDisconnected(road, roadHome, townGatePos);
+        var (townMap, townEntry, townFolk) = GenerateTown(ref townRng, townName);
+        sites.Add(new Site
+        {
+            Id = "town",
+            Kind = SiteKind.Town,
+            Map = townMap,
+            OverworldPos = townGatePos,
+            EntryPos = townEntry,
+            OnRoad = true,
+            Spawns = [],
+            ChestPos = townEntry,   // no chest: a town's wealth sits behind counters, not lids.
+            ChestLooted = true,
+        });
+        npcs.AddRange(townFolk);
+        facts.Add("site", "town", townName,
+            $"{townName}, the market town at the east road's end: a walled huddle of lanes and stalls where the drove roads meet, big enough to hold a law and small enough that the law knows faces.");
+        foreach (var tf in townFolk)
+            facts.Add("person", tf.Id, tf.Name, $"{tf.Name}, {tf.Role} of {townName}.");
+
         return new World
         {
             Seed = worldSeed,
@@ -1139,8 +1176,179 @@ public static class WorldGen
             RoadMouthPos = roadMouth,
             RoadHomePos = roadHome,
             RoadHerbs = roadHerbs,
+            TownName = townName,
             Oaths = oaths,
         };
+    }
+
+    /// <summary>
+    /// The market town's map (D-140): authored chunks stitched per seed, the
+    /// Daggerfall lesson done right at slice scale. A walled 46x26 huddle: a
+    /// main street from the west gate, two cross-lanes, and six chunk-plots
+    /// filled from a small authored library. The market row and the moot yard
+    /// stand in every town (they are why the town exists); the rest of the
+    /// plots draw and shuffle from the library on the town's own stream, so
+    /// two worlds' towns share their parts and never their arrangement.
+    /// Chunk legend: '#' house, '.' street, '~' water, 't' tree; letters are
+    /// people anchored to their plot (P provisioner, H hidemonger, B herbman,
+    /// W the moot-warden), standing on street ground wherever the plot lands.
+    /// </summary>
+    private static (GameMap Map, Pos Entry, List<Npc> Folk) GenerateTown(ref Rng townRng, string townName)
+    {
+        // 14x11 plots. Each keeps its outer ring open so every doorway
+        // reaches the streets whatever neighbor the stitch deals it.
+        string[] market =
+        [
+            "..............",
+            ".####..####...",
+            ".#P......H#...",
+            "..............",
+            "....######....",
+            "....#....#....",
+            "..............",
+            ".###....###...",
+            ".#B........#..",
+            "..............",
+            "..............",
+        ];
+        string[] moot =
+        [
+            "..............",
+            "...########...",
+            "...#......#...",
+            "...#......#...",
+            "...##....##...",
+            "......W.......",
+            "....~.........",
+            "..t........t..",
+            "..............",
+            "..t........t..",
+            "..............",
+        ];
+        string[] lane =
+        [
+            "..............",
+            ".##..##..##...",
+            ".##..##..##...",
+            "..............",
+            "..............",
+            "...##..##..##.",
+            "...##..##..##.",
+            "..............",
+            ".##..##..##...",
+            ".##..##..##...",
+            "..............",
+        ];
+        string[] well =
+        [
+            "..............",
+            "..##......##..",
+            "..##......##..",
+            "..............",
+            ".....~~.......",
+            ".....~~.......",
+            "..............",
+            "..##......##..",
+            "..##......##..",
+            "..............",
+            "..............",
+        ];
+        string[] gardens =
+        [
+            "..............",
+            "..t..t...t....",
+            "......t.......",
+            "..t.....t..t..",
+            "....t.........",
+            ".t....t....t..",
+            "......t.......",
+            "..t......t....",
+            "....t.....t...",
+            ".t...t........",
+            "..............",
+        ];
+        string[] guildhall =
+        [
+            "..............",
+            "..########....",
+            "..#......#....",
+            "..#......#....",
+            "..#......#....",
+            "..########....",
+            "..............",
+            "......##......",
+            "......##......",
+            "..............",
+            "..............",
+        ];
+
+        const int townW = 46, townH = 26;
+        var town = new GameMap("town", townW, townH, Terrain.Grass);
+        for (int x = 0; x < townW; x++) { town[new Pos(x, 0)] = Terrain.House; town[new Pos(x, townH - 1)] = Terrain.House; }
+        for (int y = 0; y < townH; y++) { town[new Pos(0, y)] = Terrain.House; town[new Pos(townW - 1, y)] = Terrain.House; }
+
+        // The stitch: market and moot always dealt, the rest drawn from the
+        // library, then the six plots shuffled onto the six slots.
+        var optional = new List<string[]> { lane, well, gardens, guildhall, lane };
+        var plots = new List<string[]> { market, moot };
+        while (plots.Count < 6)
+        {
+            var pick = optional[townRng.Range(0, optional.Count)];
+            optional.Remove(pick);
+            plots.Add(pick);
+        }
+        for (int i = plots.Count - 1; i > 0; i--)
+        {
+            int j = townRng.Range(0, i + 1);
+            (plots[i], plots[j]) = (plots[j], plots[i]);
+        }
+
+        var folk = new List<Npc>();
+        Pos[] slots = [new(1, 1), new(16, 1), new(31, 1), new(1, 14), new(16, 14), new(31, 14)];
+        for (int s = 0; s < 6; s++)
+        {
+            var plot = plots[s];
+            for (int py = 0; py < plot.Length; py++)
+                for (int px = 0; px < plot[py].Length; px++)
+                {
+                    var cell = new Pos(slots[s].X + px, slots[s].Y + py);
+                    char c = plot[py][px];
+                    town[cell] = c switch
+                    {
+                        '#' => Terrain.House,
+                        '~' => Terrain.Water,
+                        't' => Terrain.Forest,
+                        _ => Terrain.Grass,
+                    };
+                    (string Id, string Role)? anchor = c switch
+                    {
+                        'P' => ("npc_provisioner", "provisioner"),
+                        'H' => ("npc_hidemonger", "hidemonger"),
+                        'B' => ("npc_herbmonger", "herbmonger"),
+                        'W' => ("npc_mootwarden", "moot-warden"),
+                        _ => null,
+                    };
+                    if (anchor is { } a)
+                        folk.Add(new Npc
+                        {
+                            Id = a.Id,
+                            Name = NameGen.Person(ref townRng),
+                            Role = a.Role,
+                            Pos = cell,
+                            Kind = NpcKind.Towner,
+                            OnRoad = true,
+                            SiteId = "town",
+                        });
+                }
+        }
+
+        // The main street from the gate, and the two cross-lanes: cut last,
+        // so no plot's wall ever seals a quarter off from the gate.
+        for (int x = 1; x < townW - 1; x++) { town[new Pos(x, 12)] = Terrain.Grass; town[new Pos(x, 13)] = Terrain.Grass; }
+        for (int y = 1; y < townH - 1; y++) { town[new Pos(15, y)] = Terrain.Grass; town[new Pos(30, y)] = Terrain.Grass; }
+        var entry = new Pos(1, 13);
+        town[entry] = Terrain.ExitLadder;
+        return (town, entry, folk);
     }
 
     /// <summary>

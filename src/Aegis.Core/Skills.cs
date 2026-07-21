@@ -12,9 +12,11 @@ namespace Aegis.Core;
 /// Sleight (D-107) is the light hand's craft, the crime family's first skill, fed
 /// only by lifts that came away unseen;
 /// Smithing (D-135) is the iron's craft, seeded at the stead's own bench, fed
-/// only by sittings that truly moved wear off a piece.
+/// only by sittings that truly moved wear off a piece;
+/// Commerce (D-140) is the trader's craft, seeded at the market town, fed
+/// only by lots sold above the valley's own price (the margin the walk earned).
 /// </summary>
-public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting, Cooking, Survival, Spellcraft, Sleight, Smithing }
+public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting, Cooking, Survival, Spellcraft, Sleight, Smithing, Commerce }
 
 /// <summary>
 /// Counted uses are the only state; levels are derived, never granted. A skill
@@ -24,7 +26,7 @@ public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting, Cookin
 /// </summary>
 public sealed class SkillSet
 {
-    public const int Count = 11;
+    public const int Count = 12;
 
     private readonly int[] _uses = new int[Count];
 
@@ -64,6 +66,7 @@ public sealed class SkillSet
         SkillId.Spellcraft => "Spellcraft",
         SkillId.Sleight => "Sleight",
         SkillId.Smithing => "Smithing",
+        SkillId.Commerce => "Commerce",
         _ => id.ToString(),
     };
 }

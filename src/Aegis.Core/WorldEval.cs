@@ -123,6 +123,9 @@ public static class WorldEval
         {
             (w.SettlementName, "{settlement}"),
             (w.Name, "{world}"),
+            // The market town (D-140): a second settlement name per world,
+            // struck like the first so the town's prose skeletons dedupe.
+            (w.TownName, "{town}"),
         };
         foreach (var n in w.Npcs)
             names.Add((n.Name, "{person}"));

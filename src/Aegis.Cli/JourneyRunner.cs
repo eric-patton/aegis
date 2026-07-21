@@ -142,6 +142,8 @@ public static class JourneyRunner
         // The east road (D-138): mouths taken and nights camped, travel-as-play's own tallies.
         int roadsTaken = 0;
         int nightsCamped = 0;
+        // The market town (D-140): gates walked; the lots sold are Commerce's own uses.
+        int marketsWalked = 0;
         // The stead's regard at its height (D-076): a per-world Fame, reset at every
         // crossing, so the run's peak is the warmest any one stead came to hold the
         // bearer, watched by the counter's high-water mark on every key.
@@ -220,6 +222,7 @@ public static class JourneyRunner
             int bagsBefore = TotalBags(game);
             bool onRoadBefore = game.OnRoad;
             int turnBefore = game.Turn;
+            bool inTownBefore = game.CurrentSite?.Kind == SiteKind.Town;
             game.ApplyKey(key.Value);
             keys.Append(key.Value);
             totalKeys++;
@@ -305,6 +308,8 @@ public static class JourneyRunner
             // that took time is a night passed at the fire, cold or fed.
             if (!onRoadBefore && game.OnRoad) roadsTaken++;
             if (key == 'm' && game.Turn > turnBefore) nightsCamped++;
+            // The gate walked (D-140): each entry into the town is a market day.
+            if (!inTownBefore && game.CurrentSite?.Kind == SiteKind.Town) marketsWalked++;
             // The stead's regard, at its high-water mark (D-076): it resets at each
             // crossing, so the peak is the warmest one stead ever came to hold the bearer.
             maxRegard = Math.Max(maxRegard, game.Regard);
@@ -393,6 +398,8 @@ public static class JourneyRunner
                 CoinBanked: coinBanked,
                 RoadsTaken: roadsTaken,
                 NightsCamped: nightsCamped,
+                MarketsWalked: marketsWalked,
+                LotsSoldInTown: game.Player.Skills.Uses(SkillId.Commerce),
                 MaxRegard: maxRegard,
                 RegardTitle: SteadRegard.TitleOf(maxRegard),
                 MaxWrath: maxWrath,
@@ -427,6 +434,7 @@ public static class JourneyRunner
             wordsLearned, wardsSaid, shadesCalled,
             mulesBought, coursersTaken, coinBanked,
             roadsTaken, nightsCamped,
+            marketsWalked, game.Player.Skills.Uses(SkillId.Commerce), game.Player.Skills.Level(SkillId.Commerce),
             maxRegard, maxWrath, raidsSuffered);
         return 0;
     }
@@ -509,6 +517,7 @@ public static class JourneyRunner
         int wordsLearned, int wardsSaid, int shadesCalled,
         int mulesBought, int coursersTaken, int coinBanked,
         int roadsTaken, int nightsCamped,
+        int marketsWalked, int lotsSold, int commerceLevel,
         int maxRegard, int maxWrath, int raidsSuffered)
     {
         var w = Console.Out;
@@ -592,6 +601,8 @@ public static class JourneyRunner
             w.WriteLine($"         the roads: bought the stead's mule {mulesBought} time(s); the raiders' courser answered the deed {coursersTaken} time(s); the saddlebags carried {coinBanked} coin all told (D-100).");
         if (roadsTaken > 0)
             w.WriteLine($"         the east road: took the mouth {roadsTaken} time(s) and camped {nightsCamped} night(s) on the way (D-138): travel as play, the D-006 box opened.");
+        if (marketsWalked > 0)
+            w.WriteLine($"         the market: walked {marketsWalked} town gate(s) and sold {lotsSold} lot(s) at town prices; Commerce stands at level {commerceLevel} (D-140).");
         w.WriteLine($"         the stead: came to hold the bearer as {(maxRegard > 0 ? SteadRegard.TitleOf(maxRegard) : "a stranger")} at its warmest "
                     + $"(peak regard {maxRegard}, reset at every crossing) (D-076).");
         w.WriteLine($"         the dens: came to hold the bearer as {(maxWrath > 0 ? RaiderWrath.TitleOf(maxWrath) : "no one at all")} at their most fearful "
@@ -644,6 +655,7 @@ internal sealed record JourneyReport(
     int WordsLearned, int WardsSaid, int ShadesCalled,
     int MulesBought, int CoursersTaken, int CoinBanked,
     int RoadsTaken, int NightsCamped,
+    int MarketsWalked, int LotsSoldInTown,
     int MaxRegard, string RegardTitle, int MaxWrath, string WrathTitle, int RaidsSuffered,
     string? Keys,
     List<JourneyCrossingDto> Crossings);

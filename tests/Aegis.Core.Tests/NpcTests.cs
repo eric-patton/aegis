@@ -33,16 +33,19 @@ public class NpcTests
             var settlement = a.ShrinePos.Plus(0, -2);
             foreach (var npc in a.Npcs)
             {
-                // Everyone stands walkable on their OWN overworld (D-138): the
-                // waykeeper's position means nothing on the valley's map.
-                var ground = npc.OnRoad ? a.Road : a.Overworld;
+                // Everyone stands walkable on their OWN ground (D-138, D-140):
+                // the waykeeper's position means nothing on the valley's map,
+                // and a towner's means nothing outside the town's walls.
+                var ground = npc.SiteId is { } inSite
+                    ? a.Sites.First(s => s.Id == inSite).Map
+                    : npc.OnRoad ? a.Road : a.Overworld;
                 Assert.True(ground.Walkable(npc.Pos), $"seed {seed}: {npc.Id} on unwalkable tile");
                 // The road rule is a settlement rule: the Unbinder camps far away
                 // and may share the column without blocking anything.
                 if (npc.Kind == NpcKind.Villager) Assert.NotEqual(settlement.X, npc.Pos.X);
                 Assert.True(a.Facts.Exists("person", npc.Id));
             }
-            Assert.Equal(a.Npcs.Count, a.Npcs.Select(n => (n.OnRoad, n.Pos)).Distinct().Count());
+            Assert.Equal(a.Npcs.Count, a.Npcs.Select(n => (n.OnRoad, n.SiteId, n.Pos)).Distinct().Count());
         }
     }
 

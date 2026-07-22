@@ -40,6 +40,7 @@ public enum Terrain : byte
     CairnEntrance,
     GillEntrance,
     Waystone,
+    TarnIron,
 }
 
 /// <summary>

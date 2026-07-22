@@ -42,7 +42,7 @@ calling's shade, and the three-beast roster with its stable. The remaining **bre
 holes**: none untouched; all four activity families have broken ground, and **crime is the first family with every named verb shipped** (D-127: pilfering, pickpocketing, lockpicking, fencing, and burglary proper), and since D-128 every secret fact its deeds write has a reader on the lane; town life thickened in D-108/D-123 (the bones, the round, and both ledgers read), though it still trails wilderness and craft. Rough fill levels:
 
 - Attributes: **7 of 7** mechanically active (D-091 woke Mind and Will; D-117's scene checks wake Presence, the last)
-- Skills: **13 of ~18** (five combat, Hunting from D-070, Cooking from D-073, Survival from D-074, Spellcraft from D-091, Sleight from D-107, Smithing seeded from D-135, Commerce seeded from D-140, Persuasion seeded from D-142)
+- Skills: **14 of ~18** (five combat, Hunting from D-070, Cooking from D-073, Survival from D-074, Spellcraft from D-091, Sleight from D-107, Smithing seeded from D-135, Commerce seeded from D-140, Persuasion seeded from D-142, Lore from D-148)
 - Activity families: **wilderness-living core built** (hunting, selling, cooking, foraging: D-070..D-074), the **craft family opened** (cooking D-073; alchemy v1 D-090, the hale-draught), and the **crime family complete on its named verbs** (pilfering D-086; pickpocketing + Sleight D-107; lockpicking D-122; fencing at the peddler's cart D-124; burglary proper D-127); **town life opened** (knucklebones D-108; carousing + the light-purse read D-123)
 - Story templates: **6** built (Raided Stead plus Blight, Throne, Faiths, Gold Rush, Long Siege)
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
@@ -182,8 +182,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 
 ### Character identity
 
-- [~] Attributes: 7 defined, **6 active** (Might, Grace, Vigor, Wits; D-091 wakes Mind as
-  working-power and Will as the Focus pool and the wind-up's grip); Presence inert (D-015)
+- [x] Attributes: 7 defined and **7 active** (Might, Grace, Vigor, Wits; D-091 wakes Mind as
+  working-power and Will as the Focus pool and the wind-up's grip; D-117 wakes Presence
+  through visible scene checks) (D-015, D-091, D-117)
 - [x] Character creation flow: the asking at the first wake, in-fiction, journaled keys,
   fate door for the rolled bearer (D-092)
 - [~] Folk: five original anchors shipped, tilt + trait each (D-092 supersedes D-017's
@@ -209,7 +210,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - [~] Craft skills: Cooking shipped (D-073); alchemy opened as know-how, not yet a skill
   (D-090: the stillcraft lesson; a use-curve waits on the lane growing recipes); Smithing seeded at
   the stead's bench (D-135: use-grown by filing wear off owned iron) with its town school open
-  (D-141: the forge files for coin away from home, and the drawn-temper lesson deepens every sitting)
+  (D-141: the forge files for coin away from home, and the drawn-temper lesson deepens every sitting),
+  then fed by smelting the fells' tarn-iron into blooms (D-153)
 - [~] Wilderness skills: Hunting (D-070) and Survival (D-074, foraging) done; Athletics pending (vision §3)
 - [ ] Subterfuge skills: Stealth, Larceny (vision §3)
 - [~] Social skills: Commerce seeded at the market town (D-140: use-grown, fed only by
@@ -234,7 +236,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   the woodward's bench, plus bread at the road's 6c: the first traveling vendor); third
   spread shipped (D-140: hides 5c and herbs 6c at the town's market with bread at the
   market's 4c: the arbitrage ladder's town rung, priced in the walk east, feeding
-  Commerce); caravan/arbitrage at scale pending
+  Commerce); the first regional production chain shipped (D-153: finite tarn-iron seams,
+  town smelting, and guild bloom sales); caravan/arbitrage at scale pending
 - [x] Vendor sub-menu pattern: one talk digit opens a bench with its own nine slots (D-071);
   proven general by the second bench (D-081, the herbwife's stillroom: herbs at the
   apothecary's 5c vs the wood's-edge 4c, the first price-choice/arbitrage in the economy;
@@ -242,9 +245,10 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - [x] Patronage deeds at the crossing (3: raised stone, endowed hearth, true verse) (D-054)
 - [~] Crafting trades: cooking shipped (D-073); alchemy v1 shipped (D-090, v40: the hale-draught,
   three sprigs steeped at the stillroom or, taught, at any shrine rest; 'd' drinks it on the road:
-  the herb lane's first sink and the first remedy that walks into a deep site); smithing as a
-  player lane pending (D-006, D-025)
-- [~] Wilderness living: hunting + sell path + cooking + foraging shipped (D-070, D-071, D-073, D-074); camping shipped with the road (D-138: 'm' anywhere plain on an overworld, the supper's ration buying the mending, Survival deepening it, the kill cooked at the fire); tracking, fishing pending (D-006)
+  the herb lane's first sink and the first remedy that walks into a deep site); smithing opened
+  as a player trade by repair and forge schooling (D-135/D-141), then deepened by smelting
+  tarn-iron to blooms (D-153); recipes, commissions, and worked goods pending (D-006, D-025)
+- [~] Wilderness living: hunting + sell path + cooking + foraging shipped (D-070, D-071, D-073, D-074); camping shipped with the road (D-138: 'm' anywhere plain on an overworld, the supper's ration buying the mending, Survival deepening it, the kill cooked at the fire); fells extraction feeds Survival through finite tarn-iron seams (D-153); tracking, fishing pending (D-006)
 - [x] A hide-buyer with room to grow: the woodward's trade sub-menu, hides to coin (D-071)
 - [x] Crime: all four of D-006's named verbs shipped. Pickpocketing (D-107, v55: 'p' beside one
   of the stead's folk, the Sleight skill's dice, one try per pocket per world; clean lifts pay
@@ -380,9 +384,11 @@ between them as play. Starts after the stead layer's core lands.
   the pilot's climb taking both errands); the season and its news D-149 (the wolf-winter
   chained off the valley's hard winter, the fang, and scarcity pricing hides in town at
   freight speed); the third site D-150 (the wolf-gill, the great she-wolf as the first
-  elite beast, the pelt answering the fells' cold, the drover's cache); still open: a
-  possible fourth site or the region's own goods, then further regions one at a time
-  (D-131, D-146, D-147, D-149, D-150)
+  elite beast, the pelt answering the fells' cold, the drover's cache); the country's
+  own goods loop D-153 (four finite tarn-iron seams, Survival-scaled extraction, town
+  smelting into blooms, guild sale, pilot and worldgen measure live); still open: a
+  possible fourth site, then further regions one at a time
+  (D-131, D-146, D-147, D-149, D-150, D-153)
 
 ### Magic (v1 shipped, D-091)
 
@@ -602,8 +608,9 @@ kind, and the evaluation harness that hardens every generator change.
   skeletons); built D-137 as `aegis worldgen` on a pure WorldEval core, with `--json`
   for CI, `--dump` as D3's generate-then-curate feed, and a double-generate purity
   gate; landed before the generator grows again, as the plan sequenced. Play-reached
-  states stay `journey --json`'s (D-083); price spreads join the measure when B3
-  lands real ones (D-131, D-137)
+  states stay `journey --json`'s (D-083); B3's regional spread has landed, and D-153
+  adds the fells' tarn-iron seam count to every world measure and digest (D-131, D-137,
+  D-153)
 
 ### Content catalogs (breadth, grow over time)
 
@@ -656,6 +663,21 @@ kind, and the evaluation harness that hardens every generator change.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-21: **D-153 the dark iron under wet stone: the fells' own trade.** B4's
+  country-goods debt closes. Four finite, visible tarn-iron seams generate on a new
+  fells stream, reachable and mostly against wet scree or tarn. `g` works one only
+  with an unworn hafted weapon, paying eight exposed turns and one wear for a
+  Survival-scaled yield capped at three, plus one under wolf-winter. The town forge
+  smelts the whole raw lot for 2 coin at 1:1 and feeds Smithing once; the carriers'
+  guild buys blooms at 4 coin each under the ordinary haggle, law, bond, and Held Road
+  rules, feeding Commerce once. Raw ore and blooms survive death and crossings. The
+  waykeeper, glyph, sidebar, facts, snapshots, journey prose/JSON, pilot, and worldgen
+  metric all carry the loop. Save v89 -> v90. 835 tests green. All five v94 journey
+  twins byte-identical and all reached cycle 13 with twelve crossings; seed 1 replay
+  exact at 24,283 keys, turn 22,932, and seven deaths; worldgen JSON exit 0. The v94
+  sweeps are the new baselines. Deferred: blooms as inputs to recipes or commissions,
+  further regional goods, a possible fourth fells site, and the shared re-tenanting or
+  renewal decision.
 - 2026-07-21: **D-152 the laws past the seventh gate stand in the world.** Plan step 14
   closes and D2 flips to [x]. `WorldTwistCatalog` deals exactly one law from tier 7
   onward through the master seed's independent three-item shuffle bag, all three before

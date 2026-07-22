@@ -808,6 +808,7 @@ public static class Presenter
         Terrain.CairnEntrance => ('n', Hue.Gray, Hue.Black),
         Terrain.GillEntrance => ('%', Hue.White, Hue.Black),
         Terrain.Waystone => ('+', Hue.White, Hue.DarkCyan),
+        Terrain.TarnIron => ('i', Hue.DarkCyan, Hue.Black),
         _ => ('?', Hue.Magenta, Hue.Black),
     };
 
@@ -1017,6 +1018,8 @@ public static class Presenter
                 Line(game.Area == Area.Fells ? "Drovers' track: > climbs down" : "Drovers' track: > takes the fells", Hue.Gray);
             if (here == Terrain.Waystone)
                 Line("Waystone shelter: m camps", Hue.Cyan);
+            if (here == Terrain.TarnIron)
+                Line("Tarn-iron seam: g works", Hue.DarkCyan);
             foreach (var npc in game.NpcsHere)
                 if (npc.Pos.Chebyshev(p.Pos) == 1)
                     Line($"{npc.Name}: bump to talk", Hue.Green);

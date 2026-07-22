@@ -152,6 +152,12 @@ public static class JourneyRunner
         // The caravan leg (D-144): sacks loaded at the cart, sacks sold at the counter.
         int saltBought = 0;
         int saltSold = 0;
+        // The fells' own trade (D-153): raw iron worked, smelted, then sold
+        // as blooms through the guild, watched by the two carried counters.
+        int tarnIronMined = 0;
+        int tarnIronSmelted = 0;
+        int ironBloomsSold = 0;
+        int coinFromIron = 0;
         // The stead's regard at its height (D-076): a per-world Fame, reset at every
         // crossing, so the run's peak is the warmest any one stead came to hold the
         // bearer, watched by the counter's high-water mark on every key.
@@ -245,6 +251,8 @@ public static class JourneyRunner
             int smithUsesBefore = game.Player.Skills.Uses(SkillId.Smithing);
             bool swornBefore = game.GuildSworn;
             int saltBefore = game.Player.Salt;
+            int tarnIronBefore = game.Player.TarnIron;
+            int ironBloomBefore = game.Player.IronBloom;
             game.ApplyKey(key.Value);
             keys.Append(key.Value);
             totalKeys++;
@@ -336,12 +344,23 @@ public static class JourneyRunner
             // The school and the bond (D-141): a Smithing use grown inside the
             // walls is a forge sitting (the home bench stands in the valley),
             // and the bond flipping on is one swearing, counted world by world.
-            if (inTownBefore && game.Player.Skills.Uses(SkillId.Smithing) > smithUsesBefore) forgeSittings++;
+            if (inTownBefore && game.Player.Skills.Uses(SkillId.Smithing) > smithUsesBefore
+                && game.Player.TarnIron >= tarnIronBefore) forgeSittings++;
             if (!swornBefore && game.GuildSworn) bondsSworn++;
             // The caravan leg's two ends (D-144): salt only ever rises at the
             // cart and only ever falls at the town counter.
             if (game.Player.Salt > saltBefore) saltBought += game.Player.Salt - saltBefore;
             if (game.Player.Salt < saltBefore && game.Cycle == cycleBefore) saltSold += saltBefore - game.Player.Salt;
+            // Tarn-iron rises only at a seam and falls only into forge blooms.
+            // Blooms fall only at the guild scale, so the full regional loop
+            // has three clean state edges (D-153).
+            if (game.Player.TarnIron > tarnIronBefore) tarnIronMined += game.Player.TarnIron - tarnIronBefore;
+            if (game.Player.TarnIron < tarnIronBefore) tarnIronSmelted += tarnIronBefore - game.Player.TarnIron;
+            if (game.Player.IronBloom < ironBloomBefore)
+            {
+                ironBloomsSold += ironBloomBefore - game.Player.IronBloom;
+                coinFromIron += Math.Max(0, game.Player.Coin - coinBefore);
+            }
             // The stead's regard, at its high-water mark (D-076): it resets at each
             // crossing, so the peak is the warmest one stead ever came to hold the bearer.
             maxRegard = Math.Max(maxRegard, game.Regard);
@@ -439,6 +458,10 @@ public static class JourneyRunner
                 BondsSworn: bondsSworn,
                 SaltBought: saltBought,
                 SaltSold: saltSold,
+                TarnIronMined: tarnIronMined,
+                TarnIronSmelted: tarnIronSmelted,
+                IronBloomsSold: ironBloomsSold,
+                CoinFromIron: coinFromIron,
                 MaxRegard: maxRegard,
                 RegardTitle: SteadRegard.TitleOf(maxRegard),
                 MaxWrath: maxWrath,
@@ -482,7 +505,7 @@ public static class JourneyRunner
             roadsTaken, nightsCamped, fellsTaken,
             marketsWalked, game.Player.Skills.Uses(SkillId.Commerce), game.Player.Skills.Level(SkillId.Commerce),
             forgeSittings, bondsSworn, game.Player.Skills.Level(SkillId.Smithing),
-            saltBought, saltSold,
+            saltBought, saltSold, tarnIronMined, tarnIronSmelted, ironBloomsSold, coinFromIron,
             maxRegard, maxWrath, raidsSuffered, game.Teller);
         return 0;
     }
@@ -568,6 +591,7 @@ public static class JourneyRunner
         int marketsWalked, int lotsSold, int commerceLevel,
         int forgeSittings, int bondsSworn, int smithingLevel,
         int saltBought, int saltSold,
+        int tarnIronMined, int tarnIronSmelted, int ironBloomsSold, int coinFromIron,
         int maxRegard, int maxWrath, int raidsSuffered, Storyteller teller)
     {
         var w = Console.Out;
@@ -661,6 +685,8 @@ public static class JourneyRunner
             w.WriteLine($"         the town school: {forgeSittings} sitting(s) at the forge under the smith's eye (Smithing stands at level {smithingLevel}); the carriers' bond sworn {bondsSworn} time(s) across the worlds (D-141).");
         if (saltBought + saltSold > 0)
             w.WriteLine($"         the caravan leg: loaded {saltBought} sack(s) of salt at the cart and sold {saltSold} at the town counter, the margin earned by the walk (D-144).");
+        if (tarnIronMined + tarnIronSmelted + ironBloomsSold > 0)
+            w.WriteLine($"         the fell iron: worked {tarnIronMined} raw piece(s), smelted {tarnIronSmelted}, and sold {ironBloomsSold} bloom(s) for {coinFromIron} coin through the carriers (D-153).");
         w.WriteLine($"         the stead: came to hold the bearer as {(maxRegard > 0 ? SteadRegard.TitleOf(maxRegard) : "a stranger")} at its warmest "
                     + $"(peak regard {maxRegard}, reset at every crossing) (D-076).");
         w.WriteLine($"         the dens: came to hold the bearer as {(maxWrath > 0 ? RaiderWrath.TitleOf(maxWrath) : "no one at all")} at their most fearful "
@@ -719,6 +745,7 @@ internal sealed record JourneyReport(
     int MarketsWalked, int LotsSoldInTown,
     int ForgeSittings, int BondsSworn,
     int SaltBought, int SaltSold,
+    int TarnIronMined, int TarnIronSmelted, int IronBloomsSold, int CoinFromIron,
     int MaxRegard, string RegardTitle, int MaxWrath, string WrathTitle, int RaidsSuffered,
     int PacingNights, int PacingSpaceCalls, int PacingPressCalls,
     int PacingDealtUnderSpace, int PacingQuietUnderPress,

@@ -197,6 +197,18 @@ public sealed class Player
     /// </summary>
     public int Salt { get; set; }
 
+    /// <summary>
+    /// Raw tarn-iron worked from the fells (D-153), carried to a town forge.
+    /// It survives death and crossings like the other goods on the bearer.
+    /// </summary>
+    public int TarnIron { get; set; }
+
+    /// <summary>
+    /// Forge blooms smelted from tarn-iron (D-153), sold through the carriers'
+    /// guild. Carried goods survive death and crossings.
+    /// </summary>
+    public int IronBloom { get; set; }
+
     // Gear (D-041): the other half of the build. Banked like attributes: the
     // remnant never takes it, and it crosses waygates untouched (vision secs 8, 10).
 

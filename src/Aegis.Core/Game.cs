@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed, Forge, Bond, Plea, Salt, Script, Book, GraveBargain }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed, Forge, Bond, Plea, Salt, Script, Book, GraveBargain, TarnSmelt, IronBloom }
 
 /// <summary>
 /// The cart's counter (D-124): the road's prices. The ration a coin or two
@@ -96,6 +96,21 @@ public static class FellWinter
     public const int Ticks = 3;
     public const int HideBonus = 1;
     public const int Fang = 1;
+}
+
+/// <summary>
+/// The fells' own good (D-153): four finite workings, a slow extraction paid
+/// in time and hafted-tool wear, a winter-opened bonus, then forge and guild.
+/// </summary>
+public static class FellIron
+{
+    public const int SeamsPerWorld = 4;
+    public const int WorkTurns = 8;
+    public const int ToolWear = 1;
+    public const int MaxBaseYield = 3;
+    public const int WinterYield = 1;
+    public const int SmeltCoin = 2;
+    public const int BloomPrice = 4;
 }
 
 /// <summary>
@@ -1627,6 +1642,8 @@ public sealed class Game
                 Log.Add(Turn, SiteHere(p)!.Cleared
                     ? "The wolf-gill. Bone still whitens its floor, but nothing moves down there now except what the wind does."
                     : "The ground opens at your feet: a gill cut deep through the scree, its floor strewn white with old bone, drove-years of it. Something down there keeps a clean larder. Press > to climb down.", LogTone.Danger);
+            else if (t == Terrain.TarnIron)
+                Log.Add(Turn, "A dark seam shows where water has opened the scree. A hafted tool and time could work the tarn-iron free. Press g to work it.", LogTone.Info);
             else if (t == Terrain.FellMouth)
                 Log.Add(Turn, Area == Area.Fells
                     ? "The drovers' track drops off the fells' edge here, and the road shows below, thin as a drawn line. Press > to climb down."
@@ -2416,6 +2433,10 @@ public sealed class Game
             return true;
         }
 
+        if (Mode == MapMode.Overworld && Area == Area.Fells
+            && World.TarnIronSeams.Contains(Player.Pos))
+            return WorkTarnIron();
+
         if (Mode == MapMode.Site && CurrentSite is { StonePos: { } stonePos, StoneRead: false } && Player.Pos == stonePos)
             return ReadGravenStone(CurrentSite);
 
@@ -2548,6 +2569,41 @@ public sealed class Game
         Log.Add(Turn, "There is nothing here to take.");
         return false;
     }
+
+    /// <summary>
+    /// Works one finite tarn-iron seam (D-153). The cost is eight exposed
+    /// turns and one point of wear on a hafted weapon. Survival reads the
+    /// ground, and a wolf-winter opens one more piece of ore from the stone.
+    /// </summary>
+    private bool WorkTarnIron()
+    {
+        if (Player.Weapon is not { Family: SkillId.Hafted } tool)
+        {
+            Log.Add(Turn, "Tarn-iron shows in the wet stone, but it will not come free to bare hands. A hafted tool could open it.", LogTone.Info);
+            return false;
+        }
+        if (tool.Worn)
+        {
+            Log.Add(Turn, $"The {tool.Name} turns in your hands against the seam, too worn to bite stone again. The iron can wait for a truer edge.", LogTone.Info);
+            return false;
+        }
+
+        bool winterOpened = FellWinterStands;
+        int taken = Math.Min(FellIron.MaxBaseYield,
+            1 + Player.Skills.Bonus(SkillId.Survival))
+            + (winterOpened ? FellIron.WinterYield : 0);
+        World.TarnIronSeams.Remove(Player.Pos);
+        CurrentMap[Player.Pos] = Terrain.Heath;
+        Player.TarnIron += taken;
+        tool.Wear = Math.Min(tool.MaxWear, tool.Wear + FellIron.ToolWear);
+        World.Facts.Add("resource-state", $"tarn_iron_{Player.Pos.X}_{Player.Pos.Y}", World.FellRegion.Name,
+            $"A tarn-iron seam on the {World.FellRegion.Name} was worked out and carried down in the bearer's pack.");
+        GainSkill(SkillId.Survival);
+        Log.Add(Turn, $"You work the dark seam loose with the {tool.Name}, slow enough to keep iron apart from stone. It gives {taken} piece{(taken == 1 ? "" : "s")} of tarn-iron{(winterOpened ? ", the frost having opened the seam deeper" : "")}. ({Player.TarnIron} raw iron carried, {tool.Wear}/{tool.MaxWear} wear)", LogTone.Reward);
+        for (int i = 1; i < FellIron.WorkTurns; i++) AdvanceTurn();
+        return true;
+    }
+
 
     /// <summary>
     /// Reading a graven stone (D-091): the descent's own prize, a word taken
@@ -3167,26 +3223,25 @@ public sealed class Game
         string trail = World.RoadWildsSite.Cleared
             ? "The half-way glade is hunted quiet for now; the deer will forget, they always do."
             : "Deer come down to the half-way glade most evenings, if your supper still walks on legs.";
+        string fells = (World.FellWildsSite.Cleared
+            ? $"\"The {World.FellRegion.Name}, up the drovers' track north of the road. Quiet lately, I hear: somebody thinned the pack. It will not stay thinned. Wolf-country never does."
+            : $"\"The {World.FellRegion.Name}, up the drovers' track north of the road. No roof, no law, and wolves that hunt in company. The hides come down worth the climb, when the climber comes down with them. Take a supper you can burn.")
+            + (World.FellCairnSite.Cleared
+                ? " And the old cairn on the tops sits quiet now, they tell me. First time in anyone's telling."
+                : " And give the old cairn on the tops its room: the drovers water anywhere but its lee, and drovers are not careful people.")
+            + (World.FellGillSite.Cleared
+                ? " The bone-gill is settled too, if the talk is true: the old she-wolf is a pelt at last, and every drover on this road drinks to the hand that made her one."
+                : " And there is a gill up there strewn white with bone, where the old she-wolf dens. She has outlived every man who swore to bring her pelt down; mind she does not outlive you.")
+            + (FellWinterStands
+                ? " And not this season, walker, not without need: a wolf-winter sits up there, and hungry ground makes bold teeth."
+                : "")
+            + $" Four tarn-iron seams show dark along the wet scree. The forge in {World.TownName} will take the stone to bloom, and the carriers buy what comes out.\"";
         return
         [
             ("The road", $"\"{sky} {trail}\""),
             ("The wayhouse", "\"Older than me, older than the stead down the valley, and it will outlast us both. A wayhouse is not built, walker, it accretes: every roof-tree in it was carried up by someone who swore once was enough.\""),
             ("The far country", $"\"{World.TownName}, they call it: the gate is a few steps past my door, you can smell the ovens from the yard on a west wind. Market, moot-stone, a wall with opinions. I sleep out here. A town is a fine thing to stand next to.\""),
-            ("The fells", (World.FellWildsSite.Cleared
-                ? $"\"The {World.FellRegion.Name}, up the drovers' track north of the road. Quiet lately, I hear: somebody thinned the pack. It will not stay thinned. Wolf-country never does."
-                : $"\"The {World.FellRegion.Name}, up the drovers' track north of the road. No roof, no law, and wolves that hunt in company. The hides come down worth the climb, when the climber comes down with them. Take a supper you can burn.")
-                + (World.FellCairnSite.Cleared
-                ? " And the old cairn on the tops sits quiet now, they tell me. First time in anyone's telling."
-                : " And give the old cairn on the tops its room: the drovers water anywhere but its lee, and drovers are not careful people.")
-                // The gill's word (D-150): the she-wolf priced at the same door.
-                + (World.FellGillSite.Cleared
-                ? " The bone-gill is settled too, if the talk is true: the old she-wolf is a pelt at last, and every drover on this road drinks to the hand that made her one."
-                : " And there is a gill up there strewn white with bone, where the old she-wolf dens. She has outlived every man who swore to bring her pelt down; mind she does not outlive you.")
-                // The winter read at the climb's own door (D-149): the
-                // waykeeper prices the season the way they price everything.
-                + (FellWinterStands
-                ? " And not this season, walker, not without need: a wolf-winter sits up there, and hungry ground makes bold teeth.\""
-                : "\"")),
+            ("The fells", fells),
         ];
     }
 
@@ -3562,6 +3617,7 @@ public sealed class Game
                 // and gated at the END of the list so nothing shifts under it.
                 case "npc_townsmith":
                     offers.Add((TradeGood.Forge, "", ForgeLabel()));
+                    offers.Add((TradeGood.TarnSmelt, "", TarnSmeltLabel()));
                     if (Player.Skills.Level(SkillId.Smithing) >= 1)
                         offers.Add((TradeGood.Lesson, LessonCatalog.IdOf(LessonId.DrawnTemper), LessonLabel(LessonId.DrawnTemper)));
                     break;
@@ -3571,6 +3627,7 @@ public sealed class Game
                 // readable at the door.
                 case "npc_guildmaster":
                     offers.Add((TradeGood.Bond, "", BondLabel()));
+                    offers.Add((TradeGood.IronBloom, "", IronBloomSaleLabel()));
                     break;
                 // The scrivener's board (D-148): the sitting always listed
                 // with a state-read label, then the shelf in catalog order,
@@ -3922,11 +3979,68 @@ public sealed class Game
         GainSkill(SkillId.Smithing);
     }
 
+    /// <summary>The forge's raw-iron entry (D-153), always listed and state-read.</summary>
+    private string TarnSmeltLabel() => Player.TarnIron > 0
+        ? $"Smelt your tarn-iron ({Player.TarnIron} raw, {TitheBuy(FellIron.SmeltCoin)} coin{TitheLabel}; {Player.TarnIron} bloom{(Player.TarnIron == 1 ? "" : "s")})"
+        : "Smelt tarn-iron (no raw iron carried)";
+
+    /// <summary>
+    /// The town forge takes one carried lot from stone to bloom (D-153). The
+    /// flat charge buys coal and hearth time, and the successful lot feeds
+    /// Smithing once. Nothing is taken when no raw iron is carried.
+    /// </summary>
+    private void TrySmeltTarnIron()
+    {
+        if (TownCounterBarred()) return;
+        if (Player.TarnIron == 0)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name} looks over the empty cloth you spread on the forge table. \"Bring the dark stone down from the tops first. I cannot smelt a road story.\"");
+            return;
+        }
+        int price = TitheBuy(FellIron.SmeltCoin);
+        if (Player.Coin < price)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Coal and hearth time come to {price} coin the lot, and you hold {Player.Coin}. The stone will keep.\"");
+            return;
+        }
+
+        int raw = Player.TarnIron;
+        Player.Coin -= price;
+        Player.TarnIron = 0;
+        Player.IronBloom += raw;
+        CountTithe();
+        GainSkill(SkillId.Smithing);
+        Log.Add(Turn, $"The smith banks the hearth and lets your hands keep the tongs. Stone runs off in black glass; {raw} iron bloom{(raw == 1 ? "" : "s")} come free under the hammer. ({Player.IronBloom} blooms carried, {Player.Coin} coin left)", LogTone.Reward);
+    }
+
     /// <summary>The guild's entry (D-141): one digit, the label reading the bond's state true (D-041).</summary>
     private string BondLabel() =>
         GuildSworn ? "The carriers' bond (sworn; your lots sell under the guild's mark)"
         : Player.Skills.Level(SkillId.Commerce) < 1 ? $"Swear the carriers' bond ({TitheBuy(CarriersGuild.BondCoin)} coin{TitheLabel}; the guild bonds no unproven hand)"
         : $"Swear the carriers' bond ({TitheBuy(CarriersGuild.BondCoin)} coin{TitheLabel})";
+
+    /// <summary>The guild's fell-iron lot (D-153), sold under ordinary town terms.</summary>
+    private string IronBloomSaleLabel() => Player.IronBloom > 0
+        ? $"Sell your iron blooms ({Player.IronBloom} at {FellIron.BloomPrice}c, {TitheSale(Player.IronBloom * FellIron.BloomPrice + TownHaggle())} coin{(TitheCounter ? "; 1 coin road tithe" : "")})"
+        : "Sell iron blooms (none carried)";
+
+    private void TrySellIronBlooms()
+    {
+        if (TownCounterBarred()) return;
+        if (Player.IronBloom == 0)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The guild buys blooms, not promises of them. Bring iron the forge has made honest.\"");
+            return;
+        }
+
+        int blooms = Player.IronBloom;
+        int paid = TitheSale(blooms * FellIron.BloomPrice + TownHaggle());
+        Player.IronBloom = 0;
+        Player.Coin += paid;
+        CountTithe();
+        Log.Add(Turn, $"You set {blooms} iron bloom{(blooms == 1 ? "" : "s")} on the guild scale. {TalkNpc!.Name} rings each one, weighs the lot, and pays {paid} coin. ({Player.Coin} now)", LogTone.Reward);
+        FeedCommerce();
+    }
 
     /// <summary>
     /// The carriers' bond sworn (D-141): the town's first ledger opened on the
@@ -5063,6 +5177,16 @@ public sealed class Game
                 // iron's wear, so the menu refreshes like the hide sale does.
                 case TradeGood.Forge:
                     WorkTheForge();
+                    _offers.Clear();
+                    _offers.AddRange(BuildOffers(TalkNpc!));
+                    break;
+                case TradeGood.TarnSmelt:
+                    TrySmeltTarnIron();
+                    _offers.Clear();
+                    _offers.AddRange(BuildOffers(TalkNpc!));
+                    break;
+                case TradeGood.IronBloom:
+                    TrySellIronBlooms();
                     _offers.Clear();
                     _offers.AddRange(BuildOffers(TalkNpc!));
                     break;
@@ -10122,6 +10246,7 @@ public sealed class Game
         WorldTwist: WorldTwistCatalog.IdOf(World.Twist),
         TwistVariant: World.RoadHolder?.ToString().ToLowerInvariant() ?? "",
         Waystones: string.Join(",", World.Waystones.Select(p => $"{p.X}:{p.Y}")),
+        TarnIronSeams: string.Join(",", World.TarnIronSeams.Select(p => $"{p.X}:{p.Y}")),
         RoadTithes: RoadTithes,
         GraveTruceStands: GraveTruceStands,
         Oaths: string.Join(",", World.Oaths.Select(OathCatalog.IdOf)),
@@ -10163,6 +10288,8 @@ public sealed class Game
         WolfBountyHides: WolfBountyHides,
         RawMeat: Player.RawMeat,
         Herb: Player.Herb,
+        TarnIron: Player.TarnIron,
+        IronBloom: Player.IronBloom,
         Draughts: Player.Draughts,
         Focus: Player.Focus,
         MaxFocus: Player.MaxFocus,
@@ -10303,6 +10430,7 @@ public sealed record Snapshot(
     string WorldTwist,
     string TwistVariant,
     string Waystones,
+    string TarnIronSeams,
     int RoadTithes,
     bool GraveTruceStands,
     string Oaths,
@@ -10344,6 +10472,8 @@ public sealed record Snapshot(
     int WolfBountyHides,
     int RawMeat,
     int Herb,
+    int TarnIron,
+    int IronBloom,
     int Draughts,
     int Focus,
     int MaxFocus,

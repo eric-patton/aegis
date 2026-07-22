@@ -321,10 +321,13 @@ namespace Aegis.Core;
 /// camps and official prices, grave mouths can hold a shared truce and market,
 /// and hart or wolf hides can enter a town's law, so a v88 journal beyond the
 /// sixth crossing would walk different tiles, menus, fights, and accounts.
+/// v90 when D-153 put tarn-iron in the fells: new visible seams change walks,
+/// 'g' spends eight turns and tool wear on their ore, and new town digits smelt
+/// and sell the blooms, moving coin and the Survival, Smithing, and Commerce crafts.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 89;
+    public const int Version = 90;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

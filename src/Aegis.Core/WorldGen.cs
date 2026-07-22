@@ -148,6 +148,12 @@ public sealed class World
     /// <summary>What grows on the fells (D-146): herb spots on the heath, picked like the valley's.</summary>
     public required List<Pos> FellHerbs { get; init; }
 
+    /// <summary>
+    /// The fells' finite tarn-iron seams (D-153): visible workings along wet
+    /// scree, exhausted one by one and regenerated with the world.
+    /// </summary>
+    public required List<Pos> TarnIronSeams { get; init; }
+
     /// <summary>The wolves' ground (D-146): the fells' hunting site.</summary>
     public Site FellWildsSite => Sites.First(s => s.Id == "fell-wilds");
 
@@ -1380,13 +1386,37 @@ public static class WorldGen
             ChestPos = gillCache,
         });
 
+        // Tarn-iron (D-153): four finite seams at the wet edge of the fells,
+        // placed on a new stream after every earlier B4 draw. Existing fells,
+        // sites, and herbs therefore hold to their tiles. The first pass asks
+        // for scree or tarn beside the working; the relaxed tail guarantees
+        // four reachable seams even in an unusually open generated country.
+        var ironRng = new Rng(SeedTree.Derive(fellSeed, "tarn-iron"));
+        var tarnIronSeams = new List<Pos>();
+        for (int attempt = 0; attempt < 1200 && tarnIronSeams.Count < FellIron.SeamsPerWorld; attempt++)
+        {
+            var p = new Pos(ironRng.Range(2, FellsW - 2), ironRng.Range(2, FellsH - 2));
+            if (fells[p] != Terrain.Heath || !Reachable(fells, fellHome, p)
+                || fellHerbs.Contains(p) || tarnIronSeams.Any(s => s.Manhattan(p) < 5)
+                || sites.Any(s => s.Area == Area.Fells && s.OverworldPos == p)) continue;
+            bool wetEdge = Directions.All8.Any(d =>
+            {
+                var q = p.Plus(d.dx, d.dy);
+                return fells.InBounds(q) && fells[q] is Terrain.Scree or Terrain.Water;
+            });
+            if (attempt < 800 && !wetEdge) continue;
+            tarnIronSeams.Add(p);
+        }
+        if (tarnIronSeams.Count != FellIron.SeamsPerWorld)
+            throw new InvalidOperationException("Fells generation could not place every tarn-iron seam.");
+        foreach (var seam in tarnIronSeams) fells[seam] = Terrain.TarnIron;
+
         facts.Add("site", "fells", $"{fellTrack.X},{fellTrack.Y}",
             "A drovers' track climbs off the road's north shoulder onto the high fells: heath and scree and no roof anywhere, wolf-country by every account that comes down with the hides to prove it.");
         facts.Add("site", "fell-gill", $"{gillPos.X},{gillPos.Y}",
             "A gill cuts the tops above the drovers' track, scree-walled and strewn white with old bone. The drovers count their dogs twice passing it, and the old she-wolf the tale gives it has outlived every man who swore to bring her pelt down.");
         facts.Add("site", "fell-cairn", $"{cairnPos.X},{cairnPos.Y}",
             "On the tops above the drovers' track stands a kerbed cairn older than any road under it. The drovers water anywhere but its lee, and none of them will say why in daylight.");
-
         // The countries named (D-143, plan 2026-07 B3): the region becomes an
         // entity, on its own derived stream after every existing draw, so all
         // prior placement, casting, and story stay byte-identical. The valley
@@ -1411,6 +1441,8 @@ public static class WorldGen
             $"The {roadRegionName}: the high country the east road crosses, {townName}'s country, where the drove roads meet and word and freight travel together.");
         facts.Add("region", "fells", fellRegionName,
             $"The {fellRegionName}: the fells above the road, nobody's country. No law runs there and no roof stands there; what it keeps, it keeps in hides and weather.");
+        facts.Add("resource", "tarn_iron", fellRegionName,
+            $"Four tarn-iron seams show dark on the {fellRegionName}, where the wet has opened the scree. A hafted tool can work them, and the town forge knows the stone.");
 
         // Worlds that differ in kind (D-152): the twist is selected outside
         // every existing stream, after the whole ordinary world stands. It
@@ -1469,6 +1501,7 @@ public static class WorldGen
             FellMouthPos = fellTrack,
             FellHomePos = fellHome,
             FellHerbs = fellHerbs,
+            TarnIronSeams = tarnIronSeams,
             TownName = townName,
             Regions = regions,
             PeddlerSalt = Peddling.SaltStock(tier),

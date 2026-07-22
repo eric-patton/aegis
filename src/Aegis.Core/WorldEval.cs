@@ -16,7 +16,7 @@ public sealed record WorldMeasure(
     string Twist, string TwistVariant, int Waystones,
     int Npcs, int Villagers, int Facts, Dictionary<string, int> FactTypes,
     int StoryStorylets, List<string> StoryletIds,
-    List<SiteMeasure> Sites, int Gleanings, int HerbSpots, bool WildPony, int BreadBase);
+    List<SiteMeasure> Sites, int Gleanings, int HerbSpots, int TarnIronSeams, bool WildPony, int BreadBase);
 
 /// <summary>One tier's slice of the batch: how the generator spreads itself at that depth.</summary>
 public sealed record TierSummary(
@@ -84,6 +84,7 @@ public static class WorldEval
             Sites: sites,
             Gleanings: w.Gleanings.Count,
             HerbSpots: w.Herbs.Count,
+            TarnIronSeams: w.TarnIronSeams.Count,
             WildPony: w.WildPonyPos is not null,
             // The one generation-time price spread today: the blight's thin larder
             // prices bread at 6 where every other story opens at 4, mirroring
@@ -230,7 +231,7 @@ public static class WorldEval
         }
 
         var m = Measure(w);
-        Fold($"{m.Seed}|{m.Tier}|{m.WorldName}|{m.SettlementName}|{m.Story}|{m.Twist}|{m.TwistVariant}|{m.Waystones}|{m.Npcs}|{m.Facts}|{m.StoryStorylets}|{m.Gleanings}|{m.HerbSpots}|{m.WildPony}");
+        Fold($"{m.Seed}|{m.Tier}|{m.WorldName}|{m.SettlementName}|{m.Story}|{m.Twist}|{m.TwistVariant}|{m.Waystones}|{m.Npcs}|{m.Facts}|{m.StoryStorylets}|{m.Gleanings}|{m.HerbSpots}|{m.TarnIronSeams}|{m.WildPony}");
         foreach (var kv in m.FactTypes) Fold($"{kv.Key}={kv.Value}");
         foreach (var id in m.StoryletIds) Fold(id);
         foreach (var s in m.Sites) Fold($"{s.Id}|{s.Kind}|{s.Spawns}|{s.Monsters}|{s.Stone}|{s.Coffer}");

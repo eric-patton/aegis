@@ -476,7 +476,9 @@ public static class JourneyPilot
         bool owed = (!combe.Cleared && !skip.Contains(combe.Id))
             || (!cairn.Cleared && !skip.Contains(cairn.Id))
             || (!gill.Cleared && !skip.Contains(gill.Id));
-        return owed
+        bool ironOwed = g.World.TarnIronSeams.Count > 0
+            && g.Player.Weapon is { Family: SkillId.Hafted, Worn: false };
+        return (owed || ironOwed)
             && g.Player.Bow is not null && g.Player.Weapon is not null && g.Player.Armor is not null;
     }
 
@@ -536,7 +538,9 @@ public static class JourneyPilot
         // unsworn proven name sends the walk through the gate too, and both
         // errands clear themselves inside. Salt in the pack (D-144) is the
         // caravan leg's whole reason to exist: it sells only in there.
-        if (g.Player.Hide > 0 || g.Player.Herb > 0 || g.Player.Salt > 0 || ForgeErrand(g) || BondErrand(g) || ScribeErrand(g))
+        if (g.Player.Hide > 0 || g.Player.Herb > 0 || g.Player.Salt > 0
+            || SmeltErrand(g) || g.Player.IronBloom > 0
+            || ForgeErrand(g) || BondErrand(g) || ScribeErrand(g))
         {
             var gate = g.World.TownSite.OverworldPos;
             if (p.Pos == gate) return '>';
@@ -593,6 +597,18 @@ public static class JourneyPilot
         if (RoadCampWanted(g) && fells[p.Pos] is Terrain.Heath or Terrain.Grass or Terrain.Hills)
             return 'm';
 
+        // Tarn-iron (D-153): once the dangerous mouths are settled, work each
+        // finite seam with the hafted weapon already carried for the frontier.
+        // A worn tool leaves the remaining seams for this world, so the climb
+        // never shuttles against a refusal it cannot answer on the tops.
+        if (p.Weapon is { Family: SkillId.Hafted, Worn: false })
+            foreach (var seam in g.World.TarnIronSeams.OrderBy(s => Chebyshev(p.Pos, s))
+                         .ThenBy(s => s.Y).ThenBy(s => s.X))
+            {
+                if (p.Pos == seam) return 'g';
+                if (NavKey(g, fells, p.Pos, seam, blocked) is { } toSeam) return toSeam;
+            }
+
         foreach (var spot in g.World.FellHerbs.OrderBy(h => Chebyshev(p.Pos, h))
                      .ThenBy(h => h.Y).ThenBy(h => h.X))
             if (NavKey(g, fells, p.Pos, spot, blocked) is { } toHerb) return toHerb;
@@ -614,7 +630,9 @@ public static class JourneyPilot
         var blocked = g.NpcsHere.Select(n => n.Pos).ToHashSet();
 
         Npc? stall = null;
-        if (g.Player.Hide > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_hidemonger");
+        if (SmeltErrand(g)) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_townsmith");
+        else if (g.Player.IronBloom > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_guildmaster");
+        else if (g.Player.Hide > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_hidemonger");
         else if (g.Player.Herb > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_herbmonger");
         // The caravan leg's far end (D-144): salt in the pack sells at the
         // provisioner's board, the same one-press lot as the hides.
@@ -646,6 +664,8 @@ public static class JourneyPilot
     /// <summary>The stall's digit (D-140): sell the lot the counter buys, or nothing.</summary>
     private static char? TownSellDigit(Game g)
     {
+        if (g.TalkNpc!.Id == "npc_townsmith" && SmeltErrand(g)) return OfferDigit(g, TradeGood.TarnSmelt);
+        if (g.TalkNpc.Id == "npc_guildmaster" && g.Player.IronBloom > 0) return OfferDigit(g, TradeGood.IronBloom);
         if (g.TalkNpc!.Id == "npc_hidemonger" && g.Player.Hide > 0) return OfferDigit(g, TradeGood.Hide);
         if (g.TalkNpc.Id == "npc_herbmonger" && g.Player.Herb > 0) return OfferDigit(g, TradeGood.Herb);
         // The salt lot (D-144): the same predicate that sent the walk.
@@ -693,6 +713,10 @@ public static class JourneyPilot
     /// <summary>Worn iron, and coin enough to pay the smith and still eat (D-141).</summary>
     private static bool ForgeErrand(Game g) =>
         g.IronNeedsWork && g.Player.Coin >= TownCost(g, TownForge.WorkCoin) + 5;
+
+    /// <summary>Raw fell iron, and enough coin for the hearth with bread left.</summary>
+    private static bool SmeltErrand(Game g) =>
+        g.Player.TarnIron > 0 && g.Player.Coin >= TownCost(g, FellIron.SmeltCoin) + 5;
 
     /// <summary>An unsworn proven name, and coin enough to bond and still eat (D-141).</summary>
     private static bool BondErrand(Game g) =>

@@ -582,10 +582,11 @@ kind, and the evaluation harness that hardens every generator change.
   RNG, no facts, no narration, disagreement counters carried in the journey report
   across the sweep seeds); the steering half stays open, gated on the book's evidence
   (authority scope ◇ parked) (D-131, D-145)
-- [ ] D2: The twist library: worlds past a given tier carry one generated rule that
-  changes how the world works, written into history and law; authored as templates,
-  drawn per world, must touch systems not just flavor; arrives after the town
-  (governance ◇ parked, to be reconciled with the tier-7+ question, D-058) (D-131)
+- [ ] D2: The twist library: D-151 settles the build contract before code moves. Tier
+  7+ carries exactly one mandatory mixed-valence law, independently drawn from the
+  world story through a deterministic no-repeat shuffle bag; the Held Road, Grave
+  Market, and Horned Law open the library. Twists are the primary structural answer
+  to tier 7+ freshness, while new bands remain optional catalog growth (D-131, D-151)
 - [ ] D3: Prose variety infrastructure: fact-keyed fragments composed per surface (rumor,
   epitaph, ledger, song) plus a repetition audit across seeds; the audit needs a
   generate-then-curate surface dump (talk-gated prose is pilot-unexercised by design, so
@@ -605,7 +606,8 @@ kind, and the evaluation harness that hardens every generator change.
 - [~] Gear: 10 items; req axes Might/Vigor/Grace; deep signature verbs pending (D-041, D-056)
 - [~] Oaths: 7 (grow with new systems: weather, factions, companions) (D-047, D-051)
 - [~] Legend: 5 rungs, 3 hospitality boons; rungs past 5 open (D-048)
-- [~] Hostility-tier bands: 2-6 distinct + tier-7 recombination; tier 7+ approach open (D-033..D-058)
+- [~] Hostility-tier bands: 2-6 distinct + tier-7 recombination; D-151 makes twists the
+  recurring tier 7+ structure while further bands remain optional catalog growth (D-033..D-058, D-151)
 - [~] Scar list: three shipped (eye, hand, look); the dragging step and more open (D-098)
 - [ ] Weather / seasons (referenced only in flavor today) (vision §1, D-051; planned to
   ride the stead event deck, plan 2026-07 step 4, D-131)
@@ -639,9 +641,7 @@ kind, and the evaluation harness that hardens every generator change.
 - ◇ Storylet external data-file format + condition/effect vocabulary (D-030)
 - ◇ Catalogs to grow: more oaths, the scar list, Legend rungs past 5, patron deeds past 3, hostility bands past the fen-leaguer (D-047, D-009, D-048, D-054, D-033+)
 - ◇ Story open items: bottle-episode playability, Unbinder guise tells, reveal-tier sharing across characters, template 7+ candidates (aegis-arc.md §11, world-story-templates.md §11)
-- ◇ Tier 7+ content: more distinct bands vs a recombination system vs the twist library (D-058, D-131: the twist library is a third candidate answer; reconcile, don't run both)
 - ◇ Named stead folk (plan 2026-07 A5): adopt after A1-A3 are live, and at what depth (D-131)
-- ◇ Twist-library governance: how twists compose with story templates and tiers, whether a world ever carries two (D-131)
 - ◇ Pacing-layer authority: which event classes it may delay or hasten, and which stay untouchable (D-131)
 - ◇ Generator-version pinning per world: today a save bump re-deals live worlds; decide before any save-format freeze whether old generators ship alongside new (D-131)
 
@@ -650,6 +650,20 @@ kind, and the evaluation harness that hardens every generator change.
 ## Changelog / newly tracked
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
+
+- 2026-07-21: **D-151 the laws past the seventh gate: step 14's design gate.** Tier 7+
+  takes one twist per world as its recurring freshness structure, independently drawn
+  from the world story through a deterministic three-law shuffle bag with no boundary
+  repeat. The opening library is the Held Road (one standing faith, waystone shelter,
+  one-coin official tithe), the Grave Market (a common truce at the barrow and cairn,
+  peaceful settlement bought for half the tenants' possible Essence, violence closing
+  both markets), and the Horned Law (harts protected and fenceable, wolves bountied).
+  Twists are mandatory mixed-valence world identity, never covenants, and must change a
+  player rule, a world response, facts, and multiple surfaces. The D-058 tier-7+ and
+  D-131 governance questions close. D2 remains unchecked until D-152 builds and verifies
+  the library. Newly found while scoping the build: cairn and gill clearing currently
+  fall through another site's fallback response; D-152 will give both explicit routing
+  and regression tests before the Grave Market depends on the seam. Next: D-152.
 
 - 2026-07-21: **D-150 the wolf-gill: the fells' third site, the she-wolf, and the great pelt.** B4's density line continued. A scree-walled ravine strewn with the drove-years' bones: one carved gully (connected by construction), denned pockets, the bone-hollow at the deep end, all on the fells' own three-terrain palette with scree stopping feet never eyes. The great she-wolf is the first elite beast: her own kind (GreatWolf, own reads and glyph) but deliberately the pack's own behavior, heavier only in weight (hp 16+tier, jaw +2, pounce +2, posture 6, all additive after the dice). Her yield is the great pelt, once ever, carried like a keepsake: a cold fells camp under it mends whole (the D-146 exposure answered by the country's own apex), plus two extra hides; no coin, no essence, game-honest. The gill's coin is a lost drover's pack among the bones. The D-149 fang and the D-146 draw-off both cover her kind. Pilot: third errand behind the same armed gate, taken last. Save v87 -> v88. The sweep caught a live latent bug (the D-138 seam's second face): trade-places moves never gathered the traded-onto ground, so the pilot's mule parked on a herb spot spun a world's key budget; both trade branches now gather, with a regression test. 820 tests green (new WolfGillTests; the pack-fall test filtered honestly). Twins byte-identical on all five seeds; the gill cleared in all twelve worlds on every seed; sim replay exact; worldgen purity exit 0; v92 sweeps are the new baselines. Deferred: re-tenanting with the respawn question, the she-wolf in song, more fell sites toward full density.
 - 2026-07-21: **D-149 the wolf-winter: the frontier's season, and news that is not about the bearer.** B4's frontier-news deferral paid, and D-143's "news of deeds beyond crime" opened: the calendar's first news with no bearer in it. Every world's hard winter now schedules the tops' turn as it lands (announced: the fells are whitening already); the wolf-winter sits three ticks on the fells, the pack biting one point deeper under it (bite and pounce, additive after the dice so the rng stream never moves) with the climb's narration and the waykeeper's fells topic reading the season; its word walks to town two ticks later at freight speed and the hidemonger pays a coin over the chalk while it stands (scarcity's label saying why); the lifting's word takes the same road home before the ordinary chalk returns. The frontier's bargain restated: most dangerous exactly when hides sell dearest. Save v86 -> v87. 816 tests green (new FellWinterTests: the whole choreography plus the fang proven by twin games on identical dice; ScheduleTests updated: the winter's landing now loads the calendar). Twins byte-identical on all five seeds and byte-identical to v90 outright; a sim prefix-replay probe (the snapshot grown FellWinterStands/WolfWordStands) confirms the season stands mid-journey, the bytes holding only because the pilot absorbed the fang and sold outside the word's window on these seeds; sim replay exact; worldgen purity exit 0; the v91 sweeps are the new baselines. Deferred: the stead hearing it in the keeper's news, frontier goods beyond hides, seasons read by the pacing layer.

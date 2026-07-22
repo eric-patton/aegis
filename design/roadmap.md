@@ -150,6 +150,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - [ ] 4. D1 pacing steering
   (V1-04 design Approved D-160; implementation pending)
 - [ ] 5. Town and economy depth tranche
+  (V1-05 design Approved D-161; implementation pending)
 - [ ] 6. Character and activity breadth tranche, completing the intended skill roster
 - [ ] 7. Combat and magic depth tranche
 - [ ] 8. Companions, factions, and consequences depth tranche
@@ -208,7 +209,8 @@ infinite prerequisite for completion.
 - [x] A kind that answers being parried: the drilled thegn's bind, half its force kept
   and a point shoved back through the crossed iron (D-129)
 - [ ] Parry- and stance-riding knacks (D-125, D-094)
-- [ ] Formal duels / judicial combat set-pieces (vision §4)
+- [ ] Formal duels / judicial combat set-pieces (V1-05 design Approved D-161;
+  implementation pending)
 
 ### Character identity
 
@@ -228,8 +230,9 @@ infinite prerequisite for completion.
   the name; folk-aware recultured societies in worldgen; keepsake content past the song (D-093)
 - [x] Literacy skill + books gating recipes/techniques/lore (D-148: Lore 1 is literacy;
   three opening books with concrete keeps; D-154 adds the fourth, a smithing text whose
-  recipe spends tarn-iron; the scrivener teaches letters for coin; more titles, Lore
-  knacks, and the bookshop/archives proper still open) (D-005, vision §3)
+  recipe spends tarn-iron; the scrivener teaches letters for coin; D-161 approves the
+  town-law primer, folk-tales, and shelf submenu for V1-05, implementation pending;
+  Lore knacks remain open) (D-005, vision §3)
 
 ### Skills (14 of ~18)
 
@@ -318,13 +321,15 @@ infinite prerequisite for completion.
   about while the streak stands); carousing shipped (D-123, v66: the standing round at the
   skald's hearth, 5 coin once per world, no rung and no ledger, the lane remembering who
   poured); caravan/arbitrage shipped (D-144: the salt leg, the first buy-to-resell
-  trade); tournaments and property pending (D-006)
+  trade); D-161 approves the law-day lists and guild loft for V1-05, implementation
+  pending (D-006)
 - [x] A consumer for the light_purse fact (the stead reading a fleeced bearer, gated on the
   live net like the lucky hand's talk) (D-108, built D-123)
 - [x] Carousing as a round-standing verb at the hearth (D-108, built D-123)
 - [~] Aspirational sink ladder: property, retinue, master training, commissions (D-025, D-036);
   the stead half shipped whole as the five-work facility ladder (A3 v1 D-134, A3 v2 D-135),
-  the town half is B2's property rung
+  the town half is the guild loft and fitted workshop approved for V1-05 in D-161,
+  implementation pending
 - [~] Grow the wood's-edge bench: cooking (D-073) + foraged-goods sale (D-074) shipped; hunting gear/lessons pending (D-071)
 
 ### The stead layer (plan 2026-07 Phase A, adopted D-131)
@@ -399,9 +404,11 @@ between them as play. Starts after the stead layer's core lands.
   inside the wall; a caught hand goes into the warden's book, not the stead's shame; a
   standing mark kills the haggle coin and two shut the counters, never the moot) and
   Persuasion, the 13th skill, is seeded in the plea at the moot-stone (the fine the cost,
-  the level shaving the fine). Plan step 10 is whole; B2's core stands. Still tracked for
-  later town cuts: tournaments and property (the town-life boxes above), road encounters
-  and the peddler's restock (D-138/D-132), B3's region machinery (D-131)
+  the level shaving the fine). Plan step 10 is whole; B2's core stands. D-161 approves
+  the next town cut for V1-05: the guild loft and fitted workshop, law-day lists and
+  judicial challenge, and the two-book shelf expansion, all implementation pending.
+  Still tracked beyond it: road encounters and the peddler's restock (D-138/D-132),
+  B3's region machinery (D-131)
 - [x] B3: Region machinery, done once and kept general (D-131; built D-143 + D-144).
   Region entities and name pools (the D-049 box: Region as identity, two named
   countries per world on their own stream, the naming perceivable at the crossings and
@@ -704,6 +711,16 @@ kind, and the evaluation harness that hardens every generator change.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-22: **D-161 town and economy depth is designed.** V1-05 is Approved but not
+  implemented. One per-world guild loft costs 80 coin after the primer, bond, and even
+  town book, providing a bed, reading desk, and crossing-safe strongbox; a 120-coin
+  fitted workshop adds the launch masterwork commission without combat-stat gear. The
+  law-day lists are one 15-coin, three-bout nonlethal tournament per world, paying 45
+  and a champion fact on a clean sweep; the primer also unlocks one judicial challenge
+  per world. The town-law primer and folk-tales complete the six-book launch shelf behind
+  a scalable submenu. Exact gates, pilot evidence, expected v95 bump, exclusions, and the
+  full sweep contract live in `design/plan-1.0.md`. Tranche 5 remains unchecked until
+  built and verified. No engine or save-format change yet.
 - 2026-07-22: **D-160 pacing steering is designed.** V1-04 is Approved but not
   implemented. Authority is limited to explicitly elastic random-deck cards: Press
   guarantees an eligible draw after three quiet nights, and each continuous Space episode

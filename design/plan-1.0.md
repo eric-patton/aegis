@@ -31,7 +31,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 | V1-02 | Weather and seasons v1 | Approved | D-158 | Pending |
 | V1-03 | D3 prose-variety infrastructure | Approved | D-159 | Pending |
 | V1-04 | D1 pacing steering | Approved | D-160 | Pending |
-| V1-05 | Town and economy depth | Draft | Pending | Blocked on design pass |
+| V1-05 | Town and economy depth | Approved | D-161 | Pending |
 | V1-06 | Character and activity breadth | Draft | Pending | Blocked on design pass |
 | V1-07 | Combat and magic depth | Draft | Pending | Blocked on design pass |
 | V1-08 | Companions, factions, and consequences | Draft | Pending | Blocked on design pass |
@@ -443,14 +443,133 @@ weather and seasons
 
 ## V1-05: Town and economy depth
 
-**Design status:** Draft  
+**Design status:** Approved
+**Decisions:** D-161
 **Roadmap association:** Path to 1.0 tranche 5; property, tournaments or duels,
 commissions, books, town-life and economy partials  
-**Known dependencies:** Town chunks, law, guild, Commerce, Persuasion, Smithing, Lore,
+**Dependencies:** Town chunks, law, guild, Commerce, Persuasion, Smithing, Lore,
 regional trade  
-**Design pass must settle:** exact launch features, property scope, competitive play,
-crafting or commission scope, remaining book titles, costs and rewards, faction and law
-connections, pilot coverage, and acceptance.
+**Implementation status:** Pending until the full design queue is Approved
+
+### Approved behavior
+
+#### The guild loft
+
+- The launch property is one room inside the existing guildhall plot, bought once per
+  world for 80 coin. It requires the carriers' bond, an even town book, and the town-law
+  primer read whole.
+- The room remains the bearer's if the town book gains marks later. Law can close a
+  counter but cannot strand an owner outside their room or strongbox.
+- The room contains a settled bed, a reading desk, and a strongbox. The bed gives the
+  wayhouse's full settled rest without coin but never opens shrine or Essence work. The
+  desk permits the ordinary `v` reading verb in town. The strongbox moves the whole purse
+  in or out, keeps boxed coin safe from death and raids, and includes that coin
+  automatically in the crossing's ordinary weighing so property never creates a
+  forfeiture chore.
+- The loft, its box, and every improvement are world-scoped. They end at the crossing.
+  There is no periodic rent or upkeep: the eighty-coin purchase recurs in each world and
+  is the whole launch carrying cost.
+
+#### The fitted workshop
+
+- The launch masterwork commission is a fitted workshop for the loft, commissioned from
+  the town smith once per world for 120 coin. It requires the loft, Smithing 2, and
+  ordinary access to the smith's counter.
+- Its workbench uses the existing most-worn-item choice and the existing stead-bench
+  Smithing arithmetic. A sitting costs no further coin and feeds Smithing only when wear
+  truly moves.
+- It does not smelt tarn-iron, teach the drawn temper, or perform bloom-tempering. Those
+  services remain at the town forge. No commissioned gear gains damage, protection,
+  requirements, moves, or other combat power.
+
+#### The law-day lists
+
+- Each town holds one nonlethal tournament per world. Entry costs 15 coin, requires an
+  even town book, and requires the bearer to be whole and unwounded. Losing spends the
+  entry and closes that world's tournament. There is no retry.
+- One entry contains three seeded, escalating formal bouts. The bracket comes from its
+  own named derived stream after every existing world-generation draw, and its actors
+  reuse the existing combat grammar at the current hostility tier rather than creating a
+  separate minigame.
+- The bearer may use personal weapons, bows, workings, and consumables. Guests and
+  summons do not enter a one-on-one list. Combat meters settle between bouts, but wear
+  and consumed supplies remain spent.
+- A lethal result becomes a yield on either side. A bout creates no death, scar,
+  remnant, loot, Essence, bestiary study, or faction kill. Honest combat actions still
+  feed their existing skills, and ordinary world time continues through them.
+- Winning all three bouts pays 45 coin and writes one champion fact for town surfaces to
+  read. This makes the activity feed skill, coin, and world state without becoming a
+  repeatable faucet.
+- Reading the town-law primer also unlocks one judicial challenge per world while a mark
+  stands. It reuses one formal bout. A win answers exactly one mark; a loss leaves the
+  book unchanged. It never feeds Persuasion, so the paid plea remains the tongue's own
+  costed use-curve and the only way to argue the book down repeatedly.
+
+#### The last two launch books and the shelf
+
+- `the little book of line and surety` costs 11 coin, asks Lore 1, and takes five shrine
+  or loft-desk sittings. Reading it whole unlocks the guild-loft contract and the
+  once-per-world judicial challenge. It grants no flat Persuasion or fine bonus.
+- `the hearth-book of road and fell` costs 10 coin, asks Lore 1, and takes five sittings.
+  Reading it whole permanently enables a three-entry curated, fact-keyed storylet pool.
+  Each entry may fire once per character, only when a qualifying world supplies its true
+  required facts. The entries never repeat, invent history, or grant a universal coin,
+  Essence, or combat bonus; their durable payoff is authored content and facts later
+  surfaces may consume.
+- Both books append to BookId and the stable catalog, and ownership, progress, and read
+  state cross worlds with the other books.
+- The scrivener's board gains one stable shelf entry that opens the existing vendor
+  submenu pattern. The shelf lists all six books in fixed catalog order with owned,
+  unread, and finished states. Direct book digits leave the talk board, preserving room
+  under the nine-digit law for later archives.
+
+#### Guild, law, presentation, and persistence
+
+- The guild controls the room, the smith controls its workshop, and the moot controls
+  tournament eligibility and judicial challenge. Existing counter-bar and Held Road
+  tithe rules apply wherever their current general contracts say they do.
+- No positive town Fame scalar is added. The guild bond, town book, champion fact,
+  property fact, and workshop fact are the complete launch state.
+- The guildhall room and its gated door are added inside the existing fixed plot. The
+  lists marshal joins the existing moot plot. Both remain reachable across the town
+  stitch, and no new plot displaces the two variable town chunks.
+- Context hints name the bed, desk, strongbox, workshop, lists entry, and current gate or
+  refusal. Every menu remains at or below nine digits. Snapshots expose stable property,
+  box, workshop, tournament, and judicial state.
+- Assuming V1-01, V1-02, and V1-04 make their planned bumps while V1-03 remains no-bump,
+  this tranche is expected to move save v94 to v95 because the town map and cast change,
+  talk digits move into submenus, and new journaled actions change carried and world
+  state. The implementation decision owns the final version after prior cards land.
+
+#### Pilot and acceptance
+
+- The journey pilot buys and reads both books. In the first eligible world where its
+  reserve permits, it buys the loft, uses the bed, desk, and strongbox, commissions the
+  workshop, and completes at least one real wear-moving sitting.
+- Once honestly armed, whole, and able to keep its normal bread reserve, the pilot enters
+  each world's lists once. It remains crime-free, so judicial challenge is covered by
+  focused engine tests rather than an invented pilot offense.
+- Journey prose and JSON record entries, bouts, yields, championships, judicial results,
+  lofts bought, boxed coin in and out, room rests, desk sittings, workshops commissioned,
+  and workshop sittings.
+- Focused tests cover the town stitch and reachability, every price and prerequisite,
+  later-law access to owned property, strongbox death, raid, and crossing behavior, bed
+  and desk parity, workshop boundaries, both sides of nonlethal resolution, skill and
+  resource accounting, tournament closure, judicial success and failure, both books,
+  all three fact-gated storylets, stable menus, snapshots, and journal replay.
+- Implementation receives the complete HANDOFF engine sweep: clean Release build, full
+  tests, five seeded twelve-world twin journeys, justified baseline drift, seed 1 sim
+  replay, and the worldgen purity gate.
+
+### Explicit exclusions
+
+- No multiple houses, decoration system, periodic rent, passive income, tenants,
+  population simulation, cross-world property, lethal arena, repeatable tournament,
+  betting minigame, spectator simulation, NPC attack verb, or positive town Fame ladder.
+- No general crafting interface, commissioned combat-stat gear, caravan consignments,
+  dynamic supply simulation, vendor liquidity, town burglary, Stealth work, further book
+  titles, or Lore knacks. Those remain with later cards or post-1.0 unless the final audit
+  promotes them.
 
 ## V1-06: Character and activity breadth
 

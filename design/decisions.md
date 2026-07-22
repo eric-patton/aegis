@@ -231,6 +231,89 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-161: A key inside the wall: the guild loft, the law-day lists, and the last shelf (2026-07-22)
+
+V1-05 is Approved as the fifth implementation-ready card on the design-first road to
+1.0. Its parts are one town loop rather than four isolated purchases: literacy opens the
+law's written customs, a proven guild hand may buy a room inside the wall, wealth may fit
+that room for work, and the town's formal lists turn the existing combat grammar into
+public play with the moot's book still in force.
+
+The property rung is the guild loft, bought once per world for 80 coin after the bearer
+has read the town-law primer, sworn the carriers' bond, and kept the town book even. It is
+one gated room inside the guildhall's fixed plot, not a nested site or a new housing mode.
+The bed gives a settled full rest without opening shrine or Essence work, the desk permits
+ordinary book sittings in town, and the strongbox moves the whole purse in or out. Boxed
+coin is safe from death and raids and joins the carried purse automatically in the
+crossing's ordinary weighing, so safety never creates a forfeiture chore. Later marks do
+not lock an owner out. The room, box, and improvements are world-scoped and end at the
+crossing; there is no rent tick, because the recurring eighty-coin purchase is already the
+world-by-world carrying cost.
+
+The fitted workshop is the launch masterwork commission: 120 coin to the town smith,
+after the loft, Smithing 2, and ordinary counter access. Its bench uses the existing
+most-worn-item rule and stead-bench arithmetic, costs nothing per sitting, and feeds
+Smithing only when wear moves. Smelting, teaching, and bloom-tempering stay at the public
+forge. No commission changes damage, protection, requirements, moves, or any other combat
+number. The two-rung town sink therefore asks 200 coin in a world, set deliberately above
+the stead works' 25-to-45-coin pieces while remaining reachable against the live
+twelve-world journeys' 7,245-to-7,455 coin from the four major reported faucets and
+1,001-to-2,586 coin banked.
+
+The law-day lists are one nonlethal tournament per world: 15 coin, an even town book, a
+whole unwounded bearer, and one entry only. Three seeded escalating bouts reuse the
+existing combat grammar at the current hostility tier, drawn from their own named stream
+after all existing generation draws. Personal arms, bows, workings, and consumables are
+legal; guests and summons do not enter a one-on-one list. Combat meters settle between
+bouts while wear and supplies remain spent. A lethal result becomes a yield, so there is
+no death, scar, remnant, loot, Essence, bestiary study, or faction kill, but honest combat
+actions still teach their skills and ordinary world time still passes. A loss closes the
+lists for that world. Three wins pay a 45-coin purse and write the champion fact for the
+town to read, feeding skill, coin, and world state without opening a repeatable faucet.
+
+The same bout machinery pays the primer's second keep. Once per world, a reader with a
+mark may claim judicial challenge at the moot. One win answers one mark; a loss leaves the
+book untouched. It never feeds Persuasion. The plea remains the tongue's own costed road
+and the only repeatable answer, so combat broadens the law without replacing the craft
+D-142 seeded there.
+
+The last two launch books append to the catalog. `the little book of line and surety`
+costs 11 coin, asks Lore 1, takes five sittings, and unlocks the loft contract and the
+judicial challenge without granting a flat fine or Persuasion bonus. `the hearth-book of
+road and fell` costs 10 coin, asks Lore 1, takes five sittings, and permanently enables
+three curated fact-keyed storylets. Each may fire once per character only when a true
+qualifying fact exists, never repeats, and writes facts later surfaces may consume; none
+gives a universal coin, Essence, or combat bonus. The scrivener's direct book digits move
+behind one stable shelf entry using the established vendor submenu. All six titles remain
+in fixed catalog order with state-read labels, leaving the talk board below the nine-key
+wall and giving later archives somewhere to grow.
+
+The guild bond, town book, champion fact, property fact, and workshop fact are the whole
+town-state addition. No positive town Fame ladder is introduced. The lists marshal joins
+the fixed moot plot, the loft joins the fixed guildhall plot, and neither displaces the
+town's two variable chunks. Context hints and snapshots expose every new surface. The
+journey pilot reads both books, proves the loft, bed, desk, box, commission, and workbench
+once the reserve permits, then enters each eligible world's lists after it is honestly
+armed and whole. It remains crime-free, so focused tests prove the judicial road instead
+of teaching the verification bot to manufacture a charge. Journey prose and JSON count
+the complete loop. Expected save movement is v94 to v95 if the prior four cards land as
+planned; the implementation decision owns the final number, full focused coverage, and
+the complete HANDOFF sweep including town reachability and worldgen purity.
+
+Options set aside: multiple properties or decoration (a housing game rather than one
+useful room); periodic rent (a passive tax where the per-world buy already recurs); a
+cross-world deed (world property belongs to the world bucket); confiscating access after
+a later mark (a strongbox deadlock); a combat-stat masterwork (craft racing loot); a
+lethal or repeatable arena (death-system distortion and a coin faucet); a tournament
+scene check instead of real combat (the town's set-piece should play the verbs already
+learned); barring bows or workings (classless play needs every personal build); a new town
+Fame scalar (the existing bond, book, and facts already express the needed gates); direct
+book digits left at the exact cap (no room for the archives the shelf is meant to grow);
+and folk-tales as a flat bonus (their keep is fact-grounded authored content, not another
+number). Deferred beyond 1.0 unless a later card promotes it: multiple houses, tenants,
+passive income, gear-power commissions, betting, spectator simulation, caravan
+consignments, dynamic vendor liquidity, town burglary, further books, and Lore knacks.
+
 ### D-160: The hand above the deck: pacing receives bounded authority (2026-07-22)
 
 V1-04 is Approved as the fourth implementation-ready card on the design-first road to

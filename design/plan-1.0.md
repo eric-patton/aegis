@@ -33,7 +33,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 | V1-04 | D1 pacing steering | Approved | D-160 | Pending |
 | V1-05 | Town and economy depth | Approved | D-161 | Pending |
 | V1-06 | Character and activity breadth | Approved | D-162 | Pending |
-| V1-07 | Combat and magic depth | Draft | Pending | Blocked on design pass |
+| V1-07 | Combat and magic depth | Approved | D-163 | Pending |
 | V1-08 | Companions, factions, and consequences | Draft | Pending | Blocked on design pass |
 | V1-09 | Next region and 1.0 release closure | Draft | Pending | Blocked on design pass |
 
@@ -750,13 +750,204 @@ magic depth
 
 ## V1-07: Combat and magic depth
 
-**Design status:** Draft  
-**Roadmap association:** Path to 1.0 tranche 7; combat and magic open launch work  
-**Known dependencies:** Weapon families, stances, parry, posture, workings, Focus,
-Spellcraft, Will  
-**Design pass must settle:** launch-sized moveset completion, stance and parry growth,
-hostile magical pressure, Will resistance, working growth, caster social texture boundary,
-enemy and player readability, pilot coverage, and acceptance.
+**Design status:** Approved
+**Decisions:** D-163
+**Roadmap association:** Path to 1.0 tranche 7; combat and magic open launch work
+**Dependencies:** V1-06 awareness and final skill roster; weapon families, stances,
+parry, posture, workings, Focus, Spellcraft, Will, bestiary reads, guests, and shades
+**Recommended implementation point:** seventh card, after V1-06 and before companion and
+faction depth
+**Implementation status:** Pending until the full design queue is Approved
+
+### Approved behavior
+
+#### Launch movesets and flanking
+
+- Add no combat skill, weapon category, gear tier, or command key. The launch movesets
+  close through existing acts plus the geometry and growth rules below.
+- A foe is player-flanked only when the bearer and a living guest or shade occupy exact
+  opposite neighboring cells around it. A paid melee blow in that geometry deals two
+  additional posture pressure. If the weapon family is Blades, it also deals one
+  additional blood damage.
+- The bearer is enemy-flanked only when two living, aware hostiles occupy exact opposite
+  neighboring cells around the bearer. A committed blow landing from either adds one
+  bearer posture pressure. Incidental bites and other uncommitted trades remain outside
+  the posture system.
+- Flanking uses no random roll, broad adjacency count, diagonal exception, or hidden
+  facing. The same eight-direction opposite-cell test governs both sides.
+- Record the existing launch movesets as complete after the geometry lands: Blades has
+  cut, heave, answered step, and flank reward; hafted axes and mauls have swing, arc,
+  heave, and sunder; spears have swing and reach thrust; Brawling has shove and wall
+  pressure; Ranged has the directional loose and intent reward; Warding has armor use,
+  stance defense, and parry.
+
+#### Enemy follow-ons
+
+- A resolved goblin cry alerts every unaware living goblin in its site. It composes with
+  V1-06's awareness state and the established group-alarm route. It does not erase the
+  distinction between ordinary unawareness and authored dormancy.
+- A warder whose board is sundered abandons its ranged rim behavior and closes to melee.
+  It no longer begins lofted-stone intents after the break and uses its existing close
+  attack. The broken board stays broken.
+- Add one Severed sweep as a one-turn telegraphed intent. It marks the three adjacent
+  cells in the facing arc toward the bearer, and only those cells resolve. Leaving the
+  footprint is the ordinary answer; a legal parry may meet it when the bearer remains in
+  the marked adjacent arc. Its damage and pressure sit in the existing heavy committed
+  band rather than inventing a new scale.
+- Blur always shows the marked cells. Read names the sweep. Keen adds its heavy weight
+  and whether a parry is legal, following the existing bestiary doctrine.
+
+#### Five level-6 martial questions
+
+- Append one permanent two-option level-6 question for each existing combat skill after
+  every earlier threshold question. Append all ten `PerkId` values and stable snapshot
+  ids; never reorder or reinterpret an existing option.
+- Blades asks between the forward edge and the returning edge. The forward edge adds one
+  blood to paid blade cuts while Pressing. The returning edge adds one posture pressure
+  to a successful blade parry.
+- Hafted asks between the whole weight and the rooted haft. The whole weight adds one
+  posture pressure to a Pressing hafted heave. The rooted haft subtracts one additional
+  incoming committed posture pressure while Guarded, floored at zero.
+- Brawling asks between crowding hands and the caught wrist. Crowding hands lets a
+  Pressing shove carry its target up to two consecutive clear cells, stopping honestly
+  after one if the second is blocked. The caught wrist lowers an unarmed parry from two
+  stamina to one.
+- Warding asks between the deep set and the easy guard. The deep set lets worn armor turn
+  one additional blood while Guarded. The easy guard removes one bearer posture damage
+  after a successful parry, floored at zero.
+- Ranged asks between the forward draw and the waiting string. The forward draw adds one
+  blood to a shaft while Pressing. The waiting string adds one posture pressure when a
+  shaft strikes a foe carrying an active telegraphed intent.
+- Refused, winded, missed, or otherwise unpaid acts never collect a knack rider.
+
+#### The hostile caster and Will resistance
+
+- End-append `RuneTongue` to `MonsterKind`. From tier 5 onward, exactly one eligible
+  existing fighting site receives one rune-tongue per world. Choose its site and legal
+  placement from a named derived RNG stream created after every existing worldgen draw.
+  Earlier layouts, names, facts, and spawn draws must remain pinned.
+- The rune-tongue has ordinary blood, posture, movement, reads, and a weak close attack.
+  It has no hidden Focus or random miscast system. After a working resolves or is
+  interrupted, it spends one visible recovery turn before choosing another working.
+- Will resistance is `clamp(Will - 5, 0, 4)`. Print it as a derived value on the
+  character sheet and expose it in snapshots needed for replay diagnosis.
+- The falling word is a one-turn ground intent. It marks a five-cell cross centered on
+  the bearer's position at commitment: the center plus its four cardinal neighbors.
+  Only those legal map cells resolve. A landing deals a combat draw from 7 through 10
+  minus Will resistance, minimum one. Armor and parry do not answer magical force.
+  Moving outside the cross does.
+- The binding word is a two-turn bearer lock rather than a cell target. It is canceled
+  if the rune-tongue is wounded, posture-broken, killed, or lacks line of sight at
+  resolution. Movement alone does not evade a maintained line. If completed, it removes
+  `max(1, 4 - resistance)` stamina and `max(0, 2 - resistance)` Focus, floored at the
+  resources held, and deals no blood.
+- Any blood damage interrupts either held enemy working. A posture break and death keep
+  their existing universal interruption behavior. An interrupted caster still enters
+  the one-turn recovery.
+- Even a Blur read distinguishes a ground working from a following binding and shows the
+  fair answer. Read adds names and timing. Keen adds the exact footprint, base effect,
+  resistance arithmetic, and interruption routes. The sidebar names a following binding
+  separately from marked ground and shows recovery.
+
+#### Two new workings
+
+- End-append Severing and Mending after Calling, bringing `SpellCatalog` to seven. Extend
+  every site's stone preference after all five existing entries, distributing the two
+  additions across complementary preferences so both normally appear during the first
+  two worlds. Do not reorder the existing five.
+- Both new workings enter the existing known-word creation pool. The cast menu stays in
+  learn order and remains within its digit limit. Knowledge persists through death and
+  crossing exactly as every existing working does.
+- The severing costs two Focus and asks for a direction. It travels the existing spell
+  range of four until stone stops it and cancels the first hostile intent in that line
+  tagged as magical. A successful severing also deals two posture pressure to the caster
+  and grants one Spellcraft use. The tag includes falling word, binding word, and the
+  existing grave-chill, and is extensible to later hostile workings.
+- Choosing an empty or blocked line spends the turn and Focus but grants no use. The
+  severing deals no blood, does not dispel ordinary physical intents, and cannot erase
+  historical facts or permanent states.
+- The mending costs three Focus and is a one-turn self-targeted wind-up. It refuses at
+  full blood without time or Focus. On commitment it spends Focus and records blood for
+  the existing levin-style grip check. If still held next turn, it restores
+  `5 + Player.SpellBonus + Skills.Bonus(Spellcraft)` blood up to the effective maximum
+  and grants one Spellcraft use.
+- A wound during the hold uses the existing Will and Spellcraft grip curve. A broken word
+  loses its committed Focus and grants no use. The mending never reduces wound duration,
+  so a hale-draught remains the stronger remedy and the only one of the two that treats
+  the wound itself.
+
+#### Spellcraft questions
+
+- Add permanent two-option Spellcraft questions at levels 2 and 4, appended in the
+  established threshold order with four new stable `PerkId` values.
+- At level 2, the full word adds one blood to damaging workings, one blood to the
+  mending, and one turn to the ward. The spare syllable refunds one Focus after every
+  second successful Focus-spending working, using the Spellcraft use ledger for stable
+  parity.
+- At level 4, the answering word refunds one Focus when a successful working cancels an
+  intent or strikes a foe while that foe carries an intent. The deep well raises maximum
+  Focus by one.
+- Refunds may compose when one working satisfies both owned conditions but never exceed
+  maximum Focus. Failed, refused, empty, or purely preparatory acts grant no refund.
+  Calling is excluded because its Focus is held rather than spent. Veilsight keeps its
+  qualitative effect and receives no artificial numeric rider from the full word.
+
+#### Social boundary, pilot, and observability
+
+- The game log and the Aegis may acknowledge the first hostile working and first
+  successful severing. Casting creates no suspicion, infamy, faction attention, price
+  change, law mark, or general NPC reaction in this card.
+- The default journey must dodge the falling cross, interrupt or break sight against a
+  binding, use the severing when it is the safest answer, and use the mending only while
+  hurt and outside an imminent marked threat. It must understand the new flanking,
+  sweep, alarm, warder, stance, and parry rules without becoming a caster-only policy.
+- Add opt-in `journey --caster`. It chooses a caster-oriented creation, prioritizes Mind
+  and Will, learns and demonstrates all seven workings, and answers Spellcraft with the
+  full word at level 2 and the answering word at level 4.
+- Journey prose and JSON report casts and successful effects by working, rune-tongue
+  encounters, hostile workings begun, interrupted, resisted, and landed, Will resistance,
+  flanks on both sides, sweeps dodged or landed, boardless warder closures, and all new
+  knack choices. The emitted journal must replay exactly through `sim`.
+
+### Acceptance and sweep requirements
+
+- Combat tests pin the exact opposite-cell flank geometry, ally and enemy sides, Blades
+  blood, posture arithmetic, no broad adjacency reward, and all ten level-6 perk effects,
+  ids, threshold order, persistence, and replay.
+- Enemy tests cover the awareness alarm without collapsing authored dormancy, the
+  boardless warder's close phase, the Severed sweep's three-cell footprint, dodge, parry,
+  damage, pressure, and all read tiers.
+- Worldgen tests prove zero rune-tongues below tier 5, exactly one above it, legal and
+  deterministic placement, end-appended enum order, and byte-stable prior generation
+  before the new named stream.
+- Hostile magic tests cover both tells, footprints, timing, every interruption route,
+  line of sight, recovery, armor and parry exclusions, resistance at its floor and cap,
+  resource floors, sheet, sidebar, snapshot, and read-tier wording.
+- Player magic tests cover catalog order, stone preferences, creation, death and crossing
+  persistence, menu capacity, costs, blocked and empty lines, magical tags, posture,
+  mending grip and cap, wound non-treatment, growth gates, and all four Spellcraft perks
+  including composed refunds.
+- Pilot tests prove default and caster policies deterministic, threat-honest, complete,
+  and exactly replayable. Prose, JSON, and sim snapshots pin the new metrics.
+- Assuming V1-01 through V1-06 land first, implementation advances save v96 to v97.
+  The implementation decision owns the final number after prior cards land.
+- Kill `aegis.exe`, build Release, run the complete test suite, run seeds 1, 7, 99,
+  2024, and 88888 through two byte-identical twelve-world journeys each, compare and
+  justify drift from v96, replay seed 1 to exact keys/cycle/turn, exercise the caster
+  journey, and pass `worldgen --json`.
+
+### Explicit exclusions
+
+- No new skill, command key, weapon category, gear tier, site, region, faction, or
+  companion command.
+- No attunement capacity, components, schools, grimoires, mentors, rituals, or other
+  acquisition source.
+- No enemy Focus bar, random enemy miscast, summon, teleportation, or darkness system.
+- No broad caster reputation, faction response, price response, or law consequence.
+- No changes to existing knack meanings, level-8 combat wave, or wider noncombat knack
+  pass.
+- No formal-duel implementation from V1-05, companion or faction expansion from V1-08,
+  or region and release content from V1-09.
 
 ## V1-08: Companions, factions, and consequences
 

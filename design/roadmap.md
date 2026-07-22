@@ -29,7 +29,7 @@ single place to answer "where are we and what is next." Keep it current.
 ## Status at a glance
 
 The **spine is deep for a martial (melee + ranged) build** and the full trans-world story
-arc ships, the **magic pillar opened (D-091)**: four workings found on graven stones,
+arc ships, the **magic pillar opened (D-091/D-099)**: five workings found on graven stones,
 Focus, and Spellcraft, and **character creation shipped whole (D-092/D-093)**: the
 asking at the first wake, five original folk, seven pasts, shapings, the precious
 thing, and stage 2's burdens, vows, remembered face, and keepsake thread. The
@@ -144,7 +144,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   town and economy depth; character and activity breadth; combat and magic depth;
   companions, factions, and consequence depth; then the next full-density region and
   the release audit. Open-ended catalogs remain tracked but do not block 1.0 unless a
-  later decision explicitly promotes them into the gate.
+  later decision explicitly promotes them into the gate. Seven of nine cards are now
+  Approved; V1-08 and V1-09 still require their design passes before implementation starts.
 
 ### Path to 1.0 tracker (ordered, adopted D-155/D-157)
 
@@ -161,6 +162,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - [ ] 6. Character and activity breadth tranche, completing the intended skill roster
   (V1-06 design Approved D-162; implementation pending)
 - [ ] 7. Combat and magic depth tranche
+  (V1-07 design Approved D-163; implementation pending)
 - [ ] 8. Companions, factions, and consequences depth tranche
 - [ ] 9. Next full-density region, launch content closure, and the 1.0 release audit
 
@@ -196,16 +198,19 @@ infinite prerequisite for completion.
   flat +4 riposte through the open door (D-125)
 - [x] Parry as a distinct verb: 'a' against a blow shown at your own ground, no dice,
   turn-committed; the feint's lying mark can never be met (D-125)
-- [ ] Weapon movesets: family-specific verbs, not just numbers (vision §4; deferred D-041)
+- [ ] Weapon movesets: family-specific verbs, not just numbers (V1-07 design Approved
+  D-163; implementation pending; vision §4, deferred D-041)
 - [x] Stances: measured/pressing/guarded on 'x', flat 2-point trades, turn-cost under
   live steel (D-094)
 - [x] Weapon identity: signature verb per family (blades' answered step, hafted sunder
   riding the heave, brawling shove; the spear's long thrust already stood) (D-095)
 - [x] Enemy second moves: goblin cry, thegn feint (lies below a keen read), hound drag,
   wight grave-chill (D-096)
-- [ ] More second moves and cry-wakes-dormant-bands (D-096)
-- [ ] Flanking proper, warder rim after the board breaks (D-095; the brawling wall-slam
-  cost shipped as guard pressure, D-125)
+- [ ] More second moves and cry-wakes-dormant-bands (V1-07 design Approved D-163;
+  implementation pending; D-096)
+- [ ] Flanking proper, warder rim after the board breaks (V1-07 design Approved D-163;
+  implementation pending; D-095; the brawling wall-slam cost shipped as guard pressure,
+  D-125)
 - [x] Monsters that read the player's commitment and stance (the other half of D-004):
   the thegn's heave-counter (D-058); the field's pressure reading the footing and the
   held wind-up, and the thegn knowing the beaten-open guard's door (D-126)
@@ -216,7 +221,8 @@ infinite prerequisite for completion.
   mass aimed at the bearer's guard and not the blood, met cleanest by the parry (D-129)
 - [x] A kind that answers being parried: the drilled thegn's bind, half its force kept
   and a point shoved back through the crossed iron (D-129)
-- [ ] Parry- and stance-riding knacks (D-125, D-094)
+- [ ] Parry- and stance-riding level-6 knacks (V1-07 design Approved D-163;
+  implementation pending; D-125, D-094)
 - [ ] Formal duels / judicial combat set-pieces (V1-05 design Approved D-161;
   implementation pending)
 
@@ -468,17 +474,24 @@ between them as play. Starts after the stead layer's core lands.
   miscast lives only in the levin's broken grip, not on every cast)
 - [x] Telegraphed cast wind-ups, interruptible both ways (D-091: the levin marks its ground a
   turn ahead, dodged by feet; a wound mid-hold can knock the word crooked, Will holds it)
-- [x] First four workings: the spark (instant line, boards no answer), the levin (the wind-up),
-  the ward (thickened air, teaches only when it turns a blow), the veilsight (names the floor,
-  sharpens the reads, shows the pretenders) (D-091)
-- [ ] Attunement capacity from found world objects (D-022)
-- [ ] Caster social texture: awe, suspicion, faction attention (D-022)
-- [ ] More workings as the deep bands grow (a word against the dark, a mender's word) (D-091)
-- [ ] Enemy casters, and Will's resist role against them (D-091)
-- [ ] Spellcraft knacks once the craft has a curve worth questioning (D-091)
+- [x] First five workings: the spark (instant line, boards no answer), the levin (the
+  wind-up), the ward (thickened air, teaches only when it turns a blow), the veilsight
+  (names the floor, sharpens the reads, shows the pretenders), and the calling (held Focus
+  gives the shade shape) (D-091, D-099)
+- [ ] Attunement capacity from found world objects (D-022; excluded from V1-07 by D-163,
+  post-1.0 unless later promoted)
+- [ ] Caster social texture: awe, suspicion, faction attention (D-022; excluded from
+  V1-07 by D-163, post-1.0 unless later promoted)
+- [ ] Severing and Mending as the sixth and seventh workings (V1-07 design Approved
+  D-163; implementation pending)
+- [ ] The rune-tongue, hostile magical pressure, and deterministic Will resistance
+  (V1-07 design Approved D-163; implementation pending)
+- [ ] Spellcraft level-2 and level-4 knacks (V1-07 design Approved D-163;
+  implementation pending)
 - [x] The pilot learning to read stones and say words (policy increment, D-072/D-082 line) (D-091) (D-103)
 - [x] Character creation hook: a known word as one possible precious starting thing (D-091 -> D-092)
-- [ ] Spell list / school content design (◇ parking lot)
+- [ ] Spell list growth past the seven V1-07 workings / school content design
+  (◇ parking lot; D-163)
 
 ### Factions & the living world
 
@@ -721,7 +734,8 @@ kind, and the evaluation harness that hardens every generator change.
 ## Open design questions (mirror of the `decisions.md` parking lot)
 
 - ◇ Folk cultures: how worldgen recultures the five folk per world, and whether factions read folk (D-017, D-092)
-- ◇ Spell list growth past the first four workings / school-shaped content, if any (D-022, D-091)
+- ◇ Spell list growth past the seven V1-07 workings / school-shaped content, if any
+  (D-022, D-091, D-163)
 - ◇ Storylet external data-file format + condition/effect vocabulary (D-030)
 - ◇ Catalogs to grow: more oaths, the scar list, Legend rungs past 5, patron deeds past 3, hostility bands past the fen-leaguer (D-047, D-009, D-048, D-054, D-033+)
 - ◇ Story open items: bottle-episode playability, Unbinder guise tells, reveal-tier sharing across characters, template 7+ candidates (aegis-arc.md §11, world-story-templates.md §11)
@@ -734,6 +748,15 @@ kind, and the evaluation harness that hardens every generator change.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-22: **D-163 combat and magic depth is designed.** V1-07 is Approved but not
+  implemented. Exact opposite-cell flanking runs both ways, the current family verbs
+  close the launch movesets, three enemy follow-ons pay the alarm, warder, and sweep
+  gaps, and all five martial skills gain level-6 questions. The rune-tongue brings two
+  readable hostile workings and deterministic Will resistance; Severing and Mending
+  bring the player catalog to seven; Spellcraft gains level-2 and level-4 questions.
+  Default and opt-in caster pilot policies, expected v97 bump, focused acceptance,
+  exclusions, and the full sweep contract live in `design/plan-1.0.md`. Tranche 7
+  remains unchecked until built and verified. No engine or save-format change yet.
 - 2026-07-22: **D-162 character and activity breadth is designed.** V1-06 is Approved
   but not implemented. Four end-appended skills close the roster at eighteen: Alchemy
   grows through self-brewing, Athletics spends stamina on a two-cell rush, Stealth spends

@@ -36,8 +36,14 @@ public sealed class GearItem
     /// <summary>Coin value: what the smith charges whole, and what repair is priced against.</summary>
     public required int Value { get; init; }
 
-    public required int MaxWear { get; init; }
+    public required int MaxWear { get; set; }
     public int Wear { get; set; }
+
+    /// <summary>Whether this piece has enough ironwork to take a tarn-iron temper (D-154).</summary>
+    public bool TarnTemperable { get; init; }
+
+    /// <summary>The bloom-temper is one-time per piece and travels with the gear.</summary>
+    public bool TarnTempered { get; set; }
 
     /// <summary>Which skill a weapon trains and draws on (D-042). Armor ignores it; bare hands are Brawling.</summary>
     public SkillId Family { get; init; } = SkillId.Brawling;
@@ -86,7 +92,7 @@ public static class GearCatalog
         {
             Id = id, Name = "woodsman's axe", Slot = GearSlot.Weapon,
             Bonus = 2, ReqAttr = Attr.Might, Req = 5, Value = 8, MaxWear = 40,
-            Family = SkillId.Hafted, Move = MoveVerb.Arc,
+            Family = SkillId.Hafted, Move = MoveVerb.Arc, TarnTemperable = true,
         },
         "quilted_jack" => new GearItem
         {
@@ -97,6 +103,7 @@ public static class GearCatalog
         {
             Id = id, Name = "riveted shirt", Slot = GearSlot.Armor,
             Bonus = 2, ReqAttr = Attr.Vigor, Req = 7, Value = 20, MaxWear = 50,
+            TarnTemperable = true,
         },
         // The bearer's ranged verb (D-050) and the first iron gated on Grace
         // (the D-041 deferral): the bow asks the eye and the step, not the arm.
@@ -115,24 +122,25 @@ public static class GearCatalog
         {
             Id = id, Name = "ash spear", Slot = GearSlot.Weapon,
             Bonus = 3, ReqAttr = Attr.Might, Req = 6, Value = 14, MaxWear = 40,
-            Family = SkillId.Hafted, Move = MoveVerb.Reach,
+            Family = SkillId.Hafted, Move = MoveVerb.Reach, TarnTemperable = true,
         },
         "grave_iron" => new GearItem
         {
             Id = id, Name = "grave-iron blade", Slot = GearSlot.Weapon,
             Bonus = 4, ReqAttr = Attr.Might, Req = 7, Value = 18, MaxWear = 45,
-            Family = SkillId.Blades, Move = MoveVerb.Answer,
+            Family = SkillId.Blades, Move = MoveVerb.Answer, TarnTemperable = true,
         },
         "carvers_maul" => new GearItem
         {
             Id = id, Name = "carver's maul", Slot = GearSlot.Weapon,
             Bonus = 5, ReqAttr = Attr.Might, Req = 8, Value = 26, MaxWear = 45,
-            Family = SkillId.Hafted, Move = MoveVerb.Arc,
+            Family = SkillId.Hafted, Move = MoveVerb.Arc, TarnTemperable = true,
         },
         "wrights_mail" => new GearItem
         {
             Id = id, Name = "wright's mail", Slot = GearSlot.Armor,
             Bonus = 3, ReqAttr = Attr.Vigor, Req = 9, Value = 34, MaxWear = 55,
+            TarnTemperable = true,
         },
         // The watch's own answer (D-053): the ringfort punishes the bow, and
         // its arms-chest holds the better one: the deep ranged signature D-050
@@ -151,6 +159,7 @@ public static class GearCatalog
         {
             Id = id, Name = "scaled byrnie", Slot = GearSlot.Armor,
             Bonus = 4, ReqAttr = Attr.Vigor, Req = 11, Value = 44, MaxWear = 60,
+            TarnTemperable = true,
         },
         _ => throw new ArgumentException($"Unknown gear id: {id}"),
     };

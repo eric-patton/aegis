@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed, Forge, Bond, Plea, Salt, Script, Book, GraveBargain, TarnSmelt, IronBloom }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed, Forge, Bond, Plea, Salt, Script, Book, GraveBargain, TarnSmelt, IronBloom, TarnTemper }
 
 /// <summary>
 /// The cart's counter (D-124): the road's prices. The ration a coin or two
@@ -111,6 +111,7 @@ public static class FellIron
     public const int WinterYield = 1;
     public const int SmeltCoin = 2;
     public const int BloomPrice = 4;
+    public const int TemperWear = 10;
 }
 
 /// <summary>
@@ -3620,6 +3621,10 @@ public sealed class Game
                     offers.Add((TradeGood.TarnSmelt, "", TarnSmeltLabel()));
                     if (Player.Skills.Level(SkillId.Smithing) >= 1)
                         offers.Add((TradeGood.Lesson, LessonCatalog.IdOf(LessonId.DrawnTemper), LessonLabel(LessonId.DrawnTemper)));
+                    // The recipe bench (D-154): one stable talk digit opens a
+                    // second board, so every eligible carried piece can be
+                    // named without spending the shared nine.
+                    offers.Add((TradeGood.TarnTemper, "", TarnTemperLabel()));
                     break;
                 // The guild's one digit (D-141): always listed, the label
                 // reading the bond's state true (D-041), because a ledger a
@@ -3873,6 +3878,13 @@ public sealed class Game
             offers.Add((TradeGood.Facility, "stillwing", FacilityLabel("stillwing")));
             offers.Add((TradeGood.Facility, "smithy", FacilityLabel("smithy")));
         }
+        // Bloom-tempering (D-154) uses the existing bench submenu shape. The
+        // whole carried ironwork is listed in stable gear order, including
+        // finished pieces, so the player chooses the exact target and no digit
+        // shifts when one takes the temper.
+        if (npc.Id == "npc_townsmith")
+            foreach (var item in Player.AllGear.Where(g => g.TarnTemperable))
+                offers.Add((TradeGood.TarnTemper, item.Id, TarnTemperItemLabel(item)));
         return offers;
     }
 
@@ -4011,6 +4023,86 @@ public sealed class Game
         CountTithe();
         GainSkill(SkillId.Smithing);
         Log.Add(Turn, $"The smith banks the hearth and lets your hands keep the tongs. Stone runs off in black glass; {raw} iron bloom{(raw == 1 ? "" : "s")} come free under the hammer. ({Player.IronBloom} blooms carried, {Player.Coin} coin left)", LogTone.Reward);
+    }
+
+    /// <summary>The forge's recipe board (D-154), state-read before it opens.</summary>
+    private string TarnTemperLabel()
+    {
+        if (!Player.HasLesson(LessonId.BloomTemper))
+            return "Temper tarn-iron (requires the red book of bloom and quench)";
+        if (!Player.AllGear.Any(g => g.TarnTemperable))
+            return "Temper tarn-iron (no ironwork carried)";
+        if (!Player.AllGear.Any(g => g.TarnTemperable && !g.TarnTempered))
+            return "Temper tarn-iron (every eligible piece already tempered)";
+        return Player.IronBloom > 0
+            ? $"Temper tarn-iron ({Player.IronBloom} bloom{(Player.IronBloom == 1 ? "" : "s")} carried)"
+            : "Temper tarn-iron (no blooms carried)";
+    }
+
+    private string TarnTemperItemLabel(GearItem item) => item.TarnTempered
+        ? $"{Cap(item.Name)} (tarn-tempered, {item.MaxWear} wear)"
+        : Player.IronBloom > 0
+            ? $"Temper the {item.Name} (1 bloom; {item.MaxWear} to {item.MaxWear + FellIron.TemperWear} wear)"
+            : $"Temper the {item.Name} (1 bloom; none carried)";
+
+    /// <summary>Opens the bounded bloom-tempering board (D-154).</summary>
+    private void OpenTemperMenu()
+    {
+        if (!Player.HasLesson(LessonId.BloomTemper))
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"There is a temper the dark blooms will take, but not by guesswork. The red book at the scrivener's has the colors and the water-times. Read that first.\"");
+            return;
+        }
+        if (!Player.AllGear.Any(g => g.TarnTemperable))
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"You carry nothing with iron enough in it to hold the temper. Bring an edge, a head, or mail. Cloth and bowstaves take no lesson from a bloom.\"");
+            return;
+        }
+
+        InTalkMenu = false;
+        InTradeMenu = true;
+        _tradeOffers.Clear();
+        _tradeOffers.AddRange(BuildTradeOffers(TalkNpc!));
+        Log.Add(Turn, $"{TalkNpc!.Name} clears the long hearth and lays your ironwork beside the trough. One clean bloom will lengthen one piece's service, without putting a grain more bite in it.");
+    }
+
+    /// <summary>
+    /// Spends one bloom to lengthen one eligible piece once (D-154). The
+    /// material is the whole cost, the keep is durability rather than power,
+    /// and a successful working feeds Smithing exactly once.
+    /// </summary>
+    private void TryTemperTarnIron(string id)
+    {
+        if (TownCounterBarred()) return;
+        var item = Player.AllGear.FirstOrDefault(g => g.Id == id);
+        if (!Player.HasLesson(LessonId.BloomTemper))
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Not without the colors in your head. Read the red book first.\"");
+            return;
+        }
+        if (item is null || !item.TarnTemperable)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"That will not hold a bloom-temper. Iron enough for the trough, or no work.\"");
+            return;
+        }
+        if (item.TarnTempered)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The {item.Name} has taken the dark already. A second bloom would only spoil the first.\"");
+            return;
+        }
+        if (Player.IronBloom == 0)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The lesson is yours, but the hearth cannot hammer air. Bring one tarn-iron bloom.\"");
+            return;
+        }
+
+        Player.IronBloom--;
+        item.TarnTempered = true;
+        item.MaxWear += FellIron.TemperWear;
+        GainSkill(SkillId.Smithing);
+        World.Facts.Add("craft", $"tarn_temper_{item.Id}", World.TownName,
+            $"The bearer spent a tarn-iron bloom at {World.TownName}'s forge and gave the {item.Name} a deeper temper.");
+        Log.Add(Turn, $"You hold the {item.Name} through the red book's colors, then quench it on the count. The bloom goes into the iron without sharpening its bite, and the piece will bear {FellIron.TemperWear} more wear before it fails. ({Player.IronBloom} bloom{(Player.IronBloom == 1 ? "" : "s")} carried, {item.MaxWear} maximum wear)", LogTone.Reward);
     }
 
     /// <summary>The guild's entry (D-141): one digit, the label reading the bond's state true (D-041).</summary>
@@ -4470,6 +4562,9 @@ public sealed class Game
                     if (arg == "smithy" && SmithyStands) WorkTheBench();
                     else TryFundFacility(arg);
                     break;
+                case TradeGood.TarnTemper:
+                    TryTemperTarnIron(arg);
+                    break;
             }
             // The labels move with the state (hides sold, lesson taken); rebuild so the
             // bench reads true, and the digits keep their order under the buyer's hand.
@@ -4479,7 +4574,9 @@ public sealed class Game
         }
 
         InTradeMenu = false;
-        Log.Add(Turn, TalkNpc!.Id == "npc_herbwife"
+        Log.Add(Turn, TalkNpc!.Id == "npc_townsmith"
+            ? $"You step back from the long hearth. {TalkNpc.Name} draws the coals together again."
+            : TalkNpc.Id == "npc_herbwife"
             ? $"You leave the stillroom. {TalkNpc.Name} turns back to her hanging simples."
             : TalkNpc.Id == "npc_steadholder"
                 ? $"You step back from the fold walls. {TalkNpc.Name} turns back to the stead's accounts."
@@ -5189,6 +5286,9 @@ public sealed class Game
                     TrySellIronBlooms();
                     _offers.Clear();
                     _offers.AddRange(BuildOffers(TalkNpc!));
+                    break;
+                case TradeGood.TarnTemper:
+                    OpenTemperMenu();
                     break;
                 // The scrivener's desk and shelf (D-148): both labels read
                 // the bearer's state (letters, ownership), so both refresh
@@ -6234,6 +6334,14 @@ public sealed class Game
                 World.Facts.Add("book", "lay", World.SettlementName,
                     "The bearer has read the lay of the kindled lands whole, an old text few living eyes have worked through.");
                 Log.Add(Turn, "(A story read whole is a story carried: the next crossing will weigh it into your Legend, once.)", LogTone.Reward);
+                break;
+            case BookId.Smithing:
+                Log.Add(Turn, $"You close {def.Title} with the hearth's colors ordered in your head: bloom, heat, water, and the count that keeps iron from turning brittle.", LogTone.Info);
+                if (!Player.HasLesson(LessonId.BloomTemper))
+                {
+                    Player.Lessons.Add(LessonId.BloomTemper);
+                    Log.Add(Turn, "(The bloom-temper is yours: at a town forge, one tarn-iron bloom can give one iron piece 10 more wear, once.)", LogTone.Reward);
+                }
                 break;
         }
         if (!Player.BookLineHeard)
@@ -10311,6 +10419,7 @@ public sealed class Game
         BowId: Player.Bow?.Id ?? "",
         BowWear: Player.Bow?.Wear ?? 0,
         PackGear: string.Join(",", Player.Pack.Select(g => g.Id)),
+        TarnTemperedGear: string.Join(",", Player.AllGear.Where(g => g.TarnTempered).Select(g => $"{g.Id}:{g.MaxWear}")),
         RepairPrice: RepairPrice,
         SmithX: World.Smith.Pos.X,
         SmithY: World.Smith.Pos.Y,
@@ -10495,6 +10604,7 @@ public sealed record Snapshot(
     string BowId,
     int BowWear,
     string PackGear,
+    string TarnTemperedGear,
     int RepairPrice,
     int SmithX,
     int SmithY,

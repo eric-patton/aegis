@@ -316,7 +316,10 @@ public static class Presenter
         int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
 
         DrawBox(frame, x0, y0, boxW, boxH);
-        frame.Write(x0 + 2, y0 + 1, $"The wood's edge | {npc.Name} the {npc.Role}", Hue.White);
+        frame.Write(x0 + 2, y0 + 1,
+            npc.Id == "npc_townsmith"
+                ? $"The long hearth | {npc.Name} the {npc.Role}"
+                : $"The wood's edge | {npc.Name} the {npc.Role}", Hue.White);
         frame.Write(x0 + 2, y0 + 2, $"You hold {game.Player.Coin} coin", Hue.Cyan);
 
         for (int i = 0; i < game.TradeOffers.Count; i++)
@@ -452,7 +455,9 @@ public static class Presenter
                 GearSlot.Ranged => $"looses +{item.EffectiveBonus(game.Player.Attributes)}",
                 _ => $"wards {item.EffectiveBonus(game.Player.Attributes)}",
             };
-            string state = item.Worn ? " WORN" : $" {item.Wear}/{item.MaxWear}";
+            string state = item.Worn
+                ? $" WORN{(item.TarnTempered ? " T" : "")}"
+                : $" {item.Wear}/{item.MaxWear}{(item.TarnTempered ? " T" : "")}";
             string asks = under ? $" {AttributeSet.NameOf(item.ReqAttr)} {item.Req}!" : "";
             frame.Write(x0 + 2, y0 + 3 + i,
                 $"{i + 1}) {item.Name,-16}{(held ? '*' : ' ')} {what}{state}{asks}",

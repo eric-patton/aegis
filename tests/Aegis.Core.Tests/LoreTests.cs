@@ -5,7 +5,7 @@ namespace Aegis.Core.Tests;
 /// <summary>
 /// Letters and Lore (D-148, plan 2026-07 step 13): the 14th skill, whose level
 /// 1 IS literacy. The scrivener's desk sells the sittings that teach letters
-/// (the D-141 school pattern), the shelf sells the three books, and the shrine's
+/// (the D-141 school pattern), the shelf sells its books, and the shrine's
 /// quiet is where pages are worked through, a sitting a key, each feeding Lore.
 /// Graven script is exempt by doctrine: the stones answer something older than
 /// schooling, so nothing shipped regresses. The tests hold the gate, the desk's

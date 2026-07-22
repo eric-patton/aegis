@@ -631,6 +631,7 @@ public static class JourneyPilot
 
         Npc? stall = null;
         if (SmeltErrand(g)) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_townsmith");
+        else if (TemperErrand(g)) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_townsmith");
         else if (g.Player.IronBloom > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_guildmaster");
         else if (g.Player.Hide > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_hidemonger");
         else if (g.Player.Herb > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_herbmonger");
@@ -665,6 +666,7 @@ public static class JourneyPilot
     private static char? TownSellDigit(Game g)
     {
         if (g.TalkNpc!.Id == "npc_townsmith" && SmeltErrand(g)) return OfferDigit(g, TradeGood.TarnSmelt);
+        if (g.TalkNpc.Id == "npc_townsmith" && TemperErrand(g)) return OfferDigit(g, TradeGood.TarnTemper);
         if (g.TalkNpc.Id == "npc_guildmaster" && g.Player.IronBloom > 0) return OfferDigit(g, TradeGood.IronBloom);
         if (g.TalkNpc!.Id == "npc_hidemonger" && g.Player.Hide > 0) return OfferDigit(g, TradeGood.Hide);
         if (g.TalkNpc.Id == "npc_herbmonger" && g.Player.Herb > 0) return OfferDigit(g, TradeGood.Herb);
@@ -717,6 +719,23 @@ public static class JourneyPilot
     /// <summary>Raw fell iron, and enough coin for the hearth with bread left.</summary>
     private static bool SmeltErrand(Game g) =>
         g.Player.TarnIron > 0 && g.Player.Coin >= TownCost(g, FellIron.SmeltCoin) + 5;
+
+    /// <summary>
+    /// The pilot makes the recipe's economic choice once (D-154): after the
+    /// red book is read, one highest-value useful iron piece takes one bloom.
+    /// Every later bloom remains guild freight, so the journey proves both uses.
+    /// </summary>
+    private static GearItem? TemperTarget(Game g)
+    {
+        if (!g.Player.HasLesson(LessonId.BloomTemper) || g.Player.IronBloom == 0
+            || g.Player.AllGear.Any(item => item.TarnTempered)) return null;
+        return g.Player.AllGear.Where(item => item.TarnTemperable && !item.TarnTempered)
+            .OrderByDescending(item => item.Value)
+            .ThenBy(item => item.Id, StringComparer.Ordinal)
+            .FirstOrDefault();
+    }
+
+    private static bool TemperErrand(Game g) => TemperTarget(g) is not null;
 
     /// <summary>An unsworn proven name, and coin enough to bond and still eat (D-141).</summary>
     private static bool BondErrand(Game g) =>
@@ -1118,6 +1137,16 @@ public static class JourneyPilot
     /// </summary>
     private static char BenchDigit(Game g, IReadOnlySet<string> skip)
     {
+        // The long hearth (D-154): the selected piece is named by offer arg,
+        // since every eligible iron piece shares the one recipe good.
+        if (g.TalkNpc?.Id == "npc_townsmith")
+        {
+            if (TemperTarget(g) is not { } target) return 'z';
+            for (int i = 0; i < g.TradeOffers.Count; i++)
+                if (g.TradeOffers[i].Good == TradeGood.TarnTemper && g.TradeOffers[i].Arg == target.Id)
+                    return (char)('1' + i);
+            return 'z';
+        }
         // The stillroom (D-082): the simples are ours to sell across her table, and
         // with the sale banked the taken eye is seen to on the same visit (D-098),
         // the sprig-coin counting toward her own price.

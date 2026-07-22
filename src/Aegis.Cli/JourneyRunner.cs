@@ -156,6 +156,8 @@ public static class JourneyRunner
         // as blooms through the guild, watched by the two carried counters.
         int tarnIronMined = 0;
         int tarnIronSmelted = 0;
+        int ironBloomsTempered = 0;
+        int ironItemsTempered = 0;
         int ironBloomsSold = 0;
         int coinFromIron = 0;
         // The stead's regard at its height (D-076): a per-world Fame, reset at every
@@ -253,6 +255,7 @@ public static class JourneyRunner
             int saltBefore = game.Player.Salt;
             int tarnIronBefore = game.Player.TarnIron;
             int ironBloomBefore = game.Player.IronBloom;
+            int temperedBefore = game.Player.AllGear.Count(item => item.TarnTempered);
             game.ApplyKey(key.Value);
             keys.Append(key.Value);
             totalKeys++;
@@ -344,22 +347,32 @@ public static class JourneyRunner
             // The school and the bond (D-141): a Smithing use grown inside the
             // walls is a forge sitting (the home bench stands in the valley),
             // and the bond flipping on is one swearing, counted world by world.
+            int temperedNow = game.Player.AllGear.Count(item => item.TarnTempered);
             if (inTownBefore && game.Player.Skills.Uses(SkillId.Smithing) > smithUsesBefore
-                && game.Player.TarnIron >= tarnIronBefore) forgeSittings++;
+                && game.Player.TarnIron >= tarnIronBefore && temperedNow == temperedBefore) forgeSittings++;
             if (!swornBefore && game.GuildSworn) bondsSworn++;
             // The caravan leg's two ends (D-144): salt only ever rises at the
             // cart and only ever falls at the town counter.
             if (game.Player.Salt > saltBefore) saltBought += game.Player.Salt - saltBefore;
             if (game.Player.Salt < saltBefore && game.Cycle == cycleBefore) saltSold += saltBefore - game.Player.Salt;
             // Tarn-iron rises only at a seam and falls only into forge blooms.
-            // Blooms fall only at the guild scale, so the full regional loop
-            // has three clean state edges (D-153).
+            // A bloom now falls either into one tempered piece or onto the
+            // guild scale (D-154), distinguished by the carried gear's mark.
             if (game.Player.TarnIron > tarnIronBefore) tarnIronMined += game.Player.TarnIron - tarnIronBefore;
             if (game.Player.TarnIron < tarnIronBefore) tarnIronSmelted += tarnIronBefore - game.Player.TarnIron;
             if (game.Player.IronBloom < ironBloomBefore)
             {
-                ironBloomsSold += ironBloomBefore - game.Player.IronBloom;
-                coinFromIron += Math.Max(0, game.Player.Coin - coinBefore);
+                int spent = ironBloomBefore - game.Player.IronBloom;
+                if (temperedNow > temperedBefore)
+                {
+                    ironBloomsTempered += spent;
+                    ironItemsTempered += temperedNow - temperedBefore;
+                }
+                else
+                {
+                    ironBloomsSold += spent;
+                    coinFromIron += Math.Max(0, game.Player.Coin - coinBefore);
+                }
             }
             // The stead's regard, at its high-water mark (D-076): it resets at each
             // crossing, so the peak is the warmest one stead ever came to hold the bearer.
@@ -460,6 +473,8 @@ public static class JourneyRunner
                 SaltSold: saltSold,
                 TarnIronMined: tarnIronMined,
                 TarnIronSmelted: tarnIronSmelted,
+                IronBloomsTempered: ironBloomsTempered,
+                IronItemsTempered: ironItemsTempered,
                 IronBloomsSold: ironBloomsSold,
                 CoinFromIron: coinFromIron,
                 MaxRegard: maxRegard,
@@ -505,7 +520,8 @@ public static class JourneyRunner
             roadsTaken, nightsCamped, fellsTaken,
             marketsWalked, game.Player.Skills.Uses(SkillId.Commerce), game.Player.Skills.Level(SkillId.Commerce),
             forgeSittings, bondsSworn, game.Player.Skills.Level(SkillId.Smithing),
-            saltBought, saltSold, tarnIronMined, tarnIronSmelted, ironBloomsSold, coinFromIron,
+            saltBought, saltSold, tarnIronMined, tarnIronSmelted,
+            ironBloomsTempered, ironItemsTempered, ironBloomsSold, coinFromIron,
             maxRegard, maxWrath, raidsSuffered, game.Teller);
         return 0;
     }
@@ -591,7 +607,8 @@ public static class JourneyRunner
         int marketsWalked, int lotsSold, int commerceLevel,
         int forgeSittings, int bondsSworn, int smithingLevel,
         int saltBought, int saltSold,
-        int tarnIronMined, int tarnIronSmelted, int ironBloomsSold, int coinFromIron,
+        int tarnIronMined, int tarnIronSmelted, int ironBloomsTempered, int ironItemsTempered,
+        int ironBloomsSold, int coinFromIron,
         int maxRegard, int maxWrath, int raidsSuffered, Storyteller teller)
     {
         var w = Console.Out;
@@ -686,7 +703,7 @@ public static class JourneyRunner
         if (saltBought + saltSold > 0)
             w.WriteLine($"         the caravan leg: loaded {saltBought} sack(s) of salt at the cart and sold {saltSold} at the town counter, the margin earned by the walk (D-144).");
         if (tarnIronMined + tarnIronSmelted + ironBloomsSold > 0)
-            w.WriteLine($"         the fell iron: worked {tarnIronMined} raw piece(s), smelted {tarnIronSmelted}, and sold {ironBloomsSold} bloom(s) for {coinFromIron} coin through the carriers (D-153).");
+            w.WriteLine($"         the fell iron: worked {tarnIronMined} raw piece(s), smelted {tarnIronSmelted}, tempered {ironItemsTempered} piece(s) with {ironBloomsTempered} bloom(s), and sold {ironBloomsSold} bloom(s) for {coinFromIron} coin through the carriers (D-153, D-154).");
         w.WriteLine($"         the stead: came to hold the bearer as {(maxRegard > 0 ? SteadRegard.TitleOf(maxRegard) : "a stranger")} at its warmest "
                     + $"(peak regard {maxRegard}, reset at every crossing) (D-076).");
         w.WriteLine($"         the dens: came to hold the bearer as {(maxWrath > 0 ? RaiderWrath.TitleOf(maxWrath) : "no one at all")} at their most fearful "
@@ -745,7 +762,8 @@ internal sealed record JourneyReport(
     int MarketsWalked, int LotsSoldInTown,
     int ForgeSittings, int BondsSworn,
     int SaltBought, int SaltSold,
-    int TarnIronMined, int TarnIronSmelted, int IronBloomsSold, int CoinFromIron,
+    int TarnIronMined, int TarnIronSmelted, int IronBloomsTempered, int IronItemsTempered,
+    int IronBloomsSold, int CoinFromIron,
     int MaxRegard, string RegardTitle, int MaxWrath, string WrathTitle, int RaidsSuffered,
     int PacingNights, int PacingSpaceCalls, int PacingPressCalls,
     int PacingDealtUnderSpace, int PacingQuietUnderPress,

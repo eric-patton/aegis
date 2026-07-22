@@ -8,6 +8,7 @@ public enum LessonId
     Stillcraft,
     DrawnTemper,
     WortCunning,
+    BloomTemper,
 }
 
 /// <summary>One lesson's catalog entry: the full name for prose, the short for the sheet.</summary>
@@ -43,6 +44,9 @@ public static class LessonCatalog
         // keep is thrift: a draught steeps from two sprigs, not three, at any
         // still in any world, the bearer's own steeping included.
         new(LessonId.WortCunning, "the wort-cunning", "wort-cunning", 0),
+        // The bloom-temper (D-154): learned only from the red book, then
+        // practiced at a town forge with a tarn-iron bloom as its whole cost.
+        new(LessonId.BloomTemper, "the bloom-temper", "bloom-temper", 0),
     ];
 
     public static LessonDef Def(LessonId id) => All.First(l => l.Id == id);
@@ -56,6 +60,7 @@ public static class LessonCatalog
         LessonId.Stillcraft => "stillcraft",
         LessonId.DrawnTemper => "drawn_temper",
         LessonId.WortCunning => "wort_cunning",
+        LessonId.BloomTemper => "bloom_temper",
         _ => id.ToString().ToLowerInvariant(),
     };
 

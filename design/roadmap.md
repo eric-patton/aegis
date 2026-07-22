@@ -127,7 +127,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - **The next stretch (2026-07, adopted D-131): see `design/plan-2026-07.md`.** Four
   lanes: the stead layer first (Phase A), multi-region (Phase B), breadth interleaved
   (Phase C), pacing/worldgen/NG+ freshness (Phase D). The plan holds the reasoning and
-  the 14-step suggested sequence; the trackable boxes live under the pillars below (the
+  the 16-step suggested sequence; the trackable boxes live under the pillars below (the
   stead-layer and pacing-and-freshness sections are new; the B and C lanes mostly attach
   to boxes that already existed). This entry supersedes the phase numbering above as the
   sequencing story.
@@ -140,7 +140,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 
 - [x] Deterministic engine: hierarchical seed tree, fact graph, worldgen (D-002, D-013, D-018)
 - [x] Layered-map presentation, TUI render layer (Frame/Presenter) (D-001)
-- [x] Save system: seed + input journal, replay-on-load, currently v29 (D-012, D-028)
+- [x] Save system: seed + input journal, replay-on-load, currently v91 (D-012, D-028, D-154)
 - [x] NG+ crossing: waygate, coin -> Legend, tier-deepening worldgen (D-011, D-029)
 - [x] The Aegis as diegetic companion voice (D-010, D-019)
 - [x] The full trans-world Aegis story arc: reveal ladder -> the keeping -> the mending -> steady state (D-020, D-026, D-037, D-038, D-039, D-045, D-060)
@@ -197,8 +197,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - [ ] Creation follow-ons: the face cast into real faction NPCs; NPC line banks adopting
   the name; folk-aware recultured societies in worldgen; keepsake content past the song (D-093)
 - [x] Literacy skill + books gating recipes/techniques/lore (D-148: Lore 1 is literacy;
-  three books with concrete keeps; the scrivener teaches letters for coin; more titles,
-  Lore knacks, and the bookshop/archives proper still open) (D-005, vision §3)
+  three opening books with concrete keeps; D-154 adds the fourth, a smithing text whose
+  recipe spends tarn-iron; the scrivener teaches letters for coin; more titles, Lore
+  knacks, and the bookshop/archives proper still open) (D-005, vision §3)
 
 ### Skills (14 of ~18)
 
@@ -211,7 +212,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   (D-090: the stillcraft lesson; a use-curve waits on the lane growing recipes); Smithing seeded at
   the stead's bench (D-135: use-grown by filing wear off owned iron) with its town school open
   (D-141: the forge files for coin away from home, and the drawn-temper lesson deepens every sitting),
-  then fed by smelting the fells' tarn-iron into blooms (D-153)
+  then fed by smelting the fells' tarn-iron into blooms (D-153) and using a bloom in the
+  first book-taught durability recipe (D-154)
 - [~] Wilderness skills: Hunting (D-070) and Survival (D-074, foraging) done; Athletics pending (vision §3)
 - [ ] Subterfuge skills: Stealth, Larceny (vision §3)
 - [~] Social skills: Commerce seeded at the market town (D-140: use-grown, fed only by
@@ -222,10 +224,11 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - [x] Mind skills: Spellcraft shipped (D-091: use-grown, fed only by workings that did work,
   feeding power and the levin's grip); Lore shipped (D-148: literacy IS Lore 1, fed by the
   scrivener's sittings and pages not yet worked through; graven script exempt by doctrine)
-- [~] Proficiencies: 6 lessons shipped (D-052 clean dressing/tended iron/gleaning; D-090 the
+- [~] Proficiencies: 7 lessons shipped (D-052 clean dressing/tended iron/gleaning; D-090 the
   stillcraft, paying D-087's deferred fourth slot; D-141 the drawn temper, the town school's
   showing, gated on Smithing 1; D-148 the wort-cunning, the first book-taught lesson, the
-  herbal its only price); quest-taught still pending
+  herbal its only price; D-154 the bloom-temper, learned from the red smithing book and
+  practiced with one tarn-iron bloom); quest-taught still pending
 - [ ] Knacks: level-6+ questions, 3-option questions, knacks for new skills (D-055)
 
 ### The Life: activities & economy (all 4 families opened: wilderness, craft, crime, town life)
@@ -237,7 +240,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   spread shipped (D-140: hides 5c and herbs 6c at the town's market with bread at the
   market's 4c: the arbitrage ladder's town rung, priced in the walk east, feeding
   Commerce); the first regional production chain shipped (D-153: finite tarn-iron seams,
-  town smelting, and guild bloom sales); caravan/arbitrage at scale pending
+  town smelting, and guild bloom sales), then gained its first use-versus-sale choice
+  (D-154: one bloom gives one eligible iron piece 10 more wear once); caravan/arbitrage
+  at scale pending
 - [x] Vendor sub-menu pattern: one talk digit opens a bench with its own nine slots (D-071);
   proven general by the second bench (D-081, the herbwife's stillroom: herbs at the
   apothecary's 5c vs the wood's-edge 4c, the first price-choice/arbitrage in the economy;
@@ -247,7 +252,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   three sprigs steeped at the stillroom or, taught, at any shrine rest; 'd' drinks it on the road:
   the herb lane's first sink and the first remedy that walks into a deep site); smithing opened
   as a player trade by repair and forge schooling (D-135/D-141), then deepened by smelting
-  tarn-iron to blooms (D-153); recipes, commissions, and worked goods pending (D-006, D-025)
+  tarn-iron to blooms (D-153); its first recipe now ships (D-154: the Lore-2 red book teaches
+  a one-bloom, one-time +10 wear temper for eligible ironwork); more recipes, commissions,
+  and worked goods pending (D-006, D-025)
 - [~] Wilderness living: hunting + sell path + cooking + foraging shipped (D-070, D-071, D-073, D-074); camping shipped with the road (D-138: 'm' anywhere plain on an overworld, the supper's ration buying the mending, Survival deepening it, the kill cooked at the fire); fells extraction feeds Survival through finite tarn-iron seams (D-153); tracking, fishing pending (D-006)
 - [x] A hide-buyer with room to grow: the woodward's trade sub-menu, hides to coin (D-071)
 - [x] Crime: all four of D-006's named verbs shipped. Pickpocketing (D-107, v55: 'p' beside one
@@ -386,9 +393,10 @@ between them as play. Starts after the stead layer's core lands.
   freight speed); the third site D-150 (the wolf-gill, the great she-wolf as the first
   elite beast, the pelt answering the fells' cold, the drover's cache); the country's
   own goods loop D-153 (four finite tarn-iron seams, Survival-scaled extraction, town
-  smelting into blooms, guild sale, pilot and worldgen measure live); still open: a
+  smelting into blooms, guild sale, pilot and worldgen measure live), deepened D-154 with
+  the first bloom recipe and the sell-or-use choice; still open: a
   possible fourth site, then further regions one at a time
-  (D-131, D-146, D-147, D-149, D-150, D-153)
+  (D-131, D-146, D-147, D-149, D-150, D-153, D-154)
 
 ### Magic (v1 shipped, D-091)
 
@@ -663,6 +671,20 @@ kind, and the evaluation harness that hardens every generator change.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-21: **D-154 the red book and the dark temper: bloom becomes craft.** The
+  scrivener's fourth title asks 14 coin, Lore 2, and seven shrine sittings, then
+  teaches the bloom-temper for good. The town forge's stable recipe digit opens a
+  bounded bench listing every eligible carried piece: one bloom gives one weapon or
+  mail piece 10 more maximum wear once, feeds Smithing, changes no combat number, and
+  travels with the gear. Bows and cloth refuse. The snapshot marks tempered gear; the
+  pilot tempers one highest-value piece, then sells all surplus blooms; journey prose
+  and JSON separate crafted blooms from sold ones. Save v90 -> v91. 838 tests green.
+  All five v95 journey twins are byte-identical and reach cycle 13 with twelve
+  crossings, each tempering one piece and selling 95-115 blooms. Seed 1 replay is
+  exact at 24,546 keys, turn 23,137, and nine deaths; worldgen JSON exits 0. The v95
+  sweeps are the new baselines. Deferred: more bloom recipes and commissions, a
+  broader crafting board when its catalog earns one, the town-law primer and folk-tales,
+  and masterwork commissions.
 - 2026-07-21: **D-153 the dark iron under wet stone: the fells' own trade.** B4's
   country-goods debt closes. Four finite, visible tarn-iron seams generate on a new
   fells stream, reachable and mostly against wet scree or tarn. `g` works one only

@@ -324,10 +324,13 @@ namespace Aegis.Core;
 /// v90 when D-153 put tarn-iron in the fells: new visible seams change walks,
 /// 'g' spends eight turns and tool wear on their ore, and new town digits smelt
 /// and sell the blooms, moving coin and the Survival, Smithing, and Commerce crafts.
+/// v91 when D-154 put the red smithing book on the scrivener's shelf and the
+/// bloom-temper on the town forge: new book and forge digits teach and spend a
+/// bloom to alter carried gear, so a v90 journal can replay to different state.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 90;
+    public const int Version = 91;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

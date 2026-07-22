@@ -131,7 +131,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   stead-layer and pacing-and-freshness sections are new; the B and C lanes mostly attach
   to boxes that already existed). This entry supersedes the phase numbering above as the
   sequencing story.
-- **The path to 1.0 (adopted D-155): see `design/plan-2026-07.md`.** The original
+- **The path to 1.0 (adopted D-155, design-first D-157): see `design/plan-1.0.md`.** The original
   sixteen-step sequence is complete. Nine ordered tranches now form a finite finish
   line: the fells capstone; weather and seasons; D3 prose variety; D1 pacing steering;
   town and economy depth; character and activity breadth; combat and magic depth;
@@ -139,9 +139,10 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   the release audit. Open-ended catalogs remain tracked but do not block 1.0 unless a
   later decision explicitly promotes them into the gate.
 
-### Path to 1.0 tracker (ordered, adopted D-155)
+### Path to 1.0 tracker (ordered, adopted D-155/D-157)
 
 - [ ] 1. B4 capstone: fourth high-fells site at full regional density
+  (V1-01 design Approved D-156; implementation pending)
 - [ ] 2. Weather and seasons v1 plus the enabled A2 event follow-ons
 - [ ] 3. D3 prose-variety infrastructure and repetition audit
 - [ ] 4. D1 pacing steering after its authority scope is decided
@@ -151,7 +152,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - [ ] 8. Companions, factions, and consequences depth tranche
 - [ ] 9. Next full-density region, launch content closure, and the 1.0 release audit
 
-The detailed tranche contents and the 1.0-ready gate live in the plan. A tranche flips
+The detailed tranche contents and design statuses live in `design/plan-1.0.md`; the
+1.0-ready gate also remains in `design/plan-2026-07.md`. A tranche flips
 to `[x]` only when its decisions are built and verified. At the final audit, every other
 unchecked or partial roadmap line must be explicitly classified as post-1.0 or promoted
 into the gate. This keeps the backlog honest without making open-ended catalog growth an
@@ -696,6 +698,19 @@ kind, and the evaluation harness that hardens every generator change.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-22: **D-157 design the whole road before building it.** The nine 1.0
+  tranches now have stable V1 cards in `design/plan-1.0.md`, with design status,
+  decisions, dependencies, approved behavior, acceptance, roadmap associations, and
+  exclusions kept together. All nine cards will reach Approved before implementation
+  resumes, after which they move through Implemented to Verified in queue order. The
+  roadmap remains the status truth; the new plan owns ordered release scope. No engine
+  or save-format change.
+- 2026-07-22: **D-156 the black tarn is designed.** V1-01 is Approved but not yet
+  implemented: a fourth high-fells site with three finite fishing reaches, a permanent
+  hook and line, Survival-scaled tarn trout, cooking and town-sale choices, no resident
+  monster, and full pilot, snapshot, worldgen, and sweep requirements. The detailed
+  contract lives in `design/plan-1.0.md`. Tranche 1 remains unchecked until the feature
+  is built and verified. No engine or save-format change yet.
 - 2026-07-22: **D-155 the road to 1.0 has a finish line.** The completed sixteen-step
   July sequence now continues through nine ordered tranches: the high-fells capstone,
   weather and seasons, prose variety, pacing steering, town and economy depth,

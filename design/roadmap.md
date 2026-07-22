@@ -147,7 +147,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   (V1-02 design Approved D-158; implementation pending)
 - [ ] 3. D3 prose-variety infrastructure and repetition audit
   (V1-03 design Approved D-159; implementation pending)
-- [ ] 4. D1 pacing steering after its authority scope is decided
+- [ ] 4. D1 pacing steering
+  (V1-04 design Approved D-160; implementation pending)
 - [ ] 5. Town and economy depth tranche
 - [ ] 6. Character and activity breadth tranche, completing the intended skill roster
 - [ ] 7. Combat and magic depth tranche
@@ -622,11 +623,12 @@ between them as play. Starts after the stead layer's core lands.
 The procgen-lessons lane: editorial authority above the tick, worlds that differ in
 kind, and the evaluation harness that hardens every generator change.
 
-- [~] D1: The pacing layer: a storyteller above the coarse tick; the read-only half
-  built D-145 (the teller's book: a Space/Press/Steady call before every tick night, no
-  RNG, no facts, no narration, disagreement counters carried in the journey report
-  across the sweep seeds); the steering half stays open, gated on the book's evidence
-  (authority scope ◇ parked) (D-131, D-145)
+- [~] D1: The pacing layer: the read-only teller built D-145, and D-160 approves its
+  bounded steering contract. Only explicitly elastic random-deck cards may move: Press
+  guarantees an eligible deal after three quiet nights, while one successful opportunity
+  may be suppressed per Space episode. Scheduled futures, faction clocks, seasons and
+  weather, durations, player-triggered content, combat, and world state stay protected.
+  Implementation remains pending under V1-04 (D-131, D-145, D-160)
 - [x] D2: The twist library: D-151 settles the contract and D-152 builds it. Tier
   7+ carries exactly one mandatory mixed-valence law, independently drawn from the
   world story through a deterministic no-repeat shuffle bag; the Held Road, Grave
@@ -694,7 +696,6 @@ kind, and the evaluation harness that hardens every generator change.
 - ◇ Catalogs to grow: more oaths, the scar list, Legend rungs past 5, patron deeds past 3, hostility bands past the fen-leaguer (D-047, D-009, D-048, D-054, D-033+)
 - ◇ Story open items: bottle-episode playability, Unbinder guise tells, reveal-tier sharing across characters, template 7+ candidates (aegis-arc.md §11, world-story-templates.md §11)
 - ◇ Named stead folk (plan 2026-07 A5): adopt after A1-A3 are live, and at what depth (D-131)
-- ◇ Pacing-layer authority: which event classes it may delay or hasten, and which stay untouchable (D-131)
 - ◇ Generator-version pinning per world: today a save bump re-deals live worlds; decide before any save-format freeze whether old generators ship alongside new (D-131)
 
 ---
@@ -703,6 +704,14 @@ kind, and the evaluation harness that hardens every generator change.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-22: **D-160 pacing steering is designed.** V1-04 is Approved but not
+  implemented. Authority is limited to explicitly elastic random-deck cards: Press
+  guarantees an eligible draw after three quiet nights, and each continuous Space episode
+  may suppress one otherwise-successful opportunity without reserving a card. Scheduled
+  futures, faction clocks, seasons and weather, durations, player-triggered content,
+  combat, and world state remain protected. The five-seed evidence, failure behavior,
+  diagnostics, expected v94 bump, and full sweep requirements live in `design/plan-1.0.md`.
+  Tranche 4 remains unchecked until built and verified. No engine or save-format change yet.
 - 2026-07-22: **D-159 prose variety infrastructure is designed.** V1-03 is Approved but
   not implemented. Fact details, storylets, scenes, and ask-about topics become an
   enumerable surface inventory; fact families gain compatible authored variant bundles,

@@ -30,7 +30,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 | V1-01 | High-fells capstone, the black tarn | Approved | D-156 | Pending |
 | V1-02 | Weather and seasons v1 | Approved | D-158 | Pending |
 | V1-03 | D3 prose-variety infrastructure | Approved | D-159 | Pending |
-| V1-04 | D1 pacing steering | Draft | Pending | Blocked on design pass |
+| V1-04 | D1 pacing steering | Approved | D-160 | Pending |
 | V1-05 | Town and economy depth | Draft | Pending | Blocked on design pass |
 | V1-06 | Character and activity breadth | Draft | Pending | Blocked on design pass |
 | V1-07 | Combat and magic depth | Draft | Pending | Blocked on design pass |
@@ -351,13 +351,95 @@ camping, economy, black tarn
 
 ## V1-04: D1 pacing steering
 
-**Design status:** Draft  
+**Design status:** Approved
+**Decisions:** D-145, D-160
 **Roadmap association:** Path to 1.0 tranche 4; D1; pacing authority question  
-**Known dependencies:** Read-only teller, scheduled facts, coarse tick, stead events,
+**Dependencies:** Read-only teller, scheduled facts, coarse tick, stead event deck,
 weather and seasons  
-**Design pass must settle:** protected clocks, eligible event classes, delay and hasten
-bounds, pressure inputs, quiet windows, observability, determinism, pilot measures,
-failure behavior, and acceptance.
+**Implementation status:** Pending until the full design queue is Approved
+
+### Approved behavior
+
+- The teller receives narrow editorial authority over the random stead-event deck. Every
+  deck card must explicitly declare whether it is elastic. The four existing cards and
+  the three V1-02 additions are elastic. Missing or invalid classification fails closed
+  as protected and is rejected by validation tests.
+- A deck card that creates a scheduled future is elastic only at its initial draw. Once
+  the future enters the calendar, its warning, due tick, hold, cancellation, and firing
+  are protected.
+- Protected clocks are never delayed, hastened, cancelled, or reordered by pacing:
+  scheduled futures; raids, watch activity, and store recovery; season changes, weather
+  hands, forecasts, and regional weather advancement; temporary durations and seasonal-
+  offer expiry; player-triggered storylets, scenes, consequences, and deed responses;
+  combat, hostile activity, site state, and world generation.
+- The teller computes one call from carried state at the beginning of each coarse tick.
+  Season and weather advance, expiring offers close, scheduled futures run, raids or
+  recovery run, and only then does the random deck apply that already-made call. Duration
+  countdowns follow, and the teller observes and records the completed night last.
+- Steady preserves the deck's existing one-in-three cadence and ordinary weighted card
+  selection.
+- On an open night with at least one eligible elastic card, Press guarantees a draw. The
+  ordinary cadence roll is still consumed first. A successful roll is a natural Press
+  deal; a failed roll is promoted to a forced Press deal. Seasonal gates, state gates,
+  once-per-world guards, pending-future exclusions, and weighted selection remain in force.
+- Any actual elastic deck deal satisfies the pressure call and resets the quiet streak
+  without adding heat. Three new heatless, eventless tick nights must pass before another
+  Press call, so Press cannot drain the finite deck on consecutive ticks.
+- A continuous Space episode may suppress at most one otherwise-successful elastic draw
+  opportunity. No card is selected, stored, or carried forward. A failed cadence roll does
+  not spend the suppression, a protected event claiming the night does not spend it, and
+  later Space calls in the same episode allow the ordinary one-in-three cadence after the
+  single suppression has been used.
+- D-145's heat model remains: each death contributes three heat, a scheduled event that
+  claims a night contributes two, raid heat follows the actual take, and one heat cools
+  per tick. Routine season or weather changes, commerce, offers, and deck cards add no
+  heat. A deck deal answers quiet through the separate quiet-streak reset.
+- Current player-triggered storylets remain immediate consequences of player action or
+  specific world change and receive no pacing classification. A future ambient,
+  time-eligible storylet class may opt into an explicit elastic contract after 1.0.
+- Press with no eligible hand creates nothing. A protected claim always wins. Space
+  creates no backlog, invalidated cards are never forced, and no catch-up deal occurs.
+- The teller draws no RNG. Every live tick consumes exactly one ordinary deck cadence
+  roll regardless of call; weighted-selection draws occur only when a card actually deals.
+  Pacing state remains world-scoped runtime state rebuilt through journal replay. Crossing
+  resets heat, quiet streak, and Space-episode authority while preserving the run-wide book.
+- Assuming V1-01 and V1-02 retain their planned save changes and V1-03 remains no-bump,
+  V1-04 advances v93 to v94 because altered event timing changes stores, offers, facts,
+  and journaled outcomes. World generation remains unaffected.
+- Pacing stays invisible in ordinary play. Journey prose and JSON report calls, natural
+  deals, Press-forced deals, Space suppressions, Press calls blocked by protected nights,
+  Press calls with no eligible hand, Space calls after their allowance is spent, longest
+  quiet stretch, deal-gap bounds, and natural-versus-steered counts per card. Per-reading
+  outcomes remain available to focused tests and diagnostic JSON.
+- The pilot gains no new choice policy. Its journeys provide passive evidence that both
+  steering directions occur and that protected clocks retain priority.
+
+### Acceptance and sweep requirements
+
+- Focused tests cover explicit classification, fail-closed metadata, call timing, Steady's
+  one-in-three cadence, Press's consumed roll and guaranteed eligible deal, natural versus
+  forced Press outcomes, the quiet reset, Space's one-suppression bound, claimed nights,
+  empty and ineligible hands, once-per-world guards, and crossing reset.
+- Boundary tests prove every protected clock remains untouched, a card is never reserved
+  across a season or eligibility boundary, and a scheduled future becomes protected as
+  soon as an elastic card places it on the calendar.
+- Determinism tests prove one cadence draw per live tick, stable weighted selection under
+  identical state, journal replay, and complete journey and JSON measures.
+- The current five-seed read-only baseline is retained as design evidence: 711 nights,
+  67 Space calls, 174 Press calls, 19 deals under Space, and 127 unanswered Press calls.
+  Implementation compares the same seeds before and after steering and explains the new
+  spacing and card distributions.
+- The complete HANDOFF engine sweep gates implementation. Release build and tests pass,
+  all five journey twin pairs remain byte-identical, sim replay is exact, worldgen purity
+  passes, and deck, store, offer, fact, and journey drift is justified against the then-
+  current baseline.
+
+### Explicit exclusions
+
+- No new events, adaptive difficulty, act or hostility-tier tuning, player pacing controls,
+  event backlog, storylet delay, scheduled-future manipulation, raid manipulation, weather
+  manipulation, combat steering, new RNG stream, separately serialized pacing state, or
+  player-facing teller meter.
 
 ## V1-05: Town and economy depth
 

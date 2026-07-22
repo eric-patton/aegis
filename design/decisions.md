@@ -231,6 +231,64 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-160: The hand above the deck: pacing receives bounded authority (2026-07-22)
+
+V1-04 is Approved as the fourth implementation-ready card on the design-first road to
+1.0. D-145's read-only book now answers its parked authority question narrowly: the
+teller may steer only explicitly declared elastic cards in the random stead-event deck.
+The four existing cards and V1-02's three additions are elastic at the moment of their
+draw. If a card places a future on the calendar, that future becomes protected at once.
+Scheduled futures, raids and recovery, seasons and weather, offer expiry and other
+durations, player-triggered storylets and consequences, combat, sites, and world
+generation remain untouchable. Current storylets are immediate answers to action rather
+than cadence content, so none enters the elastic class in this tranche.
+
+The call is made once from carried state at the beginning of the coarse tick, before the
+events it could shape. D-158's order then holds: weather and season advance, offers expire,
+scheduled futures take first claim, raids or recovery run, and only the random deck reads
+the call; duration countdowns follow and the teller observes last. Steady keeps the existing
+one-in-three chance. Press still consumes that ordinary chance roll, then guarantees one
+eligible draw if the roll missed; a natural success and a forced success are recorded
+separately. A dealt elastic card resets the quiet streak without adding heat, so another
+Press requires three new heatless, eventless nights and the deck cannot be emptied on
+successive ticks. Space may suppress one otherwise-successful opportunity per continuous
+Space episode. It selects and reserves no card, spends nothing on a failed roll or a
+protected night, and cannot carry an event across a season or eligibility boundary. After
+that one suppression, the episode permits only the ordinary one-in-three cadence.
+
+The heat model stays exactly the measured one: three per death, two when a scheduled
+future claims the night, raid heat by actual take, and one point of cooling each tick.
+Routine weather, season changes, trade, offers, and deck cards add no heat; a deck deal
+answers quiet through its separate reset. Press with an empty or ineligible hand creates
+nothing, protected clocks always win, Space creates no backlog, and no catch-up event is
+invented. Every deck card must carry explicit pacing classification, with missing or
+invalid metadata failing closed as protected and failing validation. The teller draws no
+RNG: each live tick consumes the ordinary cadence roll regardless of call, and weighted
+selection draws only when a card actually deals. State remains world-scoped and rebuilt by
+journal replay; crossing resets the carried controls while the run-wide audit book remains.
+
+The current engine's five-seed, twelve-world evidence makes the pressure authority earned
+rather than speculative: 711 tick nights produced 67 Space calls and 174 Press calls, with
+19 cards dealt under Space and 127 pressed nights left unanswered. Journey prose, JSON,
+and diagnostic readings will therefore distinguish natural, forced, suppressed, blocked,
+and empty-hand outcomes, retain quiet-gap measures, and count each card by natural versus
+steered arrival. The pilot changes no policy; its run is the observation surface. Assuming
+V1-01 and V1-02 make their planned bumps and V1-03 remains no-bump, implementation is
+expected to advance v93 to v94 because event timing changes stores, offers, facts, and
+journaled outcomes. Focused classification, boundary, cadence, RNG, crossing, replay, and
+report tests plus the complete HANDOFF sweep gate the build. The full contract and
+exclusions live under V1-04 in `design/plan-1.0.md`.
+
+Options set aside: authority over every storylet or tick event, because it would rewrite
+causality and player agency; delaying a named selected card, because a backlog would cross
+eligibility and seasonal boundaries; unlimited Space suppression, because high temperature
+could silence a finite deck; probabilistic Press, because the read-only book shows most
+pressure calls already go unanswered; treating every dealt card as heat, because trade and
+good fortune answer quiet without becoming wounds; adding a pacing RNG, because the deck's
+own cadence roll already provides the auditable seam; and a visible teller meter, because
+the player's surface is the world's rhythm rather than its editorial machinery. V1-04
+remains unimplemented until every 1.0 card is Approved under D-157.
+
 ### D-159: One fact, many tellings: prose variety infrastructure designed (2026-07-22)
 
 V1-03 is Approved as the third implementation-ready card on the design-first road to 1.0. Its boundary is the prose that expresses or interprets world facts: fact details, storylet lines, scene lines, and ask-about topic answers. Combat narration, trade and action feedback, menus, help, and item descriptions stay outside this tranche. Every owned line becomes enumerable as a `ProseSurface` with a stable source id, surface kind, optional fact family, variant id, raw text, normalized skeleton, reuse policy, and origin. The initial kinds are fact detail, rumor, topic, ledger, song, epitaph, storylet, and scene, with unused kinds standing as a contract for later content rather than an excuse to invent surfaces now.
@@ -1757,5 +1815,4 @@ Pays D-063's own named deferrals in one stroke, arming the autopilot at the smit
 - Catalogs to design later: more oaths beyond D-047's four, scar list, Legend rungs past D-048's five, patron deeds beyond D-054's three (property and retinue shapes from D-025), and optional hostility-tier content past the fen-leaguer (D-033 landed tier 2, D-040 tier 3, D-044 tier 4, D-053 tier 5, D-057 tier 6, D-058 posted the sword-thegn into the tier-7 ringfort; D-151 makes twists the recurring tier-7+ structure, so further bands are catalog growth rather than a rung-by-rung obligation)
 - Story open items listed in `design/story/aegis-arc.md` sec. 11 and `design/story/world-story-templates.md` sec. 10 (bottle-episode playability, Unbinder guise tells, reveal-tier sharing across characters, template 7+ candidates: the dying god's succession, the long siege having shipped as the sixth in D-130; names settled by D-043)
 - Named stead folk (plan 2026-07 A5, D-131): adopt after A1-A3 are live and the raids can threaten something with a name, and at what depth; if adopted, keep it lite (no population simulation, no birth rolls, research/12's avoid-list)
-- Pacing-layer authority (plan 2026-07 D1, D-131): which event classes it may delay or hasten, and which (the raids' causal clock, scheduled facts) stay untouchable
 - Generator-version pinning per world (D-131): today a save bump re-deals live worlds; decide before any save-format freeze whether old generators ship alongside new so a world keeps its birth generator (research/13's Minecraft lesson)

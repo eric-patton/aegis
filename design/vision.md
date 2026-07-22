@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-159); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-160); the research behind it lives in `../research/`.
 
 ---
 
@@ -147,9 +147,18 @@ Saves are part of the design: autosave fires at the instant of death, before the
 2. **Storylets**: every quest beat, scene, and event is an atomic, precondition-gated, handwritten unit. Content scales additively forever, which infinite NG+ requires.
 3. **Role-casting**: pivotal scenes are written against role slots ("an NPC who owes you a debt") and cast from whoever exists in this world.
 4. **NPC memory**: notable NPCs keep structured logs of what passed between you (favors, betrayals, witnessed deaths); dialogue is memory-driven selection over large authored line banks. Never open generation.
-5. **Pacing director**: decides when content surfaces, keeping tension in a band. Hostility tiers tune it.
+5. **Pacing director**: D-145's measured teller and D-160's bounded authority shape only
+   explicitly elastic random deck events. Press guarantees an eligible deal after three
+   quiet tick nights; Space may suppress one successful opportunity in a hot episode.
+   Scheduled futures, faction clocks, weather, durations, and player-triggered content
+   remain protected.
 
 Two iron rules: no quest generates unless it traces to an existing fact, and important facts appear on multiple surfaces (quest, rumor, inscription) so the world reads as knowing things. Filler jobs stay honest ambient texture.
+
+The director uses no RNG of its own and never invents content. It consumes the deck's
+ordinary cadence roll, keeps seasonal and state eligibility intact, and resets pressure
+when an elastic event actually deals. Its audit lives in journey and diagnostic output;
+ordinary play feels the resulting rhythm without exposing an editorial meter.
 
 ### The spine (two layers)
 Per world, the main quest is drawn from a growing pool of authored **world-story templates** (the usurped throne, the creeping blight, the war of faiths): structure and beats handwritten, cast and geography filled from the fact graph. A beeline takes 10-15 hours; the world holds 30+. Six compile today at slice scale: the raided stead, the creeping blight, the usurped throne (cast on the dens' own seat with the named roster as its players, D-112), the war of faiths (cast by office on the valley's two institutions, D-116), the gold rush (the old quarry's kind lie, D-121), and the long siege (the fen-leaguer's grateful fear, D-130).

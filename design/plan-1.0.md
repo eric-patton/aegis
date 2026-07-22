@@ -28,7 +28,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 | Card | Tranche | Design status | Decisions | Implementation |
 |------|---------|---------------|-----------|----------------|
 | V1-01 | High-fells capstone, the black tarn | Approved | D-156 | Pending |
-| V1-02 | Weather and seasons v1 | Draft | Pending | Blocked on design pass |
+| V1-02 | Weather and seasons v1 | Approved | D-158 | Pending |
 | V1-03 | D3 prose-variety infrastructure | Draft | Pending | Blocked on design pass |
 | V1-04 | D1 pacing steering | Draft | Pending | Blocked on design pass |
 | V1-05 | Town and economy depth | Draft | Pending | Blocked on design pass |
@@ -99,13 +99,180 @@ goods, D-155 release sequence
 
 ## V1-02: Weather and seasons v1
 
-**Design status:** Draft  
+**Design status:** Approved
+
+**Decisions:** D-158
+
 **Roadmap association:** Path to 1.0 tranche 2; weather and seasons; A2 follow-ons  
 **Known dependencies:** Scheduled facts, stead event deck, road sky, wolf-winter, regions,
 camping, economy, black tarn  
-**Design pass must settle:** scope and calendar, regional variation, mechanical effects,
-forecasting, player counters, event-deck additions, economy interactions, persistence,
-twist interactions, presentation, pilot policy, and acceptance.
+**Implementation status:** Pending until the full design queue is Approved
+
+### Approved behavior
+
+- One world season is shared across all regions. The valley, road, town, and high fells
+  express that common season through their own local weather rather than advancing on
+  independent seasonal calendars.
+- Existing road sky, hard winter, and wolf-winter behavior will be folded into this
+  unified seasonal model. Weather generation remains deterministic, with regional
+  weather using independent named streams so one region's draws do not move another's.
+- Current conditions and forecasts must remain coherent across local presentation and
+  news: the world agrees on the season while each region reports its own expression of it.
+- Each world begins in autumn. The existing seed-drawn hard winter at coarse tick 3-5
+  marks the arrival of winter, preserving its current warning and landing cadence.
+- After winter arrives, the shared season advances every three coarse ticks through
+  spring, summer, autumn, and winter, looping if the bearer remains in the world.
+- The high fells keep their established local lag: wolf-winter begins one tick after the
+  lowland winter arrives and stands for three ticks. That lag is a regional expression of
+  the shared season rather than a separate seasonal calendar.
+- Weather uses three climate bands: the valley and town share one lowland band, the east
+  road has its own band, and the high fells have their own band. Town weather therefore
+  cannot contradict the valley around it, while the road and fells retain distinct local
+  conditions and forecasts.
+- At each season change, every climate band receives a deterministic three-condition
+  weather hand, one condition for each coarse tick of that season. The hand guarantees
+  one condition characteristic of the season; its other two conditions are weighted
+  draws that may repeat, allowing a front to persist without making every season alike.
+- Each climate band's hands draw only from that band's independent named stream. Creating
+  or changing weather in one band therefore cannot move another band's sequence.
+- Weather uses four shared mechanical families: Calm, Wet, Wind, and Cold. Each climate
+  band gives those families local wording and severity rather than introducing unrelated
+  regional rules.
+- Spring guarantees one Wet card, summer one Calm card, autumn one Wind card, and winter
+  one Cold card in every regional hand. The other two cards remain season-weighted draws.
+- Existing road Clear, Rain, and Cold map to Calm, Wet, and Cold respectively; Wind is the
+  road's only new family. Hard winter and wolf-winter remain scheduled overlays rather
+  than random cards in a weather hand.
+- Direct weather mechanics are confined to exposed outdoor movement and camping. Weather
+  does not directly modify combat rolls, damage, skill checks, fishing or gathering
+  yields, or ordinary prices.
+- Weather may still move the economy and world through authored, forecastable events such
+  as hard winter, wolf-winter, and washout. Those explicit facts remain the only route by
+  which weather changes stores, prices, or other broader state.
+- Calm leaves movement and camping unchanged. Wind halves the healing of an exposed camp.
+  Wet suppresses step stamina recovery on the road and fells and halves exposed camp
+  healing. Cold has Wet's effects and also refuses a supperless camp on the road or fells.
+- Lowland walking always retains its step stamina recovery. Wind, Wet, and Cold can halve
+  an exposed lowland camp's healing, but lowland weather never refuses a supperless camp.
+- Town, stead, and wayhouse roofs ignore weather. Waystone shelter removes weather's camp
+  penalties.
+  Fells Cold retains its additional healing reduction unless the great pelt answers it.
+  These rules preserve the existing road Rain and Cold arithmetic and the established
+  relationship among fells exposure, waystones, and the pelt.
+- Forecasts look exactly one coarse tick ahead. The next card in each regional hand can
+  be learned, while later cards remain unknown until they advance into the forecast slot.
+  This uses the established one-tick omen cadence and keeps longer weather uncertain.
+- The sidebar always names the shared season, the current local weather, and the next
+  local forecast. A season or local weather change is narrated when its tick lands.
+- The road mouth reads the road's current and next weather before travel, and the fells
+  track does the same before a climb. Existing season-news and waykeeper conversations
+  repeat the relevant forecasts without consuming new talk-menu digits.
+- Snapshots expose the season, the current position within it, and current and next
+  weather for all three climate bands. This supports the pilot and tests without granting
+  the player remote omniscience through the ordinary sidebar.
+- V1-02 adds no generic weather clothing, tent, or consumable. Counterplay comes from
+  forecasts and timing, roofed stead, town, or wayhouse rest, carrying supper for Cold,
+  Held Road waystones when present, and the great pelt's existing answer to fells Cold.
+- Waiting for better weather remains a real choice because the coarse world clock and its
+  other events continue to advance. Poor weather never requires waiting; the bearer may
+  accept the exposure when urgency outweighs comfort.
+- The existing stead deck becomes season-gated. Far fields is eligible in spring or
+  summer, drovers in autumn, the fords washout in spring, and the banns and wedding in
+  summer. Hard winter remains the winter anchor outside the random deck.
+- An eligible card that is not drawn waits for the next return of its season. Existing
+  consequences and once-per-world fact guards remain unchanged.
+- Two once-per-world cards grow the deck from four to six. Haying days is eligible during
+  summer Calm, restores one store up to the current maximum, and may lift a levy through
+  the existing recovery rules. Late frost is eligible during spring Cold and costs one
+  store unless a standing granary prevents the loss.
+- Both new cards use the ordinary one-tick weather forecast as their warning, write and
+  narrate their own facts, and leave the weather itself unchanged.
+- A seventh once-per-world card, the season's bargain, is eligible in autumn while the
+  stead is below its store maximum. It opens a one-tick offer in the existing larder trade
+  surface without adding a talk digit or a named visitor.
+- The bargain restores one store for 6 coin. A bearer at the stead's friend rung or above
+  with no standing Shame pays 4 coin; a bearer at the unwelcome Shame rung or above is
+  refused. A purchase may lift a levy through the existing recovery rules but grants no
+  Regard, preventing a coin-to-reputation loop.
+- The offer expires on the next coarse tick whether taken or declined. The pilot accepts
+  it only when affordable and the stead can use the store.
+- Under Held Road, waystones shelter camps from Wind, Wet, and Cold penalties but do not
+  alter weather or restore weather-suppressed step stamina. Grave Market and Horned Law
+  do not alter seasons, weather hands, or forecasts.
+- Twist selection and regional weather use independent streams. Seasonal events and twist
+  consequences may coexist whenever their established clocks and conditions allow, with
+  no compatibility table or special exclusions.
+- Season, weather hands, forecasts, and temporary seasonal offers are world-scoped runtime
+  state rebuilt by journal replay rather than separately serialized. A crossing clears
+  them, and the new world begins in autumn with fresh hands and its own seed-drawn winter
+  arrival. No weather memory or seasonal advantage crosses on the character.
+- New named weather streams derive after existing streams so established world layouts do
+  not move. Assuming V1-01 advances save v91 to v92 first, V1-02 advances v92 to v93
+  because weather changes movement, camping, event eligibility, and journaled outcomes.
+- The pilot travels normally through Calm, Wind, and Wet. Before entering the road or
+  fells in Cold, it waits under a roof for at most one coarse tick only when it lacks
+  supper or is already badly hurt. It never waits to improve gathering or fishing yields.
+- Ordinary camp policy remains in force so weather changes real recovery. The pilot buys
+  the season's bargain when affordable and useful.
+- Journey prose and JSON report regional ticks by weather family, exposed camps by
+  condition, forecast-driven deferrals, Cold camp refusals, Haying days, Late frost,
+  granary prevention, and bargain outcomes. Across twelve worlds the journey should
+  exercise every family in every band; focused tests cover any branch absent from a
+  particular sweep seed.
+- On each coarse tick, the shared season advances when due and every climate band turns
+  to its forecast condition before other cadence work. Scheduled futures then fire and
+  retain first claim on the night. If unclaimed, ordinary raid or store recovery runs,
+  followed by the stead deck evaluating the newly current season and weather. Temporary
+  durations advance afterward, and the read-only teller observes last. A one-tick offer
+  expires at the start of the next coarse tick, before another deck card can be dealt.
+- Every seasonal hand reserves one slot for its signature family; either weighted draw may
+  add another. Across a full year every family has a nonzero chance in every climate band.
+  Lowlands favor Calm and Wet, the road favors Wet and Wind, and the fells favor Wind and
+  Cold. Immediate repeats are allowed. Exact integer weights remain implementation tuning
+  within those constraints.
+- Local presentation names the shared families in the region's own terms: lowland fair,
+  rain, hard wind, and frost; road clear, rain, crosswind, and cold; fells clear, wet mist,
+  gale, and killing cold. Exact descriptive prose remains adjustable during implementation.
+- The deck keeps its existing one-in-three draw chance, at most one card per eligible tick,
+  and once-per-world fact guards. Haying days is eligible only below maximum stores. Late
+  frost remains eligible under a granary because the prevented loss is narrated and
+  recorded; without one, ordinary store, price, levy, and bare-loft consequences apply.
+- The season's bargain grants no skill growth or Regard. A refusal for an unwelcome bearer
+  spends the card. Weather forecasts reveal the condition that could enable a weather card,
+  not a guaranteed deck draw.
+- Fishing and cooking keep their approved yields and rules. Their turns advance the world
+  clock normally, and any camp involved receives the current weather's recovery effect.
+- Current conditions and forecasts remain compact runtime state rather than writing a fact
+  every tick. Season transitions and substantive seasonal events write facts. Only a local
+  weather change narrates automatically; remote bands remain available through their
+  designated readers. Help text explains the families, exposure effects, forecast notation,
+  and shelter rules.
+
+### Acceptance
+
+- Focused tests cover the autumn start, seed-drawn winter arrival, three-tick progression,
+  year looping, guaranteed signatures, deterministic hands, permitted repeats, independent
+  regional streams, and correct current and next forecasts at every transition.
+- Presentation tests cover the sidebar, road mouth, fells track, existing conversation
+  readers, help, and snapshot fields.
+- Mechanical tests cover every movement and camp family, lowland leniency, roofs, waystone
+  shelter, supperless Cold, fells Cold, and the great pelt.
+- Event tests cover the existing cards' season gates, Haying days, Late frost, granary
+  prevention, all season's-bargain terms, expiry, and store, price, and levy consequences.
+- Boundary tests prove twist combinations, unchanged combat, fishing, gathering, and
+  ordinary price rules, crossing reset, journal replay, and the expected v93 save behavior.
+- Pilot tests and journey output cover every new policy and counter. Broad seeded evaluation
+  proves all four families occur in all three bands while signature and regional-bias
+  constraints hold.
+- Implementation is complete only after a clean Release build and tests, five-seed journey
+  twins, exact sim replay, justified drift from the then-current baseline, and worldgen
+  purity all pass under the HANDOFF sweep discipline.
+
+### Explicit exclusions
+
+- No direct weather damage, combat modifier, weather skill check, catch or gathering yield
+  change, spoilage, generic weather clothing, tent, forecast purchase, player calendar
+  control, weather-specific enemy, independent town climate, or full atmospheric simulation.
 
 ## V1-03: D3 prose-variety infrastructure
 

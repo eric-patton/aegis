@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-157); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-158); the research behind it lives in `../research/`.
 
 ---
 
@@ -29,6 +29,17 @@ You are nobody, in a world that was generated last Tuesday and has three hundred
 - **Overworld**: a walkable coarse map where one tile is a landmark or region. Horizon discovery ("what's over that ridge") is preserved; travel itself is play (wilderness activities, encounters, weather).
 - **Local tactical maps**: dungeons, ruins, towns, ambush sites. Where combat and exploration-in-the-small live.
 - **Prose scenes**: full-screen text for dialogue, events, and quest beats, with choice menus and visible skill checks.
+
+### Weather and seasons
+Every world opens in autumn under one shared seasonal calendar, with winter beginning on
+the existing seed-drawn hard-winter tick and later seasons advancing every three coarse
+ticks. Lowlands, road, and high fells express that calendar through independent deterministic
+weather hands using four readable families: Calm, Wet, Wind, and Cold. Weather's direct
+weight stays on exposed travel and camping, never hidden combat or resource rolls. One-tick
+forecasts at the sidebar and travel thresholds make timing the counterplay; roofs, supper,
+waystones, and the great pelt are the answers already in the world. The stead event deck
+reads the calendar too, so explicit seasonal facts can move stores, prices, and local deals
+without turning every ordinary weather card into an economy modifier (D-158).
 
 ### Worldgen: history first
 At world creation, a causal-grammar history generator (the Caves of Qud model) produces the **world fact graph**: settlements, factions, notable NPCs, wars, grudges, shortages, ruins, and relics, all as ID-referenced facts with causes. This graph is the source of truth for everything: quests query it, dialogue cites it, prices derive from it, items are inscribed with it. Generated history the player cannot touch is wasted, so all of it is queryable in-fiction: books (if you can read), bards, gravestones, rumor, and the ask-about system.

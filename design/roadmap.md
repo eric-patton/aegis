@@ -144,6 +144,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - [ ] 1. B4 capstone: fourth high-fells site at full regional density
   (V1-01 design Approved D-156; implementation pending)
 - [ ] 2. Weather and seasons v1 plus the enabled A2 event follow-ons
+  (V1-02 design Approved D-158; implementation pending)
 - [ ] 3. D3 prose-variety infrastructure and repetition audit
 - [ ] 4. D1 pacing steering after its authority scope is decided
 - [ ] 5. Town and economy depth tranche
@@ -340,9 +341,9 @@ KDM-derived lane; full reasoning in `design/plan-2026-07.md`.
 - [x] A2: Stead event storylets on the tick beyond the raids: small, mixed-valence,
   consequence-dense, several foreshadowed via A1 (the fanfic test applies) (D-131,
   built D-133: four cards, two through the calendar, one cancellable)
-- [ ] A2 follow-ons (D-133): grow the deck as catalog work (weather wants the C-lane
-  weather/seasons box; arrivals with names want A5); a card that reads the bearer's
-  own deeds (regard/shame-gated deals)
+- [ ] A2 follow-ons (D-133; design Approved D-158, implementation pending): season-gate
+  the existing deck, add Haying days and Late frost, and add the season's bargain that
+  reads Regard and Shame; arrivals with names still want A5
 - [x] A3 v1: Facility ladder, first three (palisade, watchtower, granary): coin sinks
   that modify existing systems (raids, watch, stores); this is the stead half of the
   open D-025/D-036 sink-ladder box; regard capped at a one-time acknowledgment per
@@ -656,8 +657,9 @@ kind, and the evaluation harness that hardens every generator change.
   library is the recurring tier 7+ structure while further bands remain optional
   catalog growth (D-033..D-058, D-151, D-152)
 - [~] Scar list: three shipped (eye, hand, look); the dragging step and more open (D-098)
-- [ ] Weather / seasons (referenced only in flavor today) (vision §1, D-051; planned to
-  ride the stead event deck, plan 2026-07 step 4, D-131)
+- [ ] Weather / seasons (design Approved D-158, implementation pending): one shared
+  season, three climate bands, four weather families, one-tick forecasts, exposed travel
+  and camp effects, and A2 event follow-ons
 - [~] Region entities, biome names, culture-flavored name pools, world epithets (D-049;
   region entities and region names built D-143: two named countries per world on their
   own stream; culture-flavored pools and world epithets still open on the race list and
@@ -698,6 +700,13 @@ kind, and the evaluation harness that hardens every generator change.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-22: **D-158 weather and seasons v1 is designed.** V1-02 is Approved but not
+  implemented: one shared seasonal calendar, three climate bands, deterministic
+  three-card weather hands, four narrow exposure families, one-tick forecasts, existing
+  shelter counterplay, season-gated stead events, two weather cards, and a bargain that
+  reads Regard and Shame. The card fixes persistence, presentation, pilot, evaluation,
+  and full sweep requirements in `design/plan-1.0.md`. Tranche 2 remains unchecked until
+  built and verified. No engine or save-format change yet.
 - 2026-07-22: **D-157 design the whole road before building it.** The nine 1.0
   tranches now have stable V1 cards in `design/plan-1.0.md`, with design status,
   decisions, dependencies, approved behavior, acceptance, roadmap associations, and

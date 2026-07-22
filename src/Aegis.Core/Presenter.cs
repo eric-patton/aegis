@@ -709,6 +709,7 @@ public static class Presenter
                 // The market's people (D-140) share the trader's color: coin
                 // is their weather too.
                 NpcKind.Towner => Hue.Yellow,
+                NpcKind.GraveTally => Hue.Cyan,
                 _ => Hue.Green,
             });
 
@@ -806,6 +807,7 @@ public static class Presenter
         Terrain.FellMouth => ('=', Hue.Gray, Hue.Black),
         Terrain.CairnEntrance => ('n', Hue.Gray, Hue.Black),
         Terrain.GillEntrance => ('%', Hue.White, Hue.Black),
+        Terrain.Waystone => ('+', Hue.White, Hue.DarkCyan),
         _ => ('?', Hue.Magenta, Hue.Black),
     };
 
@@ -820,6 +822,14 @@ public static class Presenter
         }
 
         Line(p.Name.Length > 0 ? p.Name : "The Bearer", Hue.White);
+        if (game.World.Twist != WorldTwist.None)
+        {
+            Line(WorldTwistCatalog.NameOf(game.World.Twist), Hue.Cyan);
+            if (game.World.Twist == WorldTwist.HeldRoad)
+                Line($"{WorldTwistCatalog.FaithName(game.World.RoadHolder!.Value)}; {game.RoadTithes}c tithed", Hue.DarkCyan);
+            else if (game.World.Twist == WorldTwist.GraveMarket)
+                Line(game.GraveTruceStands ? "The shared truce stands" : "Both books are shut", Hue.DarkCyan);
+        }
         Line(new string('-', 22), Hue.DarkGray);
         Line($"HP  {Bar(p.Hp, p.EffectiveMaxHp, 10)} {p.Hp}/{p.EffectiveMaxHp}", p.Hp * 3 <= p.EffectiveMaxHp ? Hue.Red : Hue.Gray);
         Line($"ST  {Bar(p.Stamina, p.MaxStamina, 10)} {p.Stamina}/{p.MaxStamina}", Hue.Gray);
@@ -1000,9 +1010,13 @@ public static class Presenter
             if (here == Terrain.RoadMouth)
                 Line(game.OnRoad ? "Road mouth: > turns for home" : "Road mouth: > takes the road", Hue.DarkYellow);
             if (here == Terrain.TownGate)
-                Line($"{game.World.TownName}'s gate: > goes in", Hue.Yellow);
+                Line(game.World.Twist == WorldTwist.HornedLaw && p.ProtectedHide > 0
+                    ? $"Gate inspection: {p.ProtectedHide} protected"
+                    : $"{game.World.TownName}'s gate: > goes in", Hue.Yellow);
             if (here == Terrain.FellMouth)
                 Line(game.Area == Area.Fells ? "Drovers' track: > climbs down" : "Drovers' track: > takes the fells", Hue.Gray);
+            if (here == Terrain.Waystone)
+                Line("Waystone shelter: m camps", Hue.Cyan);
             foreach (var npc in game.NpcsHere)
                 if (npc.Pos.Chebyshev(p.Pos) == 1)
                     Line($"{npc.Name}: bump to talk", Hue.Green);

@@ -39,6 +39,7 @@ public enum Terrain : byte
     FellMouth,
     CairnEntrance,
     GillEntrance,
+    Waystone,
 }
 
 /// <summary>

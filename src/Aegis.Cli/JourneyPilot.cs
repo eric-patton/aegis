@@ -117,11 +117,17 @@ public static class JourneyPilot
         // counter is sold to, one lot a press, then the talk is left.
         if (g.InTalkMenu && g.TalkNpc?.Kind == NpcKind.Towner)
             return TownSellDigit(g) ?? 'z';
+        if (g.InTalkMenu && g.TalkNpc?.Kind == NpcKind.GraveTally)
+            return g.GraveTruceStands && g.CurrentSite is { } grave
+                && g.Player.Essence >= g.GraveBargainPrice(grave)
+                ? OfferDigit(g, TradeGood.GraveBargain) ?? 'z'
+                : 'z';
         // The cart's counter (D-144): with the salt errand standing, buy a
         // sack a press until the stock or the spare coin runs out, then step
         // back. The same predicate that sent the walk, so no shuttle.
         if (g.InTalkMenu && g.TalkNpc?.Kind == NpcKind.Peddler)
-            return (SaltBuyErrand(g) ? OfferDigit(g, TradeGood.Salt) : null) ?? 'z';
+            return (FenceErrand(g) ? OfferDigit(g, TradeGood.Fence)
+                : SaltBuyErrand(g) ? OfferDigit(g, TradeGood.Salt) : null) ?? 'z';
         if (g.InAim) return AimDirection(g) ?? 'z';
         // The words (D-091, D-099): the open cast menu is driven toward the one
         // working wanted now (release, calling, or ward); anything else closes it.
@@ -187,9 +193,17 @@ public static class JourneyPilot
             // combe (D-146) is a wilds whose game hunts back: the pack is fought, bow
             // first, not chased like deer. Otherwise climb back to daylight.
             if (!site.Cleared && !skip.Contains(site.Id))
+            {
+                if (g.World.Twist == WorldTwist.HornedLaw && site.Kind == SiteKind.Wilds
+                    && g.LiveMonstersHere.All(m => m.Kind == MonsterKind.Hart))
+                    return p.Pos == site.EntryPos ? '<' : NavKey(g, g.CurrentMap, p.Pos, site.EntryPos, LiveFoeCells(g));
+                if (g.GraveTruceStands && site.Kind is SiteKind.Barrow or SiteKind.Cairn
+                    && g.Player.Essence >= g.GraveBargainPrice(site))
+                    return GraveMarketMove(g) ?? FightOrApproach(g);
                 return site.Kind == SiteKind.Wilds
                     && g.LiveMonstersHere.All(m => m.Kind != MonsterKind.Wolf)
                     ? HuntMove(g) : FightOrApproach(g);
+            }
             // Held, foes down: open the site's own chest before leaving (D-066). It
             // holds coin and, in the deep sites, a piece of iron better than any the
             // smith draws, and it costs only the walk back over ground already won.
@@ -334,7 +348,7 @@ public static class JourneyPilot
         // road trip still ahead, load salt at the peddler's boards so the
         // walk east carries the caravan leg's freight. The bump opens the
         // talk; the handler above buys sack by sack and steps back.
-        if (SaltBuyErrand(g) && RoadTripWanted(g, skip) && g.World.Peddler is { } cart)
+        if ((FenceErrand(g) || SaltBuyErrand(g) && RoadTripWanted(g, skip)) && g.World.Peddler is { } cart)
         {
             var toCart = NavKey(g, g.World.Overworld, p.Pos, cart.Pos, OverworldBlocked(g));
             if (toCart is not null) return toCart;
@@ -420,6 +434,8 @@ public static class JourneyPilot
         var here = g.Player.Pos;
         return g.World.Sites
             .Where(s => s.Area == g.Area && !s.Cleared && !skip.Contains(s.Id)
+                        && !(g.World.Twist == WorldTwist.HornedLaw && s.Kind == SiteKind.Wilds
+                            && g.Monsters.Where(m => m.Alive && m.SiteId == s.Id).All(m => m.Kind == MonsterKind.Hart))
                         && g.Monsters.Any(m => m.Alive && m.SiteId == s.Id))
             .OrderBy(s => Chebyshev(here, s.OverworldPos))
             .ThenBy(s => s.Id, StringComparer.Ordinal)
@@ -438,7 +454,9 @@ public static class JourneyPilot
         // out, never chased from the valley: a herb the road's water pockets
         // sealed off must not become a shuttle the trip can never put down.
         var trail = g.World.RoadWildsSite;
-        return (!trail.Cleared && !skip.Contains(trail.Id)) || FellTripWanted(g, skip);
+        bool hartTrailOwed = g.World.Twist != WorldTwist.HornedLaw
+            && !trail.Cleared && !skip.Contains(trail.Id);
+        return hartTrailOwed || FellTripWanted(g, skip);
     }
 
     /// <summary>
@@ -485,7 +503,7 @@ public static class JourneyPilot
         }
 
         var trail = g.World.RoadWildsSite;
-        if (!trail.Cleared && !skip.Contains(trail.Id))
+        if (g.World.Twist != WorldTwist.HornedLaw && !trail.Cleared && !skip.Contains(trail.Id))
         {
             if (p.Pos == trail.OverworldPos) return '>';
             if (NavKey(g, road, p.Pos, trail.OverworldPos, blocked) is { } toTrail) return toTrail;
@@ -652,20 +670,20 @@ public static class JourneyPilot
 
     /// <summary>Unlettered, and coin enough for the chair and bread besides (D-148).</summary>
     private static bool LettersErrand(Game g) =>
-        g.Player.Skills.Level(SkillId.Lore) < 1 && g.Player.Coin >= Scrivener.SittingCoin + 10;
+        g.Player.Skills.Level(SkillId.Lore) < 1 && g.Player.Coin >= TownCost(g, Scrivener.SittingCoin) + 10;
 
     /// <summary>The lay owned but its hand still knotted (D-148): copy-work until the letters reach it.</summary>
     private static bool CopyErrand(Game g) =>
         g.Player.Books.Contains(BookId.Lay) && !g.Player.HasRead(BookId.Lay)
         && g.Player.Skills.Level(SkillId.Lore) >= 1
         && g.Player.Skills.Level(SkillId.Lore) < BookCatalog.Def(BookId.Lay).LoreReq
-        && g.Player.Coin >= Scrivener.SittingCoin + 10;
+        && g.Player.Coin >= TownCost(g, Scrivener.SittingCoin) + 10;
 
     /// <summary>The first title still unowned and unread that the purse covers with bread to spare (D-148).</summary>
     private static BookDef? BookBuy(Game g) =>
         g.Player.Skills.Level(SkillId.Lore) >= 1
             ? BookCatalog.All.FirstOrDefault(b => !g.Player.Books.Contains(b.Id)
-                && !g.Player.HasRead(b.Id) && g.Player.Coin >= b.Price + 10)
+                && !g.Player.HasRead(b.Id) && g.Player.Coin >= TownCost(g, b.Price) + 10)
             : null;
 
     /// <summary>Any business at the scrivener's (D-148): the walk in fires on the same tests the digits do.</summary>
@@ -674,16 +692,23 @@ public static class JourneyPilot
 
     /// <summary>Worn iron, and coin enough to pay the smith and still eat (D-141).</summary>
     private static bool ForgeErrand(Game g) =>
-        g.IronNeedsWork && g.Player.Coin >= TownForge.WorkCoin + 5;
+        g.IronNeedsWork && g.Player.Coin >= TownCost(g, TownForge.WorkCoin) + 5;
 
     /// <summary>An unsworn proven name, and coin enough to bond and still eat (D-141).</summary>
     private static bool BondErrand(Game g) =>
         !g.GuildSworn && g.Player.Skills.Level(SkillId.Commerce) >= 1
-        && g.Player.Coin >= CarriersGuild.BondCoin + 10;
+        && g.Player.Coin >= TownCost(g, CarriersGuild.BondCoin) + 10;
+
+    private static int TownCost(Game g, int price) => price
+        + (g.World.Twist == WorldTwist.HeldRoad ? WorldTwistCatalog.RoadTithe : 0);
 
     /// <summary>Sacks still on the cart, and coin enough to load one and still eat (D-144).</summary>
     private static bool SaltBuyErrand(Game g) =>
         g.World.PeddlerSalt > 0 && g.Player.Coin >= Peddling.SaltPrice + 10;
+
+    /// <summary>Protected leather goes to the law's one buyer outside the town book (D-152).</summary>
+    private static bool FenceErrand(Game g) =>
+        g.World.Twist == WorldTwist.HornedLaw && g.Player.ProtectedHide > 0;
 
     /// <summary>A talk-level offer's digit, topics counted in front (D-041's stable order).</summary>
     private static char? OfferDigit(Game g, TradeGood good)
@@ -692,6 +717,15 @@ public static class JourneyPilot
             if (g.Offers[i].Good == good)
                 return (char)('1' + g.Topics.Count + i);
         return null;
+    }
+
+    /// <summary>Walk to the tally and settle a Grave Market without raising iron.</summary>
+    private static char? GraveMarketMove(Game g)
+    {
+        var tally = g.NpcsHere.FirstOrDefault(n => n.Kind == NpcKind.GraveTally);
+        if (tally is null) return null;
+        var blocked = LiveFoeCells(g);
+        return NavKey(g, g.CurrentMap, g.Player.Pos, tally.Pos, blocked);
     }
 
     // ---- combat: the read, the dodge, the answer ----
@@ -1204,7 +1238,8 @@ public static class JourneyPilot
     private static bool WantShade(Game g) =>
         g.Shade is null && g.Player.HasSpell(SpellId.Calling)
         && g.Mode == MapMode.Site && g.CurrentSite is { Cleared: false }
-        && g.LiveMonstersHere.Any(m => m.Kind is MonsterKind.Wight or MonsterKind.Graven)
+        && g.LiveMonstersHere.Any(m => m.Kind == MonsterKind.Graven
+            || m.Kind == MonsterKind.Wight && !g.GraveTruceStands)
         && g.SpendableFocus >= SpellCatalog.Def(SpellId.Calling).Focus;
 
     /// <summary>
@@ -1229,7 +1264,8 @@ public static class JourneyPilot
         var p = g.Player;
         if (!p.HasSpell(SpellId.Ward) || p.WardTurns > 0) return false;
         if (g.SpendableFocus < SpellCatalog.Def(SpellId.Ward).Focus) return false;
-        return g.LiveMonstersHere.Any(m => Chebyshev(p.Pos, m.Pos) <= Game.SpellRange);
+        return g.LiveMonstersHere.Any(m => !(m.Kind == MonsterKind.Wight && g.GraveTruceStands)
+            && Chebyshev(p.Pos, m.Pos) <= Game.SpellRange);
     }
 
     /// <summary>'z' when a working (or a release) is wanted now and no stone is due on this cell; the menu driver picks the digit.</summary>

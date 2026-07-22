@@ -84,6 +84,12 @@ public sealed class World
     public required Pos ShrinePos { get; init; }
     public required Pos GatePos { get; init; }
 
+    /// <summary>The one generated law this tier-7+ world keeps (D-152).</summary>
+    public required WorldTwist Twist { get; init; }
+
+    /// <summary>The institution that holds a Held Road world; null under every other law.</summary>
+    public RoadFaith? RoadHolder { get; init; }
+
     /// <summary>
     /// The east road (D-138, plan 2026-07 B1): every world's second overworld,
     /// a bounded drove road climbing out of the valley, with its own weather,
@@ -103,6 +109,9 @@ public sealed class World
     /// map, picked exactly like the valley's (D-074), regrown at the crossing.
     /// </summary>
     public required List<Pos> RoadHerbs { get; init; }
+
+    /// <summary>The Held Road's three protected camp markers; empty under every other law.</summary>
+    public required List<Pos> Waystones { get; init; }
 
     /// <summary>
     /// The market town's name (D-140, plan 2026-07 B2): the far country the
@@ -357,9 +366,10 @@ public static class WorldGen
     /// (D-049): the world-name weave rerolls against them so the long song never
     /// repeats a verse. The list is itself journal-derived, so still deterministic.
     /// </summary>
-    public static World Generate(ulong worldSeed, int tier = 1, string? prevStory = null, IReadOnlyList<OathId>? oaths = null, IReadOnlyCollection<string>? takenNames = null)
+    public static World Generate(ulong worldSeed, int tier = 1, string? prevStory = null, IReadOnlyList<OathId>? oaths = null, IReadOnlyCollection<string>? takenNames = null, WorldTwist? twist = null)
     {
         oaths ??= [];
+        WorldTwist worldTwist = twist ?? WorldTwistCatalog.ForCycle(worldSeed, tier);
         // The crowded dark (D-047): every den holds one more than the tier asks.
         int crowd = oaths.Contains(OathId.CrowdedDark) ? 1 : 0;
         var facts = new FactGraph();
@@ -1402,6 +1412,36 @@ public static class WorldGen
         facts.Add("region", "fells", fellRegionName,
             $"The {fellRegionName}: the fells above the road, nobody's country. No law runs there and no roof stands there; what it keeps, it keeps in hides and weather.");
 
+        // Worlds that differ in kind (D-152): the twist is selected outside
+        // every existing stream, after the whole ordinary world stands. It
+        // writes one law fact and adds only the authored parts its law owns.
+        // Story selection never reads it, and the twist never reads the story.
+        RoadFaith? roadHolder = null;
+        var waystones = new List<Pos>();
+        if (worldTwist == WorldTwist.HeldRoad)
+        {
+            var twistRng = new Rng(SeedTree.Derive(worldSeed, "twist-held-road"));
+            RoadFaith holder = twistRng.Next(2) == 0 ? RoadFaith.Shrine : RoadFaith.Harrow;
+            roadHolder = holder;
+            waystones.AddRange(PlaceWaystones(road, roadHerbs, npcs, sites));
+            facts.Add("twist", WorldTwistCatalog.IdOf(worldTwist), holder.ToString().ToLowerInvariant(),
+                $"{WorldTwistCatalog.NameOf(worldTwist)}: {WorldTwistCatalog.FaithName(holder)} keeps the east road. Its waystones shelter the lawful fire, and one coin from every paid dealing under the road goes into its keeping.");
+        }
+        else if (worldTwist == WorldTwist.GraveMarket)
+        {
+            AddGraveTally(npcs, facts, sites.First(s => s.Kind == SiteKind.Barrow),
+                "npc_barrow_tally", "The tally-keeper of the mound");
+            AddGraveTally(npcs, facts, sites.First(s => s.Kind == SiteKind.Cairn),
+                "npc_cairn_tally", "The tally-keeper of the cairn");
+            facts.Add("twist", WorldTwistCatalog.IdOf(worldTwist), "dead_truce",
+                $"{WorldTwistCatalog.NameOf(worldTwist)}: the dead at the long mound and high cairn keep one truce and one account. They sell leave in the weight the Aegis carries, until blood or theft closes both books.");
+        }
+        else if (worldTwist == WorldTwist.HornedLaw)
+        {
+            facts.Add("twist", WorldTwistCatalog.IdOf(worldTwist), townName,
+                $"{WorldTwistCatalog.NameOf(worldTwist)}: {townName}'s book protects every hart on the drove roads and pays for every wolf-hide brought down from the fells. The cart outside the books knows another price for protected leather.");
+        }
+
         return new World
         {
             Seed = worldSeed,
@@ -1413,6 +1453,8 @@ public static class WorldGen
             Overworld = overworld,
             ShrinePos = shrine,
             GatePos = gate,
+            Twist = worldTwist,
+            RoadHolder = roadHolder,
             Sites = sites,
             Npcs = npcs,
             StoryStorylets = storyStorylets,
@@ -1422,6 +1464,7 @@ public static class WorldGen
             RoadMouthPos = roadMouth,
             RoadHomePos = roadHome,
             RoadHerbs = roadHerbs,
+            Waystones = waystones,
             Fells = fells,
             FellMouthPos = fellTrack,
             FellHomePos = fellHome,
@@ -1431,6 +1474,87 @@ public static class WorldGen
             PeddlerSalt = Peddling.SaltStock(tier),
             Oaths = oaths,
         };
+    }
+
+    private static List<Pos> PlaceWaystones(GameMap road, IReadOnlyCollection<Pos> herbs,
+        IReadOnlyCollection<Npc> npcs, IReadOnlyCollection<Site> sites)
+    {
+        var stones = new List<Pos>();
+        foreach (int targetX in (int[])[RoadW / 4, RoadW / 2, 3 * RoadW / 4])
+        {
+            Pos? chosen = null;
+            for (int radius = 0; radius < RoadW && chosen is null; radius++)
+            {
+                foreach (int x in radius == 0 ? (int[])[targetX] : (int[])[targetX - radius, targetX + radius])
+                {
+                    if (x < 2 || x >= RoadW - 2) continue;
+                    for (int y = 2; y < RoadH - 2; y++)
+                    {
+                        var p = new Pos(x, y);
+                        if (road[p] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills)) continue;
+                        if (herbs.Contains(p) || stones.Any(s => s.Manhattan(p) < 8)) continue;
+                        if (npcs.Any(n => n.SiteId is null && n.Area == Area.Road && n.Pos == p)) continue;
+                        if (sites.Any(s => s.Area == Area.Road && s.OverworldPos == p)) continue;
+                        chosen = p;
+                        break;
+                    }
+                    if (chosen is not null) break;
+                }
+            }
+            if (chosen is { } stone)
+            {
+                road[stone] = Terrain.Waystone;
+                stones.Add(stone);
+            }
+        }
+        return stones;
+    }
+
+    private static void AddGraveTally(List<Npc> npcs, FactGraph facts, Site site, string id, string name)
+    {
+        Pos? pos = null;
+
+        // Put the keeper in a one-cell alcove cut from a wall beside the
+        // approach. Site corridors can be only one cell wide, so placing a
+        // talking NPC on existing floor can seal the route after a bargain.
+        var anchors = new List<Pos>();
+        for (int y = 1; y < site.Map.Height - 1; y++)
+            for (int x = 1; x < site.Map.Width - 1; x++)
+            {
+                var p = new Pos(x, y);
+                if (site.Map.Walkable(p)) anchors.Add(p);
+            }
+        foreach (var anchor in anchors.OrderBy(p => p.Manhattan(site.EntryPos)))
+        {
+            foreach (var (dx, dy) in Directions.Cardinal)
+            {
+                var nook = anchor.Plus(dx, dy);
+                if (site.Map[nook] != Terrain.Wall) continue;
+                int openNeighbors = Directions.Cardinal.Count(d =>
+                    site.Map.Walkable(nook.Plus(d.dx, d.dy)));
+                if (openNeighbors != 1) continue;
+                site.Map[nook] = Terrain.Floor;
+                pos = nook;
+                break;
+            }
+            if (pos is not null) break;
+        }
+
+        if (pos is null)
+            throw new InvalidOperationException($"No tally alcove could be cut in {site.Id}.");
+
+        var tally = new Npc
+        {
+            Id = id,
+            Name = name,
+            Role = "grave tally-keeper",
+            Pos = pos.Value,
+            Kind = NpcKind.GraveTally,
+            Area = site.Area,
+            SiteId = site.Id,
+        };
+        npcs.Add(tally);
+        facts.Add("person", tally.Id, tally.Name, $"{tally.Name}, {tally.Role} of the {site.Id}.");
     }
 
     /// <summary>

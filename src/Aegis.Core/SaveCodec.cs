@@ -317,10 +317,14 @@ namespace Aegis.Core;
 /// v88 when D-150 cut the wolf-gill into the tops: a third fells site a v87
 /// walk crossed as plain heath, the great she-wolf and her pack drawing new
 /// combat dice, a drover's cache, and the pelt that mends cold camps whole.
+/// v89 when D-152 made tier-7+ worlds keep one generated law: waystones alter
+/// camps and official prices, grave mouths can hold a shared truce and market,
+/// and hart or wolf hides can enter a town's law, so a v88 journal beyond the
+/// sixth crossing would walk different tiles, menus, fights, and accounts.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 88;
+    public const int Version = 89;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

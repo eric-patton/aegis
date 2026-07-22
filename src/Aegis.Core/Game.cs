@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed, Forge, Bond, Plea, Salt, Script, Book }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed, Forge, Bond, Plea, Salt, Script, Book, GraveBargain }
 
 /// <summary>
 /// The cart's counter (D-124): the road's prices. The ration a coin or two
@@ -538,6 +538,20 @@ public sealed class Game
     /// <summary>The wolf-winter's word standing in the town (D-149): hides scarce, the counter paying for it.</summary>
     public bool WolfWordStands { get; private set; }
 
+    /// <summary>Held Road coin counted at official counters this world (D-152), a reader only.</summary>
+    public int RoadTithes { get; private set; }
+
+    /// <summary>Wolf hides in the ordinary bundle that still qualify for this world's Horned Law bounty.</summary>
+    public int WolfBountyHides { get; private set; }
+
+    /// <summary>Whether the Grave Market's shared truce still stands.</summary>
+    public bool GraveTruceStands => World.Twist == WorldTwist.GraveMarket
+        && !World.Facts.Exists("twist-state", "grave_truce_broken");
+
+    /// <summary>Whether the current Held Road waystone shelters this camp from weather.</summary>
+    public bool WaystoneShelter => World.Twist == WorldTwist.HeldRoad && Area == Area.Road
+        && Mode == MapMode.Overworld && World.Waystones.Any(p => p.Chebyshev(Player.Pos) <= 1);
+
     /// <summary>Whether a scheduled future already spoke for this tick's raiding night (D-132).</summary>
     private bool _nightSpokenFor;
 
@@ -729,6 +743,23 @@ public sealed class Game
         ? TownMarket.HidePrice + (WolfWordStands ? FellWinter.HideBonus : 0)
         : TalkNpc?.Kind == NpcKind.Peddler ? HidePrice + Peddling.HideBonus : HidePrice;
 
+    /// <summary>Whether the counter across from the bearer collects the Held Road's coin.</summary>
+    private bool TitheCounter => World.Twist == WorldTwist.HeldRoad
+        && TalkNpc?.Kind is NpcKind.Waykeeper or NpcKind.Towner;
+
+    /// <summary>The visible asking after the Held Road's one-coin official tithe.</summary>
+    private int TitheBuy(int price) => price + (TitheCounter ? WorldTwistCatalog.RoadTithe : 0);
+
+    /// <summary>The visible lot paid after the Held Road's one-coin official tithe.</summary>
+    private int TitheSale(int paid) => Math.Max(0, paid - (TitheCounter ? WorldTwistCatalog.RoadTithe : 0));
+
+    private string TitheLabel => TitheCounter ? ", including 1 coin road tithe" : "";
+
+    private void CountTithe()
+    {
+        if (TitheCounter) RoadTithes++;
+    }
+
     /// <summary>
     /// Fired for every key that reached the engine while running (including menu keys
     /// and refused moves, which still write log entries). The save journal records
@@ -850,7 +881,8 @@ public sealed class Game
                     Epithet = spawn.Epithet,
                     Chief = spawn.Chief,
                     SiteId = site.Id,
-                    Dormant = spawn.Kind is MonsterKind.Graven or MonsterKind.Warder,
+                    Dormant = spawn.Kind is MonsterKind.Graven or MonsterKind.Warder
+                        || World.Twist == WorldTwist.GraveMarket && spawn.Kind == MonsterKind.Wight,
                 });
     }
 
@@ -1768,6 +1800,21 @@ public sealed class Game
                 return false;
             }
 
+            // The Horned Law's gate inspection (D-152): the warning is on the
+            // gate before this press. Crossing it with protected leather lets
+            // the town read the secret, take the batch, and write one mark.
+            if (site.Kind == SiteKind.Town && World.Twist == WorldTwist.HornedLaw
+                && Player.ProtectedHide > 0)
+            {
+                int confiscated = Player.ProtectedHide;
+                Player.ProtectedHide = 0;
+                RaiseTownBook(1);
+                if (!World.Facts.Exists("law", "protected_hides_confiscated"))
+                    World.Facts.Add("law", "protected_hides_confiscated", World.TownName,
+                        $"The gate watch found {confiscated} protected hide{(confiscated == 1 ? "" : "s")} in the bearer's pack, took the batch, and entered one mark in the town book.");
+                Log.Add(Turn, $"The gate watch opens your bundle, finds {confiscated} protected hide{(confiscated == 1 ? "" : "s")}, and takes the lot. One mark goes into {World.TownName}'s book.", LogTone.Danger);
+            }
+
             // The mortal beasts smell what keeps an uncanny mouth (D-100 stage
             // 2): they shake the saddlebags off at the bearer's feet (the risk
             // handed back, never carried off free) and bolt for the stead's
@@ -1924,7 +1971,7 @@ public sealed class Game
             Log.Add(Turn, "No camp is made below ground. The dark is not for sleeping in.");
             return false;
         }
-        if (CurrentMap[Player.Pos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills or Terrain.Heath))
+        if (CurrentMap[Player.Pos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills or Terrain.Heath or Terrain.Waystone))
         {
             Log.Add(Turn, "Not here. A camp wants plain ground: grass, heath, the wood's edge, or the lee of a hill.");
             return false;
@@ -1933,7 +1980,7 @@ public sealed class Game
         var (meat, made) = CookPlan();
         if (Player.Rations == 0 && (meat == 0 || made == 0))
         {
-            if (Area != Area.Valley && Sky == RoadSky.Cold)
+            if (Area != Area.Valley && Sky == RoadSky.Cold && !WaystoneShelter)
             {
                 Log.Add(Turn, "A supperless camp under this wind is how walkers are found at the spring thaw. You keep your feet instead.", LogTone.Danger);
                 return false;
@@ -1952,7 +1999,8 @@ public sealed class Game
             Log.Add(Turn, $"You build the fire up and spit {meat} cut{(meat == 1 ? "" : "s")} over it, the way the woodward would: {made} ration{(made == 1 ? "" : "s")} for the road. ({Player.Rations} carried, {Player.RawMeat} raw left)", LogTone.Reward);
         }
 
-        bool foul = Area != Area.Valley && Sky != RoadSky.Clear;
+        bool sheltered = WaystoneShelter;
+        bool foul = Area != Area.Valley && Sky != RoadSky.Clear && !sheltered;
         Player.Rations--;
         int hpBefore = Player.Hp;
         int heal = RoadLife.CampHealBase + RoadLife.CampHealPerSurvival * Player.Skills.Level(SkillId.Survival);
@@ -1964,6 +2012,8 @@ public sealed class Game
         if (Area == Area.Fells && Sky == RoadSky.Cold && !Player.WolfPelt) heal /= 2;
         if (peltHolds)
             Log.Add(Turn, "The great pelt goes over the bedroll, and the fells' cold stays on its own side of it all night.", LogTone.Info);
+        if (sheltered && Sky != RoadSky.Clear)
+            Log.Add(Turn, "The waystone takes the weather off the fire as surely as a roof. Supper and the whole night are still owed.", LogTone.Info);
         Player.Hp = Math.Min(Player.EffectiveMaxHp, Player.Hp + heal);
         Player.Stamina = Player.MaxStamina;
         Player.Focus = Player.MaxFocus;
@@ -2042,10 +2092,17 @@ public sealed class Game
         var carriedSilences = World.Facts.OfType("silence").ToList();
         var keptTruths = World.Facts.OfType("withheld").ToList();
 
+        // The old law ends at its arch (D-152): protected provenance belongs
+        // to one town's book. Across the crossing the leather is only leather.
+        Player.Hide += Player.ProtectedHide;
+        Player.ProtectedHide = 0;
+
         Cycle++;
         // The walked list already carries this world's name (added above), so the
         // next world's weave avoids every verse of the long song (D-049).
-        World = WorldGen.Generate(SeedTree.Derive(MasterSeed, "cycle", Cycle), tier: Cycle, prevStory: prevStory, oaths: oaths, takenNames: Player.WorldsWalked);
+        World = WorldGen.Generate(SeedTree.Derive(MasterSeed, "cycle", Cycle), tier: Cycle,
+            prevStory: prevStory, oaths: oaths, takenNames: Player.WorldsWalked,
+            twist: WorldTwistCatalog.ForCycle(MasterSeed, Cycle));
         _combatRng = new Rng(SeedTree.Derive(World.Seed, "combat"));
         _storylets.OnCrossing(World.Seed, FullCatalog());
         Monsters.Clear();
@@ -2116,6 +2173,8 @@ public sealed class Game
         _risenCount = 0;
         BonesNet = 0;
         RoundStood = false; // the next hearth has met no one's generosity
+        RoadTithes = 0;
+        WolfBountyHides = 0;
         _worldStartTurn = Turn;
         // The calendar is the World bucket's (D-132): the far gate leaves the
         // old world its futures, and the new world sets its own.
@@ -2191,6 +2250,14 @@ public sealed class Game
                 $"First {string.Join(", then ", Player.WorldsWalked)}; and then, the singers swear, a world of glass where the walker wept, which no walker ever walked.");
 
         Log.Add(Turn, $"You step through the arch, and {prevWorld} folds shut behind you like a closed book.", LogTone.Danger);
+        if (World.Twist != WorldTwist.None)
+        {
+            string variant = World.RoadHolder is { } holder
+                ? $", held under {WorldTwistCatalog.FaithName(holder)}"
+                : "";
+            Log.Add(Turn, $"{WorldTwistCatalog.NameOf(World.Twist)} stands in this world{variant}.", LogTone.Info);
+            Log.Add(Turn, World.Facts.Find("twist", WorldTwistCatalog.IdOf(World.Twist))!.Detail, LogTone.Info);
+        }
         // The crossing is the arc's guaranteed real estate (arc sec 5). Rungs are
         // gated on earlier rungs' flags, never on cycle counts, so slow players and
         // beeliners climb the same ladder in the same order.
@@ -2313,6 +2380,30 @@ public sealed class Game
         return false;
     }
 
+    private bool GraveSiteSettled(Site site) => World.Facts.Exists("twist-state", $"grave_bargain_{site.Id}");
+
+    /// <summary>The current market's asking, half the essence its living wights would yield.</summary>
+    public int GraveBargainPrice(Site site) => Monsters.Count(m => m.Alive && m.SiteId == site.Id && m.Kind == MonsterKind.Wight)
+        * WorldTwistCatalog.GravePricePerWight(World.Oaths.Contains(OathId.LeanDark));
+
+    private void BreakGraveTruce()
+    {
+        if (!GraveTruceStands) return;
+        World.Facts.Add("twist-state", "grave_truce_broken", World.Name,
+            "Blood or unbought grave-goods closed both books of the Grave Market. Every remaining wight woke to the old account.");
+        foreach (var wight in Monsters.Where(m => m.Alive && m.Kind == MonsterKind.Wight))
+        {
+            wight.Dormant = false;
+            wight.Intent = null;
+        }
+        Log.Add(Turn, "One old account closes in both places. The truce is broken, both markets are shut, and every remaining watcher wakes.", LogTone.Danger);
+    }
+
+    private void BreakGraveTruce(Monster target)
+    {
+        if (target.Kind == MonsterKind.Wight) BreakGraveTruce();
+    }
+
     private bool DoGrab()
     {
         if (Remnant is not null && Remnant.MapId == CurrentMapId && Remnant.Pos == Player.Pos)
@@ -2330,6 +2421,10 @@ public sealed class Game
 
         if (Mode == MapMode.Site && !CurrentSite!.ChestLooted && Player.Pos == CurrentSite.ChestPos)
         {
+            if (CurrentSite.Kind is SiteKind.Barrow or SiteKind.Cairn
+                && GraveTruceStands && !GraveSiteSettled(CurrentSite))
+                BreakGraveTruce();
+
             int coin = CurrentSite.Kind switch
             {
                 SiteKind.Barrow => _combatRng.Range(15, 27),
@@ -2833,10 +2928,11 @@ public sealed class Game
             NpcKind.Peddler => BuildPeddlerTopics(),
             NpcKind.Waykeeper => BuildWaykeeperTopics(),
             NpcKind.Towner => BuildTownerTopics(npc),
+            NpcKind.GraveTally => BuildGraveTallyTopics(npc),
             _ => BuildTopics(npc),
         });
         _offers.Clear();
-        if (npc.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald or NpcKind.Peddler or NpcKind.Waykeeper or NpcKind.Towner) _offers.AddRange(BuildOffers(npc));
+        if (npc.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald or NpcKind.Peddler or NpcKind.Waykeeper or NpcKind.Towner or NpcKind.GraveTally) _offers.AddRange(BuildOffers(npc));
 
         if (npc.Kind == NpcKind.Severed)
         {
@@ -2860,6 +2956,18 @@ public sealed class Game
             // First-meeting cycle is recorded before the trigger fires, so recognition
             // content can gate on "met one in an EARLIER world" (D-034).
             if (Player.FirstUnbinderCycle == 0) Player.FirstUnbinderCycle = Cycle;
+        }
+        else if (npc.Kind == NpcKind.GraveTally)
+        {
+            Log.Add(Turn, $"{npc.Name} turns a blank, patient face toward the weight the Aegis carries.");
+            if (!World.Facts.Exists("met", npc.Id))
+            {
+                World.Facts.Add("met", npc.Id, World.Name,
+                    $"{npc.Name}, keeping one book of the Grave Market, has spoken with the bearer.");
+                Log.Add(Turn, GraveTruceStands
+                    ? "\"No blow is owed while the account stands. Ask the price, or pass in peace.\""
+                    : "\"The account is shut. What walks here answers in the old coin now.\"");
+            }
         }
         else if (npc.Kind == NpcKind.Peddler)
         {
@@ -3079,6 +3187,21 @@ public sealed class Game
                 + (FellWinterStands
                 ? " And not this season, walker, not without need: a wolf-winter sits up there, and hungry ground makes bold teeth.\""
                 : "\"")),
+        ];
+    }
+
+    private List<(string Label, string Answer)> BuildGraveTallyTopics(Npc npc)
+    {
+        var site = World.Sites.First(s => s.Id == npc.SiteId);
+        string state = GraveSiteSettled(site)
+            ? "\"This account is paid. The way and what it kept are open to you.\""
+            : GraveTruceStands
+                ? $"\"{GraveBargainPrice(site)} essence settles this place. Until then, pass without iron and leave what was laid here.\""
+                : "\"Both books are shut. Nothing is for sale now.\"";
+        return
+        [
+            ("the standing account", state),
+            ("the two markets", "\"One truce, two mouths, two reckonings. A broken word at either closes both.\""),
         ];
     }
 
@@ -3409,8 +3532,8 @@ public sealed class Game
         // listed (D-041): bread at the road's flat price, and a dry bed.
         if (npc.Kind == NpcKind.Waykeeper)
         {
-            offers.Add((TradeGood.Ration, "", $"Buy road bread ({Peddling.RationPrice} coin)"));
-            offers.Add((TradeGood.Bed, "", $"A bed for the night ({RoadLife.BedCoin} coin)"));
+            offers.Add((TradeGood.Ration, "", $"Buy road bread ({TitheBuy(Peddling.RationPrice)} coin{TitheLabel})"));
+            offers.Add((TradeGood.Bed, "", $"A bed for the night ({TitheBuy(RoadLife.BedCoin)} coin{TitheLabel})"));
         }
         // The market's stalls (D-140): each keeps its own counter, one or two
         // digits, always listed (D-041). The mongers buy what the wilds
@@ -3421,7 +3544,7 @@ public sealed class Game
             switch (npc.Id)
             {
                 case "npc_provisioner":
-                    offers.Add((TradeGood.Ration, "", $"Buy a market loaf ({TownMarket.RationPrice} coin)"));
+                    offers.Add((TradeGood.Ration, "", $"Buy a market loaf ({TitheBuy(TownMarket.RationPrice)} coin{TitheLabel})"));
                     // The caravan leg's far end (D-144): the provisioner buys
                     // salt at the town's price, appended after the loaf so no
                     // digit shifts (D-041), the label counting the pack.
@@ -3482,6 +3605,13 @@ public sealed class Game
             // label counting the sacks left.
             offers.Add((TradeGood.Salt, "", SaltCartLabel()));
         }
+        if (npc.Kind == NpcKind.GraveTally)
+        {
+            var site = World.Sites.First(s => s.Id == npc.SiteId);
+            if (GraveTruceStands && !GraveSiteSettled(site) && !site.Cleared)
+                offers.Add((TradeGood.GraveBargain, site.Id,
+                    $"Settle this market ({GraveBargainPrice(site)} essence)"));
+        }
         return offers;
     }
 
@@ -3492,13 +3622,23 @@ public sealed class Game
 
     /// <summary>The provisioner's salt board (D-144): what the pack carries, at the town's price.</summary>
     private string SaltSaleLabel() => Player.Salt > 0
-        ? $"Sell your salt ({Player.Salt} sack{(Player.Salt == 1 ? "" : "s")} at {TownMarket.SaltPrice}c)"
+        ? $"Sell your salt ({Player.Salt} sack{(Player.Salt == 1 ? "" : "s")} at {TownMarket.SaltPrice}c{(TitheCounter ? ", less 1 coin road tithe" : "")})"
         : "Sell your salt (you carry none)";
 
     /// <summary>The fence's entry (D-124): what the pack holds with a past, at the cart's uncurious rate.</summary>
-    private string FenceLabel() => Player.Trinket > 0
-        ? $"Sell what has a past ({Player.Trinket} at {Peddling.TrinketPrice}c, {Player.Trinket * Peddling.TrinketPrice} coin)"
-        : "Sell what has a past (nothing in your pack has one)";
+    private string FenceLabel()
+    {
+        int trinkets = Player.Trinket * Peddling.TrinketPrice;
+        int protectedHides = Player.ProtectedHide * WorldTwistCatalog.ProtectedHideFencePrice;
+        int total = trinkets + protectedHides;
+        if (Player.ProtectedHide == 0 && Player.Trinket > 0)
+            return $"Sell what has a past ({Player.Trinket} at {Peddling.TrinketPrice}c, {trinkets} coin)";
+        if (Player.Trinket == 0 && Player.ProtectedHide > 0)
+            return $"Fence protected hides ({Player.ProtectedHide} at {WorldTwistCatalog.ProtectedHideFencePrice}c, {protectedHides} coin)";
+        return total > 0
+            ? $"Sell what has a past ({Player.Trinket} small thing{(Player.Trinket == 1 ? "" : "s")}, {Player.ProtectedHide} protected hide{(Player.ProtectedHide == 1 ? "" : "s")}; {total} coin)"
+            : "Sell what has a past (nothing in your pack has one)";
+    }
 
     /// <summary>A deed's offer label (D-054): the asking, the waiting, or the standing.</summary>
     private string PledgeLabel(PatronDeedDef def)
@@ -3561,9 +3701,9 @@ public sealed class Game
         var def = LessonCatalog.Def(id);
         if (Player.HasLesson(id))
             return $"{char.ToUpperInvariant(def.Name[0])}{def.Name[1..]} (yours already)";
-        return def.Price > 0 && SteadsTeaching
+        return def.Price > 0 && SteadsTeaching && TalkNpc?.Kind != NpcKind.Towner
             ? $"Be shown {def.Name} (freely, to the stead's own)"
-            : $"Be shown {def.Name} ({def.Price} coin)";
+            : $"Be shown {def.Name} ({TitheBuy(def.Price)} coin{TitheLabel})";
     }
 
     /// <summary>
@@ -3586,16 +3726,17 @@ public sealed class Game
         // so the boon is felt at the moment it pays (D-023's rule). The town's
         // school (D-141) waves nothing: the stead's regard does not reach a
         // town counter, and the forge-smith's secret is priced like his coal.
-        int price = SteadsTeaching && TalkNpc!.Kind != NpcKind.Towner ? 0 : def.Price;
+        int price = SteadsTeaching && TalkNpc!.Kind != NpcKind.Towner ? 0 : TitheBuy(def.Price);
         if (Player.Coin < price)
         {
-            Log.Add(Turn, $"{TalkNpc!.Name}: \"Knowing has a price like anything else: {def.Price} coin, and you hold {Player.Coin}.\"");
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Knowing has a price like anything else: {price} coin, and you hold {Player.Coin}.\"");
             return;
         }
         if (price == 0 && def.Price > 0)
             Log.Add(Turn, $"{TalkNpc!.Name} pushes your coin back across with two fingers. \"Not from you. What this stead knows, its own are shown.\"", LogTone.Reward);
 
         Player.Coin -= price;
+        if (price > 0) CountTithe();
         Player.Lessons.Add(id);
         switch (id)
         {
@@ -3747,8 +3888,8 @@ public sealed class Game
     /// <summary>The forge's entry (D-141): the sitting priced, the label reading the iron's true state.</summary>
     private string ForgeLabel() =>
         BenchTarget() is { } worn
-            ? $"Work your iron under the smith's eye ({TownForge.WorkCoin} coin; the {worn.Name}, wear {worn.Wear}/{worn.MaxWear})"
-            : $"Work your iron under the smith's eye ({TownForge.WorkCoin} coin; your iron stands true)";
+            ? $"Work your iron under the smith's eye ({TitheBuy(TownForge.WorkCoin)} coin{TitheLabel}; the {worn.Name}, wear {worn.Wear}/{worn.MaxWear})"
+            : $"Work your iron under the smith's eye ({TitheBuy(TownForge.WorkCoin)} coin{TitheLabel}; your iron stands true)";
 
     /// <summary>
     /// A sitting at the town forge (D-141): the same iron, the same honest
@@ -3764,13 +3905,15 @@ public sealed class Game
             Log.Add(Turn, $"{TalkNpc!.Name} turns each piece once against the light and hands it back. \"True, all of it. Come back when the road has had its say; the road always gets its say.\"");
             return;
         }
-        if (Player.Coin < TownForge.WorkCoin)
+        int price = TitheBuy(TownForge.WorkCoin);
+        if (Player.Coin < price)
         {
-            Log.Add(Turn, $"{TalkNpc!.Name}: \"Coal and the wheel come to {TownForge.WorkCoin} coin the sitting, and you hold {Player.Coin}. The forge runs no slates; the moot has opinions about slates.\"");
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Coal, the wheel, and the standing charge come to {price} coin the sitting, and you hold {Player.Coin}. The forge runs no slates; the moot has opinions about slates.\"");
             return;
         }
 
-        Player.Coin -= TownForge.WorkCoin;
+        Player.Coin -= price;
+        CountTithe();
         int off = Math.Min(worn.Wear, FileRate());
         worn.Wear -= off;
         Log.Add(Turn, worn.Wear == 0
@@ -3782,8 +3925,8 @@ public sealed class Game
     /// <summary>The guild's entry (D-141): one digit, the label reading the bond's state true (D-041).</summary>
     private string BondLabel() =>
         GuildSworn ? "The carriers' bond (sworn; your lots sell under the guild's mark)"
-        : Player.Skills.Level(SkillId.Commerce) < 1 ? $"Swear the carriers' bond ({CarriersGuild.BondCoin} coin; the guild bonds no unproven hand)"
-        : $"Swear the carriers' bond ({CarriersGuild.BondCoin} coin)";
+        : Player.Skills.Level(SkillId.Commerce) < 1 ? $"Swear the carriers' bond ({TitheBuy(CarriersGuild.BondCoin)} coin{TitheLabel}; the guild bonds no unproven hand)"
+        : $"Swear the carriers' bond ({TitheBuy(CarriersGuild.BondCoin)} coin{TitheLabel})";
 
     /// <summary>
     /// The carriers' bond sworn (D-141): the town's first ledger opened on the
@@ -3805,16 +3948,18 @@ public sealed class Game
             Log.Add(Turn, $"{TalkNpc!.Name}: \"The market's chalk has no weight against your name yet. Sell at the counters until it does, then bring me the same hand. The guild bonds trades, not intentions.\"");
             return;
         }
-        if (Player.Coin < CarriersGuild.BondCoin)
+        int price = TitheBuy(CarriersGuild.BondCoin);
+        if (Player.Coin < price)
         {
-            Log.Add(Turn, $"{TalkNpc!.Name}: \"The bond is {CarriersGuild.BondCoin} coin down, and you hold {Player.Coin}. A bond the sworn hand did not feel is not one the guild can lean on.\"");
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The bond is {price} coin down, and you hold {Player.Coin}. A bond the sworn hand did not feel is not one the guild can lean on.\"");
             return;
         }
 
-        Player.Coin -= CarriersGuild.BondCoin;
+        Player.Coin -= price;
+        CountTithe();
         World.Facts.Add("guild", "guild_sworn", World.TownName,
             $"The bearer swore the carriers' bond in {World.TownName}: sworn weights, bonded loads, and the guild's mark on every lot thereafter.");
-        Log.Add(Turn, $"You count {CarriersGuild.BondCoin} coin onto the guild's book and say the words after {TalkNpc!.Name}: weights sworn, loads bonded, the moot to hold you to both. The guildmaster enters your name without ceremony, which is itself the ceremony. Your lots sell under the guild's mark now, a coin the better at every counter in {World.TownName}.", LogTone.Reward);
+        Log.Add(Turn, $"You count {price} coin onto the guild's book and say the words after {TalkNpc!.Name}: weights sworn, loads bonded, the moot to hold you to both. The guildmaster enters your name without ceremony, which is itself the ceremony. Your lots sell under the guild's mark now, a coin the better at every counter in {World.TownName}.", LogTone.Reward);
     }
 
     /// <summary>
@@ -3878,14 +4023,14 @@ public sealed class Game
 
     /// <summary>The scrivener's sitting read true (D-148): letters for the unlettered, copy-work for the schooled.</summary>
     private string ScriptLabel() => Player.Skills.Level(SkillId.Lore) < 1
-        ? $"Sit to your letters ({Scrivener.SittingCoin} coin the sitting)"
-        : $"Sit and copy under the scrivener's eye ({Scrivener.SittingCoin} coin the sitting)";
+        ? $"Sit to your letters ({TitheBuy(Scrivener.SittingCoin)} coin the sitting{TitheLabel})"
+        : $"Sit and copy under the scrivener's eye ({TitheBuy(Scrivener.SittingCoin)} coin the sitting{TitheLabel})";
 
     /// <summary>A shelf entry's label (D-148): the asking, the owning, or the finished book, so the board reads true (D-041).</summary>
     private string BookLabel(BookDef def) =>
         Player.HasRead(def.Id) ? $"{Cap(def.Title)} (read, and yours for good)"
         : Player.Books.Contains(def.Id) ? $"{Cap(def.Title)} (yours already; v reads at the shrine)"
-        : $"Buy {def.Title} ({def.Price} coin{(def.LoreReq > 1 ? ", a knotted hand" : "")})";
+        : $"Buy {def.Title} ({TitheBuy(def.Price)} coin{TitheLabel}{(def.LoreReq > 1 ? ", a knotted hand" : "")})";
 
     /// <summary>
     /// A sitting at the scrivener's desk (D-148): coin for the chair and the
@@ -3897,13 +4042,15 @@ public sealed class Game
     private void TryScribeSitting()
     {
         if (TownCounterBarred()) return;
-        if (Player.Coin < Scrivener.SittingCoin)
+        int price = TitheBuy(Scrivener.SittingCoin);
+        if (Player.Coin < price)
         {
-            Log.Add(Turn, $"{TalkNpc!.Name}: \"The chair costs {Scrivener.SittingCoin} coin the sitting, and you hold {Player.Coin}. Come back with it; letters keep.\"");
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The chair costs {price} coin the sitting, and you hold {Player.Coin}. Come back with it; letters keep.\"");
             return;
         }
         bool wasLettered = Player.Skills.Level(SkillId.Lore) >= 1;
-        Player.Coin -= Scrivener.SittingCoin;
+        Player.Coin -= price;
+        CountTithe();
         for (int i = 0; i < Scrivener.SittingUses; i++) Player.Skills.AddUse(SkillId.Lore);
         if (!wasLettered && Player.Skills.Level(SkillId.Lore) >= 1)
         {
@@ -3941,14 +4088,16 @@ public sealed class Game
             Log.Add(Turn, $"{TalkNpc!.Name}: \"Letters first. I sell no one paper they cannot open; it is bad for the paper and worse for the trade. The chair is right there.\"");
             return;
         }
-        if (Player.Coin < def.Price)
+        int price = TitheBuy(def.Price);
+        if (Player.Coin < price)
         {
-            Log.Add(Turn, $"{TalkNpc!.Name}: \"{Cap(def.Title)} asks {def.Price} coin, and you hold {Player.Coin}. Books keep better than most things worth wanting.\"");
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"{Cap(def.Title)} asks {price} coin, and you hold {Player.Coin}. Books keep better than most things worth wanting.\"");
             return;
         }
-        Player.Coin -= def.Price;
+        Player.Coin -= price;
+        CountTithe();
         Player.Books.Add(id);
-        Log.Add(Turn, $"You count out {def.Price} coin and {def.Title} goes wrapped in oilcloth into your pack: {def.Blurb}. (v reads it at the shrine; {Player.Coin} coin left)", LogTone.Reward);
+        Log.Add(Turn, $"You count out {price} coin and {def.Title} goes wrapped in oilcloth into your pack: {def.Blurb}. (v reads it at the shrine; {Player.Coin} coin left)", LogTone.Reward);
     }
 
     /// <summary>The draught entry (D-090): the simples steeped, priced in sprigs, never in coin.</summary>
@@ -4158,13 +4307,18 @@ public sealed class Game
         : "Have a wound dressed (you are whole)";
 
     /// <summary>The hide-sale entry (D-071): what the bench will weigh, and for how much.</summary>
+    private int HornedHideBonus => World.Twist == WorldTwist.HornedLaw && TalkNpc?.Id == "npc_hidemonger"
+        ? Math.Min(Player.Hide, WolfBountyHides) * WorldTwistCatalog.WolfHideTownBonus : 0;
+
     private string HideSaleLabel() => Player.Hide > 0
-        ? $"Sell your hides ({Player.Hide} at {HidePriceHere}c, {Player.Hide * HidePriceHere} coin{(TalkNpc?.Id == "npc_hidemonger" && WolfWordStands ? "; wolf-winter's scarcity" : "")})"
-        : "Sell hides (none cured yet)";
+        ? $"Sell your hides ({Player.Hide} at {HidePriceHere}c, {TitheSale(Player.Hide * HidePriceHere + HornedHideBonus)} coin{(HornedHideBonus > 0 ? $"; {HornedHideBonus} wolf bounty" : "")}{(TalkNpc?.Id == "npc_hidemonger" && WolfWordStands ? "; wolf-winter's scarcity" : "")}{(TitheCounter ? "; 1 coin road tithe" : "")}{(TalkNpc?.Kind != NpcKind.Peddler && Player.ProtectedHide > 0 ? $"; {Player.ProtectedHide} protected refused" : "")})"
+        : TalkNpc?.Kind != NpcKind.Peddler && Player.ProtectedHide > 0
+            ? $"Sell hides ({Player.ProtectedHide} protected hide{(Player.ProtectedHide == 1 ? " is" : "s are")} refused here)"
+            : "Sell hides (none cured yet)";
 
     /// <summary>The herb-sale entry (D-074): what the satchel holds, at this buyer's price (D-081).</summary>
     private string HerbSaleLabel() => Player.Herb > 0
-        ? $"Sell your herbs ({Player.Herb} at {HerbPriceHere}c, {Player.Herb * HerbPriceHere} coin)"
+        ? $"Sell your herbs ({Player.Herb} at {HerbPriceHere}c, {TitheSale(Player.Herb * HerbPriceHere)} coin{(TitheCounter ? "; 1 coin road tithe" : "")})"
         : "Sell herbs (satchel empty)";
 
     private void OpenTradeMenu()
@@ -4233,9 +4387,11 @@ public sealed class Game
             return;
         }
         int hides = Player.Hide;
-        int paid = hides * HidePriceHere + TownHaggle();
+        int paid = TitheSale(hides * HidePriceHere + HornedHideBonus + TownHaggle());
         Player.Hide = 0;
+        WolfBountyHides = 0;
         Player.Coin += paid;
+        CountTithe();
         Log.Add(Turn, $"You lay {hides} hide{(hides == 1 ? "" : "s")} across the bench. {TalkNpc!.Name} runs a thumb over each, counts, and pays {paid} coin. ({Player.Coin} now)", LogTone.Reward);
         FeedCommerce();
         if (!Player.HideLineHeard)
@@ -4259,9 +4415,10 @@ public sealed class Game
             return;
         }
         int herbs = Player.Herb;
-        int paid = herbs * HerbPriceHere + TownHaggle(); // the stillroom pays the apothecary's price (D-081); the town stall the market's (D-140)
+        int paid = TitheSale(herbs * HerbPriceHere + TownHaggle()); // the stillroom pays the apothecary's price (D-081); the town stall the market's (D-140)
         Player.Herb = 0;
         Player.Coin += paid;
+        CountTithe();
         Log.Add(Turn, TalkNpc!.Id == "npc_herbwife"
             ? $"You empty {herbs} sprig{(herbs == 1 ? "" : "s")} onto the stillroom's table. {TalkNpc.Name} names each one without looking twice and pays {paid} coin, full worth. ({Player.Coin} now)"
             : TalkNpc.Id == "npc_herbmonger"
@@ -4476,13 +4633,15 @@ public sealed class Game
             Log.Add(Turn, $"{TalkNpc!.Name}: \"Your pack says no, whatever your mouth says. Eat some of it first.\"");
             return;
         }
-        if (Player.Coin < Peddling.RationPrice)
+        int price = TitheBuy(Peddling.RationPrice);
+        if (Player.Coin < price)
         {
-            Log.Add(Turn, $"{TalkNpc!.Name}: \"{Peddling.RationPrice} coin on the road, and you hold {Player.Coin}. The cart does not run a slate.\"");
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"{price} coin on the road, and you hold {Player.Coin}. The counter does not run a slate.\"");
             return;
         }
 
-        Player.Coin -= Peddling.RationPrice;
+        Player.Coin -= price;
+        CountTithe();
         Player.Rations++;
         Log.Add(Turn, $"Twice-baked bread and a knot of sausage off the cart's board, dear as road food always is. ({Player.Rations} carried)", LogTone.Reward);
         if (LarderBarred && !_cartsBreadNamed)
@@ -4506,13 +4665,15 @@ public sealed class Game
             Log.Add(Turn, $"{TalkNpc!.Name}: \"Your pack is full, friend. The stall will be here when it is not.\"");
             return;
         }
-        if (Player.Coin < TownMarket.RationPrice)
+        int price = TitheBuy(TownMarket.RationPrice);
+        if (Player.Coin < price)
         {
-            Log.Add(Turn, $"{TalkNpc!.Name}: \"{TownMarket.RationPrice} coin the loaf, and you hold {Player.Coin}. The market runs no slates for new faces.\"");
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"{price} coin the loaf, and you hold {Player.Coin}. The market runs no slates for new faces.\"");
             return;
         }
 
-        Player.Coin -= TownMarket.RationPrice;
+        Player.Coin -= price;
+        CountTithe();
         Player.Rations++;
         Log.Add(Turn, $"A market loaf still warm from the oven-row, and change from the road's price. ({Player.Rations} carried)", LogTone.Reward);
     }
@@ -4526,21 +4687,26 @@ public sealed class Game
     /// </summary>
     private void TryFenceTrinkets()
     {
-        if (Player.Trinket == 0)
+        if (Player.Trinket == 0 && Player.ProtectedHide == 0)
         {
             Log.Add(Turn, $"{TalkNpc!.Name}: \"Show me a thing that cannot give an account of itself, and I will price the silence in. Your pack holds nothing of the kind today.\"");
             return;
         }
 
         int sold = Player.Trinket;
-        int paid = sold * Peddling.TrinketPrice;
+        int hidden = Player.ProtectedHide;
+        int paid = sold * Peddling.TrinketPrice + hidden * WorldTwistCatalog.ProtectedHideFencePrice;
         Player.Trinket = 0;
+        Player.ProtectedHide = 0;
         Player.Coin += paid;
-        Log.Add(Turn, $"You set {sold} small thing{(sold == 1 ? "" : "s")} on the cart's board. {TalkNpc!.Name} turns each once in the light, asks nothing, and counts out {paid} coin. ({Player.Coin} now)", LogTone.Reward);
+        Log.Add(Turn, $"You set {sold} small thing{(sold == 1 ? "" : "s")} and {hidden} protected hide{(hidden == 1 ? "" : "s")} on the cart's board. {TalkNpc!.Name} turns the lot once in the light, asks nothing, and counts out {paid} coin. ({Player.Coin} now)", LogTone.Reward);
         Log.Add(Turn, "\"And now they are merely things. Whatever they were is between you and a mantel somewhere, and I was never part of it.\"");
-        if (!World.Facts.Exists("secret", "fenced_goods"))
+        if (sold > 0 && !World.Facts.Exists("secret", "fenced_goods"))
             World.Facts.Add("secret", "fenced_goods", World.SettlementName,
                 $"Small things that once stood on mantels in {World.SettlementName} have gone away down the road in a peddler's cart, and no one knows whose hand sent them.");
+        if (hidden > 0 && !World.Facts.Exists("secret", "protected_hides_fenced"))
+            World.Facts.Add("secret", "protected_hides_fenced", World.TownName,
+                $"Protected leather left the Horned Law's country under a peddler's canvas, and no town book names the hand that sold it.");
         _offers.Clear();
         _offers.AddRange(BuildOffers(TalkNpc!)); // the fence's label counts the pack
     }
@@ -4589,9 +4755,10 @@ public sealed class Game
         }
 
         int sacks = Player.Salt;
-        int paid = sacks * TownMarket.SaltPrice + TownHaggle();
+        int paid = TitheSale(sacks * TownMarket.SaltPrice + TownHaggle());
         Player.Salt = 0;
         Player.Coin += paid;
+        CountTithe();
         Log.Add(Turn, $"You heft {sacks} sack{(sacks == 1 ? "" : "s")} of salt onto the board. {TalkNpc!.Name} thumbs a pinch from each, nods at the grey of it, and pays {paid} coin. ({Player.Coin} now)", LogTone.Reward);
         FeedCommerce();
         if (!Player.SaltLineHeard)
@@ -4820,6 +4987,35 @@ public sealed class Game
         _offers.AddRange(BuildOffers(TalkNpc!)); // the label reads the stood round now
     }
 
+    private void TryGraveBargain(string siteId)
+    {
+        var site = World.Sites.First(s => s.Id == siteId);
+        if (!GraveTruceStands || GraveSiteSettled(site) || site.Cleared)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"There is no open account here.\"");
+            return;
+        }
+        int price = GraveBargainPrice(site);
+        if (Player.Essence < price)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"{price} essence settles this place. The Aegis carries {Player.Essence}. The count does not bend.\"");
+            return;
+        }
+
+        Player.Essence -= price;
+        foreach (var wight in Monsters.Where(m => m.Alive && m.SiteId == site.Id && m.Kind == MonsterKind.Wight))
+        {
+            wight.Hp = 0;
+            wight.Intent = null;
+        }
+        site.Cleared = true;
+        World.Facts.Add("twist-state", $"grave_bargain_{site.Id}", World.Name,
+            $"The bearer paid {price} essence at {site.Id}; its watchers withdrew and its kept ground opened without blood.");
+        Log.Add(Turn, $"You let {price} essence go into the tally. The watchers withdraw without a blow, and the kept ground opens. ({Player.Essence} essence remains)", LogTone.Reward);
+        _offers.Clear();
+        _offers.AddRange(BuildOffers(TalkNpc!));
+    }
+
     private void HandleTalkMenuKey(char key)
     {
         if (key >= '1' && key <= '0' + _topics.Count)
@@ -4830,7 +5026,7 @@ public sealed class Game
             return;
         }
 
-        if (TalkNpc!.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald or NpcKind.Peddler or NpcKind.Waykeeper or NpcKind.Towner
+        if (TalkNpc!.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald or NpcKind.Peddler or NpcKind.Waykeeper or NpcKind.Towner or NpcKind.GraveTally
             && key > '0' + _topics.Count && key <= '0' + _topics.Count + _offers.Count)
         {
             var (good, arg, _) = _offers[key - '1' - _topics.Count];
@@ -4903,6 +5099,9 @@ public sealed class Game
                     if (TalkNpc!.Kind == NpcKind.Peddler) TryBuySalt(); else TrySellSalt();
                     _offers.Clear();
                     _offers.AddRange(BuildOffers(TalkNpc!));
+                    break;
+                case TradeGood.GraveBargain:
+                    TryGraveBargain(arg);
                     break;
             }
             return;
@@ -5964,12 +6163,14 @@ public sealed class Game
     /// </summary>
     private void TryBedDown()
     {
-        if (Player.Coin < RoadLife.BedCoin)
+        int price = TitheBuy(RoadLife.BedCoin);
+        if (Player.Coin < price)
         {
-            Log.Add(Turn, $"{TalkNpc!.Name}: \"{RoadLife.BedCoin} coin the bed, and you hold {Player.Coin}. The bench by the fire is free, and it is a bench.\"");
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"{price} coin the bed, and you hold {Player.Coin}. The bench by the fire is free, and it is a bench.\"");
             return;
         }
-        Player.Coin -= RoadLife.BedCoin;
+        Player.Coin -= price;
+        CountTithe();
         Player.Hp = Player.EffectiveMaxHp;
         Player.Stamina = Player.MaxStamina;
         Player.Focus = Player.MaxFocus;
@@ -6073,6 +6274,7 @@ public sealed class Game
             Log.Add(Turn, "You are winded; the blow is feeble.", LogTone.Combat);
         }
 
+        BreakGraveTruce(target);
         target.Hp -= damage;
         if (target.Alive)
         {
@@ -6147,6 +6349,7 @@ public sealed class Game
                 && m.SiteId == CurrentSite!.Id && m.Pos.Chebyshev(Player.Pos) == 1).ToList())
             {
                 int carry = Math.Max(1, damage / 2);
+                BreakGraveTruce(other);
                 other.Hp -= carry;
                 if (other.Alive)
                 {
@@ -6249,7 +6452,20 @@ public sealed class Game
             // The she-wolf (D-150) carries two hides' worth of beast besides her pelt.
             hides = 1 + Player.Skills.Bonus(SkillId.Hunting) + (Player.Folk == FolkId.Heathborn ? 1 : 0)
                 + (target.Kind == MonsterKind.GreatWolf ? 2 : 0);
-            Player.Hide += hides;
+            if (target.Kind == MonsterKind.Hart && World.Twist == WorldTwist.HornedLaw)
+            {
+                Player.ProtectedHide += hides;
+                if (!World.Facts.Exists("secret", "protected_hart_taken"))
+                    World.Facts.Add("secret", "protected_hart_taken", World.TownName,
+                        "A protected hart was taken under the Horned Law. Its leather remains unread while it stays outside the town's book.");
+            }
+            else
+            {
+                Player.Hide += hides;
+                if (target.Kind is MonsterKind.Wolf or MonsterKind.GreatWolf
+                    && World.Twist == WorldTwist.HornedLaw)
+                    WolfBountyHides += hides;
+            }
             GainSkill(SkillId.Hunting);
             // The hunt yields raw cuts, not a road-ration (D-073): they cook into
             // rations at a fire, the hunting lane feeding the cooking lane. Uncapped
@@ -6278,6 +6494,7 @@ public sealed class Game
                 : $"The war-boar goes down heavy enough to feel through your boots. No purse on a beast: you take {essence} essence, and leave more meat than a walking body can carry.",
             MonsterKind.Warder => $"The sling-warder sits down against the bank like a man at the end of a long watch, and does not get up. You take {coin} coin and {essence} essence.",
             MonsterKind.Thegn => $"The sword-thegn lowers its point and folds down without a sound, the way it did everything: unhurried, and at last relieved of a watch no one remembered setting. You take {coin} coin and {essence} essence.",
+            MonsterKind.Hart when World.Twist == WorldTwist.HornedLaw => $"The hart drops at the end of its run. The hide bears the town's protection whether anyone saw the taking or not; you bundle {hides} protected piece{(hides == 1 ? "" : "s")} apart, and take the raw meat. ({Player.ProtectedHide} protected hides, {Player.RawMeat} raw meat)",
             MonsterKind.Hart => $"The hart drops at the end of its run. You take the hide{(hides > 1 ? $", {hides} good pieces," : "")} and the raw meat, to cook at a fire. ({Player.Hide} hides, {Player.RawMeat} raw meat)",
             MonsterKind.Wolf => $"The moor-wolf goes down snapping and is still. A thick winter pelt{(hides > 1 ? $", {hides} good pieces," : "")} and the raw meat, dark and lean, for a braver fire than most. ({Player.Hide} hides, {Player.RawMeat} raw meat)",
             MonsterKind.GreatWolf => $"The great she-wolf goes down at last the way a hillside goes, slowly and all at once, and the gill is quiet in a way it has not been in living drovers' memory. {hides} good hides off her frame, and the raw meat besides. ({Player.Hide} hides, {Player.RawMeat} raw meat)",
@@ -6495,6 +6712,7 @@ public sealed class Game
                 + (Player.HasPerk(PerkId.TrueArc) ? 1 : 0);
             damage = Math.Max(1, damage + Player.StanceBlow - (Player.ChilledTurns > 0 ? 2 : 0)); // footing (D-094), grave-cold (D-096)
             damage += RiposteBonus(target); // the open door (D-125) is within the ash's reach
+            BreakGraveTruce(target);
             target.Hp -= damage;
 
             if (target.Alive)
@@ -6646,6 +6864,7 @@ public sealed class Game
             + (family == SkillId.Hafted && Player.HasPerk(PerkId.TrueArc) ? 1 : 0);
         damage = Math.Max(1, damage + Player.StanceBlow - (Player.ChilledTurns > 0 ? 2 : 0)); // footing (D-094), grave-cold (D-096)
         damage += RiposteBonus(target); // the open door (D-125), hit with everything
+        BreakGraveTruce(target);
         target.Hp -= damage;
 
         if (target.Alive)
@@ -6829,6 +7048,7 @@ public sealed class Game
             if (target is null) continue;
 
             int damage = _combatRng.Range(2, 5) + Player.SpellBonus + Player.Skills.Bonus(SkillId.Spellcraft);
+            BreakGraveTruce(target);
             target.Hp -= damage;
             if (target.Alive)
             {
@@ -6910,6 +7130,7 @@ public sealed class Game
         }
 
         int damage = _combatRng.Range(7, 12) + 2 * Player.SpellBonus + Player.Skills.Bonus(SkillId.Spellcraft);
+        BreakGraveTruce(target);
         target.Hp -= damage;
         if (target.Alive)
         {
@@ -7102,6 +7323,7 @@ public sealed class Game
                 + Player.AimBonus + Player.Skills.Bonus(SkillId.Ranged)
                 + (Player.HasPerk(PerkId.HuntersEye) ? 1 : 0)
                 + (Player.HasPerk(PerkId.PickedMoment) && (target.Intent is not null || target.ExposedTurns > 0) ? 2 : 0);
+            BreakGraveTruce(target);
             target.Hp -= damage;
 
             if (target.Alive)
@@ -8216,6 +8438,11 @@ public sealed class Game
             }
             RaiseRegard(2, $"The lights on the mound above {World.SettlementName} are out tonight. The stead will sleep the easier, and know why.");
         }
+        else if (site.Kind == SiteKind.Cairn)
+        {
+            Log.Add(Turn, "The high cairn is still. Wind moves through the kerb gap, and nothing under the stones answers it.", LogTone.Reward);
+            Log.Add(Turn, "\"A watch kept above every roof and every law. It is ended now, and counted where the fells keep their counts.\"", LogTone.Aegis);
+        }
         else if (site.Kind == SiteKind.Quarry)
         {
             World.Facts.Add("deed", "quarry_hushed", World.SettlementName,
@@ -8251,6 +8478,11 @@ public sealed class Game
             // means the glade is hunted out for now; the far gate fills it again.
             Log.Add(Turn, "The glade goes still. Nothing left in it but tracks, crushed bracken, and the smell of the hunt.", LogTone.Reward);
             Log.Add(Turn, "\"A smaller counting, this one. Not a deed. But the body keeps that ledger too, and it is heavier than it looks.\"", LogTone.Aegis);
+        }
+        else if (site.Kind == SiteKind.Gill)
+        {
+            Log.Add(Turn, "The bone-gill lies quiet behind you. Wind moves along the cut where the pack moved, and no answering feet come through the scree.", LogTone.Reward);
+            Log.Add(Turn, "\"The fells kept this count in tooth and winter. You have closed it, for this world's walking.\"", LogTone.Aegis);
         }
         else
         {
@@ -8425,6 +8657,10 @@ public sealed class Game
 
     private void ActMonster(Monster monster)
     {
+        // The Grave Market's truce (D-152): wights remain bodies on the map,
+        // but neither wind up nor pursue until one shared account is broken.
+        if (monster.Kind == MonsterKind.Wight && GraveTruceStands) return;
+
         // The guard regathered (D-125): a stagger walked off un-riposted is a
         // door closed. The body next acts whole.
         if (monster.GuardBroken && monster.ExposedTurns == 0) monster.GuardBroken = false;
@@ -8643,6 +8879,7 @@ public sealed class Game
                     else
                     {
                         int answer = 1 + blade.EffectiveBonus(Player.Attributes);
+                        BreakGraveTruce(monster);
                         monster.Hp -= answer;
                         if (monster.Alive)
                             Log.Add(Turn, $"You take the blow standing and answer over the iron: the {monster.Name} is cut for {answer}.", LogTone.Combat);
@@ -8774,6 +9011,7 @@ public sealed class Game
         {
             var foe = Monsters.Where(m => m.Alive && !m.Dormant && m.SiteId == CurrentSite!.Id
                     && m.Kind is not MonsterKind.Severed and not MonsterKind.Hart
+                    && !(m.Kind == MonsterKind.Wight && GraveTruceStands)
                     && m.Pos.Chebyshev(guest.Pos) == 1)
                 .OrderBy(m => m.Hp).ThenBy(m => m.Pos.X).ThenBy(m => m.Pos.Y).FirstOrDefault();
             if (foe is not null)
@@ -9881,6 +10119,11 @@ public sealed class Game
         UnbinderY: World.Unbinder.Pos.Y,
         UnbindingsLeft: UnbindingsLeft,
         StoryTemplate: World.Facts.OfType("story").FirstOrDefault()?.Subject ?? "",
+        WorldTwist: WorldTwistCatalog.IdOf(World.Twist),
+        TwistVariant: World.RoadHolder?.ToString().ToLowerInvariant() ?? "",
+        Waystones: string.Join(",", World.Waystones.Select(p => $"{p.X}:{p.Y}")),
+        RoadTithes: RoadTithes,
+        GraveTruceStands: GraveTruceStands,
         Oaths: string.Join(",", World.Oaths.Select(OathCatalog.IdOf)),
         Burden: Burden,
         Hp: Player.Hp,
@@ -9916,6 +10159,8 @@ public sealed class Game
         GrudgeTitle: MoundGrudge.TitleOf(Grudge),
         Rations: Player.Rations,
         Hide: Player.Hide,
+        ProtectedHide: Player.ProtectedHide,
+        WolfBountyHides: WolfBountyHides,
         RawMeat: Player.RawMeat,
         Herb: Player.Herb,
         Draughts: Player.Draughts,
@@ -10055,6 +10300,11 @@ public sealed record Snapshot(
     int UnbinderY,
     int UnbindingsLeft,
     string StoryTemplate,
+    string WorldTwist,
+    string TwistVariant,
+    string Waystones,
+    int RoadTithes,
+    bool GraveTruceStands,
     string Oaths,
     int Burden,
     int Hp,
@@ -10090,6 +10340,8 @@ public sealed record Snapshot(
     string GrudgeTitle,
     int Rations,
     int Hide,
+    int ProtectedHide,
+    int WolfBountyHides,
     int RawMeat,
     int Herb,
     int Draughts,

@@ -13,13 +13,14 @@ public sealed record SiteMeasure(
 /// </summary>
 public sealed record WorldMeasure(
     ulong Seed, int Tier, string WorldName, string SettlementName, string Story,
+    string Twist, string TwistVariant, int Waystones,
     int Npcs, int Villagers, int Facts, Dictionary<string, int> FactTypes,
     int StoryStorylets, List<string> StoryletIds,
     List<SiteMeasure> Sites, int Gleanings, int HerbSpots, bool WildPony, int BreadBase);
 
 /// <summary>One tier's slice of the batch: how the generator spreads itself at that depth.</summary>
 public sealed record TierSummary(
-    int Tier, int Worlds, Dictionary<string, int> Stories,
+    int Tier, int Worlds, Dictionary<string, int> Stories, Dictionary<string, int> Twists,
     double AvgFacts, int MinFacts, int MaxFacts,
     double AvgStorylets, int MinStorylets, int MaxStorylets,
     Dictionary<string, int> SiteKinds,
@@ -71,6 +72,9 @@ public static class WorldEval
             WorldName: w.Name,
             SettlementName: w.SettlementName,
             Story: story,
+            Twist: WorldTwistCatalog.IdOf(w.Twist),
+            TwistVariant: w.RoadHolder?.ToString().ToLowerInvariant() ?? "",
+            Waystones: w.Waystones.Count,
             Npcs: w.Npcs.Count,
             Villagers: w.Npcs.Count(n => n.Kind == NpcKind.Villager),
             Facts: w.Facts.All.Count,
@@ -150,10 +154,15 @@ public static class WorldEval
             .GroupBy(s => s.Kind)
             .OrderBy(g => g.Key, StringComparer.Ordinal)
             .ToDictionary(g => g.Key, g => g.Count());
+        var twists = measures
+            .GroupBy(m => m.Twist)
+            .OrderBy(g => g.Key, StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => g.Count());
         return new TierSummary(
             Tier: tier,
             Worlds: measures.Count,
             Stories: stories,
+            Twists: twists,
             AvgFacts: Math.Round(measures.Average(m => m.Facts), 1),
             MinFacts: measures.Min(m => m.Facts),
             MaxFacts: measures.Max(m => m.Facts),
@@ -221,7 +230,7 @@ public static class WorldEval
         }
 
         var m = Measure(w);
-        Fold($"{m.Seed}|{m.Tier}|{m.WorldName}|{m.SettlementName}|{m.Story}|{m.Npcs}|{m.Facts}|{m.StoryStorylets}|{m.Gleanings}|{m.HerbSpots}|{m.WildPony}");
+        Fold($"{m.Seed}|{m.Tier}|{m.WorldName}|{m.SettlementName}|{m.Story}|{m.Twist}|{m.TwistVariant}|{m.Waystones}|{m.Npcs}|{m.Facts}|{m.StoryStorylets}|{m.Gleanings}|{m.HerbSpots}|{m.WildPony}");
         foreach (var kv in m.FactTypes) Fold($"{kv.Key}={kv.Value}");
         foreach (var id in m.StoryletIds) Fold(id);
         foreach (var s in m.Sites) Fold($"{s.Id}|{s.Kind}|{s.Spawns}|{s.Monsters}|{s.Stone}|{s.Coffer}");

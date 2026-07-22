@@ -26,7 +26,7 @@ public static class JourneyRunner
     private readonly record struct SiteOutcome(string Name, bool Cleared, bool Skipped);
 
     private sealed record Crossing(
-        int FromCycle, string FromWorld, int ToCycle, string ToWorld,
+        int FromCycle, string FromWorld, string FromTwist, int ToCycle, string ToWorld, string ToTwist,
         int Turn, int DeathsInWorld, string Arms, IReadOnlyList<OathId> Sworn, int Burden,
         IReadOnlyList<SiteOutcome> Sites, IReadOnlyList<Read> Before, IReadOnlyList<Read> After);
 
@@ -174,6 +174,7 @@ public static class JourneyRunner
 
             int cycleBefore = game.Cycle;
             string worldBefore = game.World.Name;
+            string twistBefore = WorldTwistCatalog.IdOf(game.World.Twist);
             var beforeReads = Bestiary(game, cycleBefore);
             var sitesBefore = SiteStates(game, skip);
 
@@ -369,7 +370,8 @@ public static class JourneyRunner
                 // so its Oaths are what the bot took up and its Burden is their summed weight.
                 legendFromBurden += 10 * burdenLeftBehind;
                 crossings.Add(new Crossing(
-                    cycleBefore, worldBefore, game.Cycle, game.World.Name,
+                    cycleBefore, worldBefore, twistBefore, game.Cycle, game.World.Name,
+                    WorldTwistCatalog.IdOf(game.World.Twist),
                     game.Turn, deathsThisWorld, Arms(game), game.World.Oaths.ToList(), game.World.Burden,
                     sitesBefore, beforeReads, Bestiary(game, game.Cycle)));
                 keysThisWorld = 0;
@@ -390,6 +392,7 @@ public static class JourneyRunner
                 WitsDemo: wits,
                 CycleReached: game.Cycle,
                 Tier: game.World.Tier,
+                CurrentTwist: WorldTwistCatalog.IdOf(game.World.Twist),
                 CrossingsMade: crossings.Count,
                 Stop: stop,
                 KeysPressed: totalKeys,
@@ -450,8 +453,10 @@ public static class JourneyRunner
                 Crossings: crossings.Select(c => new JourneyCrossingDto(
                     FromCycle: c.FromCycle,
                     FromWorld: c.FromWorld,
+                    FromTwist: c.FromTwist,
                     ToCycle: c.ToCycle,
                     ToWorld: c.ToWorld,
+                    ToTwist: c.ToTwist,
                     Turn: c.Turn,
                     DeathsInWorld: c.DeathsInWorld,
                     Arms: c.Arms,
@@ -578,6 +583,8 @@ public static class JourneyRunner
             w.WriteLine();
             w.WriteLine($"crossing {crossings.IndexOf(c) + 1}: cycle {c.FromCycle} \"{c.FromWorld}\" (tier {c.FromCycle}) "
                         + $"-> cycle {c.ToCycle} \"{c.ToWorld}\" (tier {c.ToCycle})   [turn {c.Turn}]");
+            if (c.FromTwist != "none" || c.ToTwist != "none")
+                w.WriteLine($"  world laws: {c.FromTwist} -> {c.ToTwist}");
 
             string cleared = string.Join(", ", c.Sites.Where(s => s.Cleared).Select(s => s.Name));
             string standing = string.Join(", ", c.Sites.Where(s => !s.Cleared).Select(s => s.Name));
@@ -690,12 +697,12 @@ internal sealed record JourneyReadDto(string Kind, int Bank, string Read);
 internal sealed record JourneySiteDto(string Name, bool Cleared, bool Skipped);
 
 internal sealed record JourneyCrossingDto(
-    int FromCycle, string FromWorld, int ToCycle, string ToWorld, int Turn,
+    int FromCycle, string FromWorld, string FromTwist, int ToCycle, string ToWorld, string ToTwist, int Turn,
     int DeathsInWorld, string Arms, List<string> Sworn, int Burden,
     List<JourneySiteDto> Sites, List<JourneyReadDto> BestiaryBefore, List<JourneyReadDto> BestiaryAfter);
 
 internal sealed record JourneyReport(
-    ulong Seed, int TargetCrossings, bool WitsDemo, int CycleReached, int Tier, int CrossingsMade, string Stop,
+    ulong Seed, int TargetCrossings, bool WitsDemo, int CycleReached, int Tier, string CurrentTwist, int CrossingsMade, string Stop,
     int KeysPressed, int Turns, int Deaths, string Scars,
     int RemnantsReclaimed, int CoinReclaimed, int EssenceReclaimed,
     int ChestsLooted, int ChestCoin, int GearTaken,

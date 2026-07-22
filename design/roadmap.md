@@ -71,6 +71,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   opened D-073/D-090; character creation shipped both stages, D-092/D-093; companions
   shipped whole, D-097/D-099/D-100: guests, the shade, and the beast roster; the
   Death's Toll shipped whole, D-098: ledger, scars, and cure roads)
+- NG+ world twists: **3 of 3 opening laws built and verified** from tier 7 onward,
+  one independently dealt law per world through the no-repeat shuffle bag (D-151/D-152)
 
 ---
 
@@ -582,11 +584,13 @@ kind, and the evaluation harness that hardens every generator change.
   RNG, no facts, no narration, disagreement counters carried in the journey report
   across the sweep seeds); the steering half stays open, gated on the book's evidence
   (authority scope ◇ parked) (D-131, D-145)
-- [ ] D2: The twist library: D-151 settles the build contract before code moves. Tier
+- [x] D2: The twist library: D-151 settles the contract and D-152 builds it. Tier
   7+ carries exactly one mandatory mixed-valence law, independently drawn from the
   world story through a deterministic no-repeat shuffle bag; the Held Road, Grave
   Market, and Horned Law open the library. Twists are the primary structural answer
-  to tier 7+ freshness, while new bands remain optional catalog growth (D-131, D-151)
+  to tier 7+ freshness, while new bands remain optional catalog growth. All three
+  laws, their readers, pilot policy, snapshots, journey report, and worldgen measures
+  are verified across the five-seed sweep (D-131, D-151, D-152)
 - [ ] D3: Prose variety infrastructure: fact-keyed fragments composed per surface (rumor,
   epitaph, ledger, song) plus a repetition audit across seeds; the audit needs a
   generate-then-curate surface dump (talk-gated prose is pilot-unexercised by design, so
@@ -606,8 +610,9 @@ kind, and the evaluation harness that hardens every generator change.
 - [~] Gear: 10 items; req axes Might/Vigor/Grace; deep signature verbs pending (D-041, D-056)
 - [~] Oaths: 7 (grow with new systems: weather, factions, companions) (D-047, D-051)
 - [~] Legend: 5 rungs, 3 hospitality boons; rungs past 5 open (D-048)
-- [~] Hostility-tier bands: 2-6 distinct + tier-7 recombination; D-151 makes twists the
-  recurring tier 7+ structure while further bands remain optional catalog growth (D-033..D-058, D-151)
+- [~] Hostility-tier bands: 2-6 distinct + tier-7 recombination; the D-151/D-152 twist
+  library is the recurring tier 7+ structure while further bands remain optional
+  catalog growth (D-033..D-058, D-151, D-152)
 - [~] Scar list: three shipped (eye, hand, look); the dragging step and more open (D-098)
 - [ ] Weather / seasons (referenced only in flavor today) (vision §1, D-051; planned to
   ride the stead event deck, plan 2026-07 step 4, D-131)
@@ -650,6 +655,25 @@ kind, and the evaluation harness that hardens every generator change.
 ## Changelog / newly tracked
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
+
+- 2026-07-21: **D-152 the laws past the seventh gate stand in the world.** Plan step 14
+  closes and D2 flips to [x]. `WorldTwistCatalog` deals exactly one law from tier 7
+  onward through the master seed's independent three-item shuffle bag, all three before
+  refill and no boundary repeat. The Held Road generates its holder and three sheltering
+  waystones, then lays the visible one-coin tithe on completed official road and town
+  business only. The Grave Market puts a common truce and a tally at both eligible sites:
+  each ground may be settled for half its living yield without the ordinary kill rewards,
+  while violence or unbought goods closes both books. The Horned Law protects harts,
+  separates and reads their hides through official refusal, the town gate, and the
+  peddler's fence, while the town pays its wolf bounty. Facts, shrine and local readers,
+  snapshots, crossing reports, and worldgen metrics carry the law. The pilot obeys and
+  exploits each one. Save v88 -> v89. Two sweep-found seams closed: cairn and gill now
+  route their own clear responses instead of falling through another site's fallback,
+  and each tally stands in a generated side alcove so a narrow approach cannot be sealed.
+  829 tests green. All five journey seeds reached cycle 13 with twelve crossings, every
+  emitted-key twin byte-identical; seed 1 replay exact at 22,843 keys and turn 21,223;
+  worldgen JSON exit 0. The v93 sweeps are the new baselines. Deferred: catalog growth,
+  law-specific storylet depth, additional readers, and the later coinless flagship law.
 
 - 2026-07-21: **D-151 the laws past the seventh gate: step 14's design gate.** Tier 7+
   takes one twist per world as its recurring freshness structure, independently drawn

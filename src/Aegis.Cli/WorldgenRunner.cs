@@ -73,7 +73,7 @@ public static class WorldgenRunner
                 if (dump)
                 {
                     var m = WorldEval.Measure(world);
-                    Console.WriteLine($"== seed {seed} tier {tier}  \"{m.WorldName}\" / {m.SettlementName}  ({m.Story}) ==");
+                    Console.WriteLine($"== seed {seed} tier {tier}  \"{m.WorldName}\" / {m.SettlementName}  ({m.Story}, {m.Twist}) ==");
                     foreach (var surface in WorldEval.RawSurfaces(world))
                         Console.WriteLine(surface);
                     Console.WriteLine();
@@ -112,6 +112,7 @@ public static class WorldgenRunner
             w.WriteLine();
             w.WriteLine($"tier {t.Tier}  ({t.Worlds} worlds)");
             w.WriteLine($"  stories:   {string.Join(", ", t.Stories.Select(kv => $"{kv.Key} x{kv.Value}"))}");
+            w.WriteLine($"  twists:    {string.Join(", ", t.Twists.Select(kv => $"{kv.Key} x{kv.Value}"))}");
             w.WriteLine($"  facts:     avg {t.AvgFacts} (min {t.MinFacts}, max {t.MaxFacts})");
             w.WriteLine($"  storylets: avg {t.AvgStorylets} (min {t.MinStorylets}, max {t.MaxStorylets})");
             w.WriteLine($"  sites:     {string.Join(", ", t.SiteKinds.Select(kv => $"{kv.Key} x{kv.Value}"))}");

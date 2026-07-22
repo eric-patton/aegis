@@ -155,6 +155,13 @@ public sealed class Player
     public int Hide { get; set; }
 
     /// <summary>
+    /// Hides taken from protected harts under the Horned Law (D-152). The law,
+    /// its readers, and its fence keep them apart for this world. At the next
+    /// crossing their provenance falls away and they join the ordinary bundle.
+    /// </summary>
+    public int ProtectedHide { get; set; }
+
+    /// <summary>
     /// Raw meat taken from a hart (D-073): the hunt's yield before a fire. Inedible
     /// as it is; cooked into rations at the wood's edge, the Cooking skill fattening
     /// the take. On your person like hides, so it survives death and crossings.
@@ -661,7 +668,7 @@ public enum ReadTier { Blur, Read, Keen }
 /// Harrowers keep the order's house up the valley: the two faiths' folk,
 /// each with their own menu for the same reason the Smith has one.
 /// </summary>
-public enum NpcKind { Villager, Unbinder, Severed, Smith, Skald, Keeper, Harrower, Peddler, Waykeeper, Towner }
+public enum NpcKind { Villager, Unbinder, Severed, Smith, Skald, Keeper, Harrower, Peddler, Waykeeper, Towner, GraveTally }
 
 /// <summary>
 /// A named, placed person (D-031). Static in v1: they stand near their homes and

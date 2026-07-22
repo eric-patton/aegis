@@ -131,6 +131,31 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   stead-layer and pacing-and-freshness sections are new; the B and C lanes mostly attach
   to boxes that already existed). This entry supersedes the phase numbering above as the
   sequencing story.
+- **The path to 1.0 (adopted D-155): see `design/plan-2026-07.md`.** The original
+  sixteen-step sequence is complete. Nine ordered tranches now form a finite finish
+  line: the fells capstone; weather and seasons; D3 prose variety; D1 pacing steering;
+  town and economy depth; character and activity breadth; combat and magic depth;
+  companions, factions, and consequence depth; then the next full-density region and
+  the release audit. Open-ended catalogs remain tracked but do not block 1.0 unless a
+  later decision explicitly promotes them into the gate.
+
+### Path to 1.0 tracker (ordered, adopted D-155)
+
+- [ ] 1. B4 capstone: fourth high-fells site at full regional density
+- [ ] 2. Weather and seasons v1 plus the enabled A2 event follow-ons
+- [ ] 3. D3 prose-variety infrastructure and repetition audit
+- [ ] 4. D1 pacing steering after its authority scope is decided
+- [ ] 5. Town and economy depth tranche
+- [ ] 6. Character and activity breadth tranche, completing the intended skill roster
+- [ ] 7. Combat and magic depth tranche
+- [ ] 8. Companions, factions, and consequences depth tranche
+- [ ] 9. Next full-density region, launch content closure, and the 1.0 release audit
+
+The detailed tranche contents and the 1.0-ready gate live in the plan. A tranche flips
+to `[x]` only when its decisions are built and verified. At the final audit, every other
+unchecked or partial roadmap line must be explicitly classified as post-1.0 or promoted
+into the gate. This keeps the backlog honest without making open-ended catalog growth an
+infinite prerequisite for completion.
 
 ---
 
@@ -671,6 +696,16 @@ kind, and the evaluation harness that hardens every generator change.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-22: **D-155 the road to 1.0 has a finish line.** The completed sixteen-step
+  July sequence now continues through nine ordered tranches: the high-fells capstone,
+  weather and seasons, prose variety, pacing steering, town and economy depth,
+  character and activity breadth, combat and magic depth, companions/factions/
+  consequences depth, then the next full-density region and a release audit. The
+  1.0-ready gate requires every tranche complete, the full engine sweep and a fresh
+  manual playthrough review green, no known release-blocking defects, current save/help/
+  design documentation, and an explicit post-1.0 classification for every remaining
+  roadmap line. Open-ended catalog growth no longer makes "done" unreachable. No engine
+  or save-format change.
 - 2026-07-21: **D-154 the red book and the dark temper: bloom becomes craft.** The
   scrivener's fourth title asks 14 coin, Lore 2, and seven shrine sittings, then
   teaches the bloom-temper for good. The town forge's stable recipe digit opens a

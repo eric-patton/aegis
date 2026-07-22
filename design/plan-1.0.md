@@ -34,7 +34,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 | V1-05 | Town and economy depth | Approved | D-161 | Pending |
 | V1-06 | Character and activity breadth | Approved | D-162 | Pending |
 | V1-07 | Combat and magic depth | Approved | D-163 | Pending |
-| V1-08 | Companions, factions, and consequences | Draft | Pending | Blocked on design pass |
+| V1-08 | Companions, factions, and consequences | Approved | D-164 | Pending |
 | V1-09 | Next region and 1.0 release closure | Draft | Pending | Blocked on design pass |
 
 ## V1-01: High-fells capstone, the black tarn
@@ -951,13 +951,200 @@ faction depth
 
 ## V1-08: Companions, factions, and consequences
 
-**Design status:** Draft  
-**Roadmap association:** Path to 1.0 tranche 8; companion, faction, and scar follow-ons  
-**Known dependencies:** Guest and beast systems, relation ledgers, fact readers,
-Death's Toll, scars, storylets  
-**Design pass must settle:** exact launch-sized follow-ons, companion combat interactions,
-faction consumers and edges, consequence aftermath, catalog additions, pilot coverage,
-and acceptance.
+**Design status:** Approved
+
+**Decisions:** D-164
+
+**Roadmap association:** Path to 1.0 tranche 8; companion, faction, and scar follow-ons
+
+**Dependencies:** V1-02 weather, V1-05 guild and town closure, V1-07 flanking and
+physical footprints; guest and beast systems, relation ledgers, scheduled facts,
+Death's Toll, scars, storylets, oaths, and the journey pilot
+
+**Recommended implementation point:** eighth card, after V1-07 and before the final
+region and release card
+
+**Implementation status:** Pending until the full design queue is Approved
+
+### Approved behavior
+
+#### Companion combat parity
+
+- Keep the current ceiling of one mortal guest plus one shade. Add no companion
+  equipment, inventory, skills, posture, resurrection, or command key. The bearer remains
+  the only unit the player directs turn by turn.
+- A targeted physical intent may choose the nearest visible living body among the bearer,
+  mortal guest, and shade when that body meets the intent's existing range and line-of-
+  sight rules. Ties favor the bearer. Bearer-shaped magic, including the V1-07 binding,
+  remains bearer-only.
+- Charges, sweeps, and other marked physical footprints resolve once against every body
+  that occupies a struck cell. Damage uses the intent's established arithmetic for that
+  body and consumes no additional random draw for empty cells.
+- On a fellow's ordinary turn, before attacking or following, a fellow not ordered to
+  hold looks at all visible physical marks that will resolve before its next turn. If its
+  cell is marked and a legal adjacent unmarked cell exists, it takes a stable shortest
+  step to safety. Stable direction order breaks ties. It then ends that fellow turn.
+- A held fellow never takes the automatic escape. Holding is the existing explicit order
+  to keep a cell, including its danger. If no safe legal step exists, a following fellow
+  continues its ordinary behavior rather than gaining immunity.
+- Fellows gain no parry, armor, posture, resistance, hidden dodge roll, or exception from
+  ordinary occupancy. Enemy awareness and authored dormancy continue to follow V1-06 and
+  V1-07 rules.
+- A directional loose is refused without time, stamina, ammunition, or skill use when a
+  living mortal guest is the first occupied cell before the first foe in that line. A
+  shade does not stop a shaft. A guest behind the first foe does not block the shot.
+
+#### The grain road, a second guest arc
+
+- Add one live Crofter-role arc, cast from an eligible named stead villager. It may begin
+  once per world while the levy stands, the carriers' bond is sworn, no mortal guest is
+  active, and an eligible villager remains alive and at home.
+- The arc uses the ordinary storylet casting seam and adds no talk-menu digit. The Crofter
+  is a nonfighter under the existing role rule and uses the same HP, care, follow, hold,
+  door, death-wake, and loyalty-beat machinery as every mortal guest.
+- Bringing the living Crofter to the town guildhall completes the arc. The NPC leaves
+  guest state, the world writes a portfolio fact, and a grain delivery is scheduled for
+  the next coarse tick. Completion pays no coin, Essence, skill use, or immediate Regard.
+- When the delivery lands, it restores up to two Stores, runs the existing levy-lift
+  check, writes and narrates a faction fact, and grants one Regard. It lands even if the
+  stores filled in the meantime, with the gain capped honestly at the current maximum.
+  No second delivery can be earned in the world.
+- A Crofter death uses the established guest-fell, beloved, memorial, missing-NPC, and
+  Shame consequences. It schedules no delivery and adds no further punishment.
+- Crossing with any unresolved living mortal guest now produces a farewell and returns
+  the NPC to the outgoing world's roster before the world is left. It grants no portfolio,
+  Regard, Shame, or cross-world companion state.
+
+#### Bounded companion memory
+
+- The first completed mortal guest arc arms one character-scoped Aegis remembrance. The
+  first beloved guest death arms a separate remembrance. Each becomes eligible at the
+  first shrine rest in a later world and fires once per character.
+- These two memories carry only through the Aegis and name only events it witnessed.
+  Later strangers do not inherit the outgoing world's knowledge. Additional successes or
+  losses create no repeating scene, relationship currency, perk, price, or reputation.
+- Snapshots expose stable armed and consumed flags for replay diagnosis. The ordinary
+  character sheet does not become a companion ledger.
+
+#### Faction readers and the Stead-to-Town edge
+
+- Extend the existing raids topic so it reads the live watch and levy states accurately.
+  This changes no menu count and invents no state.
+- The grain road is the launch Stead-to-Town edge: the carriers' bond opens the arc, the
+  stead supplies the mortal role, the guildhall receives it, and the scheduled cart moves
+  Stores, levy state, Regard, and facts. Every transition is narrated under D-023.
+- Add no positive Town Fame scalar. The guild bond, town book, champion, property, and
+  workshop facts remain the complete launch town state. The new edge composes with them
+  rather than replacing them.
+
+#### Beast warmth and recognition
+
+- At an exposed overworld camp, one living unstabled beast beside the bearer adds one HP
+  after all ordinary season, weather, shelter, pelt, and camp-healing arithmetic.
+- Warmth never permits a supperless camp refused by Cold, reduces Wounded duration,
+  changes step stamina, improves a roof or waystone, or stacks through additional beasts
+  in the stable.
+- The first camp made with each of the mule, courser, and fell pony opens one distinct
+  character-scoped recognition beat. Each fires once per character and grants no numeric
+  reward.
+- The opt-in companion pilot must tame and ride the fell pony, closing D-104's remaining
+  journey gap.
+
+#### Scar facts, the fitted brace, and tier-scaled Toll
+
+- When a scar lands, write a stable `scar` fact whose subject is the scar's stable id.
+  When a cure removes it, write the matching `scar-mended` fact. The landing fact feeds a
+  once-per-world aftermath beat; each mend has one authored aftercare consumer on an
+  existing appropriate surface.
+- The first cure of the crushed hand records a permanent fitted-brace character mark.
+  While the bearer does not currently carry the crushed hand, a parry with a wielded
+  weapon costs one stamina instead of two. Unarmed parries remain two unless their own
+  V1-07 knack changes them.
+- A later crushed-hand scar suppresses the brace benefit while carried. Repairing that
+  scar restores the existing benefit. The mark never stacks, never changes attack costs,
+  and never grants armor, damage, or posture.
+- Toll fill is calculated as the existing ordinary or heavy base plus
+  `min(40, 10 * max(0, tier - 4))`, then reduced by the existing Will rule and bounded by
+  the existing floor. Tiers 1 through 4 remain unchanged; tiers 5 through 8 add 10, 20,
+  30, and 40, and all deeper tiers remain at the 40-point cap.
+- Do not alter the judgment-before-fill order, line, one-point ordinary drain, scar
+  matching, cure prices, crossing reset, or existing scar effects.
+- Put current scars and the fitted brace beside the creation burden on the character
+  sheet. Snapshots expose the brace and the exact tier contribution to Toll fill.
+
+#### Two final launch oaths
+
+- End-append `ClosedDoor` and `LongCount` after `HushedName` in `OathId`, bringing the
+  crossing menu from seven entries to its nine-digit limit. Preserve every existing id,
+  order, label, weight, and effect.
+- The closed door has weight one. While it stands, every Stead Regard rung requires one
+  additional point: thresholds 2, 4, and 6 instead of 1, 3, and 5. Regard gains and their
+  facts do not otherwise change.
+- The long count has weight one. While it stands, Death's Toll drains on every second
+  completed turn instead of every completed turn. Fill, line, scar judgment, and crossing
+  reset remain unchanged.
+- Both oaths are world-scoped, printed in the terms and snapshot surfaces, contribute
+  normally to Burden and Legend, and use no random draw.
+
+#### Pilot and observability
+
+- The default journey retains its Huntsman, shade, and beast policies. It understands the
+  new target selection, companion evasion, shot refusal, and unresolved-guest farewell,
+  and must not stall when any of them occurs.
+- Add opt-in `journey --companion`. Across its route it begins and completes both mortal
+  guest arcs, tends a guest, safely demonstrates follow and hold, earns a V1-07 flank,
+  observes physical targeting and automatic evasion, attempts one refused shot, receives
+  a grain delivery, camps with beast warmth, tames and rides the fell pony, cures every
+  scar it receives, uses the fitted brace, and carries both new oaths.
+- The companion route never deliberately kills a guest. Guest-fell, beloved, memorial,
+  and cross-world loss memories remain focused-test branches.
+- Journey prose and JSON report guest offers, starts, completions, farewells, deaths and
+  beats; physical target choices, evasions, held impacts and shot refusals; cart state,
+  store movement and levy lifts; beast recognition, warmth and pony use; Toll base, tier
+  contribution, scars, cures and brace parries; and both oath effects.
+- Every emitted default and companion journal must replay exactly through `sim`.
+
+### Acceptance and sweep requirements
+
+- Companion tests cover nearest-body selection, tie priority, range and line of sight,
+  bearer-only magic, each physical footprint, stable safe-step choice, hold behavior, no
+  safe cell, shade parity, shot refusal and every no-cost boundary.
+- Guest-arc tests cover every offer gate, role casting, nonfighter behavior, guildhall
+  completion, delayed cart timing, capped store restoration, levy lifting, Regard, facts,
+  death, single-use closure, and crossing farewell.
+- Memory tests prove both Aegis echoes arm only on the approved outcomes, wait for a later
+  world, fire once per character, never teach an NPC, and replay through death and crossing.
+- Faction and beast tests cover topic truth, the complete Stead-to-Town causal chain,
+  narration, every weather and shelter combination, Cold refusal, non-stacking warmth,
+  and all three recognition guards.
+- Toll tests cover scar and mend facts, every consumer, fitted-brace acquisition,
+  suppression and restoration, wielded and unarmed parry costs, exact tier arithmetic,
+  Will reduction, heavy fill, cap, line, drain, crossing reset, sheet, and snapshots.
+- Oath tests pin end-append order, nine-entry menu capacity, weights, exact Regard
+  thresholds, alternating drain, Burden, Legend, crossing scope, and replay.
+- Pilot tests prove default and companion policies deterministic, consequence-honest,
+  complete, and exactly replayable. Prose and JSON fields are pinned.
+- Assuming V1-01 through V1-07 land first, implementation advances save v97 to v98.
+  The implementation decision owns the final number after prior cards land.
+- Kill `aegis.exe`, build Release, run the complete test suite, run seeds 1, 7, 99,
+  2024, and 88888 through two byte-identical twelve-world journeys each, compare and
+  justify drift from v97, replay seed 1 to exact keys, cycle, and turn, exercise the
+  companion journey, and pass `worldgen --json`.
+
+### Explicit exclusions
+
+- No permanent party, second controllable unit, companion inventory, equipment, skill
+  tree, leveling, posture, parry, armor, resurrection, or additional order key.
+- No new faction, positive Town Fame ladder, raider-to-mound edge, further desecration,
+  deeper transgression, town violence system, retinue, or population simulation.
+- No predator attacks on waiting beasts, beast combat, stable raids beyond existing
+  rules, breeding, feed meter, barding, or further mount kind.
+- No dragging-step scar, further scar catalog, changed cure prices, prosthetic upgrade
+  tree, random scarring, or additional death penalty shape.
+- No companion-specific oath, oath pagination, Threat redesign, further Legend rung, or
+  more than nine launch oaths.
+- No Calling social follow-ons, systemic caster reputation, V1-09 region content, or
+  release packaging work.
 
 ## V1-09: Next region and 1.0 release closure
 

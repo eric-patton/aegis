@@ -231,6 +231,91 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-164: The road carried together: mortal judgment, the grain road, and the long count (2026-07-22)
+
+V1-08 is Approved as the eighth implementation-ready card on the design-first road to
+1.0. The pass joins systems that already stand rather than opening a party game or a new
+faction simulation. It adds no companion inventory, equipment, skills, posture bar,
+resurrection, command key, positive Town Fame ladder, faction, site, or scar. One mortal
+guest and one shade remain the maximum company, and the bearer remains the only unit the
+player directs turn by turn.
+
+Physical threats now judge every body honestly. A targeted physical intent may choose
+the nearest visible bearer, mortal guest, or shade within its existing range and line of
+sight, with ties favoring the bearer. Charges, sweeps, and marked physical footprints
+resolve against every body that remains on their cells. Hostile bindings and other
+bearer-shaped magic keep their established target. Before attacking or following, a
+fellow not ordered to hold steps by a stable shortest choice to an adjacent legal cell
+outside all visible physical marks when one exists. A held fellow keeps the ordered cell
+and accepts its danger. Fellows gain no parry, armor, or hidden defense model. A ranged
+shot is refused for free when a mortal guest is the first occupied cell before the first
+foe; the shade does not stop a shaft. This closes friendly-line ambiguity without making
+an accidental keypress kill a permanent character.
+
+The second live guest arc uses the Crofter role already present in the engine. During an
+active levy, once the carriers' bond is sworn and no mortal guest walks, an eligible named
+stead villager may be role-cast into the grain road once per world. Bringing the
+nonfighter alive to the town guildhall completes the arc, returns the NPC from guest
+state, and writes its portfolio fact. A grain delivery is scheduled for the next coarse
+tick. When it lands it restores up to two Stores, applies the ordinary levy-lifting rule,
+writes and narrates its faction fact, and grants one Regard. It costs no coin and pays no
+coin: the bond, the mortal road, and the delayed arrival are the investment. A death uses
+the established guest fall, beloved, memorial, and Shame rules and simply loses the
+delivery. Crossing with any unresolved living mortal guest gives a farewell and returns
+them to their own world without portfolio, Regard, or Shame.
+
+Guest memory gains a bounded cross-world answer without teaching strangers impossible
+knowledge. The first completed guest arc and the first beloved guest death each arm one
+character-scoped Aegis remembrance at a later world's shrine rest. Each fires once per
+character, names only what the Aegis personally carried, and creates no relationship
+currency or repeating line. The raids topic also reads the watch and levy states aloud.
+Together the grain road and its delayed cart form the launch Stead-to-Town edge through
+the existing bond, stores, levy, Regard, and fact machinery. No new scalar is needed.
+
+The beast niche receives the warmth its vision promised. At an exposed overworld camp, a
+living unstabled beast beside the bearer adds one blood after ordinary weather-modified
+camp healing. It never bypasses a supperless Cold refusal, shortens a wound, improves a
+roof or waystone, or stacks through a stable roster. The first camp made with each of the
+three beast kinds opens one character-scoped recognition beat. Predators at site mouths
+remain later growth; launch beasts keep their logistics and warmth identity without a
+new defense minigame.
+
+Death's aftermath closes four tracked gaps. A scar landing writes a stable `scar` fact
+and a cure writes the corresponding `scar-mended` fact; the landing and each mend receive
+authored consumers on existing surfaces. The first crushed-hand cure also records a
+permanent fitted brace. While the hand is not currently crushed, a parry made with a
+wielded weapon costs one stamina instead of two. Unarmed parries remain under their own
+V1-07 rule. A later crushed hand suppresses the brace until that scar is repaired again,
+and the benefit never stacks. Toll fill becomes the existing ordinary or heavy base plus
+`min(40, 10 * max(0, tier - 4))`, then takes the existing Will reduction and floor. The
+shape, warning line, drain, scar threshold, matching, and waygate reset do not change.
+Scars and the fitted brace appear together beside burdens on the sheet and in snapshots.
+
+Two end-appended oaths bring the crossing catalog from seven to nine, filling but not
+breaking its digit surface. The closed door, weight one, adds one point to every Stead
+Regard threshold for that world. The long count, weight one, lets Death's Toll drain only
+on every second completed turn. Both alter magnitude, never shape, and both remain
+world-bound like every sworn term. A companion-specific oath was rejected because its
+cleanest play was usually to decline the companion and collect a hollow burden.
+
+The default journey keeps its existing guest and beast doctrine and learns the new
+physical targeting and line rules. An opt-in `journey --companion` exercises both guest
+arcs, care, follow and hold, flanking, fellow evasions, refused shots, the grain delivery,
+beast recognition and warmth, the fell pony road, scar cures, the fitted brace, and both
+new oaths. It never deliberately spends a guest's life; beloved-death and memorial paths
+remain focused-test responsibilities. Prose and JSON report offers, arcs, outcomes,
+beats, targetings, evasions, held impacts, blocked shots, carts, stores, warmth, Toll,
+scars, mends, brace use, and oath effects, and every emitted journal must replay exactly.
+
+If V1-01 through V1-07 land in order, implementation advances v97 to v98 because new
+oath digits, guest casting, target choice, follower movement, scheduled faction state,
+Toll arithmetic, and character marks alter replay. The implementation decision owns the
+actual version after prior cards land. Calling follow-ons, predators, raider-to-mound
+interaction, another desecration verb, deeper transgressions, positive Town Fame, the
+dragging step, further scars, retinues, and broader companion arcs remain post-1.0 unless
+the final audit promotes them. Implementation requires focused tests for every contract
+above and the complete HANDOFF engine sweep before D-164 can be called built.
+
 ### D-163: The word against the word: flanks, the rune-tongue, and seven workings (2026-07-22)
 
 V1-07 is Approved as the seventh implementation-ready card on the design-first road to
@@ -2082,7 +2167,7 @@ Pays D-063's own named deferrals in one stroke, arming the autopilot at the smit
 - Spell list growth past the seven V1-07 workings / magic schools content design
   (architecture set by D-022; D-163 keeps it beyond the launch card)
 - Storylet external data-file format and named condition/effect vocabulary (v1 C# catalog format decided in D-030; migrate when content volume or modding demands)
-- Catalogs to design later: more oaths beyond D-047's four, scar list, Legend rungs past D-048's five, patron deeds beyond D-054's three (property and retinue shapes from D-025), and optional hostility-tier content past the fen-leaguer (D-033 landed tier 2, D-040 tier 3, D-044 tier 4, D-053 tier 5, D-057 tier 6, D-058 posted the sword-thegn into the tier-7 ringfort; D-151 makes twists the recurring tier-7+ structure, so further bands are catalog growth rather than a rung-by-rung obligation)
+- Catalogs to design later: more oaths beyond D-164's nine; the dragging step and scars beyond D-164's launch three; Legend rungs past D-048's five; patron deeds beyond D-054's three (property and retinue shapes from D-025); and optional hostility-tier content past the fen-leaguer (D-033 landed tier 2, D-040 tier 3, D-044 tier 4, D-053 tier 5, D-057 tier 6, D-058 posted the sword-thegn into the tier-7 ringfort; D-151 makes twists the recurring tier-7+ structure, so further bands are catalog growth rather than a rung-by-rung obligation)
 - Story open items listed in `design/story/aegis-arc.md` sec. 11 and `design/story/world-story-templates.md` sec. 10 (bottle-episode playability, Unbinder guise tells, reveal-tier sharing across characters, template 7+ candidates: the dying god's succession, the long siege having shipped as the sixth in D-130; names settled by D-043)
 - Named stead folk (plan 2026-07 A5, D-131): adopt after A1-A3 are live and the raids can threaten something with a name, and at what depth; if adopted, keep it lite (no population simulation, no birth rolls, research/12's avoid-list)
 - Generator-version pinning per world (D-131): today a save bump re-deals live worlds; decide before any save-format freeze whether old generators ship alongside new so a world keeps its birth generator (research/13's Minecraft lesson)

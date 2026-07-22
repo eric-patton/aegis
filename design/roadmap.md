@@ -144,8 +144,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   town and economy depth; character and activity breadth; combat and magic depth;
   companions, factions, and consequence depth; then the next full-density region and
   the release audit. Open-ended catalogs remain tracked but do not block 1.0 unless a
-  later decision explicitly promotes them into the gate. Seven of nine cards are now
-  Approved; V1-08 and V1-09 still require their design passes before implementation starts.
+  later decision explicitly promotes them into the gate. Eight of nine cards are now
+  Approved; only V1-09 still requires its design pass before implementation starts.
 
 ### Path to 1.0 tracker (ordered, adopted D-155/D-157)
 
@@ -164,6 +164,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - [ ] 7. Combat and magic depth tranche
   (V1-07 design Approved D-163; implementation pending)
 - [ ] 8. Companions, factions, and consequences depth tranche
+  (V1-08 design Approved D-164; implementation pending)
 - [ ] 9. Next full-density region, launch content closure, and the 1.0 release audit
 
 The detailed tranche contents and design statuses live in `design/plan-1.0.md`; the
@@ -542,8 +543,10 @@ between them as play. Starts after the stead layer's core lands.
   becoming the levy's answer: coin against a carted measure, +1 regard, the stores axis'
   first bearer-side input; lifted by answers or the season's recovery, the ask voiced by
   storylet)
-- [ ] Levy and watch follow-ons (D-105): a pilot levy-answer rung if journeys show levies
-  standing unanswered; the raids talk topic reading the watch and levy aloud
+- [ ] Levy and watch follow-ons (D-105, V1-08 design Approved D-164; implementation
+  pending): the raids topic reads both states aloud, and the Crofter's grain road gives
+  the levy a bonded Stead-to-Town answer. A separate default-pilot levy rung remains
+  unnecessary unless implementation journeys show the opt-in companion route is not enough
 - [x] A third faction, giving the relation matrix its second edge (D-078, D-089; delivered
   D-106, v54): the long mound's unquiet dead. Grave-goods taken while the dead still walk
   start the grudge (one rung, "marked by the long mound"): riled wights strike a point
@@ -584,6 +587,10 @@ between them as play. Starts after the stead layer's core lands.
   restitution, the mound's grudge at the stilling, wrath's actors go extinct at the
   camp-fall, nemesis grudges die with their holders, and every ledger resets at the
   crossing
+- [ ] A player-mediated Stead-to-Town faction edge (V1-08 design Approved D-164;
+  implementation pending): an active levy, a sworn carriers' bond, a mortal Crofter road,
+  and a delayed guild cart move Stores, levy state, Regard, and narrated facts without a
+  new faction scalar
 - [ ] (Unblocks: full-form story templates, institution/zealot/warden roles) (D-035)
 
 ### Companions
@@ -606,9 +613,11 @@ between them as play. Starts after the stead layer's core lands.
   camp breaks), loyalty beats from all four sources, full death weight (grave fact,
   guest-beloved at 3+ beats, stead shame, the bench empty all world, memorial
   storylet), and the paid ending (portfolio fact, NPC home, +1 regard)
-- [ ] Guest follow-ons: specialized kinds targeting guests directly, ranged friendly
-  fire, charge lanes and lofted bursts seeing guests, more guest roles and arcs, a
-  crossing farewell for arcs that outlive their world, portfolio echo down the chain (D-097)
+- [ ] Guest combat and arc closure (D-097, V1-08 design Approved D-164; implementation
+  pending): nearest-body physical targeting, marked-footprint parity, deterministic
+  automatic escapes unless holding, free refusal when a mortal guest blocks a shaft,
+  the Crofter grain-road arc, unresolved crossing farewells, and two bounded Aegis-only
+  cross-world memories. Broader roles and arcs remain post-1.0
 - [x] Pack animal / mount (D-024, D-100, shipped whole in two stages): the stead's mule
   bought at the wood's-edge bench (friend-gated, 40 coin), the raiders' courser given
   over by storylet once the camp breaks, the wild fell pony won with bread on the high
@@ -620,8 +629,10 @@ between them as play. Starts after the stead layer's core lands.
   roster safe from the raid; all mortal, world-bound
 - [x] Pilot beast policy: courser forward, mule banks; every journey now buys, banks,
   claims the deed's courser, turns the stable, and brings the bank home pre-arch (D-104)
-- [ ] Beast follow-ons (D-100): predators at wild mouths, a beast-noticing storylet,
-  warmth, a pilot road for the fell pony (the wild taming stays journey-unexercised)
+- [ ] Beast warmth and recognition (D-100, V1-08 design Approved D-164; implementation
+  pending): one blood after weather-modified exposed camp healing, one character beat per
+  beast kind, and an opt-in pilot road for the fell pony
+- [ ] Predators at wild mouths (D-100; classified post-1.0 by D-164)
 
 ### Death, stakes & consequence
 
@@ -639,9 +650,10 @@ between them as play. Starts after the stead layer's core lands.
   marks-they-carry talk storylet (once per world) (D-098 stage 2)
 - [x] Pilot cure policy: the journey walks all three cure roads when scarred and funded,
   the laying's essence held back from the shrine (D-101)
-- [ ] Toll/scar follow-ons: the brace's superior mechanical edge,
-  scar/scar-mended facts for story consumers, the dragging step and further catalog,
-  tier-scaled fill (D-011), the sheet showing marks beside burdens (D-098)
+- [ ] Toll and scar launch closure (D-098, V1-08 design Approved D-164; implementation
+  pending): scar and scar-mended facts with consumers, the fitted brace's wielded-parry
+  edge, capped tier-scaled Toll fill, and sheet plus snapshot presentation
+- [ ] The dragging step and further scar catalog (D-098; classified post-1.0 by D-164)
 
 ### Narrative & dialogue
 
@@ -699,7 +711,8 @@ kind, and the evaluation harness that hardens every generator change.
 ### Content catalogs (breadth, grow over time)
 
 - [~] Gear: 10 items; req axes Might/Vigor/Grace; deep signature verbs pending (D-041, D-056)
-- [~] Oaths: 7 (grow with new systems: weather, factions, companions) (D-047, D-051)
+- [~] Oaths: 7 live; 9 approved for launch with the closed door and long count
+  end-appended at V1-08 (D-047, D-051, D-164; implementation pending)
 - [~] Legend: 5 rungs, 3 hospitality boons; rungs past 5 open (D-048)
 - [~] Hostility-tier bands: 2-6 distinct + tier-7 recombination; the D-151/D-152 twist
   library is the recurring tier 7+ structure while further bands remain optional
@@ -737,7 +750,9 @@ kind, and the evaluation harness that hardens every generator change.
 - ◇ Spell list growth past the seven V1-07 workings / school-shaped content, if any
   (D-022, D-091, D-163)
 - ◇ Storylet external data-file format + condition/effect vocabulary (D-030)
-- ◇ Catalogs to grow: more oaths, the scar list, Legend rungs past 5, patron deeds past 3, hostility bands past the fen-leaguer (D-047, D-009, D-048, D-054, D-033+)
+- ◇ Catalogs to grow: more oaths beyond D-164's nine, the dragging step and scars beyond
+  the launch three, Legend rungs past 5, patron deeds past 3, and hostility bands past the
+  fen-leaguer (D-164, D-009, D-048, D-054, D-033+)
 - ◇ Story open items: bottle-episode playability, Unbinder guise tells, reveal-tier sharing across characters, template 7+ candidates (aegis-arc.md §11, world-story-templates.md §11)
 - ◇ Named stead folk (plan 2026-07 A5): adopt after A1-A3 are live, and at what depth (D-131)
 - ◇ Generator-version pinning per world: today a save bump re-deals live worlds; decide before any save-format freeze whether old generators ship alongside new (D-131)
@@ -748,6 +763,18 @@ kind, and the evaluation harness that hardens every generator change.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-22: **D-164 companions, factions, and consequences depth is designed.** V1-08
+  is Approved but not implemented. Physical threats judge fellows honestly, following
+  fellows escape visible marked ground while a held one keeps the ordered risk, and a
+  mortal body safely refuses a shot through it. The Crofter's grain road adds the second
+  guest arc and the Stead-to-Town edge through the bond, levy, scheduled cart, Stores,
+  Regard, and facts; two bounded Aegis memories carry outcomes without giving strangers
+  false knowledge. Beasts gain camp warmth and recognition. Scar and scar-mended facts,
+  the fitted brace, tier-scaled Toll fill, sheet presentation, the closed door, and the
+  long count close the consequence catalog. Default and opt-in companion pilot policies,
+  expected v98 bump, focused acceptance, exclusions, and the full sweep contract live in
+  `design/plan-1.0.md`. Tranche 8 remains unchecked until built and verified. No engine or
+  save-format change yet.
 - 2026-07-22: **D-163 combat and magic depth is designed.** V1-07 is Approved but not
   implemented. Exact opposite-cell flanking runs both ways, the current family verbs
   close the launch movesets, three enemy follow-ons pay the alarm, warder, and sweep

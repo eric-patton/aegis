@@ -29,7 +29,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 |------|---------|---------------|-----------|----------------|
 | V1-01 | High-fells capstone, the black tarn | Approved | D-156 | Pending |
 | V1-02 | Weather and seasons v1 | Approved | D-158 | Pending |
-| V1-03 | D3 prose-variety infrastructure | Draft | Pending | Blocked on design pass |
+| V1-03 | D3 prose-variety infrastructure | Approved | D-159 | Pending |
 | V1-04 | D1 pacing steering | Draft | Pending | Blocked on design pass |
 | V1-05 | Town and economy depth | Draft | Pending | Blocked on design pass |
 | V1-06 | Character and activity breadth | Draft | Pending | Blocked on design pass |
@@ -276,12 +276,78 @@ camping, economy, black tarn
 
 ## V1-03: D3 prose-variety infrastructure
 
-**Design status:** Draft  
+**Design status:** Approved
+**Decisions:** D-159
 **Roadmap association:** Path to 1.0 tranche 3; D3  
-**Known dependencies:** Fact graph, storylets, talk topics, worldgen `--dump`, WorldEval  
-**Design pass must settle:** surface inventory, fragment contract, composition rules,
-authored variation budget, skeleton detection, curation output, thresholds, CI role,
-content migration boundary, and acceptance.
+**Dependencies:** Fact graph, storylets, scenes, talk topics, worldgen `--dump`, WorldEval
+**Implementation status:** Pending until the full design queue is Approved
+
+### Approved behavior
+
+- D3 owns the player-facing narrative surfaces that express or interpret world facts:
+  fact details, storylet lines, scene lines, and ask-about topic answers. Mechanical
+  action feedback, combat narration, trade responses, menus, help text, and item
+  descriptions remain outside this tranche.
+- Every owned surface becomes enumerable as a `ProseSurface` with a stable source id,
+  surface kind, optional fact family, variant id, raw text, normalized skeleton, reuse
+  policy, and origin. Initial kinds cover fact detail, rumor, topic, ledger, song,
+  epitaph, storylet, and scene, including kinds built now for later content.
+- A `ProseFamily` binds a fact pattern to one or more surface renderings. Each rendering
+  contains authored compatible variant bundles. A bundle may carry several fragments or
+  lines, but fragments never mix across bundles. V1 has no recursive grammar and no free
+  combinatorial assembly.
+- Templates read a validated `ProseContext`: structured fact fields, generated names and
+  places, people, and explicit values supplied by the caller. Unknown tokens, missing
+  values, duplicate ids, empty variants, and unresolved placeholders are hard errors.
+  Migrated surfaces do not compose by embedding another surface's already-rendered text.
+- Variant selection is a pure derivation of world seed, fact id, family id, and surface
+  kind. It consumes no gameplay, storylet, or worldgen RNG and stores no state. The same
+  fact on the same surface is stable within a world, different surfaces derive
+  independently, and repeated reading does not cycle the text.
+- Every family declares one reuse class. Fixed permits one intentional rendering. Rare
+  requires at least two variants, Standard at least three, and Frequent at least four.
+  Each migrated fact family renders through at least two surface kinds, and one
+  representative family exercises four kinds to prove the broad contract.
+- All existing fact details, storylets, scenes, and topics enter the enumerable inventory.
+  Most keep their current wording and are marked Fixed. The composed vertical slice
+  migrates five representative fact families spanning generated facts, runtime events,
+  and reputation or consequence state. Existing output remains unchanged except where a
+  family is deliberately migrated.
+- The repetition audit becomes family-aware. Fixed prose remains visible but is not
+  treated as failed variation. Hard failures are generator impurity, invalid or unresolved
+  tokens, duplicate source/family/variant ids, a declared variation budget not met,
+  identical normalized variants inside one variable family, or a declared variable absent
+  from the curated catalog. Distribution skew, unrelated cross-family skeleton collisions,
+  fixed prose dominating a category, and legacy prose outside composition are warnings.
+- `aegis worldgen --dump` remains the human curation view, grouped by family and surface
+  with source metadata. `aegis worldgen --dump --json` emits one structured surface record
+  per line. The ordinary JSON report gains per-kind counts, family coverage, failures,
+  warnings, and variation measures. Hard failures return nonzero; distribution findings
+  stay advisory.
+- No save bump is expected. The composer changes no key meaning, stored state, shared RNG,
+  or world-layout draw. Any implementation discovery that breaks that assumption returns
+  to design before code continues.
+
+### Acceptance and sweep requirements
+
+- Focused tests cover the surface records, family and token validation, deterministic
+  selection, variation budgets, fixed-versus-variable classification, normalization,
+  inventory completeness, topic/storylet/scene enumeration, both dump formats, JSON
+  measures, warning behavior, and every hard-failure exit path.
+- A representative generated fact, runtime event fact, and reputation or consequence fact
+  are each proven through their real reader path as well as the direct catalog audit.
+- The standard 30-seed, tier-1-through-8 WorldEval run regenerates purely, emits every
+  owned source with stable ids, and records the new metadata-aware baseline.
+- Because this changes engine presentation infrastructure, the complete HANDOFF sweep is
+  required. Five-seed journey twins remain byte-identical, sim replay is exact, worldgen
+  purity passes, and any baseline drift is justified as prose-only with gameplay counts
+  unchanged.
+
+### Explicit exclusions
+
+- No runtime AI, localization framework, external content-file migration, recursive
+  grammar engine, procedural story generation, wholesale prose rewrite, text cycling,
+  or migration of combat, economy, and mechanical feedback.
 
 ## V1-04: D1 pacing steering
 

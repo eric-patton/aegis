@@ -146,6 +146,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - [ ] 2. Weather and seasons v1 plus the enabled A2 event follow-ons
   (V1-02 design Approved D-158; implementation pending)
 - [ ] 3. D3 prose-variety infrastructure and repetition audit
+  (V1-03 design Approved D-159; implementation pending)
 - [ ] 4. D1 pacing steering after its authority scope is decided
 - [ ] 5. Town and economy depth tranche
 - [ ] 6. Character and activity breadth tranche, completing the intended skill roster
@@ -633,12 +634,14 @@ kind, and the evaluation harness that hardens every generator change.
   to tier 7+ freshness, while new bands remain optional catalog growth. All three
   laws, their readers, pilot policy, snapshots, journey report, and worldgen measures
   are verified across the five-seed sweep (D-131, D-151, D-152)
-- [ ] D3: Prose variety infrastructure: fact-keyed fragments composed per surface (rumor,
-  epitaph, ledger, song) plus a repetition audit across seeds; the audit needs a
-  generate-then-curate surface dump (talk-gated prose is pilot-unexercised by design, so
-  the journey sweep alone cannot carry it); shares a harness with D4, whose dump half
-  now exists (`aegis worldgen --dump`, and the skeleton audit is the baseline to beat,
-  D-137) (D-131)
+- [ ] D3: Prose variety infrastructure (design Approved D-159, implementation pending):
+  enumerable fact details, storylets, scenes, and ask-about topics; fact-keyed authored
+  variant bundles composed per surface; stable pure-hash selection outside every gameplay
+  RNG; declared Fixed, Rare, Standard, and Frequent budgets; and a metadata-aware
+  repetition audit that distinguishes intentional constants from failed variation. It
+  shares WorldEval and `aegis worldgen --dump` with D4, adds structured dump output, and
+  hard-gates invalid contracts while keeping distribution findings advisory (D-131,
+  D-137, D-159)
 - [x] D4: Worldgen evaluation harness: batch-generate worlds and chart expressive-range
   metrics (template mixes, fact-graph composition, site tenancy, name variety, prose
   skeletons); built D-137 as `aegis worldgen` on a pure WorldEval core, with `--json`
@@ -700,6 +703,14 @@ kind, and the evaluation harness that hardens every generator change.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-22: **D-159 prose variety infrastructure is designed.** V1-03 is Approved but
+  not implemented. Fact details, storylets, scenes, and ask-about topics become an
+  enumerable surface inventory; fact families gain compatible authored variant bundles,
+  validated contexts, pure deterministic selection, and explicit variation budgets. The
+  WorldEval audit becomes metadata-aware, with structural failures gating the command and
+  distribution findings remaining advisory. Five representative fact families form the
+  first composed slice, while existing narrative prose enters as visible Fixed content.
+  Tranche 3 remains unchecked until built and verified. No engine or save-format change yet.
 - 2026-07-22: **D-158 weather and seasons v1 is designed.** V1-02 is Approved but not
   implemented: one shared seasonal calendar, three climate bands, deterministic
   three-card weather hands, four narrow exposure families, one-tick forecasts, existing

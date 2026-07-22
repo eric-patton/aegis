@@ -231,6 +231,87 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-162: The quick road and the quiet one: the last four skills take honest costs (2026-07-22)
+
+V1-06 is Approved as the sixth implementation-ready card on the design-first road to
+1.0. The roster closes at eighteen by end-appending Alchemy, Athletics, Stealth, and
+Larceny after Lore. Sleight stays separate. The sheet becomes two columns of nine skills,
+because the existing single column is already full. Every new skill keeps the ordinary
+counted-use ledger, survives death and crossings, never respecs, and grows only from a
+use with a real price.
+
+The boundaries are strict. Survival finds the herbs, Lore opens written formulae,
+Stillcraft permits self-brewing, and Alchemy is the hand that prepares the draught.
+Only a successful self-brew grants one use; a draught drawn by the herbwife teaches
+nothing. One paid batch makes one vial plus the ordinary Alchemy skill bonus, bounded
+by the existing rack. The hale-draught remains the one launch formula, and WortCunning
+keeps its existing thrift. This gives Alchemy the same honest one-recipe launch depth as
+Cooking without pulling a larger consumable catalog into the card.
+
+Athletics receives the rush: an uppercase direction on a local combat map attempts two
+clear cells in one turn. It costs four stamina less the ordinary skill bonus, never below
+two. Creatures, walls, transitions, loot, and other notable cells cannot be crossed, and
+an incomplete rush is refused without time or wind. Only a full rush under live hostile
+pressure grants a use, so safe laps teach nothing. Athletics therefore spends wind to buy
+speed.
+
+Stealth receives soft tread inside hostile local sites on the same contextual `s` that
+still burgles beside a settlement door. Soft tread spends time rather than wind. Each
+quiet step commits up to two honest turns: the first is the careful setting of the foot
+at the current cell; if the bearer is discovered there, the movement is canceled and
+control returns immediately. If the bearer remains unseen, the second turn moves one
+cell and resolves normally. Both turns advance every causal clock. Foes begin unaware
+until sight, harm, or an existing authored group alarm wakes them. Quiet notice is the
+foe's ordinary line-of-sight distance reduced by two, then by Grace and Stealth bonuses;
+metal armor gives one cell back. Detection is deterministic. One foe can teach at most
+once per site, when a quiet step crosses its ordinary notice band without waking it.
+There is no sneak-attack bonus: the reward is position, bypass, and encounter control.
+
+The three subterfuge ledgers do not form a hidden required class. Sleight is the hand at
+pockets and locks. Stealth is unseen movement through hostile ground. Larceny is entry,
+the household take, and its road value: clean pilfering and clean burglary each grant one
+use, and fencing grants one use per sold lot rather than per item. Failed crimes teach
+nothing. Burglary moves from Sleight to Larceny while retaining its risk curve, and each
+fenced heirloom pays seven coin plus the ordinary Larceny skill bonus. No crime asks for
+two or three skill checks at once.
+
+Creation reuses the seven proven pasts. The hedge-healer banks Alchemy 1 instead of
+Survival and starts with Lore 1, Stillcraft, and the existing herbs. The wayfarer banks
+Athletics 1 instead of Hunting. The oathbreaker keeps Blades 1 and banks Larceny 1
+instead of Hunting beside the existing social cost. Stealth begins at zero for every
+past, while Grace helps immediately. The craft kit still gives Stillcraft and herbs but
+never grants unearned Alchemy skill.
+
+Five level-2 knack questions close the character-shaping half. Alchemy chooses an extra
+vial of rack space or one fewer herb on every second self-brew. Athletics chooses a
+three-cell rush or one less stamina per rush. Stealth chooses another one-cell notice
+reduction or silence from metal armor. Larceny chooses three more coin from a clean
+burglary or two more coin per fenced heirloom. Sleight chooses ten percentage points on
+pickpocketing or on locks. The old 85 percent success caps remain. These questions are
+mutually exclusive and permanent like every existing knack.
+
+The default journey remains crime-free. It must self-brew, make honest live-pressure
+rushes, and pass a foe on soft tread. An opt-in `journey --rogue` path covers Sleight,
+Larceny, pilfering, burglary, fencing, and their consequences without changing the
+default moral route. Journey prose and JSON count the new uses and demonstrations.
+Assuming the approved cards land in order, implementation moves save v95 to v96 and
+receives focused creation, skill, refusal, cap, persistence, awareness, knack, pilot,
+snapshot, and replay tests plus the complete HANDOFF sweep against v95.
+
+Options set aside: merging Larceny into Sleight; combined multi-skill crime checks;
+random stealth detection; a stamina price for soft tread; Stealth as scene checks only;
+Athletics as a passive check bonus; new pasts; another launch potion and its selection
+menu; and a broad noncombat knack wave. The two-turn quiet step is preferred because it
+makes the split legible: Athletics spends stamina to move quickly, Stealth spends time to
+move carefully, and both currencies already matter.
+
+Deferred beyond V1-06: further formulae, reagents, poison, and a general crafting
+interface; swimming, climbing, parkour, encumbrance, and a fatigue meter; assassination,
+backstab damage, darkness, sound fields, searching AI, and town-wide stealth; organized
+crime, heists, and a criminal faction; new pasts, folk, and recultured societies; a
+Polearms split; and level-4 or level-6 noncombat knack waves. Combat and magic breadth
+remain V1-07's work.
+
 ### D-161: A key inside the wall: the guild loft, the law-day lists, and the last shelf (2026-07-22)
 
 V1-05 is Approved as the fifth implementation-ready card on the design-first road to

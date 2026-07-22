@@ -32,7 +32,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 | V1-03 | D3 prose-variety infrastructure | Approved | D-159 | Pending |
 | V1-04 | D1 pacing steering | Approved | D-160 | Pending |
 | V1-05 | Town and economy depth | Approved | D-161 | Pending |
-| V1-06 | Character and activity breadth | Draft | Pending | Blocked on design pass |
+| V1-06 | Character and activity breadth | Approved | D-162 | Pending |
 | V1-07 | Combat and magic depth | Draft | Pending | Blocked on design pass |
 | V1-08 | Companions, factions, and consequences | Draft | Pending | Blocked on design pass |
 | V1-09 | Next region and 1.0 release closure | Draft | Pending | Blocked on design pass |
@@ -573,13 +573,180 @@ regional trade
 
 ## V1-06: Character and activity breadth
 
-**Design status:** Draft  
-**Roadmap association:** Path to 1.0 tranche 6; intended roughly eighteen-skill roster  
-**Known dependencies:** Existing skill growth and knack questions, activities, crime,
-wilderness, crafting, character creation  
-**Design pass must settle:** Alchemy, Athletics, Stealth, and Larceny boundaries; costed
-use-curves; activity feeds; overlap with Survival, Sleight, and existing craft knowledge;
-creation hooks; knack requirements; pilot coverage; and acceptance.
+**Design status:** Approved
+**Decisions:** D-162
+**Roadmap association:** Path to 1.0 tranche 6; eighteen-skill launch roster
+**Known dependencies:** Existing skill growth, knack questions, hale-draught brewing,
+combat movement, monster activity, crime, fencing, character creation, journey pilot
+**Recommended implementation point:** sixth card, after V1-05 and before combat and
+magic depth
+
+### Approved behavior
+
+#### The eighteen-skill ledger and sheet
+
+- End-append `Alchemy`, `Athletics`, `Stealth`, and `Larceny` after Lore in `SkillId`.
+  Sleight remains a distinct skill. `SkillSet.Count` becomes eighteen.
+- New skills use the existing counted-use curve, persistence, level derivation, and
+  no-respec rule. Their uses survive death and crossing with the character bucket.
+- Pair the character sheet into two columns of nine skills. Preserve enum order, level,
+  use fraction, chosen knack names, the taught row, and the pending-question flow.
+- No existing skill is renamed or re-indexed. The four additions are end-appended for
+  journal and enum stability.
+
+#### Alchemy: preparation, not gathering or literacy
+
+- Survival continues to gather herbs. Lore continues to open written formulae.
+  Stillcraft remains the proficiency that permits the bearer to brew independently.
+  Alchemy is the use-grown preparation skill.
+- A successful self-brew at a settled rest spends the existing two or three herbs,
+  depending on WortCunning, grants one Alchemy use, and makes
+  `1 + SkillSet.Bonus(Alchemy)` hale-draughts, bounded by the current rack.
+- A draught drawn by the herbwife grants no Alchemy use because her hands did the work.
+  Drinking never grants a use. A refusal for ingredients or rack space spends nothing
+  and teaches nothing.
+- The hale-draught remains the one launch formula. Its healing and wound-cut effects stay
+  unchanged, WortCunning keeps its existing thrift, and the stillroom extension keeps
+  its existing rack increase.
+
+#### Athletics: wind spent for speed
+
+- Uppercase movement directions on a local combat map attempt a rush exactly two clear
+  cells in one turn. Lowercase movement keeps its present meaning.
+- A rush costs `max(2, 4 - SkillSet.Bonus(Athletics))` stamina. The ordinary step
+  regeneration resolves normally after the move.
+- Both cells must be in bounds, walkable, unoccupied, and free of transitions, loot,
+  remnants, or other notable interaction tiles. A rush never crosses a creature or
+  skips an interaction. If both cells cannot be taken, it is refused without time,
+  stamina, movement, or training.
+- A completed rush grants one Athletics use only while a living, awake hostile is
+  actively engaged on that local map. Safe travel, empty-site laps, and uppercase
+  overworld directions do not train it.
+
+#### Stealth: time spent for concealment
+
+- `s` remains burglary beside a settlement door. In a hostile local site before open
+  engagement, `s` toggles soft tread. The mode is visible in the HUD and cancels on
+  attack, discovery, leaving the site, death, or crossing.
+- Foes in hostile sites begin unaware, separately from special authored dormancy. They
+  wake when they detect the bearer, take harm, or an existing authored group alarm
+  reaches them. Once aware, their current combat behavior is unchanged.
+- Ordinary movement uses the foe's existing notice distance and line of sight. Soft
+  tread reduces that distance by two, then by the bearer's Grace bonus and
+  `SkillSet.Bonus(Stealth)`, with a floor of one. Worn tarn-temperable metal armor adds
+  one cell back; the quilted jack does not. Detection uses no random roll.
+- A quiet step costs no extra stamina. It commits up to two honest turns. The first turn
+  is the careful setting of the foot at the current cell. If detection occurs there,
+  the movement is canceled and control returns immediately. If the bearer remains
+  unseen, the second turn moves one ordinary cell and resolves normally.
+- Both turns advance every causal clock through the ordinary engine path: scheduled
+  futures, faction pressure, weather and season state, durations, recovery, monster
+  awareness, and any later systems reading turns. No partial or cosmetic clock exists.
+- Stealth gains one use per foe per site when a quiet step crosses that foe's ordinary
+  notice band without waking it. The same foe cannot train the bearer twice, ordinary
+  safe movement teaches nothing, and detection teaches nothing.
+- Soft tread grants no damage multiplier, instant kill, pickpocket modifier, or burglary
+  modifier. Its reward is position, bypass, and encounter control.
+
+#### Sleight and Larceny: hand-work versus the criminal trade
+
+- Sleight remains the precision skill for pickpocketing and lockpicking. Their existing
+  base odds, feeds, finite targets, failures, and 85 percent caps remain.
+- Larceny owns pilfering, burglary, and fencing. Burglary uses Larceny level in its
+  existing risk curve instead of Sleight level.
+- A clean pilfer and a clean burglary each grant one Larceny use. Fencing grants one use
+  per sold lot, not per heirloom. Failed or refused crimes teach nothing.
+- Each fenced heirloom pays `7 + SkillSet.Bonus(Larceny)` coin before any later explicit
+  modifier. Existing facts, shame, town marks, restitution, finite-house rules, peddler
+  access, and story readers remain intact.
+- No crime combines Sleight, Stealth, and Larceny into multiple required checks. The
+  three skills remain independently viable rather than becoming a hidden thief class.
+
+#### Creation hooks
+
+- The hedge-healer banks Alchemy 1 instead of Survival 1 and begins with Lore 1,
+  Stillcraft, and the existing three herbs.
+- The wayfarer banks Athletics 1 instead of Hunting 1 and keeps the existing rations.
+- The oathbreaker keeps Blades 1 and banks Larceny 1 instead of Hunting 1, alongside
+  the existing opening Shame.
+- No past starts with Stealth. Grace improves soft tread from the first site, and any
+  bearer can begin training it honestly.
+- The craft kit continues to grant Stillcraft and six herbs but grants no Alchemy uses
+  or level. Knowledge and practiced skill remain separate.
+- Do not add or reorder folk, past, thing, burden, or vow enum values.
+
+#### Five level-2 knack questions
+
+- Alchemy asks between one additional draught of rack capacity and one fewer herb on
+  every second successful self-brew. The thrift stacks with WortCunning but never lowers
+  a batch below one herb.
+- Athletics asks between a three-cell rush under the same path rules and one less
+  stamina per rush, still bounded by a minimum cost of one after the knack.
+- Stealth asks between one further cell of notice reduction and ignoring the one-cell
+  metal-armor noise term.
+- Larceny asks between three additional coin from each clean burglary and two additional
+  coin per fenced heirloom.
+- Sleight asks between ten percentage points on pickpocketing and ten percentage points
+  on lockpicking. Both remain capped at 85 percent.
+- Each question is permanent, mutually exclusive, end-appended in `PerkId`, announced
+  through the existing threshold path, and answered through the paired sheet.
+
+#### Pilot and observability
+
+- The default journey stays crime-free. In each eligible world it must self-brew when
+  ingredients and rack space allow, complete an honest live-pressure rush, and cross at
+  least one ordinary notice band on soft tread.
+- Add opt-in `journey --rogue`. It exercises pickpocketing, lockpicking where available,
+  pilfering, burglary, fencing, restitution or town-law consequences as applicable, and
+  the Sleight and Larceny feeds without changing default journey choices.
+- Journey prose and JSON report all four new skill uses and levels, rushes completed,
+  quiet bands crossed, discoveries during soft tread, clean pilfers and burglaries,
+  fenced lots and goods, and the five new knack choices.
+- The generic Snapshot skill ledger remains enum-driven and must list all eighteen in
+  stable order. Add explicit awareness and soft-tread state only where replay diagnosis
+  needs it.
+
+### Acceptance and sweep requirements
+
+- Focused tests pin end-append enum order, eighteen-skill storage, the two-column sheet,
+  creation starts, death and crossing persistence, save replay, and every growth line.
+- Alchemy tests cover self-brew-only feeding, herb and rack refusals, skill-scaled yield,
+  WortCunning composition, rack limits, herbwife exclusion, and both knacks.
+- Athletics tests cover every direction, exact two-cell and three-cell paths, stamina
+  arithmetic, hostile-only feeding, notable-cell and occupancy refusal, no partial move,
+  and both knacks.
+- Stealth tests cover contextual `s`, visible mode state, deterministic line of sight,
+  Grace, skill, and armor arithmetic, first-turn discovery cancellation, second-turn
+  movement, every protected causal clock, authored dormancy and alarms, once-per-foe
+  feeding, cancellation conditions, and both knacks.
+- Crime tests prove the Sleight and Larceny split, unchanged facts and consequences,
+  finite targets, burglary odds, fenced price arithmetic, one use per lot, failure and
+  refusal behavior, the 85 percent caps, and all four related knack effects.
+- Pilot tests prove the default route remains crime-free and the opt-in rogue route is
+  deterministic, consequence-honest, and complete. Snapshot and journey JSON additions
+  are pinned.
+- Assuming V1-01 through V1-05 land first, implementation advances save v95 to v96
+  because four skill indices, uppercase movement, contextual `s`, creation starts,
+  monster awareness, crime odds, prices, and knack keys alter replay semantics.
+- Kill `aegis.exe`, build Release, run the complete test suite, run seeds 1, 7, 99,
+  2024, and 88888 through two byte-identical twelve-world journeys each, compare and
+  justify drift from v95, replay seed 1 to exact keys/cycle/turn, exercise the rogue
+  journey, and pass `worldgen --json`.
+
+### Explicit exclusions
+
+- No additional formulae, reagents, poison system, consumable selection menu, or general
+  crafting interface.
+- No swimming, climbing system, parkour, encumbrance, or fatigue meter.
+- No sneak-attack multiplier, assassination, instant takedown, darkness simulation,
+  propagated sound field, searching AI, or town-wide stealth simulation.
+- No organized crime, heists, criminal faction, new fence, or second justice system.
+- No new pasts, folk, recultured societies, or character-creation stages.
+- No Polearms skill split and no rewrite of existing combat families.
+- No level-4 or level-6 noncombat knack wave, three-option questions, or general knack
+  pass for older activity skills. Those remain catalog growth for later classification.
+- No hostile magic, broader movesets, stance/parry growth, or working catalog growth;
+  those belong to V1-07.
 
 ## V1-07: Combat and magic depth
 

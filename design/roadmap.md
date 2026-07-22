@@ -42,8 +42,15 @@ calling's shade, and the three-beast roster with its stable. The remaining **bre
 holes**: none untouched; all four activity families have broken ground, and **crime is the first family with every named verb shipped** (D-127: pilfering, pickpocketing, lockpicking, fencing, and burglary proper), and since D-128 every secret fact its deeds write has a reader on the lane; town life thickened in D-108/D-123 (the bones, the round, and both ledgers read), though it still trails wilderness and craft. Rough fill levels:
 
 - Attributes: **7 of 7** mechanically active (D-091 woke Mind and Will; D-117's scene checks wake Presence, the last)
-- Skills: **14 of ~18** (five combat, Hunting from D-070, Cooking from D-073, Survival from D-074, Spellcraft from D-091, Sleight from D-107, Smithing seeded from D-135, Commerce seeded from D-140, Persuasion seeded from D-142, Lore from D-148)
-- Activity families: **wilderness-living core built** (hunting, selling, cooking, foraging: D-070..D-074), the **craft family opened** (cooking D-073; alchemy v1 D-090, the hale-draught), and the **crime family complete on its named verbs** (pilfering D-086; pickpocketing + Sleight D-107; lockpicking D-122; fencing at the peddler's cart D-124; burglary proper D-127); **town life opened** (knucklebones D-108; carousing + the light-purse read D-123)
+- Skills: **14 built of 18; the final four designed** (D-162 approves Alchemy,
+  Athletics, Stealth, and Larceny, implementation pending)
+- Activity families: **wilderness-living core built** (hunting, selling, cooking, foraging:
+  D-070..D-074; Athletics rush Approved D-162), the **craft family opened** (cooking
+  D-073; alchemy v1 D-090, with its skill curve Approved D-162), and the **crime family
+  complete on its named verbs** (pilfering D-086; pickpocketing + Sleight D-107;
+  lockpicking D-122; fencing at the peddler's cart D-124; burglary proper D-127; the
+  Sleight/Larceny split Approved D-162); **town life opened** (knucklebones D-108;
+  carousing + the light-purse read D-123)
 - Story templates: **6** built (Raided Stead plus Blight, Throne, Faiths, Gold Rush, Long Siege)
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
@@ -152,6 +159,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - [ ] 5. Town and economy depth tranche
   (V1-05 design Approved D-161; implementation pending)
 - [ ] 6. Character and activity breadth tranche, completing the intended skill roster
+  (V1-06 design Approved D-162; implementation pending)
 - [ ] 7. Combat and magic depth tranche
 - [ ] 8. Companions, factions, and consequences depth tranche
 - [ ] 9. Next full-density region, launch content closure, and the 1.0 release audit
@@ -223,7 +231,9 @@ infinite prerequisite for completion.
   example roster, keeps its structure); per-world regenerated cultures/standing still pending
 - [~] Backgrounds: seven pasts seed starting skills, extras, and a `past` fact (D-092);
   illiterate starts live (D-148: scribe's-ward and hedge-healer wake lettered at Lore 1,
-  the other five learn at the scrivener's desk); per-world recultured societies still pending
+  the other five learn at the scrivener's desk); V1-06 rehooks hedge-healer to Alchemy,
+  wayfarer to Athletics, and oathbreaker's second skill to Larceny (Approved D-162,
+  implementation pending); per-world recultured societies still pending
 - [x] Creation stage 2: burdens (one buys a second thing), vows, the remembered face, the
   keepsake's keyed storylet thread + NG+ placement when unpicked (D-093)
 - [ ] Creation follow-ons: the face cast into real faction NPCs; NPC line banks adopting
@@ -234,21 +244,23 @@ infinite prerequisite for completion.
   town-law primer, folk-tales, and shelf submenu for V1-05, implementation pending;
   Lore knacks remain open) (D-005, vision §3)
 
-### Skills (14 of ~18)
+### Skills (14 built of 18; V1-06 design Approved D-162)
 
 - [x] Blades, Hafted, Brawling, Warding, Ranged (use-grown, cost-gated) (D-042, D-050)
 - [x] Hunting: use-grown, fed by game brought down in the wilds; fattens the hide yield (D-070)
 - [x] Cooking: use-grown, raw meat to rations at the wood's-edge fire; fattens the yield (D-073)
 - [x] Survival: use-grown, fed by foraging herbs from the wood; fattens the forage (D-074)
 - [x] Knacks/perks at level 2 and 4 for the five combat skills (20 options / 10 questions) (D-046, D-055)
-- [~] Craft skills: Cooking shipped (D-073); alchemy opened as know-how, not yet a skill
-  (D-090: the stillcraft lesson; a use-curve waits on the lane growing recipes); Smithing seeded at
+- [~] Craft skills: Cooking shipped (D-073); alchemy opened as know-how, with its
+  self-brewing use-curve Approved for V1-06 (D-090, D-162); Smithing seeded at
   the stead's bench (D-135: use-grown by filing wear off owned iron) with its town school open
   (D-141: the forge files for coin away from home, and the drawn-temper lesson deepens every sitting),
   then fed by smelting the fells' tarn-iron into blooms (D-153) and using a bloom in the
   first book-taught durability recipe (D-154)
-- [~] Wilderness skills: Hunting (D-070) and Survival (D-074, foraging) done; Athletics pending (vision §3)
-- [ ] Subterfuge skills: Stealth, Larceny (vision §3)
+- [~] Wilderness skills: Hunting (D-070) and Survival (D-074, foraging) done; Athletics
+  rush design Approved for V1-06 (D-162), implementation pending (vision §3)
+- [ ] Subterfuge skills: deterministic two-turn Stealth and the distinct Larceny trade
+  are Approved for V1-06 (D-162), implementation pending (vision §3)
 - [~] Social skills: Commerce seeded at the market town (D-140: use-grown, fed only by
   lots sold above the valley's own price, its level added in coin to every town lot);
   Persuasion seeded at the moot-stone (D-142: use-grown, fed only by pleas that truly
@@ -262,7 +274,9 @@ infinite prerequisite for completion.
   showing, gated on Smithing 1; D-148 the wort-cunning, the first book-taught lesson, the
   herbal its only price; D-154 the bloom-temper, learned from the red smithing book and
   practiced with one tarn-iron bloom); quest-taught still pending
-- [ ] Knacks: level-6+ questions, 3-option questions, knacks for new skills (D-055)
+- [ ] Knacks: V1-06 approves level-2 questions for Alchemy, Athletics, Stealth, Larceny,
+  and Sleight (D-162), implementation pending; level-4/6 noncombat and 3-option questions
+  remain later catalog growth (D-055)
 
 ### The Life: activities & economy (all 4 families opened: wilderness, craft, crime, town life)
 
@@ -283,12 +297,18 @@ infinite prerequisite for completion.
 - [x] Patronage deeds at the crossing (3: raised stone, endowed hearth, true verse) (D-054)
 - [~] Crafting trades: cooking shipped (D-073); alchemy v1 shipped (D-090, v40: the hale-draught,
   three sprigs steeped at the stillroom or, taught, at any shrine rest; 'd' drinks it on the road:
-  the herb lane's first sink and the first remedy that walks into a deep site); smithing opened
+  the herb lane's first sink and the first remedy that walks into a deep site; D-162 approves
+  self-brewing as the Alchemy skill's costed use-curve, implementation pending); smithing opened
   as a player trade by repair and forge schooling (D-135/D-141), then deepened by smelting
   tarn-iron to blooms (D-153); its first recipe now ships (D-154: the Lore-2 red book teaches
   a one-bloom, one-time +10 wear temper for eligible ironwork); more recipes, commissions,
   and worked goods pending (D-006, D-025)
-- [~] Wilderness living: hunting + sell path + cooking + foraging shipped (D-070, D-071, D-073, D-074); camping shipped with the road (D-138: 'm' anywhere plain on an overworld, the supper's ration buying the mending, Survival deepening it, the kill cooked at the fire); fells extraction feeds Survival through finite tarn-iron seams (D-153); tracking, fishing pending (D-006)
+- [~] Wilderness living: hunting + sell path + cooking + foraging shipped (D-070, D-071,
+  D-073, D-074); camping shipped with the road (D-138: 'm' anywhere plain on an
+  overworld, the supper's ration buying the mending, Survival deepening it, the kill
+  cooked at the fire); fells extraction feeds Survival through finite tarn-iron seams
+  (D-153); D-162 approves live-pressure Athletics rushes; tracking and broader climbing
+  or swimming remain pending or excluded (D-006)
 - [x] A hide-buyer with room to grow: the woodward's trade sub-menu, hides to coin (D-071)
 - [x] Crime: all four of D-006's named verbs shipped. Pickpocketing (D-107, v55: 'p' beside one
   of the stead's folk, the Sleight skill's dice, one try per pocket per world; clean lifts pay
@@ -302,7 +322,9 @@ infinite prerequisite for completion.
   the pocket's and the coffer's, one try per door per world; a clean entry pays the kist's
   4-9 coin and an heirloom for the cart and writes secret/burgled_house, a caught entry jumps
   the shame ladder two rungs with restitution at the crossed sill at twice a door's coin).
-  Deeper crime (a nemesis, organized work) is future texture, not a named verb
+  D-162 approves the launch split: Sleight keeps pockets and locks, Larceny takes pilfering,
+  burglary, and fencing, and deterministic Stealth governs hostile-site movement. Deeper
+  crime (a nemesis, organized work) is future texture, not a named verb
 - [x] Fencing wants a fence: a peddler or second settlement before stolen goods have a buyer (D-107, built D-124: the peddler)
 - [x] A consumer for the secret/fenced_goods fact (the heirloom missed on the lane) (D-124,
   built D-128: the grief spoken to the very hand, gated on live shame at zero)
@@ -314,7 +336,8 @@ infinite prerequisite for completion.
 - [x] The peddler's stock growing with tiers: exotic goods, a second arbitrage leg, the
   caravan seed (D-124, D-025; built D-144: salt on the cart, two and the tier capped at
   six, bought at 5 and resold at the provisioner's 8, the bearer as the caravan)
-- [ ] Sleight knacks once the skill has a curve worth questioning (D-107)
+- [ ] Sleight knacks once the skill has a curve worth questioning (Approved D-162;
+  implementation pending: pockets versus locks) (D-107)
 - [~] Town life: gambling shipped (D-108, v56: knucklebones at the skald's hearth, 3 coin the
   throw, the one throw back as the real decision, the house's odds played plainly; the world's
   net ledger writes lucky_hand/light_purse facts at nine either way, the lucky hand talked
@@ -711,6 +734,16 @@ kind, and the evaluation harness that hardens every generator change.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-22: **D-162 character and activity breadth is designed.** V1-06 is Approved
+  but not implemented. Four end-appended skills close the roster at eighteen: Alchemy
+  grows through self-brewing, Athletics spends stamina on a two-cell rush, Stealth spends
+  two honest turns on deterministic soft tread, and Larceny takes household crime and
+  fencing while Sleight keeps pockets and locks. Three existing pasts gain the approved
+  creation hooks; the four new skills and Sleight receive level-2 knack questions; the
+  default pilot stays crime-free while an opt-in rogue route proves the criminal lane.
+  Exact costs, awareness rules, causal-clock protection, expected v96 bump, exclusions,
+  and the full sweep contract live in `design/plan-1.0.md`. Tranche 6 remains unchecked
+  until built and verified. No engine or save-format change yet.
 - 2026-07-22: **D-161 town and economy depth is designed.** V1-05 is Approved but not
   implemented. One per-world guild loft costs 80 coin after the primer, bond, and even
   town book, providing a bed, reading desk, and crossing-safe strongbox; a 120-coin

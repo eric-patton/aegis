@@ -144,8 +144,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   town and economy depth; character and activity breadth; combat and magic depth;
   companions, factions, and consequence depth; then the next full-density region and
   the release audit. Open-ended catalogs remain tracked but do not block 1.0 unless a
-  later decision explicitly promotes them into the gate. Eight of nine cards are now
-  Approved; only V1-09 still requires its design pass before implementation starts.
+  later decision explicitly promotes them into the gate. All nine cards are now Approved
+  through D-165, so implementation begins at V1-01 and proceeds in queue order.
 
 ### Path to 1.0 tracker (ordered, adopted D-155/D-157)
 
@@ -166,6 +166,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - [ ] 8. Companions, factions, and consequences depth tranche
   (V1-08 design Approved D-164; implementation pending)
 - [ ] 9. Next full-density region, launch content closure, and the 1.0 release audit
+  (V1-09 design Approved D-165; implementation pending)
 
 The detailed tranche contents and design statuses live in `design/plan-1.0.md`; the
 1.0-ready gate also remains in `design/plan-2026-07.md`. A tranche flips
@@ -193,7 +194,9 @@ infinite prerequisite for completion.
 - [x] Player ranged: the hunting bow (D-050) and the ash-spear reach thrust (D-056)
 - [x] Knowledge-sharpened telegraphs: bestiary read tiers, dulling across NG+ (D-061)
 - [x] Wits given combat meaning (read clarity) (D-059)
-- [~] Enemy variety: 9 monster families across tier bands 2-7, plus the hart (fleeing game, D-070) (D-033, D-040, D-044, D-053, D-057, D-058)
+- [~] Enemy variety: 9 monster families across tier bands 2-7, plus the hart (fleeing game,
+  D-070); the fen adder is Approved for V1-09, while further families remain post-1.0
+  catalog growth (D-033, D-040, D-044, D-053, D-057, D-058, D-165)
 - [x] Posture / second bar, break-and-riposte: every foe's guard rocked by paid blows
   (1), the wall (2), the heave (3), and the parry (4); at the brim the stagger and the
   flat +4 riposte through the open door (D-125)
@@ -339,7 +342,7 @@ infinite prerequisite for completion.
   built D-128: the bolted dark, the lane's new iron and kept-in dog, forbidden forever once
   shame/housebroken gives the lane a face)
 - [ ] A consumer for shame/housebroken in its turn (the named housebreaker meeting the lane
-  that knows) (D-128)
+  that knows) (V1-09 design Approved D-165; implementation pending)
 - [x] The peddler's stock growing with tiers: exotic goods, a second arbitrage leg, the
   caravan seed (D-124, D-025; built D-144: salt on the cart, two and the tier capped at
   six, bought at 5 and resold at the provisioner's 8, the bearer as the caravan)
@@ -372,9 +375,9 @@ KDM-derived lane; full reasoning in `design/plan-2026-07.md`.
   hold conditions on the coarse tick; first uses: the hard winter (seed-drawn,
   foreshadowed, uncancellable) and the dens' muster (set by the cull, broken by the
   camp emptied first) (D-131, built D-132)
-- [ ] A1 follow-ons (D-132): the peddler's restock as a scheduled future (D-124), the
-  calendar in the Snapshot for D4 (the deck-on-the-calendar and after-the-fact talk
-  readers landed with A2, D-133)
+- [ ] A1 follow-ons (D-132): the peddler's one capped Salt Fen restock is Approved for
+  V1-09 (D-165; implementation pending); the calendar in the Snapshot for D4 and the
+  deck-on-the-calendar plus after-the-fact talk readers landed with A2 (D-133)
 - [x] A2: Stead event storylets on the tick beyond the raids: small, mixed-valence,
   consequence-dense, several foreshadowed via A1 (the fanfic test applies) (D-131,
   built D-133: four cards, two through the calendar, one cancellable)
@@ -462,8 +465,11 @@ between them as play. Starts after the stead layer's core lands.
   own goods loop D-153 (four finite tarn-iron seams, Survival-scaled extraction, town
   smelting into blooms, guild sale, pilot and worldgen measure live), deepened D-154 with
   the first bloom recipe and the sell-or-use choice; still open: a
-  possible fourth site, then further regions one at a time
-  (D-131, D-146, D-147, D-149, D-150, D-153, D-154)
+  possible fourth site, then further regions one at a time. V1-01 approves the fourth
+  fells site (D-156), and V1-09 approves the Salt Fen as the fourth named country with a
+  roofed hamlet, four sites, salt work, the fen adder, a bounded local arc, and release
+  observability (D-165). Both remain implementation pending; regions beyond the fens are
+  post-1.0 (D-131, D-146, D-147, D-149, D-150, D-153, D-154, D-156, D-165)
 
 ### Magic (v1 shipped, D-091)
 
@@ -604,8 +610,8 @@ between them as play. Starts after the stead layer's core lands.
   waygate (D-024, D-099, vision §7)
 - [x] Pilot cast policy: the warded delver + shade doctrine, every journey now reads the
   stones, says the ward, and stands a shade on uncanny ground (D-103)
-- [ ] Calling follow-ons: a villager noticing the shade, the warder's kinship with the
-  uncanny kinds (D-099)
+- [ ] Calling follow-ons: a villager noticing the shade and the warder's response to the
+  called uncanny are Approved for V1-09 (D-165; implementation pending)
 - [x] Guest companions: role-cast from world NPCs, can permanently die (D-024, D-097):
   the guest engine (follow, fight to their measure, body-block, 'o' contextual order
   key, tending from the satchel, doors/death-wake shared) plus the first full arc:
@@ -741,6 +747,10 @@ kind, and the evaluation harness that hardens every generator change.
   and tiers on a pure WorldEval core; per-tier story mixes, fact and storylet spreads, site
   tenancy, name variety, the prose-skeleton repetition audit, a double-generate purity gate
   wired to the exit code, `--json` for CI, and `--dump` as D3's surface feed)
+- [ ] Release journey and Windows x64 package (V1-09 design Approved D-165;
+  implementation pending): a machine-gated twelve-world coverage route, campaign-scoped
+  generator 1, repeatable Native AOT packaging, hashes, clean-extraction smoke tests,
+  defect audit, roadmap classification, and fresh manual packaged playthrough
 
 ---
 
@@ -755,7 +765,6 @@ kind, and the evaluation harness that hardens every generator change.
   fen-leaguer (D-164, D-009, D-048, D-054, D-033+)
 - ◇ Story open items: bottle-episode playability, Unbinder guise tells, reveal-tier sharing across characters, template 7+ candidates (aegis-arc.md §11, world-story-templates.md §11)
 - ◇ Named stead folk (plan 2026-07 A5): adopt after A1-A3 are live, and at what depth (D-131)
-- ◇ Generator-version pinning per world: today a save bump re-deals live worlds; decide before any save-format freeze whether old generators ship alongside new (D-131)
 
 ---
 
@@ -763,6 +772,19 @@ kind, and the evaluation harness that hardens every generator change.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-22: **D-165 the Salt Fen and the 1.0 release gate are designed.** V1-09 is
+  Approved but not implemented. The fourth named country opens from the town end of the
+  road with a roofed hamlet, four full sites, three finite weather-gated salt pans, one
+  ordinary fen-adder family, the salters' compact and carriers' edge, and a bounded local
+  arc with two equal-tier conclusions. The housebreaker and two Calling follow-ons become
+  launch readers, and the compact's outcome completes the capped peddler restock. Generator
+  1 is pinned per campaign in the save header. A machine-gated release journey, exact
+  WorldEval coverage, zero-blocker defect rule, line-by-line post-1.0 roadmap audit,
+  reproducible Windows x64 Native AOT package, hashes, clean-extraction smokes, and a fresh
+  signed-off manual packaged campaign make D-155's finish line executable. All nine cards
+  are now Approved; implementation may begin at V1-01. Expected final save v99 and product
+  1.0.0 remain implementation results, not changes made here. No engine or save-format
+  change yet.
 - 2026-07-22: **D-164 companions, factions, and consequences depth is designed.** V1-08
   is Approved but not implemented. Physical threats judge fellows honestly, following
   fellows escape visible marked ground while a held one keeps the ordered risk, and a

@@ -35,7 +35,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 | V1-06 | Character and activity breadth | Approved | D-162 | Pending |
 | V1-07 | Combat and magic depth | Approved | D-163 | Pending |
 | V1-08 | Companions, factions, and consequences | Approved | D-164 | Pending |
-| V1-09 | Next region and 1.0 release closure | Draft | Pending | Blocked on design pass |
+| V1-09 | Next region and 1.0 release closure | Approved | D-165 | Pending |
 
 ## V1-01: High-fells capstone, the black tarn
 
@@ -44,7 +44,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 **Roadmap association:** Path to 1.0 tranche 1; B4 later regions; wilderness fishing  
 **Dependencies:** D-138 camping, D-140 town market, D-146 high fells, D-153 regional
 goods, D-155 release sequence  
-**Implementation status:** Pending until the full design queue is Approved
+**Implementation status:** Pending in queue order; V1-01 is now cleared to begin
 
 ### Approved behavior
 
@@ -106,7 +106,7 @@ goods, D-155 release sequence
 **Roadmap association:** Path to 1.0 tranche 2; weather and seasons; A2 follow-ons  
 **Known dependencies:** Scheduled facts, stead event deck, road sky, wolf-winter, regions,
 camping, economy, black tarn  
-**Implementation status:** Pending until the full design queue is Approved
+**Implementation status:** Pending in queue order
 
 ### Approved behavior
 
@@ -280,7 +280,7 @@ camping, economy, black tarn
 **Decisions:** D-159
 **Roadmap association:** Path to 1.0 tranche 3; D3  
 **Dependencies:** Fact graph, storylets, scenes, talk topics, worldgen `--dump`, WorldEval
-**Implementation status:** Pending until the full design queue is Approved
+**Implementation status:** Pending in queue order
 
 ### Approved behavior
 
@@ -356,7 +356,7 @@ camping, economy, black tarn
 **Roadmap association:** Path to 1.0 tranche 4; D1; pacing authority question  
 **Dependencies:** Read-only teller, scheduled facts, coarse tick, stead event deck,
 weather and seasons  
-**Implementation status:** Pending until the full design queue is Approved
+**Implementation status:** Pending in queue order
 
 ### Approved behavior
 
@@ -449,7 +449,7 @@ weather and seasons
 commissions, books, town-life and economy partials  
 **Dependencies:** Town chunks, law, guild, Commerce, Persuasion, Smithing, Lore,
 regional trade  
-**Implementation status:** Pending until the full design queue is Approved
+**Implementation status:** Pending in queue order
 
 ### Approved behavior
 
@@ -580,6 +580,8 @@ regional trade
 combat movement, monster activity, crime, fencing, character creation, journey pilot
 **Recommended implementation point:** sixth card, after V1-05 and before combat and
 magic depth
+
+**Implementation status:** Pending in queue order
 
 ### Approved behavior
 
@@ -757,7 +759,7 @@ magic depth
 parry, posture, workings, Focus, Spellcraft, Will, bestiary reads, guests, and shades
 **Recommended implementation point:** seventh card, after V1-06 and before companion and
 faction depth
-**Implementation status:** Pending until the full design queue is Approved
+**Implementation status:** Pending in queue order
 
 ### Approved behavior
 
@@ -964,7 +966,7 @@ Death's Toll, scars, storylets, oaths, and the journey pilot
 **Recommended implementation point:** eighth card, after V1-07 and before the final
 region and release card
 
-**Implementation status:** Pending until the full design queue is Approved
+**Implementation status:** Pending in queue order
 
 ### Approved behavior
 
@@ -1148,20 +1150,263 @@ region and release card
 
 ## V1-09: Next region and 1.0 release closure
 
-**Design status:** Draft  
-**Roadmap association:** Path to 1.0 tranche 9; next full-density region; release audit  
-**Known dependencies:** All earlier cards, region machinery, worldgen evaluation,
-prose audit, pacing  
-**Design pass must settle:** region identity and density contract, sites and activities,
-factions and economy, launch story and content closure, generator-version decision,
-manual playthrough protocol, post-1.0 classification, defect gate, packaging, and final
-acceptance.
+**Design status:** Approved
+
+**Decisions:** D-165
+
+**Roadmap association:** Path to 1.0 tranche 9; B4 later regions; A1 peddler restock;
+housebreaker and Calling readers; generator freeze; release audit and packaging
+
+**Dependencies:** V1-01 through V1-08; region, road, town, weather, fact, schedule,
+storylet, companion, save, WorldEval, journey, sim, and Native AOT machinery
+
+**Recommended implementation point:** ninth and final card, after V1-08
+
+**Implementation status:** Pending until the implementation queue reaches V1-09
+
+### Approved behavior
+
+#### The Salt Fen, the fourth country
+
+- Add the Salt Fen as the fourth named region and fourth overworld. End-append `Fens`
+  to `Area`, draw its region and hamlet names from their own derived streams, and keep
+  every existing area, region, name, and layout draw stable.
+- A causeway mouth near the town end of the east road enters the fens; the matching home
+  mouth returns to the same road cell. Both crossings speak the generated country name.
+  The map is bounded and fully connected from its home mouth by construction.
+- Fen ground is a walkable mixture of firm bank, reed ground, and raised causeway around
+  impassable bog and open water. Do not add swimming, boating, tides, or runtime terrain
+  replacement.
+- Beasts follow into the region and wait at ordinary site mouths. No beast gains a
+  two-cell stride there; uncertain banks make every mounted fen step one cell. Existing
+  site, death, remnant, guest, shade, and crossing behavior extends through `Area.Fens`
+  without a special exception.
+- The fens use the shared seasonal calendar and a fourth climate band. Their deterministic
+  three-card hand uses the existing Calm, Wet, Wind, and Cold families, weighted toward
+  Wet and Wind. Forecast, exposed camp, beast warmth, roof, supper, and Cold rules remain
+  the V1-02 and V1-08 rules. Local labels may change, not the four effects.
+
+#### Density contract, hamlet, and four sites
+
+- Generate one roofed fen hamlet plus exactly four regional sites. The hamlet is a small
+  settlement surface, not a second market town: at least three named regional roles,
+  ordinary rest and ration access, compact and carriers' topics, and no law book,
+  property, tournament, school, guild rank, or independent reputation ladder.
+- The four sites are one salt-making worksite, one wilderness site, and two fighting
+  deeps. Each has its own stable site id, kind, entrance terrain, authored map contract,
+  fact, entrance and completion presentation, topic reader, and deterministic reachable
+  placement.
+- Every site writes at least one fact consumed by the regional arc or its aftermath.
+  Clearing or working a site never exists only for a chest count. The wilderness site
+  and fighting deeps reuse ordinary chest, stone, coffer, guest, beast, and site-clear
+  machinery where their authored contract permits it.
+- Add the fen adder as one end-appended ordinary monster family. It may cross one water
+  cell during a move but must end every turn on walkable ground, so melee always retains
+  an answer. It has an adjacent bite and one readable two-cell straight coil-strike.
+  It gains no poison meter, hidden evasion, water immunity while standing, elite kind,
+  or bespoke resistance.
+- A felled fen adder pays the wilderness loop in raw meat and hide and feeds Hunting under
+  the existing paid-kill rule. Existing cooking and hide-sale paths consume those goods.
+  Its read tiers, glyph, intents, posture, remains, companion targeting, and V1-07
+  moveset interactions follow the same contracts as every other ordinary family.
+
+#### Salt work and the completed caravan source
+
+- Put three finite workable pans in the salt worksite. Each pan may be worked once per
+  world. A work attempt is legal only under Calm or Wind in the fen climate band.
+- A legal attempt spends six completed turns, yields one sack of the existing Salt good,
+  feeds one paid Survival use, replaces the worked pan with exhausted ground, and writes
+  a stable work fact. Wet or Cold refuses before time, skill, or state is spent.
+- Salt keeps its existing death, crossing, peddler purchase, town sale, Commerce, and
+  price rules. Add no new material, container, crafting recipe, regional currency, price
+  simulation, or weather-scaled yield.
+- Either conclusion of the regional arc schedules one peddler restock for the next coarse
+  tick. The delivery restores up to two sacks on the cart, capped at that world's original
+  tier-derived stock, writes and narrates a fact, and can occur only once per world. It
+  completes A1's outstanding peddler-restock follow-on without making stock infinite.
+
+#### The compact, the carriers, and the regional arc
+
+- The salters' compact is a named regional institution expressed through roles, facts,
+  topics, scheduled state, and the local arc. It is not a new `FactionId`, Fame or Infamy
+  scalar, universal relation ledger, or population simulation.
+- The carriers' guild is the Town-to-Fen edge. Its existing bond opens the compact's
+  freight-facing surfaces, and the completed arc schedules the cart restock above. No
+  outcome grants positive Town Fame or changes the Stead-to-Town grain road.
+- Add one bounded regional arc per world. It is independent of the selected world-story
+  template, uses the hamlet and all four sites through produced and consumed facts, and
+  reaches one of two authored conclusions. The two conclusions have the same reward tier:
+  one sack of salt, the one restock schedule, an outcome fact, and witnessed aftermath.
+  They grant no coin, Essence, Regard, permanent character mark, or new reputation.
+- Every transition is perceivable. The compact's unresolved pressure has explicit exits
+  through either conclusion or the ordinary crossing reset. The arc never blocks the
+  waygate, the selected world story, the Aegis arc, or access to the region's ordinary
+  sites and salt work.
+- Keep the six existing world-story templates as the 1.0 pool. A seventh template and
+  full-form expansion of the existing slice-scale templates remain post-1.0.
+
+#### Three launch readers
+
+- Add one once-per-world reader for `shame/housebroken` in which the known housebreaker
+  meets a lane that knows. It is mechanically inert, names no unknown culprit, and adds
+  no further Shame, fine, bar, or reward.
+- Add the two Calling follow-ons already tracked under D-099: one bounded villager notice
+  of a present shade and one warder response to the called uncanny. Each is a once-per-world
+  reader, changes no allegiance or reward, and cannot give an NPC knowledge it lacks.
+- The peddler restock is the third promoted reader and A1 closure. Together these items,
+  the regional arc, and the final audit are the complete launch-content closure. No other
+  unchecked catalog line is silently promoted.
+
+#### Generator version and save freeze
+
+- Add a generator version to the save header, separate from the save-format and product
+  versions. The 1.0 generator is version 1. Save replay passes the recorded generator
+  version through every world generated by that campaign.
+- The pin is campaign-scoped because seed plus the append-only key journal rebuilds the
+  entire campaign from its first world. An existing campaign therefore keeps its recorded
+  generator for later crossings; a new campaign uses the newest supported generator.
+- A future build that changes generation must retain the old entry point for supported
+  campaigns or reject that generator version explicitly. It may never silently rebuild
+  an existing journal against a different generator.
+- Worldgen, sim, journey, snapshots, and release evidence expose the generator version.
+  `worldgen` can select any supported version for regression audits, and unknown versions
+  fail before generation.
+- Assuming V1-01 through V1-08 land in order, V1-09 advances save v98 to v99 and writes
+  generator version 1. Product version `1.0.0` remains an independent assembly and package
+  version. Pre-1.0 save formats remain explicitly rejected; no migration is invented.
+
+#### Release journey and observability
+
+- The default journey learns the fen route, weather, banks, adder, hamlet, sites, and
+  return path and cannot stall when the new region is present.
+- Add `journey --release`, a deterministic twelve-world release route that composes the
+  approved demonstrations from V1-01 through V1-09. It traverses and completes the fens,
+  works all three pans, observes at least one weather refusal without wasting a turn,
+  resolves the regional arc, receives its restock, and fights the fen adder honestly.
+- The release route carries a machine-readable coverage matrix for every tranche. It
+  exits nonzero when any mandatory demonstration is absent, and every emitted journal
+  replays exactly through `sim`.
+- Journey prose and JSON report fen visits and crossings, hamlet and site outcomes, pan
+  attempts, refusals, work, salt, adder reads and kills, arc state and conclusion,
+  restock state, save version, generator version, and the coverage matrix.
+- WorldEval and `worldgen --json` record the fourth region and climate band, generated
+  hamlet, exact site mix, reachable mouths and entrances, fen terrain counts, three pans,
+  adder tenancy, regional facts and prose surfaces, and generator version. All region
+  generation participates in the purity digest.
+
+#### Manual release-candidate playthrough
+
+- The manual gate uses a clean extraction of the candidate package and one fresh named
+  save, with no pilot, debug hook, edited journal, or development build.
+- The playthrough covers creation, ordinary exploration and trade, all four regions,
+  every activity family, representative combat and magic, a mortal guest and shade,
+  death, remnant recovery, Wounded, Toll and scar recovery, world-story completion, the
+  complete Aegis progression through resolution, and at least one post-resolution crossing.
+- Record product, save, and generator versions; seed; commit and package hashes; terminal
+  and Windows version; start and finish times; final cycle; and every defect. The public
+  checklist records coverage and verdicts without recounting story reveals.
+- The user's explicit sign-off is required. Automated journeys, tests, or a prior
+  development playthrough cannot substitute for this fresh packaged run.
+
+#### Defect gate, documentation, and packaging
+
+- A release blocker or major defect is any crash, hang, data loss, corrupt or
+  nondeterministic save, replay disagreement, unreachable required progression, conflict
+  without an exit, package startup failure, inaccessible required control, unreadable
+  supported terminal layout, or material contradiction of an Approved launch contract.
+- 1.0 requires zero known blocker or major defects. A minor prose or cosmetic defect may
+  remain only when it is written in the release audit and explicitly accepted. Any engine
+  fix after candidate evidence invalidates that candidate and reruns verification in
+  proportion to the change, including the full sweep for an engine change.
+- The initial release target is Windows x64. Publish the CLI in Release as Native AOT and
+  self-contained, then package `aegis-1.0.0-win-x64.zip` from a clean output directory.
+- The zip contains `aegis.exe`, a spoiler-free README with controls, saves, terminal
+  expectations and platform scope, 1.0 release notes, and required third-party notices.
+  Generate a SHA-256 manifest carrying commit, product version, save version, generator
+  version, runtime identifier, and every packaged file hash.
+- A repeatable local PowerShell release script kills `aegis.exe`, publishes, stages,
+  hashes, zips, and smoke-tests a clean extraction with `--help`, a short exact sim, and
+  `worldgen --json`. It must fail on dirty or missing package inputs but never alters
+  source or save data.
+- Add no installer, updater, telemetry, network call, automatic save migration, code
+  signing, or remote release machinery. Linux and macOS packages wait for native-host
+  build and verification. This card makes no source-license decision.
+
+#### Post-1.0 classification and final acceptance
+
+- During V1-09 implementation, annotate every roadmap line still unchecked or partial
+  after V1-01 through V1-08. Each must either cite this card as promoted or say
+  `post-1.0` with its governing decision. Category-level prose never substitutes for
+  line-level classification.
+- Unless an earlier card completes them, the post-1.0 families are: further gear, enemy,
+  oath, scar, Legend, working and template catalogs; folk reculturing, world epithets and
+  deeper creation integration; NPC schedules, named-population simulation, retinues and
+  broader companion arcs; tracking, swimming, climbing, further recipes and further
+  activity depth; deeper faction relations, caster reputation and town law; playable
+  memory scenes and other recurring-story expansion; external content files,
+  localization and modding; and non-Windows packages.
+- Aegis is 1.0-ready only when all nine cards are Verified; the complete engine and
+  release journeys pass; save and generator contracts pass; the clean package passes
+  smoke tests; the manual campaign is signed off; the roadmap has no unclassified open
+  line; every important shipped fact has a reader; every live conflict has an exit;
+  every activity pays at least two D-006 outputs; and the defect ledger has no blocker
+  or major entry.
+
+### Acceptance and sweep requirements
+
+- Region tests cover stable end-appended identities, independent seed streams, name
+  uniqueness, connected generation, both road crossings, all terrain and mount rules,
+  the climate band, camp and forecast behavior, death and crossing, and every hamlet and
+  site surface.
+- Site and combat tests cover exact site mix and reachability, produced and consumed
+  facts, adders crossing one water cell but ending on ground, both attacks and marks,
+  reads, posture, companions, Hunting, remains, rewards, and the no-unreachable-enemy
+  invariant.
+- Economy and arc tests cover all three pans, six-turn labor, weather refusal and every
+  no-cost boundary, salt persistence and sale, both arc conclusions, equal rewards,
+  schedules, cap, single restock, compact and carriers' facts, witnessed aftermath, and
+  crossing reset.
+- Reader tests prove the housebreaker and both Calling beats fire only with honest
+  knowledge, once per world, with no numeric consequence. The fact audit proves every
+  important launch fact has at least one reachable reader.
+- Save tests pin the v99 header shape, generator 1, campaign-scoped replay, unknown and
+  unsupported rejection, unchanged key journaling, and exact replay through multiple
+  crossings. Worldgen tests regenerate every supported generator identically.
+- Release-tool tests pin the coverage matrix, failure exit, JSON, clean staging, manifest
+  content, hash verification, package name, and clean-extraction smoke commands without
+  mutating user saves.
+- Kill `aegis.exe`, build Release, run the complete test suite, run seeds 1, 7, 99,
+  2024, and 88888 through two byte-identical twelve-world default journeys and two
+  byte-identical twelve-world release journeys, compare and justify drift from v98,
+  replay seed 1 from both modes to exact keys, cycle, and turn, and pass the version-1
+  `worldgen --json` purity and structural gates.
+- Publish the Windows x64 candidate, verify its manifest and clean-extraction smokes,
+  then complete the manual protocol. A documentation-only correction after packaging
+  requires a new package and hashes; an engine change requires the full sweep again.
+
+### Explicit exclusions
+
+- No fifth region, second fen settlement, fifth fen site, boat, swimming, tide simulation,
+  dynamic flooding, bridge building, mounted fen stride, poison system, elite adder,
+  additional ordinary monster family, or new regional crafting material.
+- No new reputation scalar, `FactionId`, positive Town Fame, regional property, law book,
+  tournament, school, guild rank, population simulation, or persistent compact state
+  across worlds.
+- No seventh world-story template, full-form template expansion, playable Aegis memory,
+  changed Aegis resolution, new companion arc, retinue, caster reputation, or further
+  faction edge.
+- No further gear, recipe, skill, knack, working, oath, scar, Legend rung, patron deed,
+  hostility band, folk culture, background, world epithet, NPC schedule, or line-bank
+  catalog beyond the explicitly promoted readers and regional content.
+- No installer, updater, telemetry, network dependency, code signing, cloud save,
+  automatic migration, remote CI or release, Linux package, or macOS package.
 
 ## 1.0 gate
 
 The release gate remains the one adopted in D-155 and detailed in
-`design/plan-2026-07.md`: all nine tranches Verified, full engine sweep green, a fresh
-manual playthrough review complete, no known release-blocking defects, current save/help/
-design documentation, every important fact with a reader, every live conflict with a
-designed exit, and every remaining roadmap line explicitly promoted or classified as
-post-1.0.
+`design/plan-2026-07.md`, now made executable by D-165: all nine tranches Verified, full
+engine and release sweeps green, a clean Windows x64 package, a fresh manual packaged
+playthrough signed off, no known blocker or major defects, current save, generator, help,
+release, and design documentation, every important fact with a reader, every live conflict
+with a designed exit, and every remaining roadmap line explicitly promoted or classified
+as post-1.0.

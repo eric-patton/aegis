@@ -231,6 +231,118 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-165: The country at the road's wet end, and the build that may call itself finished (2026-07-22)
+
+V1-09 is Approved as the ninth and final implementation-ready card on the design-first
+road to 1.0. It does two jobs that belong together at the finish line: it opens one more
+country at the density rule D-131 set, and it turns D-155's release promise into an
+executable gate. Nothing else enters the launch by implication. The full approved
+contract, exact acceptance, and exclusions live under V1-09 in `design/plan-1.0.md`.
+
+The fourth country is the Salt Fen, a named overworld reached by a causeway off the town
+end of the east road. It carries its own generated country and hamlet names, its own
+derived streams, a fourth climate band under the one shared season, and firm bank, reeds,
+raised ways, bog, and open water. Bog and water stop the bearer; no swimming, boats,
+tides, dynamic floods, or mounted double stride arrive with it. Beasts, guests, shades,
+death, remnants, camps, forecasts, crossings, and sites extend through the end-appended
+`Area.Fens` under their existing rules.
+
+Full density is explicit rather than aspirational: one roofed hamlet and exactly four
+regional sites, one salt work, one wilderness ground, and two fighting deeps. The hamlet
+is not a second market town and gains no law book, property, tournament, school, guild
+rank, or reputation ladder. Every site receives a stable kind and id, authored map
+contract, reachable placement, fact, presentation, topic reader, and a fact consumed by
+the regional arc or its aftermath. The region also adds one ordinary family, the fen
+adder: it can cross one water cell but must end on walkable ground, and it fights through
+an adjacent bite and a readable two-cell coil-strike. Raw meat and hide return it to the
+existing wilderness economy. Poison, hidden evasion, an elite adder, and a second new
+family are rejected.
+
+The salt work completes the caravan good's missing source. Three finite pans may each be
+worked once per world under Calm or Wind. Six completed turns make one existing sack of
+salt and one paid Survival use; Wet or Cold refuses before spending anything. Salt keeps
+all of its current death, crossing, purchase, sale, price, and Commerce rules. Either
+regional conclusion schedules one next-tick peddler delivery, restoring up to two sacks
+without exceeding the world's original tier-derived stock, once per world. This pays
+A1's old restock deferral without creating infinite stock, a new material, or a second
+regional price simulation.
+
+The salters' compact is an institution in roles, facts, topics, schedule, and story, not
+a new faction scalar. The carriers' bond supplies the Town-to-Fen edge. One bounded local
+arc per world reads the hamlet and all four sites and ends in either of two authored
+conclusions. Both pay the same tier: one salt sack, the one scheduled restock, an outcome
+fact, and witnessed aftermath, with no coin, Essence, Regard, permanent mark, or new
+reputation. Its pressure ends through either conclusion or the crossing reset and never
+blocks the waygate, the selected world story, the Aegis arc, ordinary site access, or salt
+work. The six existing world-story templates are the 1.0 pool; template 7 and full-form
+growth remain later work.
+
+Three small readers finish the chosen launch surface. The known housebreaker meets a lane
+that knows once per world without another punishment. A present shade receives one
+bounded villager notice, and the called uncanny one bounded warder response, both without
+allegiance, reward, or impossible knowledge. The peddler restock is the third promoted
+reader and the A1 closure. No other unchecked content line slips into 1.0 unnamed.
+
+The generator freeze resolves D-131's last parked question in the shape the real save
+architecture permits. Save headers gain a generator version separate from save format and
+product version. Generator 1 is campaign-scoped: seed plus the append-only key journal
+replays the whole campaign from its first world, so every later crossing in an existing
+campaign uses the recorded generator while a new campaign uses the newest supported one.
+A future build must retain a supported old entry point or reject it explicitly; it may
+never silently redeal an old journal. Worldgen, sim, journey, snapshots, and release
+evidence expose the version. In queue order V1-09 is expected to move v98 to v99 while
+the package becomes 1.0.0. Pre-1.0 journals remain rejected rather than receiving a false
+migration.
+
+The release proof gets its own engine-honest road. `journey --release` composes the nine
+cards across twelve worlds, carries a machine-readable coverage matrix, fails if any
+mandatory demonstration is absent, and emits a journal that `sim` must replay exactly.
+The ordinary pilot also learns the fen. WorldEval measures the fourth region, climate,
+hamlet, exact site mix, reachability, terrain, pans, adder tenancy, facts, prose, and
+generator version, all inside the purity digest.
+
+The human gate cannot be automated away. A clean packaged Windows x64 build must be
+played from a fresh named save with no pilot, debug hook, edited journal, or development
+binary. The run covers creation, ordinary life, all four regions and activity families,
+representative combat and magic, mortal and called company, death and recovery, the main
+progression through resolution, and one later crossing. Its audit records versions, seed,
+commit and package hashes, environment, final cycle, defects, and the user's explicit
+sign-off without publishing story reveals.
+
+A blocker or major defect is a crash, hang, data loss, corrupt or nondeterministic save,
+replay disagreement, unreachable required progression, conflict without an exit, package
+startup failure, inaccessible control, unreadable supported layout, or material breach of
+an Approved launch contract. The release carries none. A minor prose or cosmetic defect
+ships only when written and explicitly accepted. An engine fix invalidates the candidate
+and earns the full sweep again.
+
+Packaging is deliberately narrow and repeatable: Windows x64, Release, Native AOT,
+self-contained, `aegis-1.0.0-win-x64.zip`, a spoiler-free README, release notes, required
+notices, and a SHA-256 manifest naming commit, product, save, generator, runtime, and file
+hashes. A local PowerShell release script kills the process, publishes, stages, hashes,
+zips, and smoke-tests a clean extraction. No installer, updater, telemetry, network call,
+automatic migration, code signing, remote release machinery, or source-license decision
+is smuggled into the card. Linux and macOS wait for native-host proof.
+
+The final audit classifies every remaining unchecked or partial roadmap line individually.
+Open catalogs, reculturing and deeper creation, NPC schedules and population depth,
+retinues and broader guests, tracking and further activities, deeper faction and caster
+social systems, recurring-story expansion, data-file migration, localization, modding,
+and non-Windows packages are post-1.0 unless an earlier Approved card actually completes
+them. Aegis may call itself 1.0 only when all nine cards are Verified, both engine and
+release sweeps are green, save and generator contracts hold, the clean package passes,
+the manual campaign is signed off, every roadmap line is classified, every important
+fact has a reader, every conflict an exit, every activity two outputs, and the defect
+ledger no blocker or major entry.
+
+Options set aside: a thinner region; a fifth site or second settlement; swimming, boats,
+tides, dynamic flooding, poison, or a regional mount advantage; another reputation
+ladder; a seventh launch template; per-world generator markers inside the plain key
+journal; silent generator upgrades; checkpoint saves just to support mixed generators;
+an installer or cross-platform package without native-host proof; and calling an automated
+journey a manual playthrough. V1-09 remains unimplemented until its turn after V1-08, but
+with this approval all nine cards are now designed and implementation may begin at V1-01.
+
 ### D-164: The road carried together: mortal judgment, the grain road, and the long count (2026-07-22)
 
 V1-08 is Approved as the eighth implementation-ready card on the design-first road to
@@ -2170,4 +2282,3 @@ Pays D-063's own named deferrals in one stroke, arming the autopilot at the smit
 - Catalogs to design later: more oaths beyond D-164's nine; the dragging step and scars beyond D-164's launch three; Legend rungs past D-048's five; patron deeds beyond D-054's three (property and retinue shapes from D-025); and optional hostility-tier content past the fen-leaguer (D-033 landed tier 2, D-040 tier 3, D-044 tier 4, D-053 tier 5, D-057 tier 6, D-058 posted the sword-thegn into the tier-7 ringfort; D-151 makes twists the recurring tier-7+ structure, so further bands are catalog growth rather than a rung-by-rung obligation)
 - Story open items listed in `design/story/aegis-arc.md` sec. 11 and `design/story/world-story-templates.md` sec. 10 (bottle-episode playability, Unbinder guise tells, reveal-tier sharing across characters, template 7+ candidates: the dying god's succession, the long siege having shipped as the sixth in D-130; names settled by D-043)
 - Named stead folk (plan 2026-07 A5, D-131): adopt after A1-A3 are live and the raids can threaten something with a name, and at what depth; if adopted, keep it lite (no population simulation, no birth rolls, research/12's avoid-list)
-- Generator-version pinning per world (D-131): today a save bump re-deals live worlds; decide before any save-format freeze whether old generators ship alongside new so a world keeps its birth generator (research/13's Minecraft lesson)

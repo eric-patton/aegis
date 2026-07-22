@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-164); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-165); the research behind it lives in `../research/`.
 
 ---
 
@@ -33,8 +33,9 @@ You are nobody, in a world that was generated last Tuesday and has three hundred
 ### Weather and seasons
 Every world opens in autumn under one shared seasonal calendar, with winter beginning on
 the existing seed-drawn hard-winter tick and later seasons advancing every three coarse
-ticks. Lowlands, road, and high fells express that calendar through independent deterministic
-weather hands using four readable families: Calm, Wet, Wind, and Cold. Weather's direct
+ticks. Lowlands, road, high fells, and the D-165 Salt Fen express that calendar through
+independent deterministic weather hands using four readable families: Calm, Wet, Wind,
+and Cold. Weather's direct
 weight stays on exposed travel and camping, never hidden combat or resource rolls. One-tick
 forecasts at the sidebar and travel thresholds make timing the counterplay; roofs, supper,
 waystones, and the great pelt are the answers already in the world. The stead event deck
@@ -44,7 +45,19 @@ without turning every ordinary weather card into an economy modifier (D-158).
 ### Worldgen: history first
 At world creation, a causal-grammar history generator (the Caves of Qud model) produces the **world fact graph**: settlements, factions, notable NPCs, wars, grudges, shortages, ruins, and relics, all as ID-referenced facts with causes. This graph is the source of truth for everything: quests query it, dialogue cites it, prices derive from it, items are inscribed with it. Generated history the player cannot touch is wasted, so all of it is queryable in-fiction: books (if you can read), bards, gravestones, rumor, and the ask-about system.
 
-Hierarchical seeds (master seed hashed per subsystem/region/site) keep every world reproducible; saves are seed + delta.
+Hierarchical seeds (master seed hashed per subsystem/region/site) keep every world
+reproducible; saves are seed plus journal. D-165 freezes generator 1 per campaign in the
+save header for 1.0. A supported old campaign keeps its recorded generator through later
+crossings, while new campaigns use the newest supported one; a future build retains the
+old entry point or rejects it explicitly, never silently redealing an old journal.
+
+The launch world has four named countries once D-165 lands. The Salt Fen is the fourth:
+a bounded causeway country off the town end of the east road, with its own hamlet and
+climate band, firm banks and reeds around impassable bog and water, exactly four regional
+sites, three finite salt pans, and one ordinary fen-adder family. Its salters' compact is
+an institution in facts and schedule rather than a new reputation scalar. Salt work feeds
+Survival and the existing caravan good, while either equal-tier local conclusion schedules
+one capped peddler restock. Further regions remain post-1.0.
 
 Fact-driven prose follows the same deterministic discipline. D-159 defines enumerable
 narrative surfaces, fact-keyed authored variant bundles, validated contexts, and stable
@@ -161,7 +174,11 @@ When you fall:
 - **Wounded**: a temporary, visible, debt-framed debuff. Never a power loss; time and money, not spirals.
 - **Death's Toll**: a visible meter that fills on death and drains over time. Routine deaths never scar. Clustered or boss-tier deaths risk a scar: a lost eye, a crushed hand, a haunted look. A handful per playthrough at most, each with a costly path back to parity, each a dialogue hook. NPCs who watch you fall remember. *Shipped whole (D-098): the deterministic ledger, the three scars matched to their deaths, each one's costly cure road (the stillroom's knife, the smith's brace, the songhall's laying), and the stead noticing the marks. D-164 approves the launch aftermath pending implementation: scar and scar-mended facts with consumers, a fitted brace that makes wielded parries cost one stamina after the hand is repaired, capped tier-scaled Toll fill, and scars plus brace beside burdens on the sheet. Further scars remain later catalog growth.*
 
-Saves are part of the design: autosave fires at the instant of death, before the penalty screen, carrying all consequence state. Manual saves exist for life reasons; an optional Ironman toggle enforces the stakes architecturally.
+Saves are part of the design: autosave fires at the instant of death, before the penalty
+screen, carrying all consequence state. Manual saves exist for life reasons; an optional
+Ironman toggle enforces the stakes architecturally. Product, save-format, and generator
+versions are separate. The 1.0 contract is product 1.0.0, expected save v99 after the nine
+cards land in order, and campaign-pinned generator 1 (D-165).
 
 ---
 
@@ -220,9 +237,14 @@ And the loop closes on itself: **your finished characters enter the mythology.**
 ## 11. Technology
 
 - **C# / .NET**, NativeAOT single-file publish. TUI via a lean custom render layer (or Terminal.Gui v2); the hard 80% is the deterministic simulation core, not the rendering.
-- **Save architecture**: versioned seed contract for regenerable content, delta journal for authored/player-mutated state.
+- **Save architecture**: versioned seed and campaign-generator contract for regenerable content, append-only key journal for authored/player-mutated state.
 - **RNG**: hierarchical seed tree (master seed hashed with stable subsystem/region/site identifiers); subsystems never share a stream.
 - **Content**: storylets and line banks; format v1 spec'd in `storylets.md` (C# catalog now, designed to map 1:1 onto data files when volume demands).
+- **1.0 release**: Windows x64, self-contained Native AOT zip, spoiler-free README,
+  release notes, required notices, SHA-256 manifest, clean-extraction smokes, zero known
+  blocker or major defects, and a fresh signed-off manual packaged campaign. Installers,
+  telemetry, networking, automatic migration, code signing, and non-Windows packages are
+  outside the launch contract (D-165).
 
 ## 12. Open Items
 
@@ -235,7 +257,7 @@ And the loop closes on itself: **your finished characters enter the mythology.**
 ## 13. Document Map
 
 - `roadmap.md`: the living feature tracker and roadmap (what is built, partial, left, open)
-- `decisions.md`: the decision audit trail with rationale (77 and counting)
+- `decisions.md`: the decision audit trail with rationale (165 and counting)
 - `storylets.md`: storylet format and fact-graph schema spec (D-030)
 - `story/aegis-arc.md`: the trans-world Aegis arc spec (Canon: The Ledger; D-026)
 - `story/world-story-templates.md`: the world-story template contract, iron rules, and the template pool (six landed through D-130)

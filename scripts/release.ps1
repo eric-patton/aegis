@@ -11,6 +11,7 @@ $publishDir = Join-Path $artifactRoot "publish-$Runtime"
 $stageDir = Join-Path $artifactRoot "aegis-1.0.0-$Runtime"
 $extractDir = Join-Path $artifactRoot "smoke-aegis-1.0.0-$Runtime"
 $zipPath = Join-Path $artifactRoot "aegis-1.0.0-$Runtime.zip"
+$checksumPath = "$zipPath.sha256"
 
 if ((git -C $repo status --porcelain).Count -ne 0) {
     throw "Release packaging requires a clean worktree."
@@ -30,6 +31,9 @@ foreach ($path in @($publishDir, $stageDir, $extractDir)) {
 }
 if (Test-Path -LiteralPath $zipPath) {
     Remove-Item -LiteralPath $zipPath -Force
+}
+if (Test-Path -LiteralPath $checksumPath) {
+    Remove-Item -LiteralPath $checksumPath -Force
 }
 
 dotnet publish (Join-Path $repo "src\Aegis.Cli\Aegis.Cli.csproj") `
@@ -107,5 +111,10 @@ foreach ($line in Get-Content -LiteralPath (Join-Path $extractDir "SHA256SUMS.tx
 }
 
 $zipHash = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash.ToLowerInvariant()
+[System.IO.File]::WriteAllText(
+    $checksumPath,
+    "$zipHash  $(Split-Path -Leaf $zipPath)`n",
+    [System.Text.UTF8Encoding]::new($false))
 Write-Output "package=$zipPath"
+Write-Output "checksum=$checksumPath"
 Write-Output "sha256=$zipHash"

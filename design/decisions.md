@@ -298,9 +298,9 @@ twelve worlds.
 
 The roadmap audit classifies every remaining incomplete line as post-1.0 except this
 card and its package gate. The durable defect and release audit is
-`design/release-audit-1.0.0.md`. V1-09 remains Implemented rather than Verified until
-the clean Windows x64 package passes its final script and the user completes and signs
-off the fresh packaged campaign required by D-165.
+`design/release-audit-1.0.0.md`. The clean Windows x64 package, manifest, hashes, and
+extraction smokes pass. V1-09 remains Implemented rather than Verified until the user
+completes and signs off the fresh packaged campaign required by D-165.
 
 Options set aside remain D-165's explicit exclusions: a fifth country, a seventh
 world-story template, swimming, boating, tides, poison, an independent compact

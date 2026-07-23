@@ -48,6 +48,7 @@ public class ReleaseToolTests
         Assert.Contains("saveVersion=99", script);
         Assert.Contains("generatorVersion=1", script);
         Assert.Contains("Get-FileHash", script);
+        Assert.Contains("$zipPath.sha256", script);
         Assert.Contains("Expand-Archive", script);
         Assert.Contains("& $exe --help", script);
         Assert.Contains("& $exe sim --seed 1", script);

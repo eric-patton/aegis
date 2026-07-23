@@ -23,8 +23,8 @@ The canonical design truth stays where it always was:
 
 - Latest completed work: D-174, V1-09's Salt Fen, finite salt work, regional account,
   launch readers, campaign-scoped generator 1, release journey, roadmap and defect
-  audits, and Windows x64 release packaging machinery. Automated verification is green;
-  the clean package and fresh manual campaign are the remaining gates.
+  audits, and Windows x64 release packaging machinery. Automated verification and the
+  clean package are green; the fresh manual campaign is the remaining gate.
 - Save format: `SaveCodec.Version = 99` (v91 = D-154, v92 = D-166, v93 = D-167,
   v94 = D-169, v95 = D-170, v96 = D-171, v97 = D-172, v98 = D-173,
   v99 = D-174; history
@@ -211,12 +211,9 @@ hard failures. The fixed-surface warning remains expected.
 
 ## What is next (queued, in recommended order)
 
-1. **Create the clean Windows x64 candidate package** with `scripts/release.ps1` from
-   the committed D-174 tree. Record its commit and SHA-256 in
-   `design/release-audit-1.0.0.md`.
-2. **Run the fresh packaged manual campaign** exactly as
+1. **Run the fresh packaged manual campaign** exactly as
    `design/release-audit-1.0.0.md` specifies. The user must provide the explicit verdict.
-3. If approved, record the manual evidence and verdict, flip V1-09 and tranche 25 to
+2. If approved, record the manual evidence and verdict, flip V1-09 and tranche 25 to
    Verified, update the 1.0 counts and changelog, and close the release-candidate status.
    Any engine fix invalidates the candidate and requires the full sweep again.
 

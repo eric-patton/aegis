@@ -11,8 +11,8 @@ tools.
 - Generator version: 1
 - Runtime identifier: win-x64
 - Package: `aegis-1.0.0-win-x64.zip`
-- Commit: pending final candidate commit
-- Package SHA-256: pending final clean package
+- Commit: recorded in the package's internal `SHA256SUMS.txt`
+- Package SHA-256: recorded in the sibling `aegis-1.0.0-win-x64.zip.sha256`
 - Verification environment: Windows x64, .NET SDK 10.0.300
 - Manual seed and slot: pending user run
 
@@ -27,9 +27,9 @@ tools.
 - [x] Seed 1 default journal replays exactly through `sim`
 - [x] Seed 1 release journal replays exactly through `sim`
 - [x] Generator 1 worldgen purity and structure gate: 240 worlds, zero mismatches
-- [ ] Clean Windows x64 Native AOT package
-- [ ] Manifest metadata and every listed file hash verified
-- [ ] Clean-extraction `--help`, short exact `sim`, and `worldgen --json` smokes
+- [x] Clean Windows x64 Native AOT package
+- [x] Manifest metadata and every listed file hash verified
+- [x] Clean-extraction `--help`, short exact `sim`, and `worldgen --json` smokes
 
 The first release-route proof used seed 1 and reached cycle 13 after 12 crossings. Its
 machine matrix reported V1-01 through V1-09 true. The V1-09 row included both legal pan

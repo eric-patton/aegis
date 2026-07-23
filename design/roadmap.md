@@ -54,7 +54,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - Story templates: **6** built (Raided Stead plus Blight, Throne, Faiths, Gold Rush, Long Siege)
 - Path to 1.0: **8 of 9 tranches Verified** (V1-01 D-166, V1-02 D-167, V1-03 D-168,
   V1-04 D-169, V1-05 D-170, V1-06 D-171, V1-07 D-172, V1-08 D-173); V1-09 is
-  Implemented under D-174 and awaits the clean packaged manual signoff before verification
+  Implemented under D-174 with its clean package verified, and awaits the fresh manual
+  campaign and explicit user signoff before verification
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
@@ -767,7 +768,7 @@ kind, and the evaluation harness that hardens every generator change.
 - [~] Release journey and Windows x64 package (V1-09 design Approved D-165; built D-174):
   the machine-gated twelve-world route, campaign-scoped generator 1, repeatable Native
   AOT packaging, hashes, clean-extraction smokes, defect audit, and roadmap
-  classification are built; fresh packaged manual playthrough and explicit signoff remain
+  classification have passed; a fresh packaged manual playthrough and explicit signoff remain
 
 ---
 
@@ -802,8 +803,8 @@ Newest first. Log when a feature is checked off, or when new work is added to th
   tests pass. Five default and five release twin pairs are byte-identical, both seed 1
   journals replay exactly, and generator 1 is pure across 240 worlds and 93,002 prose
   surfaces. The roadmap, important-fact, conflict, and defect audits are complete.
-  V1-09 remains Implemented and partial until the clean package completes its final
-  script and the user signs off the fresh packaged campaign.
+  V1-09 remains Implemented and partial until the user signs off the fresh packaged
+  campaign.
 - 2026-07-23: **D-173 companion, faction, and consequence depth is built and
   Verified.** V1-08 closes companion combat parity, the Crofter grain road, bounded
   success and loss memories, live watch and levy readers, beast warmth and recognition,

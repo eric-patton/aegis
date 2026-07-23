@@ -1312,8 +1312,9 @@ storylet, companion, save, WorldEval, journey, sim, and Native AOT machinery
 
 **Recommended implementation point:** ninth and final card, after V1-08
 
-**Implementation status:** Built and automated gates verified 2026-07-23. The fresh
-packaged manual campaign and explicit user signoff remain before this card becomes Verified.
+**Implementation status:** Built, automated gates verified, and clean package verified
+2026-07-23. The fresh packaged manual campaign and explicit user signoff remain before
+this card becomes Verified.
 
 ### Approved behavior
 

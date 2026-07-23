@@ -225,6 +225,13 @@ versus forced arrivals. The JSON adds those aggregates plus one record for every
 tick, including the call fixed before the night, cadence result, protected claim, outcome,
 and dealt card key. Ordinary game presentation exposes none of this editorial machinery.
 
+D-161/D-170 add matching town-depth diagnostics to both report forms: lists entries,
+formal bouts, yields, championships, judicial results, lofts bought, boxed purses moved in
+and out, room rests, desk sittings, workshops commissioned, and real wear-moving workshop
+sittings. The canonical pilot remains crime-free, so zero judicial results are expected in
+the sweep. Focused tests cover both judicial outcomes instead of manufacturing an offense
+inside the journey policy.
+
 ## Worldgen and prose curation
 
 `worldgen` batch-generates each requested world twice, compares the complete WorldEval

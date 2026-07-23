@@ -319,6 +319,8 @@ public static class Presenter
         frame.Write(x0 + 2, y0 + 1,
             npc.Id == "npc_townsmith"
                 ? $"The long hearth | {npc.Name} the {npc.Role}"
+                : npc.Id == "npc_scrivener"
+                    ? $"The shelf | {npc.Name} the {npc.Role}"
                 : $"The wood's edge | {npc.Name} the {npc.Role}", Hue.White);
         frame.Write(x0 + 2, y0 + 2, $"You hold {game.Player.Coin} coin", Hue.Cyan);
 
@@ -816,6 +818,12 @@ public static class Presenter
         Terrain.TarnIron => ('i', Hue.DarkCyan, Hue.Black),
         Terrain.TarnEntrance => ('o', Hue.Blue, Hue.Black),
         Terrain.FishingReach => ('f', Hue.Cyan, Hue.DarkBlue),
+        Terrain.LoftDoor => ('+', Hue.DarkYellow, Hue.Black),
+        Terrain.LoftBed => ('b', Hue.Cyan, Hue.Black),
+        Terrain.LoftDesk => ('d', Hue.White, Hue.Black),
+        Terrain.LoftStrongbox => ('$', Hue.Yellow, Hue.Black),
+        Terrain.LoftWorkshop => ('k', Hue.DarkCyan, Hue.Black),
+        Terrain.LawDayRing => (':', Hue.Yellow, Hue.Black),
         _ => ('?', Hue.Magenta, Hue.Black),
     };
 
@@ -926,11 +934,20 @@ public static class Presenter
                         Line($"{npc.Name}: bump to talk", Hue.Green);
                 if (game.CurrentMap[p.Pos] == Terrain.ExitLadder)
                     Line("The gate arch: < leaves", Hue.Yellow);
+                var townHere = game.CurrentMap[p.Pos];
+                if (townHere == Terrain.LoftBed) Line("Loft bed: r rests", Hue.Cyan);
+                if (townHere == Terrain.LoftDesk && game.NextRead is not null) Line("Loft desk: v reads", Hue.Cyan);
+                if (townHere == Terrain.LoftStrongbox) Line($"Strongbox: g moves purse ({game.BoxedCoin}c boxed)", Hue.Yellow);
+                if (townHere == Terrain.LoftWorkshop)
+                    Line(game.WorkshopFitted ? "Fitted workbench: g works" : "Bench-bay: commission needed", Hue.DarkCyan);
+                if (townHere == Terrain.LoftDoor && !game.GuildLoftOwned) Line("Guild loft: locked", Hue.DarkYellow);
+                if (game.FormalBout is { } formal)
+                    Line($"Formal bout: {formal.ToString().ToLowerInvariant()}", Hue.Yellow);
             }
             int alive = game.LiveMonstersHere.Count();
             if (game.CurrentSite.Kind == SiteKind.BlackTarn)
                 Line($"Fishing reaches: {game.CurrentSite.FishingReaches.Count}", Hue.Cyan);
-            else if (game.CurrentSite.Kind != SiteKind.Town)
+            else if (game.CurrentSite.Kind != SiteKind.Town || game.FormalBout is not null)
                 Line($"Foes here: {alive}", alive > 0 ? Hue.Red : Hue.DarkGreen);
             if (game.CurrentSite.Kind == SiteKind.BlackTarn && game.CurrentMap[p.Pos] == Terrain.FishingReach)
                 Line(p.FishingLine ? "Fishing reach: g works" : "Fishing reach: needs line", Hue.Cyan);

@@ -18,6 +18,10 @@ public class LoreTests
         => (char)('1' + game.Topics.Count + game.Offers.ToList()
             .FindIndex(o => o.Good == good && (arg.Length == 0 || o.Arg == arg)));
 
+    private static char TradeKey(Game game, TradeGood good, string arg = "")
+        => (char)('1' + game.TradeOffers.ToList()
+            .FindIndex(o => o.Good == good && (arg.Length == 0 || o.Arg == arg)));
+
     /// <summary>Walks the real road and gate: the mouth, then the arch.</summary>
     private static void EnterTown(Game game)
     {
@@ -94,9 +98,12 @@ public class LoreTests
         Assert.True(game.InTalkMenu);
 
         // Unlettered: the shelf refuses the sale whole, and keeps no coin.
-        game.ApplyKey(OfferKey(game, TradeGood.Book, "herbal"));
+        game.ApplyKey(OfferKey(game, TradeGood.Shelf));
+        game.ApplyKey(TradeKey(game, TradeGood.Book, "herbal"));
         Assert.Empty(game.Player.Books);
         Assert.Equal(Scrivener.SittingCoin * 4, game.Player.Coin);
+        game.ApplyKey(' ');
+        BumpTowner(game, "npc_scrivener");
 
         // Four sittings at two uses each carry the hand to Lore 1: lettered.
         for (int i = 0; i < 3; i++)
@@ -123,7 +130,8 @@ public class LoreTests
         game.Player.Coin = herbal.Price;
         EnterTown(game);
         BumpTowner(game, "npc_scrivener");
-        game.ApplyKey(OfferKey(game, TradeGood.Book, "herbal"));
+        game.ApplyKey(OfferKey(game, TradeGood.Shelf));
+        game.ApplyKey(TradeKey(game, TradeGood.Book, "herbal"));
         Assert.Contains(BookId.Herbal, game.Player.Books);
         Assert.Equal(0, game.Player.Coin);
 

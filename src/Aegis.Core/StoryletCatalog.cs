@@ -1599,5 +1599,54 @@ public static class StoryletCatalog
             ],
             Effect = g => g.GrantTheCourser(),
         },
+
+        // The hearth-book's three fact-keyed keeps (D-161). The book opens
+        // the hearing, but each world must supply the true ground. Character
+        // scope makes each account a once-ever meeting rather than a refrain.
+        new Storylet
+        {
+            Id = "hearth-book-winter-line",
+            Trigger = StoryletTrigger.NearHouse,
+            Scope = StoryletScope.Character,
+            Priority = 7,
+            Requires = [new FactPattern("event", "hard_winter")],
+            When = g => g.Player.HasRead(BookId.FolkTales),
+            Lines =
+            [
+                ("A line from the hearth-book comes back at the eaves, not as counsel but recognition: the old account named this exact work of cold on roof and hinge. The page had not exaggerated it.", LogTone.Info),
+            ],
+            Effect = g => g.World.Facts.Add("book-tale", "winter-line", g.World.SettlementName,
+                "A true winter in this world gave the bearer the living referent of one account in the hearth-book of road and fell."),
+        },
+        new Storylet
+        {
+            Id = "hearth-book-quiet-den",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.Character,
+            Priority = 7,
+            Requires = [new FactPattern("deed", "camp_cleared")],
+            When = g => g.Player.HasRead(BookId.FolkTales) && g.TalkNpc?.Kind == NpcKind.Villager,
+            Lines =
+            [
+                ("The villager's phrasing catches on a sentence from the hearth-book, an old account that only makes sense now the den above this stead stands quiet. You hear where the copyist had left a careful blank for the place-name.", LogTone.Info),
+            ],
+            Effect = g => g.World.Facts.Add("book-tale", "quiet-den", g.World.SettlementName,
+                "A cleared den and the stead's own telling supplied the true place-name for one hearth-book account."),
+        },
+        new Storylet
+        {
+            Id = "hearth-book-black-water",
+            Trigger = StoryletTrigger.AmbientTurn,
+            Scope = StoryletScope.Character,
+            Priority = 7,
+            Requires = [new FactPattern("resource-state", "black_tarn_worked")],
+            When = g => g.Player.HasRead(BookId.FolkTales),
+            Lines =
+            [
+                ("On the open road, the last of the hearth-book's marked accounts settles into place. The copied bank, the patient line, and the road away were not symbols. You have walked their measure.", LogTone.Info),
+            ],
+            Effect = g => g.World.Facts.Add("book-tale", "black-water", g.World.FellRegion.Name,
+                "The worked black tarn supplied the true ground for one account in the hearth-book of road and fell."),
+        },
     ];
 }

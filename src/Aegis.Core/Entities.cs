@@ -550,6 +550,9 @@ public sealed class Monster
     /// <summary>Which site this monster haunts; only the current site's monsters act.</summary>
     public required string SiteId { get; init; }
 
+    /// <summary>An authored visible name for formal opponents; ordinary foes keep their kind-name.</summary>
+    public string? FormalName { get; init; }
+
     public int Hp { get; set; } = 8;
     public Intent? Intent { get; set; }
 
@@ -637,7 +640,7 @@ public sealed class Monster
     public bool Grudge => Scarred || SlewBearer || Rose;
 
     public bool Alive => Hp > 0;
-    public string Name => Kind switch
+    public string Name => FormalName ?? Kind switch
     {
         MonsterKind.Goblin => "goblin",
         MonsterKind.Wight => "wight",

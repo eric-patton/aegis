@@ -58,7 +58,7 @@ public class TownTests
             Assert.Empty(town.Spawns);
 
             // The whole cast stands, walkable and distinct, inside the walls.
-            foreach (string id in (string[])["npc_provisioner", "npc_hidemonger", "npc_herbmonger", "npc_mootwarden", "npc_townsmith", "npc_guildmaster", "npc_scrivener"])
+            foreach (string id in (string[])["npc_provisioner", "npc_hidemonger", "npc_herbmonger", "npc_mootwarden", "npc_townsmith", "npc_guildmaster", "npc_scrivener", "npc_listsmarshal"])
             {
                 var npc = a.Npcs.First(n => n.Id == id);
                 Assert.Equal("town", npc.SiteId);

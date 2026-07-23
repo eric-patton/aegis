@@ -1680,12 +1680,12 @@ public static class WorldGen
         [
             "..............",
             "...########...",
-            "...#......#...",
-            "...#......#...",
-            "...##....##...",
+            "...#aaaaaa#...",
+            "...#aaaaaa#...",
+            "...#aaaaaa#...",
             "......W.......",
             "....~.........",
-            "..t........t..",
+            "..t....M...t..",
             "..............",
             "..t........t..",
             "..............",
@@ -1738,10 +1738,10 @@ public static class WorldGen
         [
             "..............",
             "..########....",
+            "..#b..x..#....",
+            "..#d..k..#....",
             "..#......#....",
-            "..#......#....",
-            "..#......#....",
-            "..####.###....",
+            "..####L###....",
             "......G.......",
             "......##......",
             "......##......",
@@ -1802,6 +1802,12 @@ public static class WorldGen
                         '#' => Terrain.House,
                         '~' => Terrain.Water,
                         't' => Terrain.Forest,
+                        'L' => Terrain.LoftDoor,
+                        'b' => Terrain.LoftBed,
+                        'd' => Terrain.LoftDesk,
+                        'x' => Terrain.LoftStrongbox,
+                        'k' => Terrain.LoftWorkshop,
+                        'a' => Terrain.LawDayRing,
                         _ => Terrain.Grass,
                     };
                     (string Id, string Role)? anchor = c switch
@@ -1812,6 +1818,7 @@ public static class WorldGen
                         'W' => ("npc_mootwarden", "moot-warden"),
                         'S' => ("npc_townsmith", "forge-smith"),
                         'G' => ("npc_guildmaster", "guildmaster"),
+                        'M' => ("npc_listsmarshal", "lists marshal"),
                         // The scrivener (D-148): the market's own lean-to, the
                         // town's first bookish anchor, letters sold by the sitting.
                         'V' => ("npc_scrivener", "scrivener"),

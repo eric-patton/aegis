@@ -52,8 +52,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   Sleight/Larceny split Approved D-162); **town life opened** (knucklebones D-108;
   carousing + the light-purse read D-123)
 - Story templates: **6** built (Raided Stead plus Blight, Throne, Faiths, Gold Rush, Long Siege)
-- Path to 1.0: **4 of 9 tranches Verified** (V1-01 D-166, V1-02 D-167, V1-03 D-168,
-  V1-04 D-169); V1-05 is next
+- Path to 1.0: **5 of 9 tranches Verified** (V1-01 D-166, V1-02 D-167, V1-03 D-168,
+  V1-04 D-169, V1-05 D-170); V1-06 is next
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
@@ -147,8 +147,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   companions, factions, and consequence depth; then the next full-density region and
   the release audit. Open-ended catalogs remain tracked but do not block 1.0 unless a
   later decision explicitly promotes them into the gate. All nine cards are Approved
-  through D-165. V1-01 through V1-04 are built and Verified under D-166 through D-169,
-  so V1-05 is next in queue order.
+  through D-165. V1-01 through V1-05 are built and Verified under D-166 through D-170,
+  so V1-06 is next in queue order.
 
 ### Path to 1.0 tracker (ordered, adopted D-155/D-157)
 
@@ -160,8 +160,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   (V1-03 design Approved D-159; built and Verified D-168)
 - [x] 4. D1 pacing steering
   (V1-04 design Approved D-160; built and Verified D-169)
-- [ ] 5. Town and economy depth tranche
-  (V1-05 design Approved D-161; implementation pending)
+- [x] 5. Town and economy depth tranche
+  (V1-05 design Approved D-161; built and Verified D-170)
 - [ ] 6. Character and activity breadth tranche, completing the intended skill roster
   (V1-06 design Approved D-162; implementation pending)
 - [ ] 7. Combat and magic depth tranche
@@ -186,8 +186,8 @@ infinite prerequisite for completion.
 
 - [x] Deterministic engine: hierarchical seed tree, fact graph, worldgen (D-002, D-013, D-018)
 - [x] Layered-map presentation, TUI render layer (Frame/Presenter) (D-001)
-- [x] Save system: seed + input journal, replay-on-load, currently v94
-  (D-012, D-028, D-166, D-167, D-169)
+- [x] Save system: seed + input journal, replay-on-load, currently v95
+  (D-012, D-028, D-166, D-167, D-169, D-170)
 - [x] NG+ crossing: waygate, coin -> Legend, tier-deepening worldgen (D-011, D-029)
 - [x] The Aegis as diegetic companion voice (D-010, D-019)
 - [x] The full trans-world Aegis story arc: reveal ladder -> the keeping -> the mending -> steady state (D-020, D-026, D-037, D-038, D-039, D-045, D-060)
@@ -231,8 +231,8 @@ infinite prerequisite for completion.
   and a point shoved back through the crossed iron (D-129)
 - [ ] Parry- and stance-riding level-6 knacks (V1-07 design Approved D-163;
   implementation pending; D-125, D-094)
-- [ ] Formal duels / judicial combat set-pieces (V1-05 design Approved D-161;
-  implementation pending)
+- [x] Formal duels / judicial combat set-pieces (V1-05 design Approved D-161;
+  built and Verified D-170)
 
 ### Character identity
 
@@ -254,8 +254,8 @@ infinite prerequisite for completion.
   the name; folk-aware recultured societies in worldgen; keepsake content past the song (D-093)
 - [x] Literacy skill + books gating recipes/techniques/lore (D-148: Lore 1 is literacy;
   three opening books with concrete keeps; D-154 adds the fourth, a smithing text whose
-  recipe spends tarn-iron; the scrivener teaches letters for coin; D-161 approves the
-  town-law primer, folk-tales, and shelf submenu for V1-05, implementation pending;
+  recipe spends tarn-iron; the scrivener teaches letters for coin; D-170 adds the
+  town-law primer, folk-tales, and stable six-book shelf submenu under D-161;
   Lore knacks remain open) (D-005, vision §3)
 
 ### Skills (14 built of 18; V1-06 design Approved D-162)
@@ -359,15 +359,15 @@ infinite prerequisite for completion.
   about while the streak stands); carousing shipped (D-123, v66: the standing round at the
   skald's hearth, 5 coin once per world, no rung and no ledger, the lane remembering who
   poured); caravan/arbitrage shipped (D-144: the salt leg, the first buy-to-resell
-  trade); D-161 approves the law-day lists and guild loft for V1-05, implementation
-  pending (D-006)
+  trade); the law-day lists, judicial challenge, guild loft, and fitted workshop ship under
+  D-161/D-170 (D-006)
 - [x] A consumer for the light_purse fact (the stead reading a fleeced bearer, gated on the
   live net like the lucky hand's talk) (D-108, built D-123)
 - [x] Carousing as a round-standing verb at the hearth (D-108, built D-123)
 - [~] Aspirational sink ladder: property, retinue, master training, commissions (D-025, D-036);
   the stead half shipped whole as the five-work facility ladder (A3 v1 D-134, A3 v2 D-135),
-  the town half is the guild loft and fitted workshop approved for V1-05 in D-161,
-  implementation pending
+  the town half now includes the world-scoped guild loft and fitted workshop under
+  D-161/D-170; retinue and broader master training remain open
 - [~] Grow the wood's-edge bench: cooking (D-073) + foraged-goods sale (D-074) shipped; hunting gear/lessons pending (D-071)
 
 ### The stead layer (plan 2026-07 Phase A, adopted D-131)
@@ -442,11 +442,11 @@ between them as play. Starts after the stead layer's core lands.
   inside the wall; a caught hand goes into the warden's book, not the stead's shame; a
   standing mark kills the haggle coin and two shut the counters, never the moot) and
   Persuasion, the 13th skill, is seeded in the plea at the moot-stone (the fine the cost,
-  the level shaving the fine). Plan step 10 is whole; B2's core stands. D-161 approves
-  the next town cut for V1-05: the guild loft and fitted workshop, law-day lists and
-  judicial challenge, and the two-book shelf expansion, all implementation pending.
-  Still tracked beyond it: road encounters and the peddler's restock (D-138/D-132),
-  B3's region machinery (D-131)
+  the level shaving the fine). Plan step 10 is whole; B2's core stands. D-170 completes
+  D-161's next town cut: the world-scoped guild loft and fitted workshop, law-day lists
+  and judicial challenge, and the stable six-book shelf. Still tracked beyond it: road
+  encounters and the peddler's restock (D-138/D-132), plus later town breadth named by
+  the remaining Path to 1.0 cards
 - [x] B3: Region machinery, done once and kept general (D-131; built D-143 + D-144).
   Region entities and name pools (the D-049 box: Region as identity, two named
   countries per world on their own stream, the naming perceivable at the crossings and
@@ -780,6 +780,18 @@ kind, and the evaluation harness that hardens every generator change.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-22: **D-170 town and economy depth is built and Verified.** V1-05 adds the
+  world-scoped guild loft, settled bed, reading desk, safe strongbox, fitted repair
+  workshop, one three-bout nonlethal lists entry per eligible world, and the one-bout
+  judicial challenge. The scrivener now holds all six books behind one stable shelf,
+  including the two final launch titles and their durable gates. Journey prose and JSON
+  expose every approved counter; the crime-free pilot correctly records zero judicial
+  results while focused tests prove both outcomes. Save v94 advances to v95. Release
+  builds with zero warnings and all 900 tests pass, including 14 focused property tests.
+  Five v99 twin pairs are byte-identical, seed 1 replays 26,386 keys exactly to cycle 13
+  and turn 25,172 with all six books read, all five JSON reports match their prose runs,
+  and the 240-world purity gate has zero digest mismatches across 87,722 surfaces. Tranche
+  5 is checked off. V1-06 is next.
 - 2026-07-22: **D-169 bounded pacing authority is built and Verified.** V1-04 gives the
   teller authority only over seven explicitly elastic season-deck cards. Press promotes
   a missed cadence roll when an eligible hand exists; Space suppresses one successful

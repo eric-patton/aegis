@@ -337,10 +337,14 @@ namespace Aegis.Core;
 /// v94 when D-160 gave the teller its bounded hand above the elastic season
 /// deck: Press may promote a missed deal and Space may suppress one natural
 /// opportunity, changing stores, offers, facts, and later journaled choices.
+/// v95 when D-161 opened the guild loft and law-day lists: the town stitch
+/// gained a room, fixtures, a marshal, and a formal ring; the scrivener's
+/// books moved behind a shelf; new journaled keys move property, boxed coin,
+/// workshop, tournament, judicial, book, and fact state.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 94;
+    public const int Version = 95;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

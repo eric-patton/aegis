@@ -43,6 +43,12 @@ public enum Terrain : byte
     TarnIron,
     TarnEntrance,
     FishingReach,
+    LoftDoor,
+    LoftBed,
+    LoftDesk,
+    LoftStrongbox,
+    LoftWorkshop,
+    LawDayRing,
 }
 
 /// <summary>

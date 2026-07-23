@@ -8,7 +8,7 @@ namespace Aegis.Core;
 /// the shrine's quiet, and pays a concrete keep when finished: no book in this
 /// world is only words about words.
 /// </summary>
-public enum BookId { Herbal, Bestiary, Lay, Smithing }
+public enum BookId { Herbal, Bestiary, Lay, Smithing, TownLaw, FolkTales }
 
 /// <summary>One book's catalog entry: the title, the coin, the Lore its lines ask, and the sittings it takes.</summary>
 public sealed record BookDef(BookId Id, string Title, int Price, int LoreReq, int Sittings, string Blurb);
@@ -35,6 +35,10 @@ public static class BookCatalog
         // making its edge or ward bite deeper.
         new(BookId.Smithing, "the red book of bloom and quench", 14, 2, 7,
             "hearth colors, water-times, and the keeping of dark iron written by working hands"),
+        new(BookId.TownLaw, "the little book of line and surety", 11, 1, 5,
+            "bonds, lawful holdings, and the forms by which a written answer is kept"),
+        new(BookId.FolkTales, "the hearth-book of road and fell", 10, 1, 5,
+            "old road accounts keyed to the places and deeds that made them true"),
     ];
 
     public static BookDef Def(BookId id) => All.First(b => b.Id == id);
@@ -46,6 +50,8 @@ public static class BookCatalog
         BookId.Bestiary => "bestiary",
         BookId.Lay => "lay",
         BookId.Smithing => "smithing",
+        BookId.TownLaw => "town_law",
+        BookId.FolkTales => "folk_tales",
         _ => id.ToString().ToLowerInvariant(),
     };
 

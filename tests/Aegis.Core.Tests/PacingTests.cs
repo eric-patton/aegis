@@ -244,7 +244,7 @@ public class PacingTests
     }
 
     [Fact]
-    public void JournalReplay_RebuildsSteeringAndDiagnosticsInSaveV94()
+    public void JournalReplay_RebuildsSteeringAndDiagnosticsInSaveV95()
     {
         const ulong seed = 1234;
         string keys = "0" + new string('.', SteadRaids.TickTurns * 9);
@@ -252,7 +252,7 @@ public class PacingTests
         foreach (char key in keys) live.ApplyKey(key);
         var replay = SaveCodec.Replay(seed, keys);
 
-        Assert.Equal(94, SaveCodec.Version);
+        Assert.Equal(95, SaveCodec.Version);
         Assert.Equal(live.Stores, replay.Stores);
         Assert.Equal(live.Upcoming, replay.Upcoming);
         Assert.Equal(live.Teller.Readings, replay.Teller.Readings);

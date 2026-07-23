@@ -31,7 +31,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 | V1-02 | Weather and seasons v1 | Verified | D-158, D-167 | Completed |
 | V1-03 | D3 prose-variety infrastructure | Verified | D-159, D-168 | Completed |
 | V1-04 | D1 pacing steering | Verified | D-160, D-169 | Completed |
-| V1-05 | Town and economy depth | Approved | D-161 | Pending |
+| V1-05 | Town and economy depth | Verified | D-161, D-170 | Completed |
 | V1-06 | Character and activity breadth | Approved | D-162 | Pending |
 | V1-07 | Combat and magic depth | Approved | D-163 | Pending |
 | V1-08 | Companions, factions, and consequences | Approved | D-164 | Pending |
@@ -525,13 +525,13 @@ weather and seasons
 
 ## V1-05: Town and economy depth
 
-**Design status:** Approved
-**Decisions:** D-161
+**Design status:** Verified
+**Decisions:** D-161, D-170
 **Roadmap association:** Path to 1.0 tranche 5; property, tournaments or duels,
 commissions, books, town-life and economy partials  
 **Dependencies:** Town chunks, law, guild, Commerce, Persuasion, Smithing, Lore,
 regional trade  
-**Implementation status:** Pending in queue order
+**Implementation status:** Completed and verified 2026-07-22; V1-06 follows under D-162
 
 ### Approved behavior
 
@@ -642,6 +642,21 @@ regional trade
 - Implementation receives the complete HANDOFF engine sweep: clean Release build, full
   tests, five seeded twelve-world twin journeys, justified baseline drift, seed 1 sim
   replay, and the worldgen purity gate.
+
+### Implementation verification
+
+- D-170 completes the card at save v95. The Release build is clean with zero warnings,
+  all 900 tests pass, and the 14 focused TownPropertyTests cover the approved property,
+  workshop, shelf, formal-combat, storylet, snapshot, and replay contracts.
+- Seeds 1, 7, 99, 2024, and 88888 each completed two byte-identical twelve-world journeys.
+  Every eligible run bought and exercised the loft and workshop, completed both new books,
+  and resolved the full three-bout lists entry. The pilot remains crime-free, so zero
+  judicial results are expected in these journeys and both outcomes are focused-test proven.
+- Seed 1's 26,386 emitted keys replay exactly to cycle 13 and turn 25,172 with all six books
+  owned and read. All five JSON reports agree with their prose counterparts.
+- The 240-world generation gate exits cleanly with zero digest mismatches across 87,722
+  surfaces. Drift from v98 is justified by new town travel, reading, formal combat, and the
+  recurring property and workshop economy. The v99 journeys are the new baseline.
 
 ### Explicit exclusions
 

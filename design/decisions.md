@@ -231,6 +231,68 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-170: A key inside the wall: town depth built (2026-07-22)
+
+V1-05 is built and Verified under D-161's approved boundary. The existing guildhall now
+holds one world-scoped loft behind its own gated door. A bearer who has sworn the carriers'
+bond, kept an even town book, and read the town-law primer may buy its key for 80 coin. The
+room contains the promised settled bed, reading desk, and iron strongbox. Bed and desk reuse
+the established rest and book-reading contracts. The strongbox moves the whole carried
+purse in either direction, protects boxed coin from death and raids, and includes it in the
+crossing's ordinary weighing. Later marks may close counters but never take an owned room
+away. The town smith may fit the loft's workshop for 120 coin once Smithing 2 is earned. Its
+bench reuses the established most-worn-item repair arithmetic, costs nothing per sitting,
+and feeds Smithing only when wear truly moves. It neither replaces the forge nor extends
+bloom-tempering.
+
+The moot's law-day lists now hold one nonlethal tournament per world. An eligible bearer
+pays 15 coin for three seeded, escalating formal bouts driven by the existing combat
+grammar. Personal arms, workings, consumables, wear, and ordinary world time remain real,
+but a would-be killing blow becomes a yield. Formal combat creates no death, scar, remnant,
+loot, Essence, bestiary study, faction kill, guest, or summon. Losing closes the entry.
+Winning all three pays the approved 45 coin and writes the world's champion fact. Reading
+the primer also opens one judicial challenge while a town mark stands. Its single formal
+bout answers exactly one mark on a win and leaves the book unchanged on a loss, without
+feeding Persuasion or displacing the paid plea.
+
+The scrivener's six-book catalog now lives behind one stable shelf submenu. The two final
+launch books append to BookId and the stable catalog, each costs its approved amount, asks
+Lore 1, and takes five sittings. The primer gates the loft contract and judicial challenge.
+The folk-tales volume enables its three character-scoped, fact-keyed storylets, each able to
+fire once only when a later world honestly supplies the required facts. Ownership, reading
+progress, completion, and durable storylet facts cross with the existing book ledger. The
+town stitch adds the loft room and lists marshal without displacing either variable plot,
+every menu remains within nine digits, context hints expose the new interactions, and the
+snapshot exposes the stable property, box, workshop, tournament, judicial, and formal-bout
+state. Save v94 advances to v95 because the town map and cast, talk digits, journaled
+actions, and carried and world state all changed.
+
+The journey pilot buys and reads both books, preserves the approved reserve, buys and uses
+the loft in each eligible world, boxes and retrieves a purse, rests and reads there,
+commissions the workshop, and deliberately brings it one genuinely worn item. Once armed
+and whole it enters the lists once per eligible world. Journey prose and JSON expose every
+approved counter. Judicial results remain zero in the canonical journeys by design because
+the pilot stays crime-free; focused tests cover both judicial outcomes. Fourteen focused
+TownPropertyTests cover the complete property, workshop, shelf, formal-combat, storylet,
+snapshot, and replay contracts. The clean Release build has zero warnings and all 900 tests
+pass.
+
+The complete engine sweep is green. For seeds 1, 7, 99, 2024, and 88888, both twelve-world
+journeys are byte-identical twins at 26386, 26507, 27481, 26312, and 26751 keys. Every
+eligible run buys and uses its loft and workshop, completes both new books, and resolves all
+three bouts in every lists entry. Seed 1's emitted 26386-key journal replays exactly to
+cycle 13 and turn 25172 with all six books owned and read. All five JSON journeys agree
+with their prose reports. The 240-world generation gate exits cleanly with zero digest
+mismatches across 87722 surfaces and only the two expected legacy fixed-surface warnings.
+The v99 drift from v98 is healthy: new town travel, reading sittings, formal bouts, and the
+recurring 200-coin property and workshop spend move both routes and the later economy, so
+runs may lengthen or shorten while world generation remains deterministic and pure.
+
+Options set aside remain exactly D-161's exclusions: multiple or cross-world properties,
+rent, decoration, passive income, lethal or repeatable lists, betting, general crafting,
+commissioned combat power, burglary expansion, and further books or Lore knacks. V1-06 is
+next in the approved queue.
+
 ### D-169: The hand above the deck: bounded pacing authority built (2026-07-22)
 
 V1-04 is built and Verified under D-160's approved boundary. Every one of the seven live
@@ -2387,10 +2449,11 @@ Pays D-063's own named deferrals in one stroke, arming the autopilot at the smit
 
 ## Not yet raised (parking lot)
 
-- Final race list: which 1-2 original races join the familiar anchors (D-017)
+- Folk cultures: how worldgen recultures the five folk per world, and whether factions
+  read folk (D-017, D-092)
 - Spell list growth past the seven V1-07 workings / magic schools content design
   (architecture set by D-022; D-163 keeps it beyond the launch card)
 - Storylet external data-file format and named condition/effect vocabulary (v1 C# catalog format decided in D-030; migrate when content volume or modding demands)
 - Catalogs to design later: more oaths beyond D-164's nine; the dragging step and scars beyond D-164's launch three; Legend rungs past D-048's five; patron deeds beyond D-054's three (property and retinue shapes from D-025); and optional hostility-tier content past the fen-leaguer (D-033 landed tier 2, D-040 tier 3, D-044 tier 4, D-053 tier 5, D-057 tier 6, D-058 posted the sword-thegn into the tier-7 ringfort; D-151 makes twists the recurring tier-7+ structure, so further bands are catalog growth rather than a rung-by-rung obligation)
-- Story open items listed in `design/story/aegis-arc.md` sec. 11 and `design/story/world-story-templates.md` sec. 10 (bottle-episode playability, Unbinder guise tells, reveal-tier sharing across characters, template 7+ candidates: the dying god's succession, the long siege having shipped as the sixth in D-130; names settled by D-043)
+- Story open items listed in `design/story/aegis-arc.md` sec. 11 and `design/story/world-story-templates.md` sec. 11 (bottle-episode playability, Unbinder guise tells, reveal-tier sharing across characters, template 7+ candidates: the dying god's succession, the long siege having shipped as the sixth in D-130; names settled by D-043)
 - Named stead folk (plan 2026-07 A5, D-131): adopt after A1-A3 are live and the raids can threaten something with a name, and at what depth; if adopted, keep it lite (no population simulation, no birth rolls, research/12's avoid-list)

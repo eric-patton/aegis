@@ -149,6 +149,21 @@ public static class JourneyRunner
         // The school and the bond (D-141): forge sittings, and bonds sworn world by world.
         int forgeSittings = 0;
         int bondsSworn = 0;
+        // The private room and law-day (D-161): ownership and every accepted
+        // use are watched on the exact key that changes their fact or meter.
+        int listsEntries = 0;
+        int formalBouts = 0;
+        int formalYields = 0;
+        int championships = 0;
+        int judicialWins = 0;
+        int judicialLosses = 0;
+        int loftsBought = 0;
+        int boxedCoinIn = 0;
+        int boxedCoinOut = 0;
+        int roomRests = 0;
+        int deskSittings = 0;
+        int workshopsCommissioned = 0;
+        int workshopSittings = 0;
         // The caravan leg (D-144): sacks loaded at the cart, sacks sold at the counter.
         int saltBought = 0;
         int saltSold = 0;
@@ -276,6 +291,17 @@ public static class JourneyRunner
             bool inTownBefore = game.CurrentSite?.Kind == SiteKind.Town;
             int smithUsesBefore = game.Player.Skills.Uses(SkillId.Smithing);
             bool swornBefore = game.GuildSworn;
+            bool listsEnteredBefore = game.ListsEntered;
+            bool championBefore = game.ListsChampion;
+            bool loftBefore = game.GuildLoftOwned;
+            bool workshopBefore = game.WorkshopFitted;
+            bool boxInBefore = game.World.Facts.Exists("property-use", "boxed_coin_in");
+            bool boxOutBefore = game.World.Facts.Exists("property-use", "boxed_coin_out");
+            var formalBefore = game.FormalBout;
+            var formalOpponentBefore = game.LiveMonstersHere.FirstOrDefault(m => m.FormalName is not null);
+            int townBookBefore = game.TownBook;
+            int bookSittingsBefore = game.Player.BookSittings.Values.Sum();
+            Terrain groundBefore = game.CurrentMap[game.Player.Pos];
             int saltBefore = game.Player.Salt;
             int tarnIronBefore = game.Player.TarnIron;
             int ironBloomBefore = game.Player.IronBloom;
@@ -420,6 +446,29 @@ public static class JourneyRunner
             if (inTownBefore && game.Player.Skills.Uses(SkillId.Smithing) > smithUsesBefore
                 && game.Player.TarnIron >= tarnIronBefore && temperedNow == temperedBefore) forgeSittings++;
             if (!swornBefore && game.GuildSworn) bondsSworn++;
+            if (!listsEnteredBefore && game.ListsEntered) listsEntries++;
+            if (!championBefore && game.ListsChampion) championships++;
+            if (!loftBefore && game.GuildLoftOwned) loftsBought++;
+            if (!workshopBefore && game.WorkshopFitted) workshopsCommissioned++;
+            if (!boxInBefore && game.World.Facts.Exists("property-use", "boxed_coin_in")) boxedCoinIn++;
+            if (!boxOutBefore && game.World.Facts.Exists("property-use", "boxed_coin_out")) boxedCoinOut++;
+            if (groundBefore == Terrain.LoftBed && key == 'r' && game.Turn > turnBefore) roomRests++;
+            if (groundBefore == Terrain.LoftDesk)
+                deskSittings += Math.Max(0, game.Player.BookSittings.Values.Sum() - bookSittingsBefore);
+            if (groundBefore == Terrain.LoftWorkshop
+                && game.Player.Skills.Uses(SkillId.Smithing) > smithUsesBefore) workshopSittings++;
+
+            var formalOpponentNow = game.LiveMonstersHere.FirstOrDefault(m => m.FormalName is not null);
+            if (formalBefore is null && game.FormalBout is not null) formalBouts++;
+            else if (formalBefore is not null && formalOpponentBefore is not null
+                     && formalOpponentNow is not null && !ReferenceEquals(formalOpponentBefore, formalOpponentNow))
+                formalBouts++;
+            if (formalBefore is not null && formalOpponentBefore is { Alive: false }) formalYields++;
+            if (formalBefore == FormalBoutKind.Judicial && game.FormalBout is null)
+            {
+                if (game.TownBook < townBookBefore) judicialWins++;
+                else judicialLosses++;
+            }
             // The caravan leg's two ends (D-144): salt only ever rises at the
             // cart and only ever falls at the town counter.
             if (game.Player.Salt > saltBefore) saltBought += game.Player.Salt - saltBefore;
@@ -550,6 +599,19 @@ public static class JourneyRunner
                 LotsSoldInTown: game.Player.Skills.Uses(SkillId.Commerce),
                 ForgeSittings: forgeSittings,
                 BondsSworn: bondsSworn,
+                ListsEntries: listsEntries,
+                FormalBouts: formalBouts,
+                FormalYields: formalYields,
+                Championships: championships,
+                JudicialWins: judicialWins,
+                JudicialLosses: judicialLosses,
+                LoftsBought: loftsBought,
+                BoxedCoinIn: boxedCoinIn,
+                BoxedCoinOut: boxedCoinOut,
+                RoomRests: roomRests,
+                DeskSittings: deskSittings,
+                WorkshopsCommissioned: workshopsCommissioned,
+                WorkshopSittings: workshopSittings,
                 SaltBought: saltBought,
                 SaltSold: saltSold,
                 TarnIronMined: tarnIronMined,
@@ -640,6 +702,9 @@ public static class JourneyRunner
             roadsTaken, nightsCamped, fellsTaken,
             marketsWalked, game.Player.Skills.Uses(SkillId.Commerce), game.Player.Skills.Level(SkillId.Commerce),
             forgeSittings, bondsSworn, game.Player.Skills.Level(SkillId.Smithing),
+            listsEntries, formalBouts, formalYields, championships, judicialWins, judicialLosses,
+            loftsBought, boxedCoinIn, boxedCoinOut, roomRests, deskSittings,
+            workshopsCommissioned, workshopSittings,
             saltBought, saltSold, tarnIronMined, tarnIronSmelted,
             ironBloomsTempered, ironItemsTempered, ironBloomsSold, coinFromIron,
             fishCaught, fishCooked, fishRations, fishSold, coinFromFish,
@@ -731,6 +796,10 @@ public static class JourneyRunner
         int roadsTaken, int nightsCamped, int fellsTaken,
         int marketsWalked, int lotsSold, int commerceLevel,
         int forgeSittings, int bondsSworn, int smithingLevel,
+        int listsEntries, int formalBouts, int formalYields, int championships,
+        int judicialWins, int judicialLosses,
+        int loftsBought, int boxedCoinIn, int boxedCoinOut, int roomRests, int deskSittings,
+        int workshopsCommissioned, int workshopSittings,
         int saltBought, int saltSold,
         int tarnIronMined, int tarnIronSmelted, int ironBloomsTempered, int ironItemsTempered,
         int ironBloomsSold, int coinFromIron,
@@ -831,6 +900,10 @@ public static class JourneyRunner
             w.WriteLine($"         the market: walked {marketsWalked} town gate(s) and sold {lotsSold} lot(s) at town prices; Commerce stands at level {commerceLevel} (D-140).");
         if (forgeSittings + bondsSworn > 0)
             w.WriteLine($"         the town school: {forgeSittings} sitting(s) at the forge under the smith's eye (Smithing stands at level {smithingLevel}); the carriers' bond sworn {bondsSworn} time(s) across the worlds (D-141).");
+        if (loftsBought + workshopsCommissioned > 0)
+            w.WriteLine($"         the guild loft: bought {loftsBought}; boxed a purse {boxedCoinIn} time(s) and took it out {boxedCoinOut}; rested {roomRests} night(s), read {deskSittings} sitting(s), commissioned {workshopsCommissioned} workshop(s), and worked worn iron {workshopSittings} time(s) (D-161).");
+        if (listsEntries + judicialWins + judicialLosses > 0)
+            w.WriteLine($"         the law-day: entered {listsEntries} list(s), stood {formalBouts} bout(s), and saw {formalYields} yield(s); won {championships} championship(s); judicial challenges ended {judicialWins} won and {judicialLosses} lost (D-161).");
         if (saltBought + saltSold > 0)
             w.WriteLine($"         the caravan leg: loaded {saltBought} sack(s) of salt at the cart and sold {saltSold} at the town counter, the margin earned by the walk (D-144).");
         if (tarnIronMined + tarnIronSmelted + ironBloomsSold > 0)
@@ -909,6 +982,10 @@ internal sealed record JourneyReport(
     int RoadsTaken, int NightsCamped, int FellsTaken,
     int MarketsWalked, int LotsSoldInTown,
     int ForgeSittings, int BondsSworn,
+    int ListsEntries, int FormalBouts, int FormalYields, int Championships,
+    int JudicialWins, int JudicialLosses,
+    int LoftsBought, int BoxedCoinIn, int BoxedCoinOut, int RoomRests, int DeskSittings,
+    int WorkshopsCommissioned, int WorkshopSittings,
     int SaltBought, int SaltSold,
     int TarnIronMined, int TarnIronSmelted, int IronBloomsTempered, int IronItemsTempered,
     int IronBloomsSold, int CoinFromIron,

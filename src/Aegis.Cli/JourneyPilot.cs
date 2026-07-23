@@ -581,7 +581,9 @@ public static class JourneyPilot
         // caravan leg's whole reason to exist: it sells only in there.
         if (g.Player.Hide > 0 || g.Player.Herb > 0 || g.Player.Salt > 0 || g.Player.TarnTrout > 0
             || SmeltErrand(g) || g.Player.IronBloom > 0
-            || ForgeErrand(g) || BondErrand(g) || ScribeErrand(g))
+            || ForgeErrand(g) || BondErrand(g) || ScribeErrand(g)
+            || LoftErrand(g) || WorkshopErrand(g) || ListsErrand(g)
+            || g.GuildLoftOwned && LoftUse(g) is not null)
         {
             var gate = g.World.TownSite.OverworldPos;
             if (p.Pos == gate) return '>';
@@ -695,6 +697,11 @@ public static class JourneyPilot
         var p = g.Player;
         var town = g.CurrentMap;
         var blocked = g.NpcsHere.Select(n => n.Pos).ToHashSet();
+        if (!g.GuildLoftOwned) blocked.Add(TerrainCell(town, Terrain.LoftDoor));
+
+        // The law-day rope (D-161) is a real fight surface. Once an entry has
+        // begun, finish its current pairing before doing any market business.
+        if (g.FormalBout is not null) return FightOrApproach(g);
 
         Npc? stall = null;
         if (SmeltErrand(g)) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_townsmith");
@@ -717,11 +724,25 @@ public static class JourneyPilot
         // whatever copy-work the lay's knotted hand still asks for. The
         // predicates must match TownSellDigit's exactly, or the errand shuttles.
         else if (ScribeErrand(g)) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_scrivener");
+        else if (LoftErrand(g)) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_guildmaster");
+        else if (WorkshopErrand(g)) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_townsmith");
+        else if (ListsErrand(g)) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_listsmarshal");
         if (stall is not null)
         {
             if (NavKey(g, town, p.Pos, stall.Pos, blocked) is { } toStall) return toStall;
             // A stall walled off from the gate would spin the errand forever:
             // drop the goods' errand and leave rather than shuttle.
+        }
+
+        // The room's four honest uses (D-161): box a purse and take it back,
+        // sleep in the owned bed, read at the desk, and work worn iron at the
+        // fitted bench. The one-time facts make each errand finite and make
+        // the journey report prove the action rather than infer it from ownership.
+        if (LoftUse(g) is { } use)
+        {
+            var cell = TerrainCell(town, use.Terrain);
+            if (p.Pos == cell) return use.Key;
+            if (NavKey(g, town, p.Pos, cell, blocked) is { } toCell) return toCell;
         }
 
         var arch = g.CurrentSite!.EntryPos;
@@ -751,11 +772,11 @@ public static class JourneyPilot
         if (g.TalkNpc.Id == "npc_scrivener")
         {
             if (LettersErrand(g) || CopyErrand(g)) return OfferDigit(g, TradeGood.Script);
-            if (BookBuy(g) is { } buy)
-                for (int i = 0; i < g.Offers.Count; i++)
-                    if (g.Offers[i].Good == TradeGood.Book && g.Offers[i].Arg == BookCatalog.IdOf(buy.Id))
-                        return (char)('1' + g.Topics.Count + i);
+            if (BookBuy(g) is not null) return OfferDigit(g, TradeGood.Shelf);
         }
+        if (g.TalkNpc.Id == "npc_guildmaster" && LoftErrand(g)) return OfferDigit(g, TradeGood.Loft);
+        if (g.TalkNpc.Id == "npc_townsmith" && WorkshopErrand(g)) return OfferDigit(g, TradeGood.Workshop);
+        if (g.TalkNpc.Id == "npc_listsmarshal" && ListsErrand(g)) return OfferDigit(g, TradeGood.Lists);
         return null;
     }
 
@@ -772,9 +793,9 @@ public static class JourneyPilot
 
     /// <summary>The first title still unowned and unread that the purse covers with bread to spare (D-148).</summary>
     private static BookDef? BookBuy(Game g) =>
-        g.Player.Skills.Level(SkillId.Lore) >= 1
+        g.NextRead is null && g.Player.Skills.Level(SkillId.Lore) >= 1
             ? BookCatalog.All.FirstOrDefault(b => !g.Player.Books.Contains(b.Id)
-                && !g.Player.HasRead(b.Id) && g.Player.Coin >= TownCost(g, b.Price) + 10)
+                && !g.Player.HasRead(b.Id) && g.Player.Coin >= TownCost(g, b.Price) + BookReserve(g))
             : null;
 
     /// <summary>Any business at the scrivener's (D-148): the walk in fires on the same tests the digits do.</summary>
@@ -783,7 +804,12 @@ public static class JourneyPilot
 
     /// <summary>Worn iron, and coin enough to pay the smith and still eat (D-141).</summary>
     private static bool ForgeErrand(Game g) =>
-        g.IronNeedsWork && g.Player.Coin >= TownCost(g, TownForge.WorkCoin) + 5;
+        g.IronNeedsWork && !WorkshopRepairAvailable(g)
+        && g.Player.Coin >= TownCost(g, TownForge.WorkCoin) + 5;
+
+    private static bool WorkshopRepairAvailable(Game g) => g.WorkshopFitted
+        || g.GuildLoftOwned && g.Player.Skills.Level(SkillId.Smithing) >= 2
+        && g.Player.Coin >= TownCost(g, TownProperty.WorkshopCoin) + 20;
 
     /// <summary>Raw fell iron, and enough coin for the hearth with bread left.</summary>
     private static bool SmeltErrand(Game g) =>
@@ -810,6 +836,53 @@ public static class JourneyPilot
     private static bool BondErrand(Game g) =>
         !g.GuildSworn && g.Player.Skills.Level(SkillId.Commerce) >= 1
         && g.Player.Coin >= TownCost(g, CarriersGuild.BondCoin) + 10;
+
+    /// <summary>The shelf preserves an already-open property purchase plus bread.</summary>
+    private static int BookReserve(Game g) =>
+        g.Player.HasRead(BookId.TownLaw) && g.GuildSworn && !g.GuildLoftOwned
+            ? TownCost(g, TownProperty.LoftCoin) + 20
+            : 10;
+
+    private static bool LoftErrand(Game g) =>
+        !g.GuildLoftOwned && g.Player.HasRead(BookId.TownLaw) && g.GuildSworn
+        && g.TownBook == 0 && g.Player.Coin >= TownCost(g, TownProperty.LoftCoin) + 20;
+
+    private static bool WorkshopErrand(Game g) =>
+        !g.WorkshopFitted && g.GuildLoftOwned && g.Player.Skills.Level(SkillId.Smithing) >= 2
+        && g.Player.Coin >= TownCost(g, TownProperty.WorkshopCoin) + 20;
+
+    private static bool ListsErrand(Game g) =>
+        !g.ListsEntered && g.TownBook == 0 && g.Player.WoundedTurns == 0
+        && g.Player.Hp == g.Player.EffectiveMaxHp && g.Player.Weapon is not null
+        && g.Player.Coin >= TownCost(g, LawDayLists.EntryCoin) + 20;
+
+    private static (Terrain Terrain, char Key)? LoftUse(Game g)
+    {
+        if (!g.GuildLoftOwned) return null;
+        if (!g.World.Facts.Exists("property-use", "boxed_coin_in") && g.Player.Coin > 0)
+            return (Terrain.LoftStrongbox, 'g');
+        if (!g.World.Facts.Exists("property-use", "boxed_coin_out") && g.BoxedCoin > 0)
+            return (Terrain.LoftStrongbox, 'g');
+        if (!g.World.Facts.Exists("property-use", "loft_bed"))
+            return (Terrain.LoftBed, 'r');
+        if (g.NextRead is not null)
+            return (Terrain.LoftDesk, 'v');
+        if (g.WorkshopFitted && g.IronNeedsWork
+            && !g.World.Facts.Exists("property-use", "workshop_sitting"))
+            return (Terrain.LoftWorkshop, 'g');
+        return null;
+    }
+
+    private static Pos TerrainCell(GameMap map, Terrain terrain)
+    {
+        for (int y = 0; y < map.Height; y++)
+            for (int x = 0; x < map.Width; x++)
+            {
+                var p = new Pos(x, y);
+                if (map[p] == terrain) return p;
+            }
+        throw new InvalidOperationException($"Town terrain {terrain} is missing.");
+    }
 
     private static int TownCost(Game g, int price) => price
         + (g.World.Twist == WorldTwist.HeldRoad ? WorldTwistCatalog.RoadTithe : 0);
@@ -1206,6 +1279,18 @@ public static class JourneyPilot
     /// </summary>
     private static char BenchDigit(Game g, IReadOnlySet<string> skip)
     {
+        // The scrivener's stable shelf (D-161): the talk menu opens it, then
+        // the fixed catalog digit buys the same next title BookBuy selected.
+        if (g.TalkNpc?.Id == "npc_scrivener")
+        {
+            if (BookBuy(g) is not { } buy) return 'z';
+            for (int i = 0; i < g.TradeOffers.Count; i++)
+                if (g.TradeOffers[i].Good == TradeGood.Book
+                    && g.TradeOffers[i].Arg == BookCatalog.IdOf(buy.Id))
+                    return (char)('1' + i);
+            return 'z';
+        }
+
         // The long hearth (D-154): the selected piece is named by offer arg,
         // since every eligible iron piece shares the one recipe good.
         if (g.TalkNpc?.Id == "npc_townsmith")

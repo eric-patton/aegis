@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed, Forge, Bond, Plea, Salt, Script, Book, GraveBargain, TarnSmelt, IronBloom, TarnTemper, FishingLine, CookFish, TarnTrout }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed, Forge, Bond, Plea, Salt, Script, Book, GraveBargain, TarnSmelt, IronBloom, TarnTemper, FishingLine, CookFish, TarnTrout, Shelf, Loft, Workshop, Lists, Judicial }
 
 /// <summary>
 /// The cart's counter (D-124): the road's prices. The ration a coin or two
@@ -147,6 +147,23 @@ public static class CarriersGuild
     public const int BondCoin = 10;
     public const int LotBonus = 1;
 }
+
+/// <summary>The town's two world-scoped capital works (D-161).</summary>
+public static class TownProperty
+{
+    public const int LoftCoin = 80;
+    public const int WorkshopCoin = 120;
+}
+
+/// <summary>The law-day lists and their bounded purse (D-161).</summary>
+public static class LawDayLists
+{
+    public const int EntryCoin = 15;
+    public const int ChampionPurse = 45;
+    public const int Bouts = 3;
+}
+
+public enum FormalBoutKind { Lists, Judicial }
 
 /// <summary>
 /// The guard worn open (D-125): the second bar, and what wears it. Pressure is
@@ -513,6 +530,27 @@ public sealed class Game
     /// </summary>
     public int TownBook => InfamyOf(FactionId.Town);
 
+    /// <summary>The guild room and its fitted bench, each held only in this world.</summary>
+    public bool GuildLoftOwned => World.Facts.Exists("property", "guild_loft");
+    public bool WorkshopFitted => World.Facts.Exists("property", "fitted_workshop");
+
+    /// <summary>Coin laid in the loft's box. It is safe from death and joins the crossing automatically.</summary>
+    public int BoxedCoin { get; private set; }
+
+    /// <summary>The law-day ledgers, bounded to one entry and one challenge per world.</summary>
+    public bool ListsEntered => World.Facts.Exists("lists", "entered");
+    public int ListsWins { get; private set; }
+    public bool ListsChampion => World.Facts.Exists("lists", "champion");
+    public bool JudicialChallengeUsed => World.Facts.Exists("law", "judicial_challenge");
+    public FormalBoutKind? FormalBout => _formalBout;
+
+    private FormalBoutKind? _formalBout;
+    private readonly List<(MonsterKind Kind, string Name, int Hp)> _lawDayBracket = [];
+    private int _formalBoutIndex;
+    private Pos _formalReturnPos;
+    private bool _formalPendingResolution;
+    private bool _formalPlayerYielded;
+
     /// <summary>Test hook: marks go into the warden's book without staging a caught hand.</summary>
     public void Debug_RaiseTownBook(int marks) => RaiseTownBook(marks);
 
@@ -868,6 +906,7 @@ public sealed class Game
         _storylets = new StoryletEngine(World.Seed, FullCatalog());
         Player.Pos = World.ShrinePos;
         SpawnMonsters();
+        BuildLawDayBracket();
         ScheduleWorldFuture();
 
         Log.Add(0, $"You wake at the shrine of {World.SettlementName}, in the world called {World.Name}.");
@@ -962,6 +1001,22 @@ public sealed class Game
                     Dormant = spawn.Kind is MonsterKind.Graven or MonsterKind.Warder
                         || World.Twist == WorldTwist.GraveMarket && spawn.Kind == MonsterKind.Wight,
                 });
+    }
+
+    /// <summary>
+    /// The formal bracket is derived after the generated world is whole. It
+    /// owns a named stream, so no existing world or combat draw moves.
+    /// </summary>
+    private void BuildLawDayBracket()
+    {
+        _lawDayBracket.Clear();
+        var rng = new Rng(SeedTree.Derive(World.Seed, "law-day-lists"));
+        MonsterKind[] forms = [MonsterKind.Carl, MonsterKind.Warder, MonsterKind.Thegn];
+        for (int i = 0; i < LawDayLists.Bouts; i++)
+        {
+            int hp = 7 + World.Tier + i * 4 + rng.Next(3);
+            _lawDayBracket.Add((forms[i], NameGen.Person(ref rng), hp));
+        }
     }
 
     internal static string Compass(Pos from, Pos to)
@@ -1505,6 +1560,13 @@ public sealed class Game
         var target = Player.Pos.Plus(dx, dy);
         var map = CurrentMap;
 
+        if (_formalBout is not null && map.InBounds(target) && map[target] != Terrain.LawDayRing)
+        {
+            Log.Add(Turn, "You step toward the rope and give the marshal your open hand. The bout is yielded.", LogTone.Info);
+            ResolveFormalYield(playerYielded: true);
+            return true;
+        }
+
         if (Mode == MapMode.Site)
         {
             var blocker = Monsters.FirstOrDefault(m => m.Alive && m.SiteId == CurrentSite!.Id && m.Pos == target);
@@ -1521,6 +1583,15 @@ public sealed class Game
         {
             var npc = NpcsHere.FirstOrDefault(n => n.Pos == target);
             if (npc is not null) return StartTalk(npc);
+        }
+
+        if (Mode == MapMode.Site && CurrentSite?.Kind == SiteKind.Town
+            && map.InBounds(target) && map[target] == Terrain.LoftDoor && !GuildLoftOwned)
+        {
+            Log.Add(Turn, Player.HasRead(BookId.TownLaw)
+                ? "The guild loft's door is locked. The guildmaster keeps the contract outside."
+                : "A guild lock holds the inner door. Its little line of surety means nothing to an unread eye.");
+            return false;
         }
 
         // Stepping into one who walks with you (D-097, D-099) trades places:
@@ -1768,6 +1839,24 @@ public sealed class Game
                     }, LogTone.Info);
             else if (t == Terrain.ExitLadder)
                 Log.Add(Turn, "Daylight above. Press < to climb out.");
+            else if (CurrentSite!.Kind == SiteKind.Town && t == Terrain.LoftDoor)
+                Log.Add(Turn, GuildLoftOwned
+                    ? "Your key turns in the guild loft's door. The room within is yours while this world's road holds."
+                    : "The guild loft's locked door. The contract is the guildmaster's to sell.", LogTone.Info);
+            else if (CurrentSite.Kind == SiteKind.Town && t == Terrain.LoftBed)
+                Log.Add(Turn, "The loft's settled bed stands ready. Press r to sleep under your own key.", LogTone.Info);
+            else if (CurrentSite.Kind == SiteKind.Town && t == Terrain.LoftDesk)
+                Log.Add(Turn, NextRead is not null
+                    ? "The loft desk holds a lamp and a quiet chair. Press v to read."
+                    : "The loft desk holds a lamp and a quiet chair. No unfinished page asks for it.", LogTone.Info);
+            else if (CurrentSite.Kind == SiteKind.Town && t == Terrain.LoftStrongbox)
+                Log.Add(Turn, $"The loft's iron strongbox holds {BoxedCoin} coin. Press g to move the whole purse.", LogTone.Info);
+            else if (CurrentSite.Kind == SiteKind.Town && t == Terrain.LoftWorkshop)
+                Log.Add(Turn, WorkshopFitted
+                    ? (BenchTarget() is { } worn
+                        ? $"The fitted workbench is ready for the {worn.Name}. Press g to work it."
+                        : "The fitted workbench stands ready, and every carried piece stands true.")
+                    : "An empty bench-bay waits against the loft wall. The town smith fits work here by commission.", LogTone.Info);
             else if (t == Terrain.FishingReach && CurrentSite!.Kind == SiteKind.BlackTarn)
                 Log.Add(Turn, Player.FishingLine
                     ? "An old fishing reach, the bank worn flat where patient feet stood. Press g to set the hook and line."
@@ -2175,6 +2264,10 @@ public sealed class Game
             Remnant = null;
         }
 
+        // Boxed coin is safe, not hidden from the arch. The weighing gathers
+        // the whole purse without asking the owner to empty the room first.
+        Player.Coin += BoxedCoin;
+        BoxedCoin = 0;
         int converted = Player.Coin;
         Player.Legend += converted;
         Player.Coin = 0;
@@ -2223,6 +2316,10 @@ public sealed class Game
         _storylets.OnCrossing(World.Seed, FullCatalog());
         Monsters.Clear();
         SpawnMonsters();
+        BuildLawDayBracket();
+        ListsWins = 0;
+        _formalBout = null;
+        _formalPendingResolution = false;
         // World-bound (D-097): a living guest never crosses; their world keeps
         // them. The farewell and the portfolio fact are stage 2's work.
         Guest = null;
@@ -2522,6 +2619,14 @@ public sealed class Game
 
     private bool DoGrab()
     {
+        if (Mode == MapMode.Site && CurrentSite?.Kind == SiteKind.Town && GuildLoftOwned)
+        {
+            if (CurrentMap[Player.Pos] == Terrain.LoftStrongbox)
+                return MoveStrongboxCoin();
+            if (CurrentMap[Player.Pos] == Terrain.LoftWorkshop)
+                return WorkLoftBench();
+        }
+
         if (Remnant is not null && Remnant.MapId == CurrentMapId && Remnant.Pos == Player.Pos)
         {
             Player.Coin += Remnant.Coin;
@@ -3464,7 +3569,8 @@ public sealed class Game
         Capture(tally, game.BuildGraveTallyTopics(tally));
 
         foreach (string id in new[] { "npc_provisioner", "npc_hidemonger", "npc_herbmonger",
-                     "npc_mootwarden", "npc_townsmith", "npc_scrivener", "npc_guildmaster" })
+                     "npc_mootwarden", "npc_townsmith", "npc_scrivener", "npc_guildmaster",
+                     "npc_listsmarshal" })
         {
             var towner = Person(id, NpcKind.Towner, id[4..]);
             Capture(towner, game.BuildTownerTopics(towner));
@@ -3840,6 +3946,11 @@ public sealed class Game
                     ? "\"Your bond stands in the book with the rest. Sworn weights, bonded loads: sell under our mark and no counter in this town argues your scales. Walk far, carry honest, and the mark walks ahead of you.\""
                     : "\"Every load that crosses this country worth crossing it goes under the guild's mark: sworn weights, bonded loads, and a hand the moot can hold to account. We bond names the market already trusts, coin down at the swearing. The market's chalk will tell me if yours is one.\""));
                 break;
+            case "npc_listsmarshal":
+                topics.Add(("The lists", ListsEntered
+                    ? $"\"Your entry is written and closed: {ListsWins} bout{(ListsWins == 1 ? "" : "s")} won. One name, one law-day, one outcome.\""
+                    : "\"Three pairings under the town's rope, each harder than the last. Personal arms and workings are lawful. A yield ends a bout before death can begin.\""));
+                break;
         }
         return topics;
     }
@@ -3976,6 +4087,7 @@ public sealed class Game
                     // second board, so every eligible carried piece can be
                     // named without spending the shared nine.
                     offers.Add((TradeGood.TarnTemper, "", TarnTemperLabel()));
+                    offers.Add((TradeGood.Workshop, "", WorkshopLabel()));
                     break;
                 // The guild's one digit (D-141): always listed, the label
                 // reading the bond's state true (D-041), because a ledger a
@@ -3984,6 +4096,7 @@ public sealed class Game
                 case "npc_guildmaster":
                     offers.Add((TradeGood.Bond, "", BondLabel()));
                     offers.Add((TradeGood.IronBloom, "", IronBloomSaleLabel()));
+                    offers.Add((TradeGood.Loft, "", LoftLabel()));
                     break;
                 // The scrivener's board (D-148): the sitting always listed
                 // with a state-read label, then the shelf in catalog order,
@@ -3991,8 +4104,7 @@ public sealed class Game
                 // digit ever shifts under a buyer's fingers (D-041).
                 case "npc_scrivener":
                     offers.Add((TradeGood.Script, "", ScriptLabel()));
-                    foreach (var book in BookCatalog.All)
-                        offers.Add((TradeGood.Book, BookCatalog.IdOf(book.Id), BookLabel(book)));
+                    offers.Add((TradeGood.Shelf, "", "Browse the scrivener's shelf"));
                     break;
                 // The moot's one digit (D-142): the plea, listed only while a
                 // mark stands. The warden still keeps no counter (the law is
@@ -4002,6 +4114,11 @@ public sealed class Game
                 case "npc_mootwarden":
                     if (TownBook > 0)
                         offers.Add((TradeGood.Plea, "", PleaLabel()));
+                    if (Player.HasRead(BookId.TownLaw) && TownBook > 0)
+                        offers.Add((TradeGood.Judicial, "", JudicialLabel()));
+                    break;
+                case "npc_listsmarshal":
+                    offers.Add((TradeGood.Lists, "", ListsLabel()));
                     break;
             }
         // The cart's counter (D-124): the road's three digits. Bread at the
@@ -4247,6 +4364,9 @@ public sealed class Game
         if (npc.Id == "npc_townsmith")
             foreach (var item in Player.AllGear.Where(g => g.TarnTemperable))
                 offers.Add((TradeGood.TarnTemper, item.Id, TarnTemperItemLabel(item)));
+        if (npc.Id == "npc_scrivener")
+            foreach (var book in BookCatalog.All)
+                offers.Add((TradeGood.Book, BookCatalog.IdOf(book.Id), BookLabel(book)));
         return offers;
     }
 
@@ -4530,6 +4650,142 @@ public sealed class Game
         Log.Add(Turn, $"You count {price} coin onto the guild's book and say the words after {TalkNpc!.Name}: weights sworn, loads bonded, the moot to hold you to both. The guildmaster enters your name without ceremony, which is itself the ceremony. Your lots sell under the guild's mark now, a coin the better at every counter in {World.TownName}.", LogTone.Reward);
     }
 
+    private string LoftLabel()
+    {
+        if (GuildLoftOwned) return "The guild loft (yours in this world; your key still answers)";
+        string gate = !Player.HasRead(BookId.TownLaw) ? "; requires the town-law primer"
+            : !GuildSworn ? "; requires the carriers' bond"
+            : TownBook > 0 ? "; the town book must stand even" : "";
+        return $"Buy the guild loft ({TitheBuy(TownProperty.LoftCoin)} coin{TitheLabel}{gate})";
+    }
+
+    private void TryBuyGuildLoft()
+    {
+        if (TownCounterBarred()) return;
+        if (GuildLoftOwned)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The key is yours. A room is not improved by buying its door twice.\"");
+            return;
+        }
+        if (!Player.HasRead(BookId.TownLaw))
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Read the little book of line and surety first. I sell a written holding, and I will not sell one on words the buyer cannot keep.\"");
+            return;
+        }
+        if (!GuildSworn)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The rooms inside the wall are for bonded hands. Swear the carriers' bond first.\"");
+            return;
+        }
+        if (TownBook > 0)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The moot's book stands against your name. Bring it even, then bring me the coin.\"");
+            return;
+        }
+        int price = TitheBuy(TownProperty.LoftCoin);
+        if (Player.Coin < price)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The loft is {price} coin, whole, and you hold {Player.Coin}. The key waits.\"");
+            return;
+        }
+        Player.Coin -= price;
+        CountTithe();
+        World.Facts.Add("property", "guild_loft", World.TownName,
+            $"The bearer bought the guild loft in {World.TownName}: one settled room, a desk, and an iron box under the carriers' bond.");
+        Log.Add(Turn, $"You lay {price} coin against the contract. The guildmaster rules a line through the debt, puts the room under your name, and gives you the iron key. The loft inside the hall is yours while this world's road holds. ({Player.Coin} coin left)", LogTone.Reward);
+    }
+
+    private string WorkshopLabel()
+    {
+        if (WorkshopFitted) return "The fitted workshop (standing in your guild loft)";
+        string gate = !GuildLoftOwned ? "; requires the guild loft"
+            : Player.Skills.Level(SkillId.Smithing) < 2 ? "; requires Smithing 2" : "";
+        return $"Commission the fitted workshop ({TitheBuy(TownProperty.WorkshopCoin)} coin{TitheLabel}{gate})";
+    }
+
+    private void TryCommissionWorkshop()
+    {
+        if (TownCounterBarred()) return;
+        if (WorkshopFitted)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Your bench stands. Work it when the road puts wear in your iron.\"");
+            return;
+        }
+        if (!GuildLoftOwned)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Bring me a room before you commission a room's work. The guild sells the loft.\"");
+            return;
+        }
+        if (Player.Skills.Level(SkillId.Smithing) < 2)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"A fitted bench answers the hand that owns it. Bring me a smith's hand at the second measure.\"");
+            return;
+        }
+        int price = TitheBuy(TownProperty.WorkshopCoin);
+        if (Player.Coin < price)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The fitting is {price} coin, and you hold {Player.Coin}. Iron waits better than carpenters.\"");
+            return;
+        }
+        Player.Coin -= price;
+        CountTithe();
+        World.Facts.Add("property", "fitted_workshop", World.TownName,
+            $"The town smith fitted the bearer's guild loft with a workbench, wheel, files, and an iron true enough for practiced hands.");
+        Log.Add(Turn, $"You count {price} coin onto the forge board. Before the week is out, a wheel, files, vice, and true iron stand against the loft wall. The workbench is yours to use without another charge. ({Player.Coin} coin left)", LogTone.Reward);
+    }
+
+    private bool MoveStrongboxCoin()
+    {
+        if (Player.Coin > 0)
+        {
+            int moved = Player.Coin;
+            BoxedCoin += moved;
+            Player.Coin = 0;
+            if (!World.Facts.Exists("property-use", "boxed_coin_in"))
+                World.Facts.Add("property-use", "boxed_coin_in", World.TownName,
+                    "The bearer put a whole carried purse under the guild loft's iron key.");
+            Log.Add(Turn, $"You count the whole purse into the loft's strongbox and turn the iron key. ({moved} coin moved, {BoxedCoin} boxed)", LogTone.Info);
+            return true;
+        }
+        if (BoxedCoin > 0)
+        {
+            int moved = BoxedCoin;
+            Player.Coin += moved;
+            BoxedCoin = 0;
+            if (!World.Facts.Exists("property-use", "boxed_coin_out"))
+                World.Facts.Add("property-use", "boxed_coin_out", World.TownName,
+                    "The bearer took the guild loft's boxed purse back onto the road.");
+            Log.Add(Turn, $"You empty the strongbox into your purse and turn the key on bare iron. ({moved} coin moved, {Player.Coin} carried)", LogTone.Info);
+            return true;
+        }
+        Log.Add(Turn, "The strongbox and your purse are both empty.");
+        return false;
+    }
+
+    private bool WorkLoftBench()
+    {
+        if (!WorkshopFitted)
+        {
+            Log.Add(Turn, "The empty bench-bay has neither wheel nor file. The town smith fits the commission.");
+            return false;
+        }
+        if (BenchTarget() is not { } worn)
+        {
+            Log.Add(Turn, "You lay your iron across the fitted bench and find every edge true and every strap sound.");
+            return false;
+        }
+        int off = Math.Min(worn.Wear, FileRate());
+        worn.Wear -= off;
+        GainSkill(SkillId.Smithing);
+        if (!World.Facts.Exists("property-use", "workshop_sitting"))
+            World.Facts.Add("property-use", "workshop_sitting", World.TownName,
+                "The bearer repaired worn iron at the fitted workshop in the guild loft.");
+        Log.Add(Turn, worn.Wear == 0
+            ? $"At your own wheel and file, the {worn.Name} comes back to true."
+            : $"You work the {worn.Name} at the fitted bench. ({worn.Wear}/{worn.MaxWear} wear now)", LogTone.Info);
+        return true;
+    }
+
     /// <summary>
     /// A work is funded (D-134): the bearer's coin becomes the stead's timber.
     /// Once per world apiece, the fact its effect hangs off written at the
@@ -4597,7 +4853,7 @@ public sealed class Game
     /// <summary>A shelf entry's label (D-148): the asking, the owning, or the finished book, so the board reads true (D-041).</summary>
     private string BookLabel(BookDef def) =>
         Player.HasRead(def.Id) ? $"{Cap(def.Title)} (read, and yours for good)"
-        : Player.Books.Contains(def.Id) ? $"{Cap(def.Title)} (yours already; v reads at the shrine)"
+        : Player.Books.Contains(def.Id) ? $"{Cap(def.Title)} (yours already; v reads at shrine or loft desk)"
         : $"Buy {def.Title} ({TitheBuy(def.Price)} coin{TitheLabel}{(def.LoreReq > 1 ? ", a knotted hand" : "")})";
 
     /// <summary>
@@ -4665,7 +4921,7 @@ public sealed class Game
         Player.Coin -= price;
         CountTithe();
         Player.Books.Add(id);
-        Log.Add(Turn, $"You count out {price} coin and {def.Title} goes wrapped in oilcloth into your pack: {def.Blurb}. (v reads it at the shrine; {Player.Coin} coin left)", LogTone.Reward);
+        Log.Add(Turn, $"You count out {price} coin and {def.Title} goes wrapped in oilcloth into your pack: {def.Blurb}. (v reads it at the shrine or loft desk; {Player.Coin} coin left)", LogTone.Reward);
     }
 
     /// <summary>The draught entry (D-090): the simples steeped, priced in sprigs, never in coin.</summary>
@@ -4902,6 +5158,15 @@ public sealed class Game
                 : $"{TalkNpc.Name} leads you to the bench at the wood's edge, where the hides hang to cure and the wood's own lessons are kept.");
     }
 
+    private void OpenShelfMenu()
+    {
+        InTalkMenu = false;
+        InTradeMenu = true;
+        _tradeOffers.Clear();
+        _tradeOffers.AddRange(BuildTradeOffers(TalkNpc!));
+        Log.Add(Turn, $"{TalkNpc!.Name} turns the shelf board around: six titles in the catalog's fixed hand, each marked for what the bearer already owns and what is finished.");
+    }
+
     private void HandleTradeMenuKey(char key)
     {
         if (key >= '1' && key <= '0' + _tradeOffers.Count)
@@ -4928,6 +5193,9 @@ public sealed class Game
                 case TradeGood.TarnTemper:
                     TryTemperTarnIron(arg);
                     break;
+                case TradeGood.Book:
+                    TryBuyBook(arg);
+                    break;
             }
             // The labels move with the state (hides sold, lesson taken); rebuild so the
             // bench reads true, and the digits keep their order under the buyer's hand.
@@ -4937,7 +5205,9 @@ public sealed class Game
         }
 
         InTradeMenu = false;
-        Log.Add(Turn, TalkNpc!.Id == "npc_townsmith"
+        Log.Add(Turn, TalkNpc!.Id == "npc_scrivener"
+            ? $"You step back from the shelf. {TalkNpc.Name} turns the catalog toward the street again."
+            : TalkNpc.Id == "npc_townsmith"
             ? $"You step back from the long hearth. {TalkNpc.Name} draws the coals together again."
             : TalkNpc.Id == "npc_herbwife"
             ? $"You leave the stillroom. {TalkNpc.Name} turns back to her hanging simples."
@@ -5063,6 +5333,191 @@ public sealed class Game
         Log.Add(Turn, $"You stand at the moot-stone and answer the mark plainly: what was done, what it weighed, what you set against it. {TalkNpc!.Name} hears you out, takes {fine} coin for the wronged and the stone, and rules on it.", LogTone.Info);
         LowerTownBook(1);
         GainSkill(SkillId.Persuasion);
+    }
+
+    private string ListsLabel()
+    {
+        if (ListsChampion) return "The law-day lists (champion; the purse paid)";
+        if (ListsEntered) return $"The law-day lists (closed; {ListsWins} bout{(ListsWins == 1 ? "" : "s")} won)";
+        string gate = TownBook > 0 ? "; the town book must stand even"
+            : Player.WoundedTurns > 0 || Player.Hp < Player.EffectiveMaxHp ? "; requires a whole, unwounded bearer" : "";
+        return $"Enter the law-day lists ({TitheBuy(LawDayLists.EntryCoin)} coin{TitheLabel}{gate})";
+    }
+
+    private string JudicialLabel() => JudicialChallengeUsed
+        ? "Claim judicial challenge (already claimed in this world)"
+        : $"Claim judicial challenge (one formal bout; {TownBook} mark{(TownBook == 1 ? "" : "s")} against you)";
+
+    private void TryEnterLists()
+    {
+        if (ListsEntered)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"One entry in a law-day. The book is closed on yours.\"");
+            return;
+        }
+        if (TownBook > 0)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The lists take an even name. Answer the moot's book first.\"");
+            return;
+        }
+        if (Player.WoundedTurns > 0 || Player.Hp < Player.EffectiveMaxHp)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Whole and unwounded at the rope. The lists will make their own bruises.\"");
+            return;
+        }
+        int price = TitheBuy(LawDayLists.EntryCoin);
+        if (Player.Coin < price)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The entry is {price} coin, and you hold {Player.Coin}. The names wait until sundown.\"");
+            return;
+        }
+        Player.Coin -= price;
+        CountTithe();
+        ListsWins = 0;
+        World.Facts.Add("lists", "entered", World.TownName,
+            $"The bearer paid entry and stood once in {World.TownName}'s law-day lists.");
+        StartFormalBout(FormalBoutKind.Lists, 0);
+    }
+
+    private void TryJudicialChallenge()
+    {
+        if (!Player.HasRead(BookId.TownLaw))
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The challenge is a written custom. Read the little book of line and surety before you claim it.\"");
+            return;
+        }
+        if (TownBook == 0)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The book stands even. There is no mark for steel to answer.\"");
+            return;
+        }
+        if (JudicialChallengeUsed)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"One challenge in a world. Yours is already entered. Coin and a plain plea remain.\"");
+            return;
+        }
+        World.Facts.Add("law", "judicial_challenge", World.TownName,
+            $"The bearer claimed the town's once-per-world judicial challenge while a mark stood in the moot's book.");
+        StartFormalBout(FormalBoutKind.Judicial, 1);
+    }
+
+    private void StartFormalBout(FormalBoutKind kind, int bracketIndex)
+    {
+        _formalBout = kind;
+        _formalBoutIndex = bracketIndex;
+        _formalReturnPos = Player.Pos;
+        _formalPendingResolution = false;
+        _formalPlayerYielded = false;
+        InTalkMenu = false;
+        TalkNpc = null;
+        SettleFormalMeters();
+        SpawnFormalOpponent();
+        Log.Add(Turn, kind == FormalBoutKind.Lists
+            ? "The marshal calls the first pairing. Rope, swept ground, and the town watching from outside the line. Yield ends the entry; three wins take the purse."
+            : "The warden enters the challenge and the marshal calls one answer into the rope. One win answers one mark; a yield leaves the book untouched.", LogTone.Info);
+    }
+
+    private void SpawnFormalOpponent()
+    {
+        foreach (var stale in Monsters.Where(m => m.SiteId == "town" && m.FormalName is not null)) stale.Hp = 0;
+        var ring = LawDayRingCells();
+        if (ring.Count < 2) throw new InvalidOperationException("The law-day ring is missing from the town stitch.");
+        var row = ring.GroupBy(p => p.Y).OrderByDescending(g => g.Count()).ThenBy(g => g.Key).First().OrderBy(p => p.X).ToList();
+        Player.Pos = row[0];
+        var (kind, name, hp) = _lawDayBracket[Math.Clamp(_formalBoutIndex, 0, _lawDayBracket.Count - 1)];
+        Monsters.Add(new Monster
+        {
+            Kind = kind,
+            FormalName = name,
+            Pos = row[^1],
+            SiteId = "town",
+            Hp = hp,
+            MaxHp = hp,
+        });
+        Log.Add(Turn, $"{name} steps inside the rope and salutes. The marshal drops a hand.", LogTone.Combat);
+    }
+
+    private List<Pos> LawDayRingCells()
+    {
+        var cells = new List<Pos>();
+        for (int y = 0; y < World.TownSite.Map.Height; y++)
+            for (int x = 0; x < World.TownSite.Map.Width; x++)
+            {
+                var p = new Pos(x, y);
+                if (World.TownSite.Map[p] == Terrain.LawDayRing) cells.Add(p);
+            }
+        return cells;
+    }
+
+    private void ResolveFormalYield(bool playerYielded)
+    {
+        if (_formalBout is null || _formalPendingResolution) return;
+        _formalPendingResolution = true;
+        _formalPlayerYielded = playerYielded;
+        foreach (var opponent in Monsters.Where(m => m.SiteId == "town" && m.FormalName is not null))
+        {
+            opponent.Hp = 0;
+            opponent.Intent = null;
+        }
+    }
+
+    private void FinishFormalResolution()
+    {
+        if (_formalBout is not { } kind || !_formalPendingResolution) return;
+        _formalPendingResolution = false;
+        SettleFormalMeters();
+        if (_formalPlayerYielded)
+        {
+            Log.Add(Turn, kind == FormalBoutKind.Lists
+                ? "The marshal takes the yield. The entry closes here, with no retry in this world's lists."
+                : "The marshal takes the yield. The challenge is spent, and the moot's book stands exactly as it did.", LogTone.Info);
+            EndFormalBout();
+            return;
+        }
+
+        if (kind == FormalBoutKind.Judicial)
+        {
+            LowerTownBook(1);
+            Log.Add(Turn, "The marshal names the challenge answered. One mark is ruled out of the moot's book.", LogTone.Reward);
+            EndFormalBout();
+            return;
+        }
+
+        ListsWins++;
+        if (ListsWins < LawDayLists.Bouts)
+        {
+            Log.Add(Turn, $"The marshal takes the other fighter's yield. {ListsWins} of {LawDayLists.Bouts} bouts stand won; the next name is called.", LogTone.Reward);
+            _formalBoutIndex++;
+            SpawnFormalOpponent();
+            return;
+        }
+
+        Player.Coin += LawDayLists.ChampionPurse;
+        World.Facts.Add("lists", "champion", World.TownName,
+            $"The bearer won all three formal bouts and took the champion's purse in {World.TownName}'s law-day lists.");
+        Log.Add(Turn, $"The third yield is called. The marshal names you champion and counts the {LawDayLists.ChampionPurse}-coin purse into your hand. ({Player.Coin} coin carried)", LogTone.Reward);
+        EndFormalBout();
+    }
+
+    private void EndFormalBout()
+    {
+        _formalBout = null;
+        _formalPlayerYielded = false;
+        Player.Pos = _formalReturnPos;
+    }
+
+    private void SettleFormalMeters()
+    {
+        Player.Hp = Player.EffectiveMaxHp;
+        Player.Stamina = Player.MaxStamina;
+        Player.Focus = Player.MaxFocus;
+        Player.PostureDmg = 0;
+        Player.StaggerTurns = 0;
+        Player.ChilledTurns = 0;
+        Player.WardTurns = 0;
+        Player.HeaveTarget = null;
+        Player.LevinTarget = null;
+        _parryTarget = null;
     }
 
     /// <summary>
@@ -5692,6 +6147,7 @@ public sealed class Game
                 case TradeGood.Lesson: TryLearnLesson(arg); break;
                 case TradeGood.Pledge: TryPledgeDeed(arg); break;
                 case TradeGood.Trade: OpenTradeMenu(); break;
+                case TradeGood.Shelf: OpenShelfMenu(); break;
                 case TradeGood.Brace: TryForgeBrace(); break;   // the hand's road back (D-098)
                 case TradeGood.Laying: TryLayHaunting(); break; // the look's road back (D-098)
                 case TradeGood.Bones: TryPlayBones(); break;    // the hearth game (D-108)
@@ -5737,6 +6193,11 @@ public sealed class Game
                 case TradeGood.TarnTemper:
                     OpenTemperMenu();
                     break;
+                case TradeGood.Workshop:
+                    TryCommissionWorkshop();
+                    _offers.Clear();
+                    _offers.AddRange(BuildOffers(TalkNpc!));
+                    break;
                 // The scrivener's desk and shelf (D-148): both labels read
                 // the bearer's state (letters, ownership), so both refresh
                 // read-true like the forge's sitting does (D-041).
@@ -5756,12 +6217,23 @@ public sealed class Game
                     _offers.Clear();
                     _offers.AddRange(BuildOffers(TalkNpc!));
                     break;
+                case TradeGood.Loft:
+                    TryBuyGuildLoft();
+                    _offers.Clear();
+                    _offers.AddRange(BuildOffers(TalkNpc!));
+                    break;
                 // The plea at the moot-stone (D-142): the label counts the
                 // marks, and the digit leaves the board when the book is even.
                 case TradeGood.Plea:
                     TryPleadCase();
                     _offers.Clear();
                     _offers.AddRange(BuildOffers(TalkNpc!));
+                    break;
+                case TradeGood.Lists:
+                    TryEnterLists();
+                    break;
+                case TradeGood.Judicial:
+                    TryJudicialChallenge();
                     break;
                 // The caravan leg (D-144): the same digit buys at the cart and
                 // sells at the town counter, and both labels count, so the
@@ -6655,15 +7127,30 @@ public sealed class Game
 
     private bool DoRest()
     {
-        if (!(Mode == MapMode.Overworld && CurrentMap[Player.Pos] == Terrain.Shrine))
+        bool atShrine = Mode == MapMode.Overworld && CurrentMap[Player.Pos] == Terrain.Shrine;
+        bool atLoftBed = Mode == MapMode.Site && CurrentSite?.Kind == SiteKind.Town
+            && GuildLoftOwned && CurrentMap[Player.Pos] == Terrain.LoftBed;
+        if (!atShrine && !atLoftBed)
         {
-            Log.Add(Turn, "You may only rest where the Aegis anchors.");
+            Log.Add(Turn, "You may rest where the Aegis anchors, or in a settled bed of your own.");
             return false;
         }
 
         Player.Hp = Player.EffectiveMaxHp;
         Player.Stamina = Player.MaxStamina;
         Player.Focus = Player.MaxFocus;
+
+        if (atLoftBed)
+        {
+            TendIronAtRest();
+            SteepAtRest("While the guildhall settles");
+            foreach (var fellow in Fellows) fellow.Hp = fellow.MaxHp;
+            if (!World.Facts.Exists("property-use", "loft_bed"))
+                World.Facts.Add("property-use", "loft_bed", World.TownName,
+                    "The bearer took a settled night's rest in the guild loft.");
+            Log.Add(Turn, "Your key in the door, a settled bed, and the town held outside the shutters: you wake whole in the loft.", LogTone.Reward);
+            return true;
+        }
 
         TendIronAtRest();
         SteepAtRest();
@@ -6731,11 +7218,15 @@ public sealed class Game
     /// </summary>
     private bool DoRead()
     {
-        if (!(Mode == MapMode.Overworld && CurrentMap[Player.Pos] == Terrain.Shrine))
+        bool atShrine = Mode == MapMode.Overworld && CurrentMap[Player.Pos] == Terrain.Shrine;
+        bool atLoftDesk = Mode == MapMode.Site && CurrentSite?.Kind == SiteKind.Town
+            && GuildLoftOwned && CurrentMap[Player.Pos] == Terrain.LoftDesk;
+        if (!atShrine && !atLoftDesk)
         {
-            Log.Add(Turn, "Pages want the shrine's quiet; the road keeps none.");
+            Log.Add(Turn, "Pages want the shrine's quiet, or the lamp and shut door of your loft desk.");
             return false;
         }
+
         var unfinished = BookCatalog.All.Where(b => Player.Books.Contains(b.Id) && !Player.HasRead(b.Id)).ToList();
         if (unfinished.Count == 0)
         {
@@ -6752,6 +7243,10 @@ public sealed class Game
             Log.Add(Turn, $"You open {unfinished[0].Title} and the hand knots past your letters. More sittings at the scrivener's desk would untie it (Lore {unfinished[0].LoreReq}).");
             return false;
         }
+
+        if (atLoftDesk && !World.Facts.Exists("property-use", "loft_desk"))
+            World.Facts.Add("property-use", "loft_desk", World.TownName,
+                "The bearer sat to read at the guild loft's desk.");
 
         var def = BookCatalog.Def(id);
         int done = Player.BookSittings.GetValueOrDefault(id) + 1;
@@ -6794,6 +7289,14 @@ public sealed class Game
                     Player.Lessons.Add(LessonId.BloomTemper);
                     Log.Add(Turn, "(The bloom-temper is yours: at a town forge, one tarn-iron bloom can give one iron piece 10 more wear, once.)", LogTone.Reward);
                 }
+                break;
+            case BookId.TownLaw:
+                Log.Add(Turn, $"You close {def.Title} with the written customs set in order: the guild's lawful holding, and the moot's old answer by formal challenge.", LogTone.Info);
+                Log.Add(Turn, "(The guild-loft contract and one judicial challenge per world are open to you where their other terms are met.)", LogTone.Reward);
+                break;
+            case BookId.FolkTales:
+                Log.Add(Turn, $"You close {def.Title} with its accounts keyed to the facts that make each one true. They will answer only where the world gives them honest ground.", LogTone.Info);
+                Log.Add(Turn, "(Three road-and-hearth accounts may now find their qualifying worlds, once each in this character's walking.)", LogTone.Reward);
                 break;
         }
         if (!Player.BookLineHeard)
@@ -7086,6 +7589,15 @@ public sealed class Game
     /// </summary>
     private void HarvestRemains(Monster target)
     {
+        if (_formalBout is not null && target.SiteId == "town" && target.FormalName is not null)
+        {
+            target.Hp = 0;
+            target.Intent = null;
+            Log.Add(Turn, $"The blow reaches its ending and stops there. {target.Name} gives the marshal an open hand: yield, not death.", LogTone.Combat);
+            ResolveFormalYield(playerYielded: false);
+            return;
+        }
+
         int coin = target.Kind switch
         {
             MonsterKind.Wight => _combatRng.Range(0, 3),
@@ -9465,12 +9977,18 @@ public sealed class Game
                 var windup = monster.Intent?.Kind;
                 int hpBefore = Player.Hp;
                 ActMonster(monster);
-                if (hpBefore > 0 && Player.Hp <= 0)
+                if (_formalBout is null && hpBefore > 0 && Player.Hp <= 0)
                 {
                     _deathShape = (monster.Kind, windup);
                     _deathHand = monster;
                 }
             }
+
+        if (_formalBout is not null && Player.Hp <= 0)
+        {
+            Log.Add(Turn, "The answer reaches its ending and the marshal is between you before the ground can be. Your open hand gives the yield.", LogTone.Combat);
+            ResolveFormalYield(playerYielded: true);
+        }
 
         // The guard set (D-125) lives declaration to resolution, exactly one
         // field-turn, met or not: iron cannot wait in a line forever.
@@ -9478,7 +9996,7 @@ public sealed class Game
 
         // Those who walk with you (D-097, D-099) take their own step after
         // the field has moved, so what they answer is what actually stands.
-        if (Player.Hp > 0)
+        if (Player.Hp > 0 && _formalBout is null)
         {
             ActFellow(Guest);
             ActFellow(Shade);
@@ -9525,6 +10043,8 @@ public sealed class Game
             Log.Add(Turn, "Out from under the blows, your guard settles whole.", LogTone.Info);
         }
 
+        FinishFormalResolution();
+
         if (Mode == MapMode.Overworld && Player.Hp > 0)
             _storylets.TryFire(this, StoryletTrigger.AmbientTurn);
 
@@ -9552,7 +10072,7 @@ public sealed class Game
                 // tell, hit or miss, and the knowledge banks with the bearer
                 // across the crossing. This is the one clause of D-004 still
                 // owed since the first combat decision: the read is earned.
-                Player.WitnessTell(monster.Kind, Cycle);
+                if (_formalBout is null) Player.WitnessTell(monster.Kind, Cycle);
                 // The feint (D-096): the blow falls where it was always going,
                 // which is not always where the mark said.
                 var struckCell = intent.FeintCell ?? intent.TargetCell;
@@ -9786,7 +10306,7 @@ public sealed class Game
         // stands nearer than the bearer turns on that fellow. The old kinds
         // keep their old eyes for now; blood is blood to a den, and a den
         // does not ask whether what it cuts at bleeds.
-        if (Fellows.Where(f => monster.Pos.Chebyshev(f.Pos) < monster.Pos.Chebyshev(Player.Pos))
+        if (_formalBout is null && Fellows.Where(f => monster.Pos.Chebyshev(f.Pos) < monster.Pos.Chebyshev(Player.Pos))
             .OrderBy(f => monster.Pos.Chebyshev(f.Pos)).FirstOrDefault() is { } quarry)
         {
             ActAgainstGuest(monster, quarry);
@@ -10954,6 +11474,12 @@ public sealed class Game
     internal void Debug_GiveBook(BookId id) { if (!Player.Books.Contains(id)) Player.Books.Add(id); }
     internal void Debug_SetFellWinter(int ticks) => _fellWinterTicks = ticks; // the season pinned (D-149), so fang tests stay about the fang
     internal void Debug_BankLore(int uses) { for (int i = 0; i < uses; i++) Player.Skills.AddUse(SkillId.Lore); }
+    internal void Debug_FireStorylet(StoryletTrigger trigger) => _storylets.TryFire(this, trigger);
+    internal void Debug_ResolveFormalBout(bool playerYielded)
+    {
+        ResolveFormalYield(playerYielded);
+        FinishFormalResolution();
+    }
     internal void Debug_ClearCamp() => Debug_ClearSite(SiteKind.GoblinCamp);
     internal void Debug_ClearSite(SiteKind kind)
     {
@@ -11037,6 +11563,16 @@ public sealed class Game
         Stamina: Player.Stamina,
         MaxStamina: Player.MaxStamina,
         Coin: Player.Coin,
+        TownBook: TownBook,
+        GuildSworn: GuildSworn,
+        GuildLoftOwned: GuildLoftOwned,
+        BoxedCoin: BoxedCoin,
+        WorkshopFitted: WorkshopFitted,
+        ListsEntered: ListsEntered,
+        ListsWins: ListsWins,
+        ListsChampion: ListsChampion,
+        JudicialChallengeUsed: JudicialChallengeUsed,
+        FormalBout: FormalBout?.ToString().ToLowerInvariant() ?? "",
         Essence: Player.Essence,
         Legend: Player.Legend,
         Standing: Standing,
@@ -11234,6 +11770,16 @@ public sealed record Snapshot(
     int Stamina,
     int MaxStamina,
     int Coin,
+    int TownBook,
+    bool GuildSworn,
+    bool GuildLoftOwned,
+    int BoxedCoin,
+    bool WorkshopFitted,
+    bool ListsEntered,
+    int ListsWins,
+    bool ListsChampion,
+    bool JudicialChallengeUsed,
+    string FormalBout,
     int Essence,
     int Legend,
     int Standing,

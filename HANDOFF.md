@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-22, end of the D-169 session)
+# Aegis handoff (updated 2026-07-22, end of the D-170 session)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,27 +8,27 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-169 currently at its head), then the parking lot of open
+  newest-first block (D-170 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-169)". Bump it whenever a decision lands.
+  "(D-001 through D-170)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence and the first
-  four Path to 1.0 tranches are done; V1-05 is next (see "What is next" below).
-- `design/plan-1.0.md`: the canonical nine-card implementation queue. V1-01 through V1-04
-  are Verified; V1-05 through V1-09 are Approved and pending in that order.
+  five Path to 1.0 tranches are done; V1-06 is next (see "What is next" below).
+- `design/plan-1.0.md`: the canonical nine-card implementation queue. V1-01 through V1-05
+  are Verified; V1-06 through V1-09 are Approved and pending in that order.
 - `design/story/`: arc spec and world-story templates. Full story detail lives there.
 - `docs/dev-harness.md`: the pilot/sim/journey harness.
 
 ## Current state
 
-- Latest completed work: D-169, V1-04, bounded Press and Space authority over the
-  explicitly elastic season deck, with full pacing diagnostics. D-168's V1-03
-  implementation is commit `7a2dd3e`.
-- Save format: `SaveCodec.Version = 94` (v91 = D-154, v92 = D-166, v93 = D-167,
-  v94 = D-169; history comments in `src/Aegis.Core/SaveCodec.cs`).
-- Tests: 886 green (`dotnet test tests/Aegis.Core.Tests/Aegis.Core.Tests.csproj -c Release
+- Latest completed work: D-170, V1-05, the guild loft and fitted workshop, law-day
+  lists and judicial challenge, stable six-book shelf, and complete journey diagnostics.
+  D-169's V1-04 implementation is commit `936115c`.
+- Save format: `SaveCodec.Version = 95` (v91 = D-154, v92 = D-166, v93 = D-167,
+  v94 = D-169, v95 = D-170; history comments in `src/Aegis.Core/SaveCodec.cs`).
+- Tests: 900 green (`dotnet test tests/Aegis.Core.Tests/Aegis.Core.Tests.csproj -c Release
   --no-build`).
-- The D-169 Release build, full test run, pacing diagnostics, sweep, replay, and worldgen
+- The D-170 Release build, full test run, town diagnostics, sweep, replay, and worldgen
   purity gate are green.
 
 ## Working conventions (were in user-level config, not visible to a new tool)
@@ -81,28 +81,32 @@ against the previous baseline set to see (and justify) drift. Then sim-replay at
 least seed 1's journal and require exact key/cycle/turn match. Then run the
 worldgen purity gate.
 
-**Current baselines are v98**, stored under `artifacts/aegis-sweep/`. The prior comparison
-set is v97. Every v98 twin pair is byte-identical to its mate. Whole reports differ from
-v97 by the new diagnostics and approved elastic event timing, while every emitted key
-journal is byte-identical to v97:
+**Current baselines are v99**, stored under `artifacts/aegis-sweep/`. The prior comparison
+set is v98. Every v99 twin pair is byte-identical to its mate. Drift is expected and
+justified by added town travel and sittings, formal bouts, book purchases, and the recurring
+property and workshop economy, which can shift later routes in either direction:
 
-| seed  | keys  | turns | deaths | fish caught | outcome                    |
-|-------|-------|-------|--------|-------------|----------------------------|
-| 1     | 25260 | 24066 | 7      | 96          | cycle 13, 12 crossings     |
-| 7     | 26298 | 24998 | 9      | 96          | cycle 13, 12 crossings     |
-| 99    | 26662 | 25392 | 13     | 96          | cycle 13, 12 crossings     |
-| 2024  | 25198 | 24149 | 9      | 96          | cycle 13, 12 crossings     |
-| 88888 | 28253 | 26536 | 8      | 92          | cycle 13, 12 crossings     |
+| seed  | keys  | turns | deaths | entries / bouts | lofts / workshops | outcome                |
+|-------|-------|-------|--------|-----------------|-------------------|------------------------|
+| 1     | 26386 | 25172 | 8      | 8 / 24          | 8 / 8             | cycle 13, 12 crossings |
+| 7     | 26507 | 25181 | 8      | 7 / 21          | 7 / 7             | cycle 13, 12 crossings |
+| 99    | 27481 | 26176 | 10     | 9 / 27          | 9 / 9             | cycle 13, 12 crossings |
+| 2024  | 26312 | 25217 | 9      | 8 / 24          | 8 / 8             | cycle 13, 12 crossings |
+| 88888 | 26751 | 25471 | 9      | 8 / 24          | 8 / 8             | cycle 13, 12 crossings |
 
-Seed 1 sim replay: 25,260 keys, cycle 13, turn 24,066, autumn at position zero, line
-owned, and three fresh reaches in the new world. Across the five journeys, 752 tick
-readings match 752 cadence rolls: 139 natural deals, 27 Press-forced deals, 13 Space
-suppressions, 2 protected Press blocks, and 11 empty Press calls. Press calls fall from
-199 in v97 to 55 in v98. Worldgen: 240 worlds, zero digest
-mismatches, 86,282 prose surfaces (12,449 fact details, 20,272 topics, 49,943 storylet
-lines, 3,138 scene lines, 240 rumors, 240 ledger entries), five families at their declared
-coverage, zero hard prose failures, all twelve band-family weather cells populated,
-240 qualifying tarn sites, and all with three reaches.
+Every entry above ends in a championship and every formal bout in a yield. Every eligible
+world boxes and retrieves coin, rests in the loft, commissions its workshop, and completes
+one real wear-moving workshop sitting. Each final run records four desk sittings and all
+six books owned and read. Judicial results are zero by design because the pilot stays
+crime-free; focused tests prove both outcomes.
+
+Seed 1 sim replay: 26,386 keys, cycle 13, turn 25,172, eight deaths, autumn at position
+zero, line owned, all six books owned and read, and three fresh reaches in the new world.
+All five final JSON journeys parse and match their prose metrics. Worldgen: 240 worlds,
+zero digest mismatches, 87,722 prose surfaces (12,689 fact details, 20,752 topics, 50,663
+storylet lines, 3,138 scene lines, 240 rumors, 240 ledger entries), five families at their
+declared coverage, zero hard failures, and the two expected warnings for legacy fixed
+surfaces and fixed-heavy composition.
 
 ## Engine invariants (break these and old saves die)
 
@@ -131,8 +135,12 @@ coverage, zero hard prose failures, all twelve band-family weather cells populat
   and may steer only Elastic cards. Scheduled futures, faction work, weather, durations,
   player-triggered content, combat, sites, and worldgen remain protected. Crossing resets
   pacing carry and Space authority but keeps the run-wide diagnostic book (D-169).
+- The guild loft, boxed purse, fitted workshop, lists entry, and judicial challenge are
+  world-scoped. Books and their reading progress remain character-scoped. Formal combat
+  uses ordinary actions and time but converts a lethal result to a yield, with no death,
+  remnant, loot, Essence, bestiary study, faction kill, guest, or summon (D-170).
 - Movement keys h/j/k/l/y/u/b/n, `.` wait, `>` enter, `<` exit, `g` grab,
-  `r` rest, `v` read (shrine only), `m` camp, `i` gear, `c` sheet, `e` eat,
+  `r` rest, `v` read (shrine or owned loft desk), `m` camp, `i` gear, `c` sheet, `e` eat,
   `o` order.
 - Pilot streams must be BOM-less UTF-8 (a BOM deadlocks the pipe).
 - The character sheet (`Presenter.DrawSheet`) is full at 14 skills: the NEXT
@@ -155,18 +163,20 @@ coverage, zero hard prose failures, all twelve band-family weather cells populat
   inventory, and `ProseAudit.ValidateFamilies` is the hard catalog gate.
 - D-169 adds `Debug_SetPacingCarry`, `Debug_QueueDeckCadence`, live deck metadata
   validation, and per-reading `PacingDeckOutcome` diagnostics.
+- D-170 adds `Debug_FireStorylet` and `Debug_ResolveFormalBout` for focused, deterministic
+  proof of character-scoped fact gates and both sides of nonlethal formal resolution.
 - Story-pinned seeds exist (e.g. master 42/43 cycle-2 stories); when a test breaks
   on a story draw, check whether a deliberate re-pin is recorded in decisions.md
   before "fixing" the world.
 
 ## What is next (queued, in recommended order)
 
-1. **V1-05: town and economy depth** (`design/plan-1.0.md`, D-161). Its design is Approved
-   and implementation-ready. Read the complete card before editing and preserve every
-   stated boundary and dependency.
-2. **Verify V1-05 under its card and the HANDOFF discipline**, then record its
-   implementation decision, check off tranche 5, and advance to V1-06.
-3. **V1-06 through V1-09 remain Approved in queue order.** Do not silently widen a card.
+1. **V1-06: character and activity breadth** (`design/plan-1.0.md`, D-162). Its design is
+   Approved and implementation-ready. Read the complete card before editing and preserve
+   every stated boundary and dependency.
+2. **Verify V1-06 under its card and the HANDOFF discipline**, then record its
+   implementation decision, check off tranche 6, and advance to V1-07.
+3. **V1-07 through V1-09 remain Approved in queue order.** Do not silently widen a card.
    If implementation reveals a substantive contract conflict, present options and a
    recommendation to the user before changing the approved design.
 

@@ -21,8 +21,16 @@ namespace Aegis.Core;
 /// script (the scrivener's desk, and pages not yet worked through): level 1 IS
 /// literacy, and below it mundane script refuses the eye. Graven script is not
 /// letters and never gates on this (D-091's stones answer something older).
+/// D-162 closes the launch roster with four end-appended activity skills:
+/// Alchemy prepares, Athletics rushes, Stealth spends time on quiet ground,
+/// and Larceny owns the criminal trade.
 /// </summary>
-public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting, Cooking, Survival, Spellcraft, Sleight, Smithing, Commerce, Persuasion, Lore }
+public enum SkillId
+{
+    Blades, Hafted, Brawling, Warding, Ranged, Hunting, Cooking, Survival,
+    Spellcraft, Sleight, Smithing, Commerce, Persuasion, Lore,
+    Alchemy, Athletics, Stealth, Larceny,
+}
 
 /// <summary>
 /// Counted uses are the only state; levels are derived, never granted. A skill
@@ -32,7 +40,7 @@ public enum SkillId { Blades, Hafted, Brawling, Warding, Ranged, Hunting, Cookin
 /// </summary>
 public sealed class SkillSet
 {
-    public const int Count = 14;
+    public const int Count = 18;
 
     private readonly int[] _uses = new int[Count];
 
@@ -75,6 +83,10 @@ public sealed class SkillSet
         SkillId.Commerce => "Commerce",
         SkillId.Persuasion => "Persuasion",
         SkillId.Lore => "Lore",
+        SkillId.Alchemy => "Alchemy",
+        SkillId.Athletics => "Athletics",
+        SkillId.Stealth => "Stealth",
+        SkillId.Larceny => "Larceny",
         _ => id.ToString(),
     };
 }
@@ -93,7 +105,8 @@ public static class Lifting
     public const int TakeMaxExclusive = 5;
 
     /// <summary>Odds a lift comes away unseen: half for a green hand, a twentieth per Sleight level, capped short of certainty.</summary>
-    public static double ChanceFor(int sleightLevel) => Math.Min(0.85, 0.5 + 0.05 * sleightLevel);
+    public static double ChanceFor(int sleightLevel, double knackBonus = 0) =>
+        Math.Min(0.85, 0.5 + 0.05 * sleightLevel + knackBonus);
 }
 
 /// <summary>
@@ -111,7 +124,8 @@ public static class Locks
     public const int TakeMaxExclusive = 15;
 
     /// <summary>Odds a lock gives: a third and change for a green hand, better per Sleight level, capped short of certainty.</summary>
-    public static double ChanceFor(int sleightLevel) => Math.Min(0.85, 0.35 + 0.06 * sleightLevel);
+    public static double ChanceFor(int sleightLevel, double knackBonus = 0) =>
+        Math.Min(0.85, 0.35 + 0.06 * sleightLevel + knackBonus);
 }
 
 /// <summary>
@@ -129,6 +143,6 @@ public static class Burglary
     public const int TakeMin = 4;
     public const int TakeMaxExclusive = 10;
 
-    /// <summary>Odds the house stays asleep: two in five for a green hand, a twentieth per Sleight level, capped short of certainty.</summary>
-    public static double ChanceFor(int sleightLevel) => Math.Min(0.85, 0.4 + 0.05 * sleightLevel);
+    /// <summary>Odds the house stays asleep: two in five for a green hand, a twentieth per Larceny level, capped short of certainty.</summary>
+    public static double ChanceFor(int larcenyLevel) => Math.Min(0.85, 0.4 + 0.05 * larcenyLevel);
 }

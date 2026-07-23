@@ -32,7 +32,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 | V1-03 | D3 prose-variety infrastructure | Verified | D-159, D-168 | Completed |
 | V1-04 | D1 pacing steering | Verified | D-160, D-169 | Completed |
 | V1-05 | Town and economy depth | Verified | D-161, D-170 | Completed |
-| V1-06 | Character and activity breadth | Approved | D-162 | Pending |
+| V1-06 | Character and activity breadth | Verified | D-162, D-171 | Completed |
 | V1-07 | Combat and magic depth | Approved | D-163 | Pending |
 | V1-08 | Companions, factions, and consequences | Approved | D-164 | Pending |
 | V1-09 | Next region and 1.0 release closure | Approved | D-165 | Pending |
@@ -670,15 +670,15 @@ regional trade
 
 ## V1-06: Character and activity breadth
 
-**Design status:** Approved
-**Decisions:** D-162
+**Design status:** Verified
+**Decisions:** D-162, D-171
 **Roadmap association:** Path to 1.0 tranche 6; eighteen-skill launch roster
 **Known dependencies:** Existing skill growth, knack questions, hale-draught brewing,
 combat movement, monster activity, crime, fencing, character creation, journey pilot
 **Recommended implementation point:** sixth card, after V1-05 and before combat and
 magic depth
 
-**Implementation status:** Pending in queue order
+**Implementation status:** Completed and verified 2026-07-23; V1-07 follows under D-163
 
 ### Approved behavior
 
@@ -831,6 +831,24 @@ magic depth
   2024, and 88888 through two byte-identical twelve-world journeys each, compare and
   justify drift from v95, replay seed 1 to exact keys/cycle/turn, exercise the rogue
   journey, and pass `worldgen --json`.
+
+### Implementation verification
+
+- D-171 completes the card at save v96. The Release build is clean with zero warnings
+  and all 920 tests pass. Focused acceptance covers stable enum order and storage,
+  two-column presentation, creation, death and crossing persistence, self-brewing and
+  both Alchemy knacks, all eight rush directions and both Athletics knacks, deterministic
+  awareness and quiet-step arithmetic, the crime-ledger split, caps, prices, and feeds.
+- Seeds 1, 7, 99, 2024, and 88888 each completed two byte-identical twelve-world
+  journeys. Every run exercised successful self-brewing, live-pressure rushing, and
+  quiet-band crossings. Every default crime-action counter remained zero. The opt-in
+  rogue seed-1 route exercised Sleight and Larceny, clean pilfering and burglary, fencing,
+  lock, pocket, and burglary attempts, and restitution.
+- Seed 1's 32,587 emitted keys replay exactly to cycle 13 and turn 30,609 with seven
+  deaths. All five JSON reports agree with their prose counterparts.
+- The 240-world generation gate exits cleanly with zero digest mismatches across 87,722
+  surfaces. Drift from v99 is justified by the new activity errands, two-turn quiet
+  movement, rushing, and awareness behavior. The v100 journeys are the new baseline.
 
 ### Explicit exclusions
 

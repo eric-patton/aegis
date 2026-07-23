@@ -183,6 +183,13 @@ public sealed class Player
     public int Draughts { get; set; }
 
     /// <summary>
+    /// Successful batches prepared by the bearer's own hands (D-162). The
+    /// second-steeping knack reads this parity, so the count crosses and
+    /// survives death with the rest of the practiced body.
+    /// </summary>
+    public int SelfBrews { get; set; }
+
+    /// <summary>
     /// Small things with a past (D-124): what pilfering pockets off the mantel
     /// beside the loaf. No one in the stead buys back its own heirlooms; the
     /// peddler's cart is not curious. On your person like the hides, surviving
@@ -563,6 +570,13 @@ public sealed class Monster
     /// the first sighting is a horn, and the horn is for everybody.
     /// </summary>
     public bool Dormant { get; set; }
+
+    /// <summary>
+    /// Whether this foe has noticed the bearer (D-162). This is separate from
+    /// authored dormancy: a graven figure may know where the bearer stands and
+    /// still wait for its own stone-close waking rule.
+    /// </summary>
+    public bool Aware { get; set; } = true;
 
     /// <summary>
     /// The board sundered (D-095): a hafted heave splits the linden for good,

@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-170); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-171); the research behind it lives in `../research/`.
 
 ---
 
@@ -86,6 +86,13 @@ Might, Grace, Vigor, Wits, Mind, Will, Presence. Raised by spending **Essence** 
 
 ### Skills: eighteen-ish, grown by use
 Combat (Blades, Hafted, Polearms, Ranged, Brawling, Warding), Craft (Smithing, Alchemy, Cooking), Wilderness (Hunting, Survival, Athletics), Subterfuge (Stealth, Larceny), Social (Persuasion, Commerce), Mind (Lore, plus magic skills). Skills grow only through use, and every use costs something real: materials, durability, fatigue, time, risk. Grinding is welcome and diegetic (sparring partners, training dummies, dangerous hunting grounds) with diminishing returns; it is never an exploit, because free repeatable actions do not exist.
+
+D-171 closes the launch roster at eighteen under D-162. Alchemy grows through successful
+self-brewing, Athletics through stamina-paid rushes under live pressure, Stealth through
+two-turn quiet movement across a foe's ordinary notice band, and Larceny through clean
+household crime and fenced lots. Sleight remains the separate hand skill for pockets and
+locks. Five level-2 questions give each new ledger, plus Sleight, its first permanent
+choice.
 
 At skill thresholds you choose one of two or three **perks** (mutually exclusive, KCD-style; in the game's own register they are knacks, shipped at level 2 by D-046). **Proficiencies** (discrete know-how: recipes, techniques, faction customs) come from books, mentors, and quests. D-154 closes the first complete book-to-craft path: a Lore-2 smithing text teaches a permanent bloom-temper, then one tarn-iron bloom gives one eligible iron piece 10 more wear once at the town forge, feeding Smithing without increasing combat power.
 

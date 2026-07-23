@@ -97,7 +97,7 @@ public class CreationTests
         var game = Wake();
         Answer(game, '2', '7', "0", '4');
         Assert.Equal(1, game.Player.Skills.Level(SkillId.Blades));
-        Assert.Equal(1, game.Player.Skills.Level(SkillId.Hunting));
+        Assert.Equal(1, game.Player.Skills.Level(SkillId.Larceny));
         Assert.Equal(1, game.Shame);
     }
 

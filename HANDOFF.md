@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-22, end of the D-170 session)
+# Aegis handoff (updated 2026-07-23, end of the D-171 session)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,27 +8,28 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-170 currently at its head), then the parking lot of open
+  newest-first block (D-171 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-170)". Bump it whenever a decision lands.
+  "(D-001 through D-171)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence and the first
-  five Path to 1.0 tranches are done; V1-06 is next (see "What is next" below).
-- `design/plan-1.0.md`: the canonical nine-card implementation queue. V1-01 through V1-05
-  are Verified; V1-06 through V1-09 are Approved and pending in that order.
+  six Path to 1.0 tranches are done; V1-07 is next (see "What is next" below).
+- `design/plan-1.0.md`: the canonical nine-card implementation queue. V1-01 through V1-06
+  are Verified; V1-07 through V1-09 are Approved and pending in that order.
 - `design/story/`: arc spec and world-story templates. Full story detail lives there.
 - `docs/dev-harness.md`: the pilot/sim/journey harness.
 
 ## Current state
 
-- Latest completed work: D-170, V1-05, the guild loft and fitted workshop, law-day
-  lists and judicial challenge, stable six-book shelf, and complete journey diagnostics.
-  D-169's V1-04 implementation is commit `936115c`.
-- Save format: `SaveCodec.Version = 95` (v91 = D-154, v92 = D-166, v93 = D-167,
-  v94 = D-169, v95 = D-170; history comments in `src/Aegis.Core/SaveCodec.cs`).
-- Tests: 900 green (`dotnet test tests/Aegis.Core.Tests/Aegis.Core.Tests.csproj -c Release
+- Latest completed work: D-171, V1-06, the four final skills, activity verbs,
+  awareness and soft tread, five level-2 knack questions, creation hooks, and default
+  plus rogue journey coverage. D-170's V1-05 implementation is commit `82ce682`.
+- Save format: `SaveCodec.Version = 96` (v91 = D-154, v92 = D-166, v93 = D-167,
+  v94 = D-169, v95 = D-170, v96 = D-171; history comments in
+  `src/Aegis.Core/SaveCodec.cs`).
+- Tests: 920 green (`dotnet test tests/Aegis.Core.Tests/Aegis.Core.Tests.csproj -c Release
   --no-build`).
-- The D-170 Release build, full test run, town diagnostics, sweep, replay, and worldgen
+- The D-171 Release build, full test run, activity diagnostics, sweep, replay, rogue route, and worldgen
   purity gate are green.
 
 ## Working conventions (were in user-level config, not visible to a new tool)
@@ -40,8 +41,9 @@ The canonical design truth stays where it always was:
 - Always use raw string literals (`"""`) for multi-line strings in C#.
 - Git identity: author is `eric-patton <ursine.blue@proton.me>`. **Never** list an
   AI as author or co-author; no `Co-Authored-By: Claude` trailers or similar.
-- Committing without asking is fine. This repo is **local only, no remote: never
-  push**. No destructive git ever: no `reset --hard`, `push --force` (any variant),
+- Committing and a normal push are fine. The GitHub remote is
+  `git@github.com:eric-patton/aegis.git`. No destructive git ever: no `reset --hard`,
+  `push --force` (any variant),
   `clean -f`, `branch -D`, `rebase`, `filter-branch`, `stash drop/clear`.
 - Commit message register matches the log: lowercase evocative title in the game's
   own diction, decision number in parens, e.g.
@@ -81,28 +83,26 @@ against the previous baseline set to see (and justify) drift. Then sim-replay at
 least seed 1's journal and require exact key/cycle/turn match. Then run the
 worldgen purity gate.
 
-**Current baselines are v99**, stored under `artifacts/aegis-sweep/`. The prior comparison
-set is v98. Every v99 twin pair is byte-identical to its mate. Drift is expected and
-justified by added town travel and sittings, formal bouts, book purchases, and the recurring
-property and workshop economy, which can shift later routes in either direction:
+**Current baselines are v100**, stored under `artifacts/aegis-sweep/`. The prior comparison
+set is v99. Every v100 twin pair is byte-identical to its mate. Drift is expected and
+justified by activity errands, two-turn quiet movement, live-pressure rushing, and
+awareness behavior, which can shift later routes in either direction:
 
-| seed  | keys  | turns | deaths | entries / bouts | lofts / workshops | outcome                |
-|-------|-------|-------|--------|-----------------|-------------------|------------------------|
-| 1     | 26386 | 25172 | 8      | 8 / 24          | 8 / 8             | cycle 13, 12 crossings |
-| 7     | 26507 | 25181 | 8      | 7 / 21          | 7 / 7             | cycle 13, 12 crossings |
-| 99    | 27481 | 26176 | 10     | 9 / 27          | 9 / 9             | cycle 13, 12 crossings |
-| 2024  | 26312 | 25217 | 9      | 8 / 24          | 8 / 8             | cycle 13, 12 crossings |
-| 88888 | 26751 | 25471 | 9      | 8 / 24          | 8 / 8             | cycle 13, 12 crossings |
+| seed  | keys  | turns | deaths | Alchemy / Athletics / Stealth uses | rushes / quiet bands | outcome                |
+|-------|-------|-------|--------|-------------------------------------|-----------------------|------------------------|
+| 1     | 32587 | 30609 | 7      | 8 / 12 / 22                         | 50 / 22               | cycle 13, 12 crossings |
+| 7     | 33112 | 26158 | 12     | 11 / 12 / 19                        | 53 / 19               | cycle 13, 12 crossings |
+| 99    | 31328 | 27261 | 11     | 10 / 20 / 17                        | 88 / 17               | cycle 13, 12 crossings |
+| 2024  | 35236 | 33491 | 8      | 15 / 12 / 16                        | 51 / 16               | cycle 13, 12 crossings |
+| 88888 | 35591 | 33953 | 6      | 8 / 12 / 22                         | 50 / 22               | cycle 13, 12 crossings |
 
-Every entry above ends in a championship and every formal bout in a yield. Every eligible
-world boxes and retrieves coin, rests in the loft, commissions its workshop, and completes
-one real wear-moving workshop sitting. Each final run records four desk sittings and all
-six books owned and read. Judicial results are zero by design because the pilot stays
-crime-free; focused tests prove both outcomes.
+Every default run self-brews, rushes under live pressure, and crosses ordinary notice
+bands on soft tread. Every default crime-action counter is zero. The opt-in rogue seed-1
+journey records 31 Sleight uses, 12 Larceny uses, one clean pilfer, five clean burglaries,
+six fenced lots, every requested attempt lane, and twelve restitutions.
 
-Seed 1 sim replay: 26,386 keys, cycle 13, turn 25,172, eight deaths, autumn at position
-zero, line owned, all six books owned and read, and three fresh reaches in the new world.
-All five final JSON journeys parse and match their prose metrics. Worldgen: 240 worlds,
+Seed 1 sim replay: 32,587 keys, cycle 13, turn 30,609, seven deaths. All five final JSON
+journeys parse and match their prose metrics. Worldgen: 240 worlds,
 zero digest mismatches, 87,722 prose surfaces (12,689 fact details, 20,752 topics, 50,663
 storylet lines, 3,138 scene lines, 240 rumors, 240 ledger entries), five families at their
 declared coverage, zero hard failures, and the two expected warnings for legacy fixed
@@ -139,12 +139,16 @@ surfaces and fixed-heavy composition.
   world-scoped. Books and their reading progress remain character-scoped. Formal combat
   uses ordinary actions and time but converts a lethal result to a yield, with no death,
   remnant, loot, Essence, bestiary study, faction kill, guest, or summon (D-170).
+- Hostile-site awareness is separate from authored dormancy. Soft tread spends up to two
+  ordinary causal turns, and uppercase local movement validates a complete rush before
+  spending stamina or time. Sleight owns pockets and locks; Larceny owns pilfering,
+  burglary, and fencing (D-171).
 - Movement keys h/j/k/l/y/u/b/n, `.` wait, `>` enter, `<` exit, `g` grab,
   `r` rest, `v` read (shrine or owned loft desk), `m` camp, `i` gear, `c` sheet, `e` eat,
-  `o` order.
+  `o` order. Uppercase H/J/K/L/Y/U/B/N rush on local combat maps.
 - Pilot streams must be BOM-less UTF-8 (a BOM deadlocks the pipe).
-- The character sheet (`Presenter.DrawSheet`) is full at 14 skills: the NEXT
-  skill added needs the skills column-paired (comment in place).
+- The character sheet (`Presenter.DrawSheet`) holds all 18 skills in two stable
+  enum-ordered columns of nine.
 
 ## Test conventions
 
@@ -165,18 +169,20 @@ surfaces and fixed-heavy composition.
   validation, and per-reading `PacingDeckOutcome` diagnostics.
 - D-170 adds `Debug_FireStorylet` and `Debug_ResolveFormalBout` for focused, deterministic
   proof of character-scoped fact gates and both sides of nonlethal formal resolution.
+- D-171's activity acceptance lives in `ActivityBreadthTests`: all eight rush directions,
+  two-turn soft tread arithmetic, awareness, Alchemy, crime separation, and knack edges.
 - Story-pinned seeds exist (e.g. master 42/43 cycle-2 stories); when a test breaks
   on a story draw, check whether a deliberate re-pin is recorded in decisions.md
   before "fixing" the world.
 
 ## What is next (queued, in recommended order)
 
-1. **V1-06: character and activity breadth** (`design/plan-1.0.md`, D-162). Its design is
+1. **V1-07: combat and magic depth** (`design/plan-1.0.md`, D-163). Its design is
    Approved and implementation-ready. Read the complete card before editing and preserve
    every stated boundary and dependency.
-2. **Verify V1-06 under its card and the HANDOFF discipline**, then record its
-   implementation decision, check off tranche 6, and advance to V1-07.
-3. **V1-07 through V1-09 remain Approved in queue order.** Do not silently widen a card.
+2. **Verify V1-07 under its card and the HANDOFF discipline**, then record its
+   implementation decision, check off tranche 7, and advance to V1-08.
+3. **V1-08 and V1-09 remain Approved in queue order.** Do not silently widen a card.
    If implementation reveals a substantive contract conflict, present options and a
    recommendation to the user before changing the approved design.
 

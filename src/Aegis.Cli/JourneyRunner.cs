@@ -41,6 +41,7 @@ public static class JourneyRunner
         bool emitKeys = false;
         bool json = false;
         bool wits = false; // the perception-build demo (D-084): the eye raised first.
+        bool rogue = false;
 
         for (int i = 0; i < args.Length; i++)
         {
@@ -55,6 +56,7 @@ public static class JourneyRunner
                 case "--emit-keys": emitKeys = true; break;
                 case "--json": json = true; break;
                 case "--wits": wits = true; break;
+                case "--rogue": rogue = true; break;
                 default:
                     Console.Error.WriteLine($"aegis journey: unexpected argument '{args[i]}'");
                     return 1;
@@ -238,7 +240,7 @@ public static class JourneyRunner
                 if (k > siteKeyBudget) skip.Add(activeSite);
             }
 
-            char? key = JourneyPilot.NextKey(game, skip, wits);
+            char? key = JourneyPilot.NextKey(game, skip, wits, rogue);
             // The door counts as the site (D-146's lesson): a death on the very
             // key that steps in (a pack waiting at the mouth) must land on the
             // site's own death budget, or the give-up machinery never sees a
@@ -552,6 +554,7 @@ public static class JourneyRunner
                 Seed: seed,
                 TargetCrossings: cycles,
                 WitsDemo: wits,
+                Rogue: rogue,
                 CycleReached: game.Cycle,
                 Tier: game.World.Tier,
                 CurrentTwist: WorldTwistCatalog.IdOf(game.World.Twist),
@@ -569,6 +572,27 @@ public static class JourneyRunner
                 GearTaken: gearTaken,
                 KnacksTaken: knacksTaken,
                 Knacks: KnackList(game),
+                AlchemyUses: game.Player.Skills.Uses(SkillId.Alchemy),
+                AlchemyLevel: game.Player.Skills.Level(SkillId.Alchemy),
+                AthleticsUses: game.Player.Skills.Uses(SkillId.Athletics),
+                AthleticsLevel: game.Player.Skills.Level(SkillId.Athletics),
+                StealthUses: game.Player.Skills.Uses(SkillId.Stealth),
+                StealthLevel: game.Player.Skills.Level(SkillId.Stealth),
+                LarcenyUses: game.Player.Skills.Uses(SkillId.Larceny),
+                LarcenyLevel: game.Player.Skills.Level(SkillId.Larceny),
+                SleightUses: game.Player.Skills.Uses(SkillId.Sleight),
+                SleightLevel: game.Player.Skills.Level(SkillId.Sleight),
+                RushesCompleted: game.RushesCompleted,
+                QuietBandsCrossed: game.QuietBandsCrossed,
+                SoftTreadDiscoveries: game.SoftTreadDiscoveries,
+                CleanPilfers: game.CleanPilfers,
+                CleanBurglaries: game.CleanBurglaries,
+                FencedLots: game.FencedLots,
+                FencedGoods: game.FencedGoods,
+                LockAttempts: game.LockAttempts,
+                PickpocketAttempts: game.PickpocketAttempts,
+                BurglaryAttempts: game.BurglaryAttempts,
+                RestitutionsMade: game.RestitutionsMade,
                 ArcReach: ArcReach(game),
                 ResolvedAs: resolvedAs.ToString().ToLowerInvariant(),
                 ResolvedCycle: resolvedCycle,
@@ -691,7 +715,7 @@ public static class JourneyRunner
             return 0;
         }
 
-        Report(seed, cycles, wits, crossings, stop, game, totalKeys, keys, emitKeys,
+        Report(seed, cycles, wits, rogue, crossings, stop, game, totalKeys, keys, emitKeys,
             remnantsReclaimed, coinReclaimed, essenceReclaimed,
             chestsLooted, chestCoin, gearTaken, knacksTaken,
             resolvedAs, resolvedCycle, laidCycle, mendedCycle, legendFromBurden,
@@ -783,7 +807,7 @@ public static class JourneyRunner
             : $"on the overworld at ({game.Player.Pos.X},{game.Player.Pos.Y})";
 
     private static void Report(
-        ulong seed, int cycles, bool wits, List<Crossing> crossings, string stop,
+        ulong seed, int cycles, bool wits, bool rogue, List<Crossing> crossings, string stop,
         Game game, int totalKeys, StringBuilder keys, bool emitKeys,
         int remnantsReclaimed, int coinReclaimed, int essenceReclaimed,
         int chestsLooted, int chestCoin, int gearTaken, int knacksTaken,
@@ -813,7 +837,8 @@ public static class JourneyRunner
     {
         var w = Console.Out;
         w.WriteLine($"AEGIS JOURNEY   seed {seed}   target {cycles} crossing(s)"
-                    + (wits ? "   [--wits: the keen-eyed walk (D-084)]" : ""));
+                    + (wits ? "   [--wits: the keen-eyed walk (D-084)]" : "")
+                    + (rogue ? "   [--rogue: the crooked trade (D-162)]" : ""));
         w.WriteLine(new string('=', 62));
 
         if (crossings.Count == 0)
@@ -869,6 +894,16 @@ public static class JourneyRunner
                     + $"{chestCoin} coin, {gearTaken} piece(s) of deep iron taken up and worn (D-066).");
         w.WriteLine($"         answered {knacksTaken} threshold question(s) as they opened (D-067)"
                     + (knacksTaken == 0 ? "." : $": {KnackList(game)}."));
+        w.WriteLine($"         activity breadth: Alchemy {game.Player.Skills.Uses(SkillId.Alchemy)} use(s), level {game.Player.Skills.Level(SkillId.Alchemy)}; "
+                    + $"Athletics {game.Player.Skills.Uses(SkillId.Athletics)}, level {game.Player.Skills.Level(SkillId.Athletics)}; "
+                    + $"Stealth {game.Player.Skills.Uses(SkillId.Stealth)}, level {game.Player.Skills.Level(SkillId.Stealth)}; "
+                    + $"Larceny {game.Player.Skills.Uses(SkillId.Larceny)}, level {game.Player.Skills.Level(SkillId.Larceny)} (D-162).");
+        w.WriteLine($"           rushes {game.RushesCompleted}; quiet bands {game.QuietBandsCrossed}; soft-tread discoveries {game.SoftTreadDiscoveries}; "
+                    + $"clean pilfers {game.CleanPilfers}; clean burglaries {game.CleanBurglaries}; fenced lots {game.FencedLots}, goods {game.FencedGoods}.");
+        if (rogue)
+            w.WriteLine($"           rogue circuit: pocket attempts {game.PickpocketAttempts}; lock attempts {game.LockAttempts}; "
+                        + $"burglary attempts {game.BurglaryAttempts}; restitutions {game.RestitutionsMade}; "
+                        + $"Sleight {game.Player.Skills.Uses(SkillId.Sleight)} use(s), level {game.Player.Skills.Level(SkillId.Sleight)}.");
         w.WriteLine($"         the arc: climbed the reveal ladder to {ArcReach(game)} (D-068).");
         if (resolvedCycle > 0)
             w.WriteLine($"           answered the keeping ({resolvedAs.ToString().ToLowerInvariant()}) at the Hearth in cycle {resolvedCycle}.");
@@ -966,11 +1001,17 @@ internal sealed record JourneyCrossingDto(
     List<JourneySiteDto> Sites, List<JourneyReadDto> BestiaryBefore, List<JourneyReadDto> BestiaryAfter);
 
 internal sealed record JourneyReport(
-    ulong Seed, int TargetCrossings, bool WitsDemo, int CycleReached, int Tier, string CurrentTwist, int CrossingsMade, string Stop,
+    ulong Seed, int TargetCrossings, bool WitsDemo, bool Rogue, int CycleReached, int Tier, string CurrentTwist, int CrossingsMade, string Stop,
     int KeysPressed, int Turns, int Deaths, string Scars,
     int RemnantsReclaimed, int CoinReclaimed, int EssenceReclaimed,
     int ChestsLooted, int ChestCoin, int GearTaken,
     int KnacksTaken, string Knacks,
+    int AlchemyUses, int AlchemyLevel, int AthleticsUses, int AthleticsLevel,
+    int StealthUses, int StealthLevel, int LarcenyUses, int LarcenyLevel,
+    int SleightUses, int SleightLevel,
+    int RushesCompleted, int QuietBandsCrossed, int SoftTreadDiscoveries,
+    int CleanPilfers, int CleanBurglaries, int FencedLots, int FencedGoods,
+    int LockAttempts, int PickpocketAttempts, int BurglaryAttempts, int RestitutionsMade,
     string ArcReach, string ResolvedAs, int ResolvedCycle, int LaidCycle, int MendedCycle,
     int Legend, int LegendFromBurden,
     int HidesTaken, int HidesSold, int CoinFromHides,

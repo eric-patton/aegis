@@ -231,6 +231,65 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-171: The quick road and the quiet one: activity breadth built (2026-07-23)
+
+V1-06 is built and Verified under D-162's approved boundary. `SkillId` now end-appends
+Alchemy, Athletics, Stealth, and Larceny after Lore, closing the stable roster at
+eighteen. The sheet pairs them into two columns of nine without changing enum order,
+growth, taught rows, threshold questions, or persistence. The hedge-healer now banks
+Alchemy beside Lore and Stillcraft, the wayfarer banks Athletics, and the oathbreaker
+banks Larceny beside Blades. The craft kit still grants knowledge and ingredients without
+granting practiced Alchemy.
+
+Successful self-brewing now spends the existing herb price, grants one Alchemy use, and
+makes one vial plus the ordinary skill bonus within the rack. Herbwife work, drinking,
+and refused batches teach nothing. Room on the rack and the alternating second steeping
+ship as the approved Alchemy choices. Uppercase local directions now attempt a complete
+two-cell rush, or three with the long-stride choice, only after validating every cell.
+The move pays the approved stamina price, consumes one honest turn, and trains Athletics
+only under active hostile pressure. Refusals spend nothing and move no part of the path.
+The kept-breath choice lowers the price while preserving its floor.
+
+Hostile-site foes now carry awareness separately from authored dormancy. They begin
+unaware, wake on deterministic sight, harm, or established group alarms, and otherwise
+leave their present combat behavior unchanged. Before engagement, contextual `s` toggles
+soft tread. Each quiet step spends the setting turn first, cancels movement if that turn
+discovers the bearer, and otherwise spends the second ordinary turn on the move. Both
+turns use the engine's real causal path. Notice composes the foe's existing line of sight
+with the approved two-cell reduction, Grace, Stealth, metal noise, and the two Stealth
+choices. Crossing an ordinary notice band unseen teaches once per foe and site. Attack,
+discovery, site exit, death, and crossing cancel the mode.
+
+The crime ledgers are now explicit. Sleight keeps pickpocketing and lockpicking, including
+their existing bases, feeds, finite targets, and 85 percent caps. Larceny owns clean
+pilfering, clean burglary, and one use per fenced lot. Burglary reads Larceny, and fencing
+pays the approved skill-scaled price. The rich-kist and road-price choices change the
+corresponding returns, while the two Sleight choices add ten percentage points to pockets
+or locks under the old caps. No action requires a combined thief-class check.
+
+The default journey policy self-brews, rushes under live pressure, and crosses quiet
+notice bands while every crime-action counter stays at zero. The opt-in `journey --rogue`
+policy exercises both criminal ledgers and their consequences. Journey prose, JSON, and
+snapshots expose the new skill levels, activity counts, awareness, and mode state. Save
+v95 advances to v96 because skill and perk indices, creation starts, uppercase movement,
+contextual `s`, awareness, crime arithmetic, and pilot semantics all alter replay.
+
+The Release build has zero warnings and all 920 tests pass. Seeds 1, 7, 99, 2024, and
+88888 each complete two byte-identical twelve-world journeys at 32587, 33112, 31328,
+35236, and 35591 keys. Every default run exercises the three lawful lanes and remains
+crime-free. The rogue seed-1 run records 31 Sleight uses, 12 Larceny uses, one clean
+pilfer, five clean burglaries, six fenced lots, all three attempt kinds, and twelve
+restitutions. Seed 1's emitted 32587-key journal replays exactly to cycle 13 and turn
+30609 with seven deaths. All five JSON reports agree with their prose twins. The
+240-world generation gate exits cleanly with zero digest mismatches across 87722
+surfaces. Drift from v99 is justified by the activity errands, two-turn quiet movement,
+rush policy, and awareness behavior. The v100 journeys are the new baseline.
+
+Options set aside and deferrals remain D-162's: no additional formulae, general crafting
+interface, broader traversal suite, fatigue meter, assassination bonus, darkness or sound
+simulation, town-wide stealth, organized crime, new pasts or folk, Polearms split, or
+later noncombat knack waves. V1-07 is next in the approved queue.
+
 ### D-170: A key inside the wall: town depth built (2026-07-22)
 
 V1-05 is built and Verified under D-161's approved boundary. The existing guildhall now

@@ -67,10 +67,10 @@ public static class CreationCatalog
     [
         new(PastId.Soldier, "a soldier", SkillId.Blades, "drilled iron and kept ranks; a worn jack still fits"),
         new(PastId.Poacher, "a poacher", SkillId.Ranged, "took the lord's game quietly; the bow came along"),
-        new(PastId.HedgeHealer, "a hedge-healer", SkillId.Survival, "knew the worts and what they mend; sprigs in the wallet"),
+        new(PastId.HedgeHealer, "a hedge-healer", SkillId.Alchemy, "knew the worts and what they mend; sprigs in the wallet"),
         new(PastId.SmithsHand, "a smith's-hand", SkillId.Warding, "worked the bellows and the awl; smiths know their own"),
         new(PastId.ScribesWard, "a scribe's-ward", SkillId.Spellcraft, "raised among old writings, and what they say of deep places"),
-        new(PastId.Wayfarer, "a wayfarer", SkillId.Hunting, "lived off the roads between steads; rations spare"),
+        new(PastId.Wayfarer, "a wayfarer", SkillId.Athletics, "lived off the roads between steads; rations spare"),
         new(PastId.Oathbreaker, "an oathbreaker", SkillId.Blades, "hard-schooled and twice-skilled, but the name is stained"),
     ];
 

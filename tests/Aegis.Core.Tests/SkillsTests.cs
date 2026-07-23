@@ -160,6 +160,10 @@ public class SkillsTests
         var game = new Game(42);
         for (int i = 0; i < 20; i++) game.Player.Skills.AddUse(SkillId.Hafted);
         for (int i = 0; i < 9; i++) game.Player.Skills.AddUse(SkillId.Warding);
+        for (int i = 0; i < 7; i++) game.Player.Skills.AddUse(SkillId.Alchemy);
+        for (int i = 0; i < 8; i++) game.Player.Skills.AddUse(SkillId.Athletics);
+        for (int i = 0; i < 10; i++) game.Player.Skills.AddUse(SkillId.Stealth);
+        for (int i = 0; i < 11; i++) game.Player.Skills.AddUse(SkillId.Larceny);
         game.Player.Coin = 30;
 
         game.Debug_HurtPlayer(999);
@@ -167,6 +171,10 @@ public class SkillsTests
         Assert.Equal(0, game.Player.Coin);
         Assert.Equal(20, game.Player.Skills.Uses(SkillId.Hafted));
         Assert.Equal(9, game.Player.Skills.Uses(SkillId.Warding));
+        Assert.Equal(7, game.Player.Skills.Uses(SkillId.Alchemy));
+        Assert.Equal(8, game.Player.Skills.Uses(SkillId.Athletics));
+        Assert.Equal(10, game.Player.Skills.Uses(SkillId.Stealth));
+        Assert.Equal(11, game.Player.Skills.Uses(SkillId.Larceny));
 
         game.Debug_SetMode(MapMode.Overworld);
         game.Debug_ClearCamp();
@@ -176,6 +184,10 @@ public class SkillsTests
         Assert.Equal(2, game.Cycle);
         Assert.Equal(2, game.Player.Skills.Level(SkillId.Hafted));
         Assert.Equal(1, game.Player.Skills.Level(SkillId.Warding));
+        Assert.Equal(7, game.Player.Skills.Uses(SkillId.Alchemy));
+        Assert.Equal(8, game.Player.Skills.Uses(SkillId.Athletics));
+        Assert.Equal(10, game.Player.Skills.Uses(SkillId.Stealth));
+        Assert.Equal(11, game.Player.Skills.Uses(SkillId.Larceny));
     }
 
     [Fact]
@@ -196,12 +208,14 @@ public class SkillsTests
         Assert.Contains("Pre", sheet);
         Assert.Contains("Hafted", sheet);
         Assert.Contains("Lore", sheet);
+        Assert.Contains("Alchemy", sheet);
+        Assert.Contains("Larceny", sheet);
         Assert.Contains("12/20", sheet); // progress toward the next line
         Assert.Contains("0/8", sheet);   // untrained tracks show their first ask
 
         var snap = game.TakeSnapshot();
         Assert.True(snap.InSheetMenu);
-        Assert.Equal("blades:0:0,hafted:1:12,brawling:0:0,warding:0:0,ranged:0:0,hunting:0:0,cooking:0:0,survival:0:0,spellcraft:0:0,sleight:0:0,smithing:0:0,commerce:0:0,persuasion:0:0,lore:0:0", snap.Skills);
+        Assert.Equal("blades:0:0,hafted:1:12,brawling:0:0,warding:0:0,ranged:0:0,hunting:0:0,cooking:0:0,survival:0:0,spellcraft:0:0,sleight:0:0,smithing:0:0,commerce:0:0,persuasion:0:0,lore:0:0,alchemy:0:0,athletics:0:0,stealth:0:0,larceny:0:0", snap.Skills);
 
         game.ApplyKey(' ');
         Assert.False(game.InSheetMenu);

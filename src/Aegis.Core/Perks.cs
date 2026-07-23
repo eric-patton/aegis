@@ -22,6 +22,11 @@ public enum PerkId
     CaughtArm, ShortPath,
     ShieldWall, FittedIron,
     PickedMoment, WaxedString,
+    RoomOnTheRack, SecondSteeping,
+    LongStride, KeptBreath,
+    DeeperHush, QuietHarness,
+    RichKist, RoadPrice,
+    SoftTouch, PatientWards,
 }
 
 /// <summary>
@@ -76,6 +81,41 @@ public static class PerkCatalog
                 "You stop watching the shaft and start watching the mark. The shaft takes the hint."),
             new(PerkId.LightDraw, "the light draw", "a loose asks 1 less wind",
                 "The draw finds the bow's own depth and stops there. The string does the rest."),
+        ]),
+        new(SkillId.Alchemy, 2,
+        [
+            new(PerkId.RoomOnTheRack, "room on the rack", "carry one more hale-draught",
+                "You learn which glass may safely touch. One more vial finds a sure place in the rack."),
+            new(PerkId.SecondSteeping, "the second steeping", "every second self-brew asks one fewer herb",
+                "The second pot answers the warmth left by the first. Every other steeping asks one sprig less."),
+        ]),
+        new(SkillId.Athletics, 2,
+        [
+            new(PerkId.LongStride, "the long stride", "rush three clear cells",
+                "The second stride stops being an ending. When the ground stays open, the third comes with it."),
+            new(PerkId.KeptBreath, "the kept breath", "rushes ask one less wind",
+                "You stop spending breath on the start. The ground still passes, and more wind stays yours."),
+        ]),
+        new(SkillId.Stealth, 2,
+        [
+            new(PerkId.DeeperHush, "the deeper hush", "soft tread cuts notice one cell further",
+                "You learn the half-step before silence. Eyes must come one stride nearer to find you."),
+            new(PerkId.QuietHarness, "the quiet harness", "worn metal adds no notice",
+                "Buckle answers buckle, ring rests against ring. The iron keeps its counsel while you do."),
+        ]),
+        new(SkillId.Larceny, 2,
+        [
+            new(PerkId.RichKist, "the rich kist", "clean burglary takes three more coin",
+                "You learn where a household keeps the purse behind the purse. A clean entry reaches it."),
+            new(PerkId.RoadPrice, "the road price", "fenced heirlooms pay two more coin",
+                "You know what silence is worth two valleys on. The cart begins paying the road's true price."),
+        ]),
+        new(SkillId.Sleight, 2,
+        [
+            new(PerkId.SoftTouch, "the soft touch", "pickpocketing gains ten points",
+                "A pocket need not know the hand was ever there. Your touch has learned how little touch is needed."),
+            new(PerkId.PatientWards, "the patient wards", "lockpicking gains ten points",
+                "Old iron speaks slowly. You stop hurrying its answer, and more locks give it."),
         ]),
         new(SkillId.Blades, 4,
         [
@@ -140,6 +180,16 @@ public static class PerkCatalog
         PerkId.FittedIron => "fitted_iron",
         PerkId.PickedMoment => "picked_moment",
         PerkId.WaxedString => "waxed_string",
+        PerkId.RoomOnTheRack => "room_on_the_rack",
+        PerkId.SecondSteeping => "second_steeping",
+        PerkId.LongStride => "long_stride",
+        PerkId.KeptBreath => "kept_breath",
+        PerkId.DeeperHush => "deeper_hush",
+        PerkId.QuietHarness => "quiet_harness",
+        PerkId.RichKist => "rich_kist",
+        PerkId.RoadPrice => "road_price",
+        PerkId.SoftTouch => "soft_touch",
+        PerkId.PatientWards => "patient_wards",
         _ => id.ToString().ToLowerInvariant(),
     };
 }

@@ -26,6 +26,7 @@ public enum Command
     Camp,
     Help,
     Quit,
+    RushN, RushS, RushW, RushE, RushNW, RushNE, RushSW, RushSE,
 }
 
 public static class CommandMap
@@ -41,6 +42,14 @@ public static class CommandMap
         'u' => Command.MoveNE,
         'b' => Command.MoveSW,
         'n' => Command.MoveSE,
+        'H' => Command.RushW,
+        'J' => Command.RushS,
+        'K' => Command.RushN,
+        'L' => Command.RushE,
+        'Y' => Command.RushNW,
+        'U' => Command.RushNE,
+        'B' => Command.RushSW,
+        'N' => Command.RushSE,
         '.' => Command.Wait,
         '>' => Command.Enter,
         '<' => Command.Exit,
@@ -76,6 +85,18 @@ public static class CommandMap
         Command.MoveNE => (1, -1),
         Command.MoveSW => (-1, 1),
         Command.MoveSE => (1, 1),
+        Command.RushN => (0, -1),
+        Command.RushS => (0, 1),
+        Command.RushW => (-1, 0),
+        Command.RushE => (1, 0),
+        Command.RushNW => (-1, -1),
+        Command.RushNE => (1, -1),
+        Command.RushSW => (-1, 1),
+        Command.RushSE => (1, 1),
         _ => null,
     };
+
+    public static bool IsRush(Command cmd) => cmd is
+        Command.RushN or Command.RushS or Command.RushW or Command.RushE
+        or Command.RushNW or Command.RushNE or Command.RushSW or Command.RushSE;
 }

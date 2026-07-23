@@ -479,15 +479,13 @@ public static class Presenter
     {
         var p = game.Player;
         var choice = game.PendingKnack;
-        const int boxW = 54;
-        // Every skill gets its own row (a D-091 mending: the Taught and Legend
-        // rows used to overwrite the newest skills), then Taught, then Legend.
-        // The layout is dense on purpose (D-140), denser for the 13th skill
-        // (D-142), and re-laid for the 14th (D-148): the attributes fold onto
-        // one abbreviated row, buying two, so fourteen skills and a deep
-        // question fit the 24-row frame exactly. The next skill after this
-        // one starts pairing skills into columns; there is nothing left to fold.
-        int boxH = choice is null ? 6 + SkillSet.Count : 7 + SkillSet.Count + choice.Options.Length;
+        const int boxW = 78;
+        const int skillRows = SkillSet.Count / 2;
+        const int columnWidth = 38;
+        // D-162 pairs the end-appended eighteen-skill ledger into two stable
+        // enum-order columns. Nine rows leave the taught and Legend ledgers,
+        // plus a pending question, readable at the 80x24 baseline.
+        int boxH = choice is null ? 16 : 17 + choice.Options.Length;
         int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
         int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
 
@@ -517,15 +515,18 @@ public static class Presenter
                 .Select(o => o.Name.StartsWith("the ") ? o.Name[4..] : o.Name).ToList();
             string row = $"{SkillSet.NameOf(skill),-9}{level,2}  {p.Skills.Uses(skill)}/{SkillSet.UsesForLevel(level + 1)}";
             if (knacks.Count > 0) row += $"  {string.Join(", ", knacks)}";
-            frame.Write(x0 + 2, y0 + 3 + i, row, level > 0 ? Hue.White : Hue.Gray);
+            int column = i / skillRows;
+            int rowIndex = i % skillRows;
+            frame.Write(x0 + 2 + column * columnWidth, y0 + 3 + rowIndex,
+                row, level > 0 ? Hue.White : Hue.Gray);
         }
 
         // The lessons row (D-052): the fourth ledger, what other hands put in.
-        frame.Write(x0 + 2, y0 + 3 + SkillSet.Count,
+        frame.Write(x0 + 2, y0 + 3 + skillRows,
             $"Taught   {(p.Lessons.Count > 0 ? string.Join(", ", p.Lessons.Select(l => LessonCatalog.Def(l).Short)) : "-")}",
             p.Lessons.Count > 0 ? Hue.White : Hue.Gray);
 
-        frame.Write(x0 + 2, y0 + 4 + SkillSet.Count,
+        frame.Write(x0 + 2, y0 + 4 + skillRows,
             game.Standing > 0
                 ? $"Legend {p.Legend,4}   {LegendStanding.TitleOf(game.Standing)}"
                 : $"Legend {p.Legend,4}",
@@ -533,12 +534,12 @@ public static class Presenter
 
         if (choice is not null)
         {
-            frame.Write(x0 + 2, y0 + 5 + SkillSet.Count,
+            frame.Write(x0 + 2, y0 + 5 + skillRows,
                 choice.Level >= 4
                     ? $"{SkillSet.NameOf(choice.Skill)} has deepened into a second question:"
                     : $"{SkillSet.NameOf(choice.Skill)} has settled into a question:", Hue.Cyan);
             for (int i = 0; i < choice.Options.Length; i++)
-                frame.Write(x0 + 2, y0 + 6 + SkillSet.Count + i,
+                frame.Write(x0 + 2, y0 + 6 + skillRows + i,
                     $"{i + 1}) {choice.Options[i].Name}: {choice.Options[i].Blurb}", Hue.White);
             frame.Write(x0 + 2, y0 + boxH - 1,
                 $" 1-{choice.Options.Length} choose, for good; any other key closes ", Hue.DarkGray);
@@ -858,6 +859,8 @@ public static class Presenter
         // The footing (D-094): named only when it leaves the measured default.
         if (p.Stance != Stance.Measured)
             Line($"Stance  {(p.Stance == Stance.Pressing ? "pressing" : "guarded")}", Hue.DarkYellow);
+        if (game.SoftTread)
+            Line("Soft tread", Hue.DarkCyan);
         // The bearer's own second bar (D-126): shown only while worn or open.
         if (p.StaggerTurns > 0)
             Line($"GUARD OPEN ({p.StaggerTurns})", Hue.Red);

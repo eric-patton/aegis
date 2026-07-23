@@ -64,6 +64,8 @@ public class BarrowTests
         game.Debug_SetPlayerPos(barrow.OverworldPos);
         game.Apply(Command.Enter);
         Assert.Equal(MapMode.Site, game.Mode);
+        foreach (var wight in game.Monsters.Where(m => m.Kind == MonsterKind.Wight && m.Alive))
+            wight.Aware = true;
 
         List<Pos> WightPositions() =>
             game.Monsters.Where(m => m.Kind == MonsterKind.Wight && m.Alive).Select(m => m.Pos).ToList();

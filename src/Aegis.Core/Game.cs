@@ -551,6 +551,32 @@ public sealed class Game
     private bool _formalPendingResolution;
     private bool _formalPlayerYielded;
 
+    /// <summary>
+    /// The bearer's quiet mode (D-162). It exists only inside a hostile local
+    /// site before discovery, and is canceled by every boundary named in the
+    /// contract rather than carried as a general stance.
+    /// </summary>
+    public bool SoftTread { get; private set; }
+
+    /// <summary>Run-wide activity diagnostics rebuilt by journal replay.</summary>
+    public int RushesCompleted { get; private set; }
+    public int QuietBandsCrossed { get; private set; }
+    public int SoftTreadDiscoveries { get; private set; }
+    public int CleanPilfers { get; private set; }
+    public int CleanBurglaries { get; private set; }
+    public int FencedLots { get; private set; }
+    public int FencedGoods { get; private set; }
+    public int LockAttempts { get; private set; }
+    public int PickpocketAttempts { get; private set; }
+    public int BurglaryAttempts { get; private set; }
+    public int RestitutionsMade { get; private set; }
+    public int LastSelfBrewCycle { get; private set; }
+    public int LastLiveRushCycle { get; private set; }
+    public int LastQuietBandCycle { get; private set; }
+
+    /// <summary>One Stealth use per foe per generated site, even across a death.</summary>
+    private readonly HashSet<Monster> _quietTraining = [];
+
     /// <summary>Test hook: marks go into the warden's book without staging a caught hand.</summary>
     public void Debug_RaiseTownBook(int marks) => RaiseTownBook(marks);
 
@@ -1000,6 +1026,9 @@ public sealed class Game
                     SiteId = site.Id,
                     Dormant = spawn.Kind is MonsterKind.Graven or MonsterKind.Warder
                         || World.Twist == WorldTwist.GraveMarket && spawn.Kind == MonsterKind.Wight,
+                    // Harts are game rather than hostile foes. Their existing
+                    // grazing and flight remain live without a notice phase.
+                    Aware = spawn.Kind == MonsterKind.Hart,
                 });
     }
 
@@ -1187,6 +1216,7 @@ public sealed class Game
                 break;
             case PastId.HedgeHealer:
                 Player.Herb += 3;
+                if (!Player.HasLesson(LessonId.Stillcraft)) Player.Lessons.Add(LessonId.Stillcraft);
                 // The healer read the herbals somewhere (D-148): lettered from
                 // the start, so the herb lane's book pays the moment it is bought.
                 BankSkill(SkillId.Lore);
@@ -1202,7 +1232,7 @@ public sealed class Game
             case PastId.Oathbreaker:
                 // Twice-skilled, once-stained: the second craft is paid for in
                 // a name the stead already half-knows (D-086's ledger).
-                BankSkill(SkillId.Hunting);
+                BankSkill(SkillId.Larceny);
                 _factionInfamy[FactionId.Stead] = Shame + 1;
                 break;
         }
@@ -1540,7 +1570,10 @@ public sealed class Game
             Command.Order => DoOrder(),
             Command.Camp => DoCamp(),
             Command.Help => DoWeatherHelp(),
-            _ => CommandMap.Delta(cmd) is { } d && DoMove(d.dx, d.dy),
+            _ => CommandMap.Delta(cmd) is { } d
+                && (CommandMap.IsRush(cmd) ? DoRush(d.dx, d.dy)
+                    : SoftTread ? DoQuietMove(d.dx, d.dy)
+                    : DoMove(d.dx, d.dy)),
         };
 
         if (tookTime) AdvanceTurn();
@@ -1553,6 +1586,139 @@ public sealed class Game
         Log.Add(Turn, "Lowland steps always recover. Roofs and Held Road waystones shelter camps; the great pelt answers the fells' extra Cold.", LogTone.Info);
         Log.Add(Turn, "The sidebar's > mark is the next coarse tick's forecast. Waiting still advances every world clock.", LogTone.Info);
         return false;
+    }
+
+    private bool IsHostile(Monster monster) =>
+        monster.Kind != MonsterKind.Hart
+        && !(monster.Kind == MonsterKind.Wight && GraveTruceStands);
+
+    private bool HostileSite =>
+        Mode == MapMode.Site && LiveMonstersHere.Any(m => IsHostile(m));
+
+    private bool OpenEngagement =>
+        HostileSite && LiveMonstersHere.Any(m => IsHostile(m) && m.Aware && !m.Dormant);
+
+    private bool ToggleSoftTread()
+    {
+        if (!HostileSite)
+        {
+            Log.Add(Turn, "There is no hostile ground here to cross softly.");
+            return false;
+        }
+        if (OpenEngagement)
+        {
+            Log.Add(Turn, "The ground is already awake to you. Soft tread begins before the first open answer, not after.");
+            return false;
+        }
+
+        SoftTread = !SoftTread;
+        Log.Add(Turn, SoftTread
+            ? "You settle into soft tread. Each quiet step will spend the first turn setting the foot before it moves."
+            : "You let the careful measure go and walk at the road's pace.", LogTone.Info);
+        return false;
+    }
+
+    /// <summary>
+    /// The rush (D-162): uppercase feet cross two clear local cells in one
+    /// turn, or three under the long stride. Every cell is validated before
+    /// wind or time moves, so a refusal can never become a partial rush.
+    /// </summary>
+    private bool DoRush(int dx, int dy)
+    {
+        if (Mode != MapMode.Site) return DoMove(dx, dy);
+
+        int distance = Player.HasPerk(PerkId.LongStride) ? 3 : 2;
+        int cost = Math.Max(2, 4 - Player.Skills.Bonus(SkillId.Athletics));
+        if (Player.HasPerk(PerkId.KeptBreath)) cost = Math.Max(1, cost - 1);
+        if (Player.Stamina < cost)
+        {
+            Log.Add(Turn, $"The rush asks {cost} wind and you hold {Player.Stamina}. You stay where you are.");
+            return false;
+        }
+
+        var cells = Enumerable.Range(1, distance)
+            .Select(step => Player.Pos.Plus(dx * step, dy * step)).ToList();
+        if (cells.Any(cell => !CurrentMap.Walkable(cell)
+                || LiveMonstersHere.Any(m => m.Pos == cell)
+                || NpcsHere.Any(n => n.Pos == cell)
+                || FellowAt(cell)
+                || RushCellNotable(cell)))
+        {
+            Log.Add(Turn, "The rush needs every stride clear. Something in the line asks for an ordinary step.");
+            return false;
+        }
+
+        bool trained = OpenEngagement;
+        SoftTread = false;
+        Player.Stamina -= cost;
+        Player.Pos = cells[^1];
+        StepRegen();
+        DescribeTileIfNotable(Player.Pos);
+        RushesCompleted++;
+        Log.Add(Turn, $"You spend {cost} wind and take {distance} clear strides in one rush.", LogTone.Combat);
+        if (trained)
+        {
+            LastLiveRushCycle = Cycle;
+            GainSkill(SkillId.Athletics);
+        }
+        return true;
+    }
+
+    private bool RushCellNotable(Pos cell)
+    {
+        if (Remnant is { } rem && rem.MapId == CurrentMapId && rem.Pos == cell) return true;
+        if (CurrentSite is { } site)
+        {
+            if (!site.ChestLooted && site.ChestPos == cell) return true;
+            if (!site.StoneRead && site.StonePos == cell) return true;
+            if (!site.CofferOpened && site.CofferPos == cell) return true;
+        }
+        return CurrentMap[cell] is not (Terrain.Floor or Terrain.Grass or Terrain.Forest
+            or Terrain.Hills or Terrain.Heath);
+    }
+
+    /// <summary>
+    /// A quiet step (D-162) spends one honest turn at the current cell before
+    /// the ordinary moving turn. Detection on the setting turn cancels the
+    /// move. A completed crossing may teach once from each foe whose ordinary
+    /// notice band was crossed without waking it.
+    /// </summary>
+    private bool DoQuietMove(int dx, int dy)
+    {
+        if (!HostileSite)
+        {
+            SoftTread = false;
+            return DoMove(dx, dy);
+        }
+
+        var target = Player.Pos.Plus(dx, dy);
+        if (!CurrentMap.Walkable(target)
+            || LiveMonstersHere.Any(m => m.Pos == target)
+            || NpcsHere.Any(n => n.Pos == target)
+            || FellowAt(target))
+        {
+            return DoMove(dx, dy);
+        }
+
+        var from = Player.Pos;
+        AdvanceTurn();
+        if (!SoftTread || Mode != MapMode.Site || Player.Pos != from) return false;
+
+        if (!DoMove(dx, dy)) return false;
+
+        foreach (var foe in LiveMonstersHere.Where(m => IsHostile(m) && !m.Aware && !_quietTraining.Contains(m)))
+        {
+            int ordinary = NoticeDistance(foe);
+            if (from.Chebyshev(foe.Pos) <= ordinary || Player.Pos.Chebyshev(foe.Pos) > ordinary)
+                continue;
+            if (!CurrentMap.LineOfSight(foe.Pos, Player.Pos)) continue;
+            if (CanNotice(foe, Player.Pos, quiet: true)) continue;
+            _quietTraining.Add(foe);
+            QuietBandsCrossed++;
+            LastQuietBandCycle = Cycle;
+            GainSkill(SkillId.Stealth);
+        }
+        return true;
     }
 
     private bool DoMove(int dx, int dy)
@@ -2243,6 +2409,8 @@ public sealed class Game
     /// </summary>
     private void CrossToNextWorld(IReadOnlyList<OathId> oaths)
     {
+        SoftTread = false;
+        _quietTraining.Clear();
         string prevWorld = World.Name;
         string prevSettlement = World.SettlementName;
         // The far side of a sworn crossing (D-047): the burden carried through
@@ -2570,6 +2738,8 @@ public sealed class Game
     {
         if (Mode == MapMode.Site && CurrentSite!.Map[Player.Pos] == Terrain.ExitLadder)
         {
+            SoftTread = false;
+            _quietTraining.Clear();
             bool leftTheCamp = CurrentSite.Kind == SiteKind.GoblinCamp;
             bool leftTheTown = CurrentSite.Kind == SiteKind.Town;
             Mode = MapMode.Overworld;
@@ -2606,6 +2776,7 @@ public sealed class Game
             "Blood or unbought grave-goods closed both books of the Grave Market. Every remaining wight woke to the old account.");
         foreach (var wight in Monsters.Where(m => m.Alive && m.Kind == MonsterKind.Wight))
         {
+            wight.Aware = true;
             wight.Dormant = false;
             wight.Intent = null;
         }
@@ -2614,6 +2785,8 @@ public sealed class Game
 
     private void BreakGraveTruce(Monster target)
     {
+        SoftTread = false;
+        target.Aware = true;
         if (target.Kind == MonsterKind.Wight) BreakGraveTruce();
     }
 
@@ -2904,7 +3077,9 @@ public sealed class Game
         }
 
         site.CofferTried = true;
-        if (_combatRng.Chance(Locks.ChanceFor(Player.Skills.Level(SkillId.Sleight))))
+        LockAttempts++;
+        double knack = Player.HasPerk(PerkId.PatientWards) ? 0.10 : 0;
+        if (_combatRng.Chance(Locks.ChanceFor(Player.Skills.Level(SkillId.Sleight), knack)))
         {
             site.CofferOpened = true;
             int coin = _combatRng.Range(Locks.TakeMin, Locks.TakeMaxExclusive);
@@ -2944,6 +3119,8 @@ public sealed class Game
 
         World.PilferedHouses.Add(house);
         Player.Rations++;
+        CleanPilfers++;
+        GainSkill(SkillId.Larceny);
         Log.Add(Turn, $"The latch lifts under your thumb. A loaf and a heel of cheese, wrapped rough, and out again before the fire notices. ({Player.Rations} carried)", LogTone.Reward);
         // The small thing off the mantel (D-124): the take the stead would know
         // on sight, which is why no one in it will ever buy the thing back.
@@ -3013,7 +3190,9 @@ public sealed class Game
         }
 
         World.LiftedNpcs.Add(mark.Id);
-        if (_combatRng.Chance(Lifting.ChanceFor(Player.Skills.Level(SkillId.Sleight))))
+        PickpocketAttempts++;
+        double knack = Player.HasPerk(PerkId.SoftTouch) ? 0.10 : 0;
+        if (_combatRng.Chance(Lifting.ChanceFor(Player.Skills.Level(SkillId.Sleight), knack)))
         {
             int take = _combatRng.Range(Lifting.TakeMin, Lifting.TakeMaxExclusive);
             Player.Coin += take;
@@ -3069,6 +3248,7 @@ public sealed class Game
 
         Player.Coin -= SteadShame.RepayCoin;
         World.RepaidLifts.Add(mark.Id);
+        RestitutionsMade++;
         Log.Add(Turn, $"You put {SteadShame.RepayCoin} coin into {mark.Name}'s hand and name what it is for. They count it, twice, and nod once.", LogTone.Reward);
         // A town mark's wrong is made right in the hand like anywhere (D-142),
         // but the mark in the WARDEN'S book is the moot's to rule through, not
@@ -3093,6 +3273,9 @@ public sealed class Game
     /// </summary>
     private bool DoBurgle()
     {
+        if (Mode == MapMode.Site && CurrentSite?.Kind != SiteKind.Town && HostileSite)
+            return ToggleSoftTread();
+
         if (Mode != MapMode.Overworld)
         {
             Log.Add(Turn, "No door down here has a hearth behind it. What the deep places keep, they keep openly.");
@@ -3136,18 +3319,21 @@ public sealed class Game
         }
 
         World.BurgledHouses.Add(house.Value);
-        if (_combatRng.Chance(Burglary.ChanceFor(Player.Skills.Level(SkillId.Sleight))))
+        BurglaryAttempts++;
+        if (_combatRng.Chance(Burglary.ChanceFor(Player.Skills.Level(SkillId.Larceny))))
         {
-            int take = _combatRng.Range(Burglary.TakeMin, Burglary.TakeMaxExclusive);
+            int take = _combatRng.Range(Burglary.TakeMin, Burglary.TakeMaxExclusive)
+                + (Player.HasPerk(PerkId.RichKist) ? 3 : 0);
             Player.Coin += take;
             Player.Trinket++;
+            CleanBurglaries++;
             Log.Add(Turn, "The latch gives to a light hand, and the dark inside is a room like any room: a banked fire, slow breathing from the loft, and a kist against the wall.", LogTone.Reward);
             Log.Add(Turn, $"The kist gives up {take} coin, and an heirloom comes off the shelf beside it: the kind a stead knows on sight, and a road-cart never asks about. ({Player.Coin} coin, {Player.Trinket} with a past)", LogTone.Reward);
             Log.Add(Turn, "Out, and the lane is empty. The house will know it was entered; it will never know by whom.", LogTone.Info);
             if (!World.Facts.Exists("secret", "burgled_house"))
                 World.Facts.Add("secret", "burgled_house", World.SettlementName,
                     $"A house in {World.SettlementName} was entered in the dark and lightened, and no one knows whose foot crossed the sill.");
-            GainSkill(SkillId.Sleight);
+            GainSkill(SkillId.Larceny);
         }
         else
         {
@@ -3179,6 +3365,7 @@ public sealed class Game
 
         Player.Coin -= SteadShame.BreakInRepayCoin;
         World.RepaidBurglaries.Add(house);
+        RestitutionsMade++;
         Log.Add(Turn, $"You stand at the door you crossed and put {SteadShame.BreakInRepayCoin} coin into the hands that live behind it, naming what it is for. The silence after is long, but the door does not close on you.", LogTone.Reward);
         LowerShame(2);
         return true;
@@ -3200,6 +3387,7 @@ public sealed class Game
 
         Player.Coin -= SteadShame.RepayCoin;
         World.RepaidHouses.Add(house);
+        RestitutionsMade++;
         Log.Add(Turn, $"You leave {SteadShame.RepayCoin} coin on the sill, weighted under a stone: the loaf, and the trust, both paid for.", LogTone.Reward);
         LowerShame(1);
         return true;
@@ -4166,11 +4354,11 @@ public sealed class Game
     /// <summary>The fence's entry (D-124): what the pack holds with a past, at the cart's uncurious rate.</summary>
     private string FenceLabel()
     {
-        int trinkets = Player.Trinket * Peddling.TrinketPrice;
+        int trinkets = Player.Trinket * FenceHeirloomPrice;
         int protectedHides = Player.ProtectedHide * WorldTwistCatalog.ProtectedHideFencePrice;
         int total = trinkets + protectedHides;
         if (Player.ProtectedHide == 0 && Player.Trinket > 0)
-            return $"Sell what has a past ({Player.Trinket} at {Peddling.TrinketPrice}c, {trinkets} coin)";
+            return $"Sell what has a past ({Player.Trinket} at {FenceHeirloomPrice}c, {trinkets} coin)";
         if (Player.Trinket == 0 && Player.ProtectedHide > 0)
             return $"Fence protected hides ({Player.ProtectedHide} at {WorldTwistCatalog.ProtectedHideFencePrice}c, {protectedHides} coin)";
         return total > 0
@@ -5764,10 +5952,13 @@ public sealed class Game
 
         int sold = Player.Trinket;
         int hidden = Player.ProtectedHide;
-        int paid = sold * Peddling.TrinketPrice + hidden * WorldTwistCatalog.ProtectedHideFencePrice;
+        int paid = sold * FenceHeirloomPrice + hidden * WorldTwistCatalog.ProtectedHideFencePrice;
         Player.Trinket = 0;
         Player.ProtectedHide = 0;
         Player.Coin += paid;
+        FencedLots++;
+        FencedGoods += sold + hidden;
+        GainSkill(SkillId.Larceny);
         Log.Add(Turn, $"You set {sold} small thing{(sold == 1 ? "" : "s")} and {hidden} protected hide{(hidden == 1 ? "" : "s")} on the cart's board. {TalkNpc!.Name} turns the lot once in the light, asks nothing, and counts out {paid} coin. ({Player.Coin} now)", LogTone.Reward);
         Log.Add(Turn, "\"And now they are merely things. Whatever they were is between you and a mantel somewhere, and I was never part of it.\"");
         if (sold > 0 && !World.Facts.Exists("secret", "fenced_goods"))
@@ -5779,6 +5970,10 @@ public sealed class Game
         _offers.Clear();
         _offers.AddRange(BuildOffers(TalkNpc!)); // the fence's label counts the pack
     }
+
+    public int FenceHeirloomPrice => Peddling.TrinketPrice
+        + Player.Skills.Bonus(SkillId.Larceny)
+        + (Player.HasPerk(PerkId.RoadPrice) ? 2 : 0);
 
     /// <summary>
     /// A sack off the cart (D-144): the caravan leg's buy end. One sack a
@@ -6636,14 +6831,24 @@ public sealed class Game
         return true;
     }
 
-    /// <summary>Most vials the satchel keeps whole on the road (D-090); one more while the stillroom's wing racks it (D-135).</summary>
-    public int DraughtCap => 2 + (StillwingStands ? SteadFacilities.StillwingRack : 0);
+    /// <summary>Most vials the satchel keeps whole on the road (D-090, D-135, D-162).</summary>
+    public int DraughtCap => 2
+        + (StillwingStands ? SteadFacilities.StillwingRack : 0)
+        + (Player.HasPerk(PerkId.RoomOnTheRack) ? 1 : 0);
 
     /// <summary>Sprigs one hale-draught steeps from (D-090): the herb lane's first sink.</summary>
     public const int DraughtHerbs = 3;
 
     /// <summary>What a steeping truly asks (D-148): the wort-cunning's keep is one sprig back per vial.</summary>
     public int DraughtNeed => Player.HasLesson(LessonId.WortCunning) ? DraughtHerbs - 1 : DraughtHerbs;
+
+    /// <summary>
+    /// What the bearer's own next batch asks (D-162). The second steeping
+    /// saves one sprig on alternating successful batches, never below one.
+    /// The herbwife's hands do not inherit this thrift.
+    /// </summary>
+    public int SelfBrewNeed => Math.Max(1, DraughtNeed
+        - (Player.HasPerk(PerkId.SecondSteeping) && Player.SelfBrews % 2 == 1 ? 1 : 0));
 
     /// <summary>What a draught gives back: two meals' worth of blood, and a deep cut at the wound's weight.</summary>
     public const int DraughtHeal = 12;
@@ -7336,10 +7541,17 @@ public sealed class Game
     private void SteepAtRest(string where = "While the shrine hums")
     {
         if (!Player.HasLesson(LessonId.Stillcraft)
-            || Player.Draughts >= DraughtCap || Player.Herb < DraughtNeed) return;
-        Player.Herb -= DraughtNeed;
-        Player.Draughts++;
-        Log.Add(Turn, $"{where} you steep the simples as she showed you: bruised, slow, patient. A draught of your own goes stoppered into the pack. ({Player.Draughts} vial{(Player.Draughts == 1 ? "" : "s")} carried)", LogTone.Reward);
+            || Player.Draughts >= DraughtCap || Player.Herb < SelfBrewNeed) return;
+        int made = Math.Min(1 + Player.Skills.Bonus(SkillId.Alchemy), DraughtCap - Player.Draughts);
+        Player.Herb -= SelfBrewNeed;
+        Player.Draughts += made;
+        Player.SelfBrews++;
+        LastSelfBrewCycle = Cycle;
+        GainSkill(SkillId.Alchemy);
+        string batch = made == 1
+            ? "A draught of your own goes stoppered into the pack."
+            : $"{made} draughts of your own go stoppered into the pack.";
+        Log.Add(Turn, $"{where} you steep the simples as she showed you: bruised, slow, patient. {batch} ({Player.Draughts} vial{(Player.Draughts == 1 ? "" : "s")} carried)", LogTone.Reward);
     }
 
     /// <summary>
@@ -7402,6 +7614,8 @@ public sealed class Game
 
     private bool AttackMonster(Monster target)
     {
+        SoftTread = false;
+        target.Aware = true;
         // The beaten-open guard (D-126): the arms refuse, turn-free. The feet
         // still work, and the feet are the answer.
         if (Player.StaggerTurns > 0)
@@ -7777,6 +7991,7 @@ public sealed class Game
         InAim = false;
         if (CommandMap.Delta(CommandMap.FromKey(key)) is { } d)
         {
+            SoftTread = false;
             LooseShaft(d.dx, d.dy);
             AdvanceTurn();
         }
@@ -7837,6 +8052,7 @@ public sealed class Game
         InThrust = false;
         if (CommandMap.Delta(CommandMap.FromKey(key)) is { } d)
         {
+            SoftTread = false;
             ThrustSpear(d.dx, d.dy);
             AdvanceTurn();
         }
@@ -7898,6 +8114,7 @@ public sealed class Game
             if (target.Kind is MonsterKind.Carl or MonsterKind.Warder
                 && target.Intent is null && target.ExposedTurns == 0 && !target.BoardBroken)
             {
+                target.Aware = true;
                 Log.Add(Turn, "The point drives into the linden board and is turned along the grain.", LogTone.Combat);
                 if (target.Dormant) RouseLeaguer(target);
                 return;
@@ -8018,6 +8235,7 @@ public sealed class Game
     /// </summary>
     private void CommitHeave(int dx, int dy)
     {
+        SoftTread = false;
         Player.Stamina -= HeaveCost;
         Player.HeaveTarget = Player.Pos.Plus(dx, dy);
         Log.Add(Turn, $"You wind the {Player.Weapon!.Name} up and back, all your weight gathering behind it. Everything here can see it come.", LogTone.Combat);
@@ -8210,6 +8428,7 @@ public sealed class Game
         _pendingLineSpell = null;
         if (CommandMap.Delta(CommandMap.FromKey(key)) is { } d)
         {
+            SoftTread = false;
             if (spell == SpellId.Spark) CastSpark(d.dx, d.dy);
             else CommitLevin(d.dx, d.dy);
             AdvanceTurn();
@@ -8507,6 +8726,7 @@ public sealed class Game
             if (target.Kind is MonsterKind.Carl or MonsterKind.Warder
                 && target.Intent is null && target.ExposedTurns == 0 && !target.BoardBroken)
             {
+                target.Aware = true;
                 Log.Add(Turn, "The shaft thuds into the linden board and stands there, quivering.", LogTone.Combat);
                 if (target.Dormant) RouseLeaguer(target);
                 return;
@@ -8574,6 +8794,10 @@ public sealed class Game
             SkillId.Sleight => $"Your fingers have learned the weight of a purse without asking the eyes. (Sleight rises to {after})",
             SkillId.Smithing => $"The file stops skating and starts cutting; the iron answers your hands now. (Smithing rises to {after})",
             SkillId.Persuasion => $"You are learning what a moot wants to hear: the thing itself, weighed plainly, and not one word more. (Persuasion rises to {after})",
+            SkillId.Alchemy => $"The simples answer your hands more generously now. (Alchemy rises to {after})",
+            SkillId.Athletics => $"Your breath and stride have found a longer measure. (Athletics rises to {after})",
+            SkillId.Stealth => $"Your foot learns the ground before your weight reaches it. (Stealth rises to {after})",
+            SkillId.Larceny => $"You read the crooked trade more cleanly now. (Larceny rises to {after})",
             _ => $"Your craft deepens. ({SkillSet.NameOf(id)} rises to {after})",
         }, LogTone.Reward);
 
@@ -9852,6 +10076,55 @@ public sealed class Game
         _storylets.TryFire(this, StoryletTrigger.DeedWritten);
     }
 
+    /// <summary>
+    /// The established distance at which each kind begins its current behavior.
+    /// Awareness reads that same edge, so D-162 adds no second hidden range.
+    /// </summary>
+    private static int NoticeDistance(Monster monster) => monster.Kind switch
+    {
+        MonsterKind.Goblin or MonsterKind.Wight or MonsterKind.Severed => 8,
+        MonsterKind.Graven => 9,
+        MonsterKind.Hound or MonsterKind.Carl or MonsterKind.Warder or MonsterKind.Thegn => 10,
+        MonsterKind.Boar or MonsterKind.Wolf or MonsterKind.GreatWolf => 12,
+        MonsterKind.Hart => HartFleeRange,
+        _ => 8,
+    };
+
+    private int QuietNoticeDistance(Monster monster)
+    {
+        int grace = Player.AimBonus;
+        int skill = Player.Skills.Bonus(SkillId.Stealth);
+        int deeperHush = Player.HasPerk(PerkId.DeeperHush) ? 1 : 0;
+        int armorNoise = Player.Armor?.TarnTemperable == true
+            && !Player.HasPerk(PerkId.QuietHarness) ? 1 : 0;
+        return Math.Max(1, NoticeDistance(monster) - 2 - grace - skill - deeperHush + armorNoise);
+    }
+
+    private bool CanNotice(Monster monster, Pos bearer, bool quiet)
+    {
+        if (!IsHostile(monster)) return false;
+        int range = quiet ? QuietNoticeDistance(monster) : NoticeDistance(monster);
+        return monster.Pos.Chebyshev(bearer) <= range
+            && CurrentMap.LineOfSight(monster.Pos, bearer);
+    }
+
+    private void CheckAwareness()
+    {
+        foreach (var monster in LiveMonstersHere.Where(m => IsHostile(m) && !m.Aware).ToList())
+        {
+            bool underSoftTread = SoftTread;
+            if (!CanNotice(monster, Player.Pos, underSoftTread)) continue;
+
+            monster.Aware = true;
+            if (underSoftTread)
+            {
+                SoftTread = false;
+                SoftTreadDiscoveries++;
+                Log.Add(Turn, $"The {monster.Name} finds your careful step. The quiet measure is broken.", LogTone.Danger);
+            }
+        }
+    }
+
     private void AdvanceTurn()
     {
         Turn++;
@@ -9969,6 +10242,8 @@ public sealed class Game
         }
 
         if (Mode == MapMode.Site)
+        {
+            CheckAwareness();
             foreach (var monster in Monsters.Where(m => m.Alive && m.SiteId == CurrentSite!.Id))
             {
                 // The death remembers its shape (D-098): the wind-up is caught
@@ -9983,6 +10258,7 @@ public sealed class Game
                     _deathHand = monster;
                 }
             }
+        }
 
         if (_formalBout is not null && Player.Hp <= 0)
         {
@@ -10037,7 +10313,7 @@ public sealed class Game
         // Quiet ground settles the guard (D-126): the second bar is fight
         // pressure, not a wound. Out from under the blows it regathers whole,
         // the mirror of a foe's bar dying with the foe.
-        if (Player.PostureDmg > 0 && !LiveMonstersHere.Any(m => !m.Dormant))
+        if (Player.PostureDmg > 0 && !LiveMonstersHere.Any(m => m.Aware && !m.Dormant))
         {
             Player.PostureDmg = 0;
             Log.Add(Turn, "Out from under the blows, your guard settles whole.", LogTone.Info);
@@ -10056,6 +10332,7 @@ public sealed class Game
         // The Grave Market's truce (D-152): wights remain bodies on the map,
         // but neither wind up nor pursue until one shared account is broken.
         if (monster.Kind == MonsterKind.Wight && GraveTruceStands) return;
+        if (!monster.Aware) return;
 
         // The guard regathered (D-125): a stagger walked off un-riposted is a
         // door closed. The body next acts whole.
@@ -10385,7 +10662,10 @@ public sealed class Game
         Log.Add(Turn, "The screech goes through the camp like a thrown knife: every ear in it now knows exactly where you stand.", LogTone.Danger);
         foreach (var packmate in Monsters.Where(m => m.Alive && m != crier
             && m.Kind == MonsterKind.Goblin && m.SiteId == crier.SiteId && m.Intent is null).ToList())
+        {
+            packmate.Aware = true;
             StepToward(packmate);
+        }
     }
 
     /// <summary>
@@ -10405,7 +10685,7 @@ public sealed class Game
 
         if (Mode == MapMode.Site)
         {
-            var foe = Monsters.Where(m => m.Alive && !m.Dormant && m.SiteId == CurrentSite!.Id
+            var foe = Monsters.Where(m => m.Alive && m.Aware && !m.Dormant && m.SiteId == CurrentSite!.Id
                     && m.Kind is not MonsterKind.Severed and not MonsterKind.Hart
                     && !(m.Kind == MonsterKind.Wight && GraveTruceStands)
                     && m.Pos.Chebyshev(guest.Pos) == 1)
@@ -11079,7 +11359,10 @@ public sealed class Game
     {
         if (!sighted.Dormant) return;
         foreach (var m in Monsters.Where(m => m.Alive && m.SiteId == sighted.SiteId && m.Kind == MonsterKind.Warder))
+        {
+            m.Aware = true;
             m.Dormant = false;
+        }
         Log.Add(Turn, "A horn sounds low across the water, cracked with age, and every board on the banks comes up as one.", LogTone.Danger);
     }
 
@@ -11291,6 +11574,8 @@ public sealed class Game
 
     private void HandleDeath()
     {
+        SoftTread = false;
+        _quietTraining.Clear();
         Player.Deaths++;
         InShrineMenu = false;
         InTalkMenu = false;
@@ -11573,6 +11858,24 @@ public sealed class Game
         ListsChampion: ListsChampion,
         JudicialChallengeUsed: JudicialChallengeUsed,
         FormalBout: FormalBout?.ToString().ToLowerInvariant() ?? "",
+        SoftTread: SoftTread,
+        AwareFoes: Mode == MapMode.Site ? LiveMonstersHere.Count(m => IsHostile(m) && m.Aware) : 0,
+        UnawareFoes: Mode == MapMode.Site ? LiveMonstersHere.Count(m => IsHostile(m) && !m.Aware) : 0,
+        SelfBrews: Player.SelfBrews,
+        RushesCompleted: RushesCompleted,
+        QuietBandsCrossed: QuietBandsCrossed,
+        SoftTreadDiscoveries: SoftTreadDiscoveries,
+        CleanPilfers: CleanPilfers,
+        CleanBurglaries: CleanBurglaries,
+        FencedLots: FencedLots,
+        FencedGoods: FencedGoods,
+        LockAttempts: LockAttempts,
+        PickpocketAttempts: PickpocketAttempts,
+        BurglaryAttempts: BurglaryAttempts,
+        RestitutionsMade: RestitutionsMade,
+        LastSelfBrewCycle: LastSelfBrewCycle,
+        LastLiveRushCycle: LastLiveRushCycle,
+        LastQuietBandCycle: LastQuietBandCycle,
         Essence: Player.Essence,
         Legend: Player.Legend,
         Standing: Standing,
@@ -11780,6 +12083,24 @@ public sealed record Snapshot(
     bool ListsChampion,
     bool JudicialChallengeUsed,
     string FormalBout,
+    bool SoftTread,
+    int AwareFoes,
+    int UnawareFoes,
+    int SelfBrews,
+    int RushesCompleted,
+    int QuietBandsCrossed,
+    int SoftTreadDiscoveries,
+    int CleanPilfers,
+    int CleanBurglaries,
+    int FencedLots,
+    int FencedGoods,
+    int LockAttempts,
+    int PickpocketAttempts,
+    int BurglaryAttempts,
+    int RestitutionsMade,
+    int LastSelfBrewCycle,
+    int LastLiveRushCycle,
+    int LastQuietBandCycle,
     int Essence,
     int Legend,
     int Standing,

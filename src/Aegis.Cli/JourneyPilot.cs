@@ -73,7 +73,7 @@ public static class JourneyPilot
     /// <paramref name="wits"/> plays the perception build (D-084): Wits raised first,
     /// to the point innate acuity clears D-061's dulling floor, then the usual rotation.
     /// </summary>
-    public static char? NextKey(Game g, IReadOnlySet<string> skip, bool wits = false)
+    public static char? NextKey(Game g, IReadOnlySet<string> skip, bool wits = false, bool rogue = false)
     {
         var p = g.Player;
 
@@ -116,7 +116,8 @@ public static class JourneyPilot
             return TradeOpenDigit(g) ?? 'z';
         // The stillroom (D-081, D-082): with sprigs in the satchel, or an eye to be
         // seen to (D-098), open the herbwife's bench the same way and do the business.
-        if (g.InTalkMenu && g.TalkNpc?.Id == "npc_herbwife" && (g.Player.Herb > 0 || EyeCureWanted(g)))
+        if (g.InTalkMenu && g.TalkNpc?.Id == "npc_herbwife"
+            && (g.Player.Herb > 0 || EyeCureWanted(g) || StillcraftPurchaseWanted(g)))
             return TradeOpenDigit(g) ?? 'z';
         // The hall door (D-098): what followed the bearer home is sung to rest the
         // moment the soul can pay for it; with nothing to lay, step back out.
@@ -205,6 +206,8 @@ public static class JourneyPilot
             // first, not chased like deer. Otherwise climb back to daylight.
             if (!site.Cleared && !skip.Contains(site.Id))
             {
+                if (QuietTrainingKey(g) is { } quiet) return quiet;
+                if (RushTrainingKey(g) is { } rush) return rush;
                 if (g.World.Twist == WorldTwist.HornedLaw && site.Kind == SiteKind.Wilds
                     && g.LiveMonstersHere.All(m => m.Kind == MonsterKind.Hart))
                     return p.Pos == site.EntryPos ? '<' : NavKey(g, g.CurrentMap, p.Pos, site.EntryPos, LiveFoeCells(g));
@@ -215,6 +218,7 @@ public static class JourneyPilot
                     && g.LiveMonstersHere.All(m => m.Kind != MonsterKind.Wolf)
                     ? HuntMove(g) : FightOrApproach(g);
             }
+            if (rogue && site.Cleared && CofferKey(g) is { } coffer) return coffer;
             // Held, foes down: open the site's own chest before leaving (D-066). It
             // holds coin and, in the deep sites, a piece of iron better than any the
             // smith draws, and it costs only the walk back over ground already won.
@@ -255,6 +259,22 @@ public static class JourneyPilot
         // into the forging-memory. So rest even with nothing to raise or mend when that
         // rung still waits, and seek the shrine out for it below.
         bool needVision = NeedVision(p);
+
+        // The bearer's own pot (D-162): buy the stillcraft once it is
+        // affordable, then keep enough sprigs out of the herbwife's scale to
+        // make one honest self-brew in every eligible world.
+        if (StillcraftPurchaseWanted(g) && Herbwife(g) is { } teacher)
+        {
+            var toTeacher = NavKey(g, g.World.Overworld, p.Pos, teacher.Pos, OverworldBlocked(g));
+            if (toTeacher is not null) return toTeacher;
+        }
+        if (SelfBrewWanted(g))
+        {
+            if (p.Pos == g.World.ShrinePos) return 'r';
+            var toBrew = NavKey(g, g.World.Overworld, p.Pos, g.World.ShrinePos, OverworldBlocked(g));
+            if (toBrew is not null) return toBrew;
+        }
+        if (rogue && EarlyPilferKey(g) is { } pilfer) return pilfer;
 
         // Standing on the shrine with essence to spend or wounds to mend: rest and raise
         // before setting out (this also catches the shrine you wake on after a death).
@@ -438,6 +458,11 @@ public static class JourneyPilot
             var toWife = NavKey(g, g.World.Overworld, p.Pos, wife.Pos, OverworldBlocked(g));
             if (toWife is not null) return toWife;
         }
+
+        // The opt-in rogue route (D-162) is deliberately last among the
+        // world's errands. It exercises each crime and its honest consequence
+        // without changing the default journey's choices.
+        if (rogue && RogueKey(g) is { } crooked) return crooked;
 
         // Every site is cleared or written off: the deed is done, the arch will answer.
         var gate = g.World.GatePos;
@@ -884,6 +909,107 @@ public static class JourneyPilot
         throw new InvalidOperationException($"Town terrain {terrain} is missing.");
     }
 
+    private static char? CofferKey(Game g)
+    {
+        if (g.CurrentSite is not { CofferPos: { } coffer, CofferTried: false }) return null;
+        if (g.Player.Pos == coffer) return 'g';
+        return NavKey(g, g.CurrentMap, g.Player.Pos, coffer, Empty);
+    }
+
+    /// <summary>
+    /// The opt-in crime circuit (D-162): one pocket, one sill, one kist, the
+    /// corresponding repayment when the purse permits, then one fenced lot.
+    /// Every target is finite world state, so the circuit cannot spin.
+    /// </summary>
+    private static char? RogueKey(Game g)
+    {
+        var p = g.Player;
+
+        string? caught = g.World.CaughtLifts
+            .FirstOrDefault(id => !g.World.RepaidLifts.Contains(id));
+        if (caught is not null && p.Coin >= SteadShame.RepayCoin
+            && g.World.Npcs.FirstOrDefault(n => n.Id == caught) is { } wronged)
+            return ApproachNpc(g, wronged, 'p');
+
+        Pos? pilferDebt = g.World.PilferedHouses
+            .Where(h => !g.World.RepaidHouses.Contains(h))
+            .Select(h => (Pos?)h).FirstOrDefault();
+        if (pilferDebt is { } sill && p.Coin >= SteadShame.RepayCoin)
+            return ApproachHouse(g, sill, 'g');
+
+        Pos? burglaryDebt = g.World.CaughtBurglaries
+            .Where(h => !g.World.RepaidBurglaries.Contains(h))
+            .Select(h => (Pos?)h).FirstOrDefault();
+        if (burglaryDebt is { } crossed && p.Coin >= SteadShame.BreakInRepayCoin)
+            return ApproachHouse(g, crossed, 's');
+
+        if (g.World.LiftedNpcs.Count == 0
+            && g.World.Npcs.FirstOrDefault(n => n.Kind == NpcKind.Villager) is { } mark)
+            return ApproachNpc(g, mark, 'p');
+
+        if (g.World.PilferedHouses.Count == 0 && p.Rations < Game.RationCap
+            && FirstHouse(g) is { } house)
+            return ApproachHouse(g, house, 'g');
+
+        if (g.World.BurgledHouses.Count == 0 && FirstHouse(g) is { } kist)
+            return ApproachHouse(g, kist, 's');
+
+        if (p.Trinket > 0)
+            return ApproachNpc(g, g.World.Peddler, KeyFor(
+                Math.Sign(g.World.Peddler.Pos.X - p.Pos.X),
+                Math.Sign(g.World.Peddler.Pos.Y - p.Pos.Y)));
+
+        return null;
+    }
+
+    private static char? EarlyPilferKey(Game g)
+    {
+        Pos? debt = g.World.PilferedHouses
+            .Where(h => !g.World.RepaidHouses.Contains(h))
+            .Select(h => (Pos?)h).FirstOrDefault();
+        if (debt is { } sill && g.Player.Coin >= SteadShame.RepayCoin)
+            return ApproachHouse(g, sill, 'g');
+        if (g.World.PilferedHouses.Count == 0 && g.Player.Rations < Game.RationCap
+            && FirstHouse(g) is { } house)
+            return ApproachHouse(g, house, 'g');
+        return null;
+    }
+
+    private static char? ApproachNpc(Game g, Npc npc, char action)
+    {
+        int dx = npc.Pos.X - g.Player.Pos.X;
+        int dy = npc.Pos.Y - g.Player.Pos.Y;
+        if (Math.Max(Math.Abs(dx), Math.Abs(dy)) == 1) return action;
+        var blocked = OverworldBlocked(g);
+        blocked.Remove(npc.Pos);
+        return NavKey(g, g.World.Overworld, g.Player.Pos, npc.Pos, blocked);
+    }
+
+    private static Pos? FirstHouse(Game g)
+    {
+        for (int y = 0; y < g.World.Overworld.Height; y++)
+            for (int x = 0; x < g.World.Overworld.Width; x++)
+            {
+                var p = new Pos(x, y);
+                if (g.World.Overworld[p] == Terrain.House) return p;
+            }
+        return null;
+    }
+
+    private static char? ApproachHouse(Game g, Pos house, char action)
+    {
+        if (Chebyshev(g.Player.Pos, house) == 1) return action;
+        var blocked = OverworldBlocked(g);
+        foreach (var (dx, dy) in Directions.All8)
+        {
+            var beside = house.Plus(dx, dy);
+            if (!g.World.Overworld.Walkable(beside) || blocked.Contains(beside)) continue;
+            if (NavKey(g, g.World.Overworld, g.Player.Pos, beside, blocked) is { } step)
+                return step;
+        }
+        return null;
+    }
+
     private static int TownCost(Game g, int price) => price
         + (g.World.Twist == WorldTwist.HeldRoad ? WorldTwistCatalog.RoadTithe : 0);
 
@@ -893,7 +1019,8 @@ public static class JourneyPilot
 
     /// <summary>Protected leather goes to the law's one buyer outside the town book (D-152).</summary>
     private static bool FenceErrand(Game g) =>
-        g.World.Twist == WorldTwist.HornedLaw && g.Player.ProtectedHide > 0;
+        g.Player.Trinket > 0
+        || g.World.Twist == WorldTwist.HornedLaw && g.Player.ProtectedHide > 0;
 
     /// <summary>A talk-level offer's digit, topics counted in front (D-041's stable order).</summary>
     private static char? OfferDigit(Game g, TradeGood good)
@@ -912,6 +1039,85 @@ public static class JourneyPilot
         var blocked = LiveFoeCells(g);
         return NavKey(g, g.CurrentMap, g.Player.Pos, tally.Pos, blocked);
     }
+
+    /// <summary>
+    /// One honest notice-band crossing per world (D-162). The pilot attempts
+    /// it only before any active foe has found the bearer, and only while an
+    /// unaware foe still stands beyond its ordinary edge.
+    /// </summary>
+    private static char? QuietTrainingKey(Game g)
+    {
+        if (g.LastQuietBandCycle == g.Cycle
+            || g.LiveMonstersHere.Any(m => m.Aware && !m.Dormant))
+            return null;
+
+        var targets = g.LiveMonstersHere
+            .Where(m => m.Kind != MonsterKind.Hart && !m.Aware
+                && Chebyshev(g.Player.Pos, m.Pos) > NoticeDistance(m))
+            .OrderBy(m => Chebyshev(g.Player.Pos, m.Pos))
+            .ThenBy(m => m.Pos.Y).ThenBy(m => m.Pos.X)
+            .ToList();
+        foreach (var target in targets)
+        {
+            var step = NavKey(g, g.CurrentMap, g.Player.Pos, target.Pos, LiveFoeCells(g));
+            if (step is null) continue;
+            return g.SoftTread ? step : 's';
+        }
+        return null;
+    }
+
+    /// <summary>One live-pressure rush per world, on an exactly valid line.</summary>
+    private static char? RushTrainingKey(Game g)
+    {
+        if (g.LastLiveRushCycle == g.Cycle
+            || !g.LiveMonstersHere.Any(m => m.Aware && !m.Dormant))
+            return null;
+
+        int distance = g.Player.HasPerk(PerkId.LongStride) ? 3 : 2;
+        int cost = Math.Max(2, 4 - g.Player.Skills.Bonus(SkillId.Athletics));
+        if (g.Player.HasPerk(PerkId.KeptBreath)) cost = Math.Max(1, cost - 1);
+        if (g.Player.Stamina < cost) return null;
+
+        foreach (var (dx, dy) in Directions.All8)
+        {
+            bool open = true;
+            for (int i = 1; i <= distance; i++)
+            {
+                var cell = g.Player.Pos.Plus(dx * i, dy * i);
+                if (!RushCellOpen(g, cell)) { open = false; break; }
+            }
+            if (open) return char.ToUpperInvariant(KeyFor(dx, dy));
+        }
+        return null;
+    }
+
+    private static bool RushCellOpen(Game g, Pos cell)
+    {
+        if (!g.CurrentMap.InBounds(cell)
+            || g.CurrentMap[cell] is not (Terrain.Floor or Terrain.Grass or Terrain.Forest
+                or Terrain.Hills or Terrain.Heath)
+            || g.LiveMonstersHere.Any(m => m.Pos == cell)
+            || g.NpcsHere.Any(n => n.Pos == cell)
+            || g.Guest?.Pos == cell || g.Shade?.Pos == cell)
+            return false;
+        if (g.Remnant is { } rem && rem.MapId == g.CurrentMap.Id && rem.Pos == cell) return false;
+        if (g.CurrentSite is { } site
+            && (!site.ChestLooted && site.ChestPos == cell
+                || !site.StoneRead && site.StonePos == cell
+                || !site.CofferOpened && site.CofferPos == cell))
+            return false;
+        return true;
+    }
+
+    private static int NoticeDistance(Monster monster) => monster.Kind switch
+    {
+        MonsterKind.Goblin or MonsterKind.Wight or MonsterKind.Severed => 8,
+        MonsterKind.Graven => 9,
+        MonsterKind.Hound or MonsterKind.Carl or MonsterKind.Warder or MonsterKind.Thegn => 10,
+        MonsterKind.Boar or MonsterKind.Wolf or MonsterKind.GreatWolf => 12,
+        MonsterKind.Hart => 5,
+        _ => 8,
+    };
 
     // ---- combat: the read, the dodge, the answer ----
 
@@ -1253,6 +1459,17 @@ public static class JourneyPilot
 
     private static Npc? Herbwife(Game g) => g.World.Npcs.FirstOrDefault(n => n.Id == "npc_herbwife");
 
+    private static bool StillcraftPurchaseWanted(Game g) =>
+        !g.Player.HasLesson(LessonId.Stillcraft)
+        && g.Player.Herb >= g.DraughtNeed
+        && g.Player.Coin >= LessonCatalog.Def(LessonId.Stillcraft).Price;
+
+    private static bool SelfBrewWanted(Game g) =>
+        g.LastSelfBrewCycle != g.Cycle
+        && g.Player.HasLesson(LessonId.Stillcraft)
+        && g.Player.Draughts < g.DraughtCap
+        && g.Player.Herb >= g.SelfBrewNeed;
+
     /// <summary>The talk digit that opens whichever bench the talk partner keeps
     /// (D-071, D-081): the topic count plus the Trade offer's place in the offer list.</summary>
     private static char? TradeOpenDigit(Game g)
@@ -1306,6 +1523,8 @@ public static class JourneyPilot
         // the sprig-coin counting toward her own price.
         if (g.TalkNpc?.Id == "npc_herbwife")
         {
+            if (StillcraftPurchaseWanted(g)) return TradeDigit(g, TradeGood.Lesson);
+            if (SelfBrewWanted(g)) return 'z';
             // The steeping first (D-090): sprigs into vials while the satchel has
             // room, and only what is left of the wood goes across the scales.
             if (g.Player.Draughts < g.DraughtCap && g.Player.Herb >= g.DraughtNeed)

@@ -17,13 +17,8 @@ public class DeepKnackTests
     {
         var wave = PerkCatalog.Choices.Where(c => c.Level == 4).ToList();
         Assert.Equal(5, wave.Count);
-        // One deep question per combat skill; the life-skills Hunting (D-070),
-        // Cooking (D-073), Survival (D-074), Sleight (D-107), Smithing
-        // (D-135), Commerce (D-140), Persuasion (D-142), and Lore (D-148)
-        // carry no knacks yet, and the young Spellcraft (D-091) has not
-        // settled into questions either.
         Assert.Equal(
-            Enum.GetValues<SkillId>().Where(s => s is not (SkillId.Hunting or SkillId.Cooking or SkillId.Survival or SkillId.Spellcraft or SkillId.Sleight or SkillId.Smithing or SkillId.Commerce or SkillId.Persuasion or SkillId.Lore)),
+            new[] { SkillId.Blades, SkillId.Hafted, SkillId.Brawling, SkillId.Warding, SkillId.Ranged },
             wave.Select(c => c.Skill));
         Assert.All(wave, c => Assert.Equal(2, c.Options.Length));
 
@@ -32,12 +27,14 @@ public class DeepKnackTests
         int firstDeep = PerkCatalog.Choices.ToList().FindIndex(c => c.Level == 4);
         Assert.All(PerkCatalog.Choices.Take(firstDeep), c => Assert.Equal(2, c.Level));
 
-        // Twenty perks, twenty distinct stable ids.
+        // Thirty perks, thirty distinct stable ids.
         var ids = Enum.GetValues<PerkId>().Select(PerkCatalog.IdOf).ToList();
-        Assert.Equal(20, ids.Count);
-        Assert.Equal(20, ids.Distinct().Count());
+        Assert.Equal(30, ids.Count);
+        Assert.Equal(30, ids.Distinct().Count());
         Assert.Contains("caught_arm", ids);
         Assert.Contains("waxed_string", ids);
+        Assert.Contains("room_on_the_rack", ids);
+        Assert.Contains("patient_wards", ids);
     }
 
     [Fact]

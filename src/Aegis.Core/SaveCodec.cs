@@ -341,10 +341,14 @@ namespace Aegis.Core;
 /// gained a room, fixtures, a marshal, and a formal ring; the scrivener's
 /// books moved behind a shelf; new journaled keys move property, boxed coin,
 /// workshop, tournament, judicial, book, and fact state.
+/// v96 when D-162/D-171 closed the eighteen-skill roster: creation starts changed,
+/// uppercase directions rush, contextual 's' enters soft tread, foes gained
+/// awareness, self-brewing scales, and crime odds, prices, feeds, and knack
+/// digits all gained new replay meaning.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 95;
+    public const int Version = 96;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

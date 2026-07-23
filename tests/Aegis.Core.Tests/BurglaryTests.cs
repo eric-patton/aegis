@@ -6,7 +6,7 @@ namespace Aegis.Core.Tests;
 /// Burglary proper (D-127): crime's last named verb, the whole distance in.
 /// 's' beside a stead door slips the latch and crosses the sill: a clean
 /// entry pays the kist's coin and an heirloom for the road-cart, feeds
-/// Sleight, and writes the stead's third secret fact from a deed; a caught
+/// Larceny, and writes the stead's third secret fact from a deed; a caught
 /// entry jumps the unified ladder two rungs at once, with restitution at the
 /// crossed sill (twice a door's coin) as the designed exit. One try per door
 /// per world, and the sill and the kist are two independent ledgers. Seeds
@@ -41,7 +41,8 @@ public class BurglaryTests
         Assert.Single(game.World.BurgledHouses);
         Assert.Empty(game.World.CaughtBurglaries);
         Assert.Equal(0, game.Shame); // done right, the stead is none the wiser
-        Assert.Equal(1, game.Player.Skills.Uses(SkillId.Sleight));
+        Assert.Equal(0, game.Player.Skills.Uses(SkillId.Sleight));
+        Assert.Equal(1, game.Player.Skills.Uses(SkillId.Larceny));
         Assert.True(game.World.Facts.Exists("secret", "burgled_house"));
         Assert.Contains(game.Log.Recent(4), e => e.Text.Contains("never know by whom"));
     }
@@ -59,7 +60,7 @@ public class BurglaryTests
         Assert.Equal(0, game.Player.Trinket);
         Assert.Single(game.World.CaughtBurglaries);
         Assert.Equal(2, game.Shame); // a body in the dark of a house is not a loaf
-        Assert.Equal(0, game.Player.Skills.Uses(SkillId.Sleight)); // only work that worked counts
+        Assert.Equal(0, game.Player.Skills.Uses(SkillId.Larceny)); // only work that worked counts
         Assert.True(game.World.Facts.Exists("shame", "housebroken"));
         Assert.True(game.World.Facts.Exists("shame", "unwelcome")); // both rungs crossed in one night
         var log = game.Log.Recent(6).Select(e => e.Text).ToList();
@@ -139,7 +140,7 @@ public class BurglaryTests
     }
 
     [Fact]
-    public void TheDeepPlaces_KeepNoHearths()
+    public void TheDeepPlaces_UseTheSameKeyForSoftTread()
     {
         var game = new Game(1);
         game.Debug_SetMode(MapMode.Site);
@@ -149,7 +150,8 @@ public class BurglaryTests
 
         Assert.Equal(turn, game.Turn);
         Assert.Empty(game.World.BurgledHouses);
-        Assert.Contains(game.Log.Recent(2), e => e.Text.Contains("they keep openly"));
+        Assert.True(game.SoftTread);
+        Assert.Contains(game.Log.Recent(2), e => e.Text.Contains("settle into soft tread"));
     }
 
     [Fact]

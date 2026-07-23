@@ -442,6 +442,7 @@ public class MovesetTests
     {
         game.Debug_SetMode(MapMode.Site);
         var goblin = game.Monsters.First(m => m.Alive && m.SiteId == "goblin-camp");
+        goblin.Aware = true;
         var map = game.World.Camp;
         foreach (var (dx, dy) in Directions.All8)
         {

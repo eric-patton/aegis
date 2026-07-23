@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-23, D-175 SadConsole migration design)
+# Aegis handoff (updated 2026-07-23, D-176 V1-10 approved)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,23 +8,23 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-175 currently at its head), then the parking lot of open
+  newest-first block (D-176 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-175)". Bump it whenever a decision lands.
+  "(D-001 through D-176)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence is complete;
   V1-09 is built, and D-175 supersedes its terminal candidate.
 - `design/plan-1.0.md`: the canonical ten-card implementation queue. V1-01 through V1-08
-  are Verified; V1-09 is Implemented; V1-10 is the Draft SadConsole client migration.
-- `design/sadconsole-client-migration.md`: the complete V1-10 Draft contract.
+  are Verified; V1-09 is Implemented; V1-10 is the Approved SadConsole client migration.
+- `design/sadconsole-client-migration.md`: the complete V1-10 Approved contract.
 - `design/story/`: arc spec and world-story templates. Full story detail lives there.
 - `docs/dev-harness.md`: the pilot/sim/journey harness.
 
 ## Current state
 
 - Latest approved direction: D-175 replaces the terminal-owned player with a SadConsole
-  10.10.1 and MonoGame DesktopGL client before 1.0 signoff. V1-10 is Draft and tracked
-  implementation waits for explicit approval of its complete contract.
+  10.10.1 and MonoGame DesktopGL client before 1.0 signoff. D-176 approves the complete
+  V1-10 contract for implementation.
 - Latest completed product work: D-174 and V1-09. Its engine, content, release journey,
   audits, and automated evidence remain green, but its terminal package is superseded
   and cannot receive final signoff.
@@ -220,14 +220,12 @@ hard failures. The fixed-surface warning remains expected.
 
 ## What is next (queued, in recommended order)
 
-1. **Review `design/sadconsole-client-migration.md` with the user.** V1-10 remains Draft
-   until the complete contract is explicitly approved.
-2. Implement V1-10 in its written sequence. Preserve `Aegis.Core`, canonical key meaning,
+1. Implement V1-10 in its written sequence. Preserve `Aegis.Core`, canonical key meaning,
    save v99, generator 1, Frame, Presenter, and the focus-free pilot contract.
-3. Run focused client, input, pilot, save, AOT, packaging, and visual verification, then
+2. Run focused client, input, pilot, save, AOT, packaging, and visual verification, then
    the complete repository tests and D-174 default and release sweeps. With no engine
    change, all engine results must remain byte-identical.
-4. Build a clean SadConsole candidate and restart the fresh packaged manual campaign in
+3. Build a clean SadConsole candidate and restart the fresh packaged manual campaign in
    `design/release-audit-1.0.0.md`. Only explicit user approval can make V1-09 and V1-10
    Verified and close Aegis 1.0.
 

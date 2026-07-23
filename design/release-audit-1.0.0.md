@@ -1,6 +1,6 @@
 # Aegis 1.0.0 release audit
 
-This is the durable audit for V1-09 under D-165 and D-174, amended by D-175. Automated
+This is the durable audit for V1-09 under D-165 and D-174, amended by D-175 and D-176. Automated
 evidence may be regenerated. The manual section is a human gate and cannot be inferred
 from automated tools.
 
@@ -138,5 +138,5 @@ hook, edited journal, or an existing slot.
 - Final cycle and turn: pending
 - Defects accepted: none; the presentation defect requires replacement
 - V1-09 status: Implemented, not yet Verified
-- V1-10 status: Draft, not yet implemented
+- V1-10 status: Approved under D-176, not yet implemented
 - Aegis 1.0 status: release recovery, no active candidate

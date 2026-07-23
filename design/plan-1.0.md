@@ -36,7 +36,7 @@ criteria, and decision associations for the ten 1.0 tranches.
 | V1-07 | Combat and magic depth | Verified | D-163, D-172 | Completed |
 | V1-08 | Companions, factions, and consequences | Verified | D-164, D-173 | Completed |
 | V1-09 | Next region and 1.0 release closure | Implemented | D-165, D-174 | Original candidate superseded |
-| V1-10 | SadConsole client and release recovery | Draft | D-175 | Design review pending |
+| V1-10 | SadConsole client and release recovery | Approved | D-175, D-176 | Implementation pending |
 
 ## V1-01: High-fells capstone, the black tarn
 
@@ -1556,9 +1556,9 @@ this card becomes Verified.
 
 ## V1-10: SadConsole client and release recovery
 
-**Design status:** Draft for user review
+**Design status:** Approved
 
-**Decision:** D-175
+**Decisions:** D-175 and D-176
 
 **Roadmap association:** Path to 1.0 tranche 10; presentation; tooling and verification;
 Windows x64 release package
@@ -1566,7 +1566,7 @@ Windows x64 release package
 **Dependencies:** V1-09 implemented under D-174; existing D-027 pilot and sim contract;
 D-175 compatibility and focus-free control spike
 
-**Implementation status:** Not started
+**Implementation status:** Ready to begin
 
 ### Player-facing outcome
 

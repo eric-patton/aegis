@@ -1,10 +1,10 @@
 # SadConsole client migration
 
-Status: Draft for user review
+Status: Approved for implementation
 
 Roadmap card: V1-10
 
-Governing decision: D-175
+Governing decisions: D-175 and D-176
 
 Spike evidence: `../artifacts/sadconsole-spike/RESULTS.md`
 

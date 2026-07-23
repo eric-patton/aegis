@@ -827,7 +827,7 @@ public static class JourneyRunner
                         r.Kind.ToString().ToLowerInvariant(), r.Bank, r.Tier.ToString())).ToList(),
                     BestiaryAfter: c.After.Select(r => new JourneyReadDto(
                         r.Kind.ToString().ToLowerInvariant(), r.Bank, r.Tier.ToString())).ToList())).ToList());
-            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(report, PilotJsonPretty.Default.JourneyReport));
+            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(report, CliJsonPretty.Default.JourneyReport));
             return releasePassed ? 0 : 2;
         }
 

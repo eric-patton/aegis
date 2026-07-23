@@ -1,9 +1,10 @@
 using Aegis.Cli;
+using Aegis.Host;
 
-// aegis                          play in the terminal
-// aegis --pilot [--session s]    play, with the control channel open alongside
-// aegis --headless --pilot       no console at all; driven entirely via the pilot
-// aegis pilot <cmd>              client: screen | keys "<keys>" | state | quit | ping
+// aegis-tools                    legacy terminal comparison player
+// aegis-tools --pilot            legacy player with the control channel open
+// aegis-tools --headless --pilot no console; driven entirely via the pilot
+// aegis-tools pilot <cmd>        client: screen | keys "<keys>" | state | frame | quit | ping
 // aegis sim --seed N --keys ".." headless scripted run, JSON result on stdout
 // aegis journey --seed N --cycles K   autopilot: climb the ladder, report the crossings
 // aegis worldgen --seeds N --tiers A-B   batch-generate worlds, chart the expressive range (D-137)
@@ -43,13 +44,13 @@ for (int i = 0; i < args.Length; i++)
         case "--save-dir": saveDir = args[++i]; break;
         case "--help" or "-h":
             Console.WriteLine("""
-                aegis [--seed N] [--save slot] [--pilot] [--headless] [--session name]
-                aegis saves [--save-dir dir]
-                aegis pilot <screen|keys "<keys>"|state|quit|ping> [--session name]
-                aegis sim --seed N (--keys "<keys>" | --keys-file path) [--quiet] [--generator N]
-                aegis journey --seed N --cycles K [--emit-keys] [--rogue] [--caster] [--companion] [--generator N]
-                aegis journey --release [--seed N] [--json]
-                aegis worldgen [--seeds N] [--start S] [--tiers A-B] [--json] [--dump] [--generator N]
+                aegis-tools [--seed N] [--save slot] [--pilot] [--headless] [--session name]
+                aegis-tools saves [--save-dir dir]
+                aegis-tools pilot <screen|keys "<keys>"|state|frame|quit|ping> [--session name]
+                aegis-tools sim --seed N (--keys "<keys>" | --keys-file path) [--quiet] [--generator N]
+                aegis-tools journey --seed N --cycles K [--emit-keys] [--rogue] [--caster] [--companion] [--generator N]
+                aegis-tools journey --release [--seed N] [--json]
+                aegis-tools worldgen [--seeds N] [--start S] [--tiers A-B] [--json] [--dump] [--generator N]
 
                 --save      play in a named slot: loads it if it exists, creates it if not;
                             every action is journaled immediately (quit any time, nothing lost)
@@ -99,7 +100,7 @@ else
 }
 
 using var renderer = headless ? null : new ConsoleRenderer();
-var host = new GameHost(game, renderer);
+var host = new GameSession(game, renderer);
 using var cts = new CancellationTokenSource();
 
 PilotServer? server = null;
@@ -121,6 +122,7 @@ if (server is not null)
     await Task.Delay(200); // let an in-flight pilot response (e.g. the "quit" ack) flush before exit
 cts.Cancel();
 server?.Stop();
+server?.Dispose();
 save?.Dispose();
 return 0;
 

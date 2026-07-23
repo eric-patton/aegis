@@ -65,7 +65,7 @@ public static class SimRunner
             Final = game.TakeSnapshot(),
         };
 
-        Console.WriteLine(JsonSerializer.Serialize(result, PilotJsonPretty.Default.SimResult));
+        Console.WriteLine(JsonSerializer.Serialize(result, CliJsonPretty.Default.SimResult));
         return 0;
     }
 }

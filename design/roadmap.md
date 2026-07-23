@@ -55,7 +55,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - Path to 1.0: **8 of 10 tranches Verified** (V1-01 D-166, V1-02 D-167, V1-03 D-168,
   V1-04 D-169, V1-05 D-170, V1-06 D-171, V1-07 D-172, V1-08 D-173); V1-09 is
   Implemented under D-174, but its terminal candidate is superseded by D-175. V1-10 is
-  the Approved SadConsole client migration and replacement release gate under D-176
+  Implemented under D-177; the replacement package and explicit signoff remain
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
@@ -142,7 +142,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   stead-layer and pacing-and-freshness sections are new; the B and C lanes mostly attach
   to boxes that already existed). This entry supersedes the phase numbering above as the
   sequencing story.
-- **The path to 1.0 (adopted D-155, design-first D-157, amended D-175/D-176): see
+- **The path to 1.0 (adopted D-155, design-first D-157, amended D-175 through D-177): see
   `design/plan-1.0.md`.** The original
   sixteen-step sequence is complete. Ten ordered tranches now form a finite finish
   line: the fells capstone; weather and seasons; D3 prose variety; D1 pacing steering;
@@ -151,7 +151,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   release audit; then the SadConsole client and release recovery. Open-ended catalogs
   remain tracked but do not block 1.0 unless a later decision explicitly promotes them
   into the gate. V1-01 through V1-08 are built and Verified under D-166 through D-173.
-  V1-09 is Implemented, and V1-10 is the active Approved release gate.
+  V1-09 and V1-10 are Implemented. The replacement package and explicit signoff are the
+  active release gate.
 
 ### Path to 1.0 tracker (ordered, adopted D-155/D-157)
 
@@ -174,9 +175,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - [~] 9. Next full-density region, launch content closure, and the 1.0 release audit
   (V1-09 design Approved D-165; built D-174; terminal candidate superseded D-175,
   replacement packaged manual playthrough and explicit user signoff pending)
-- [ ] 10. SadConsole client migration and replacement 1.0 candidate
+- [~] 10. SadConsole client migration and replacement 1.0 candidate
   (V1-10 direction Approved D-175; complete migration contract Approved D-176;
-  implementation pending)
+  Implemented D-177; replacement package and explicit user signoff pending)
 
 The detailed tranche contents and design statuses live in `design/plan-1.0.md`; the
 1.0-ready gate also remains in `design/plan-2026-07.md`. A tranche flips
@@ -194,7 +195,7 @@ infinite prerequisite for completion.
 - [x] Deterministic engine: hierarchical seed tree, fact graph, worldgen (D-002, D-013, D-018)
 - [~] Layered-map presentation: Frame and Presenter are built and verified (D-001);
   SadConsole shipping client, owned font and palette, resizing, and focus-free control
-  are V1-10 Approved under D-175/D-176
+  are Implemented under D-175 through D-177; visible packaged signoff remains
 - [x] Save system: seed + input journal, replay-on-load, currently v99 with campaign-scoped
   generator 1 (D-012, D-028, D-166, D-167, D-169, D-170, D-171, D-172, D-173, D-174)
 - [x] NG+ crossing: waygate, coin -> Legend, tier-deepening worldgen (D-011, D-029)
@@ -758,10 +759,10 @@ kind, and the evaluation harness that hardens every generator change.
 ### Tooling & verification, built
 
 - [x] Dev harness: headless pilot pipe, `sim` scripted JSON runs (D-027)
-- [~] SadConsole player and focus-free shared pilot (D-175/D-176, V1-10 Approved): Release and
-  Native AOT spikes prove canonical pipe keys can advance and close the visible client
-  while another application remains foreground; tracked migration and final physical
-  keyboard verification remain
+- [~] SadConsole player and focus-free shared pilot (D-175 through D-177, V1-10
+  Implemented): the owned client, serialized host queue, current-user pilot, structured
+  frame, Release and Native AOT smokes, settings, help, resizing, and package route are
+  built; visible packaged and final physical-keyboard verification remain
 - [x] Journey-bot autopilot: clears sites, arms, raises, reclaims, loots, answers the sheet, walks the arc, swears oaths, hunts, sells hides, cooks meat, forages and sells herbs (D-062..D-075)
 - [x] Pilot footing and steeping policy: stance held to the blood's line (free presses on
   quiet ground, one bought downshift mid-fight), vials steeped before the sale and drunk
@@ -805,6 +806,15 @@ one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-23: **D-177 implements the SadConsole client and focus-free host.**
+  `Aegis.Host` now owns saves, one serialized input queue, current-user pilot pipes,
+  bounded requests, and text plus structured RGB observations. `Aegis.Client` owns the
+  SadConsole and MonoGame window, embedded font, palette, resizing, input aliases,
+  settings, and first-run help. `Aegis.Cli` becomes `aegis-tools.exe`. Release and Native
+  AOT client smokes pass, all 999 tests pass, both five-seed journey sets, both seed-1
+  replays, and worldgen are byte-identical to D-174. V1-10 is Implemented. The clean
+  replacement package, visible physical-keyboard review, guided campaign, and explicit
+  signoff remain.
 - 2026-07-23: **D-176 approves the complete V1-10 migration contract.** The project
   boundary, rendering and input contracts, focus-free pilot, save and determinism
   boundaries, Native AOT package shape, accessibility requirements, migration sequence,

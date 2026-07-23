@@ -44,15 +44,25 @@ public class ReleaseToolTests
         Assert.Contains("requires a clean worktree", script);
         Assert.Contains("-p:PublishAot=true", script);
         Assert.Contains("--self-contained true", script);
+        Assert.Contains("Aegis.Client", script);
+        Assert.Contains("Aegis.Cli", script);
         Assert.Contains("aegis-1.0.0-$Runtime.zip", script);
+        Assert.Contains("aegis-tools.exe", script);
+        Assert.Contains("SDL2.dll", script);
+        Assert.Contains("openal.dll", script);
+        Assert.Contains("aot-warning-baseline.txt", script);
+        Assert.Contains("Compare-Object", script);
         Assert.Contains("saveVersion=99", script);
         Assert.Contains("generatorVersion=1", script);
         Assert.Contains("Get-FileHash", script);
         Assert.Contains("$zipPath.sha256", script);
         Assert.Contains("Expand-Archive", script);
-        Assert.Contains("& $exe --help", script);
-        Assert.Contains("& $exe sim --seed 1", script);
-        Assert.Contains("& $exe worldgen --seeds 1", script);
+        Assert.Contains("& $tools --help", script);
+        Assert.Contains("& $tools sim --seed 1", script);
+        Assert.Contains("& $tools worldgen --seeds 1", script);
+        Assert.Contains("pilot frame", script);
+        Assert.Contains("--headless", script);
+        Assert.Contains("package_reload", script);
         Assert.Contains("$sim.final.turn -ne 4", script);
         Assert.Contains("$worldgen.digestMismatches -ne 0", script);
 
@@ -74,6 +84,7 @@ public class ReleaseToolTests
         Assert.True(File.Exists(Path.Combine(root, "README.md")));
         Assert.True(File.Exists(Path.Combine(root, "RELEASE-NOTES-1.0.0.md")));
         Assert.True(File.Exists(Path.Combine(root, "THIRD-PARTY-NOTICES.md")));
+        Assert.True(File.Exists(Path.Combine(root, "scripts", "aot-warning-baseline.txt")));
     }
 
     private static string RepoRoot()

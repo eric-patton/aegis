@@ -1,5 +1,6 @@
 using System.Text;
 using Aegis.Core;
+using Aegis.Host;
 
 namespace Aegis.Cli;
 
@@ -7,7 +8,7 @@ namespace Aegis.Cli;
 /// Diff-renders frames to the terminal with VT escape sequences (alt screen buffer,
 /// 16-color SGR). Windows 11 Terminal and every modern *nix terminal speak this.
 /// </summary>
-public sealed class ConsoleRenderer : IDisposable
+public sealed class ConsoleRenderer : IFrameSink, IDisposable
 {
     private Frame? _last;
     private readonly StringBuilder _sb = new(16 * 1024);

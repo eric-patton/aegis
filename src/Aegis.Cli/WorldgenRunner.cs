@@ -134,7 +134,7 @@ public static class WorldgenRunner
                 WeatherCoverage: weatherCoverage,
                 Prose: proseAudit,
                 Tiers: tiers, Skeletons: audit, Measures: measures);
-            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(report, PilotJsonPretty.Default.WorldgenReport));
+            Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(report, CliJsonPretty.Default.WorldgenReport));
             return proseAudit.Failures.Count == 0 ? 0 : 2;
         }
 

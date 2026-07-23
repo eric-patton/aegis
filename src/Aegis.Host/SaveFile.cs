@@ -1,14 +1,7 @@
-using System.Text;
 using Aegis.Core;
 
-namespace Aegis.Cli;
+namespace Aegis.Host;
 
-/// <summary>
-/// One save slot: an append-only journal file. Every key the engine applies is
-/// appended and flushed immediately, so death consequences are durable the instant
-/// they happen (D-012's autosave-on-death, by construction) and a crash loses at
-/// most the final keystroke.
-/// </summary>
 public sealed class SaveFile : IDisposable
 {
     private const int KeysPerLine = 64;
@@ -30,7 +23,6 @@ public sealed class SaveFile : IDisposable
         Game.KeyApplied += Append;
     }
 
-    /// <summary>Loads the slot if it exists (replaying its journal), otherwise creates it with the given seed.</summary>
     public static SaveFile Open(string path, ulong seedIfNew)
     {
         Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
@@ -40,15 +32,13 @@ public sealed class SaveFile : IDisposable
             var (seed, generatorVersion, keys) = SaveCodec.Parse(ReadContent(path));
             var game = SaveCodec.Replay(seed, generatorVersion, keys);
             var appender = new StreamWriter(path, append: true, PilotWire.Utf8NoBom) { AutoFlush = true };
-            return new SaveFile(game, path, loaded: true, appender, keysOnLine: keys.Length % KeysPerLine);
+            return new SaveFile(game, path, loaded: true, appender, keys.Length % KeysPerLine);
         }
-        else
-        {
-            var game = new Game(seedIfNew, firstWake: true);
-            var appender = new StreamWriter(path, append: true, PilotWire.Utf8NoBom) { AutoFlush = true };
-            appender.WriteLine(SaveCodec.EncodeHeader(seedIfNew, game.GeneratorVersion));
-            return new SaveFile(game, path, loaded: false, appender, keysOnLine: 0);
-        }
+
+        var newGame = new Game(seedIfNew, firstWake: true);
+        var newAppender = new StreamWriter(path, append: true, PilotWire.Utf8NoBom) { AutoFlush = true };
+        newAppender.WriteLine(SaveCodec.EncodeHeader(seedIfNew, newGame.GeneratorVersion));
+        return new SaveFile(newGame, path, loaded: false, newAppender, 0);
     }
 
     private void Append(char key)
@@ -61,7 +51,6 @@ public sealed class SaveFile : IDisposable
         }
     }
 
-    /// <summary>Reads journal content while tolerating a concurrent writer (a running game).</summary>
     public static string ReadContent(string path)
     {
         using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
@@ -70,13 +59,22 @@ public sealed class SaveFile : IDisposable
     }
 
     public static string DefaultDirectory =>
-        System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Aegis", "saves");
+        System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "Aegis",
+            "saves");
 
     public static string SlotPath(string directory, string slot)
     {
+        if (slot.Length is < 1 or > 48)
+            throw new ArgumentException("Save slot names must be 1-48 characters.");
+
         foreach (char c in slot)
+        {
             if (!char.IsLetterOrDigit(c) && c is not ('-' or '_'))
                 throw new ArgumentException($"Save slot names use letters, digits, - and _ only (got '{slot}').");
+        }
+
         return System.IO.Path.Combine(directory, slot + ".aegis");
     }
 

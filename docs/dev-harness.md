@@ -4,14 +4,14 @@ How to run, drive, and observe Aegis without touching the game window. Design ra
 
 ## Run modes
 
-```
-aegis                            play normally in the terminal
-aegis --seed 42                  play a specific world
-aegis --save myslot              play in a named save slot (load-or-create)
-aegis saves                      list save slots
-aegis --pilot                    play, with the control channel open alongside
-aegis --headless --pilot         no console at all; driven entirely via the pilot
-aegis --session name             name the pilot channel (default: "default")
+```text
+aegis.exe                        play in the SadConsole window
+aegis.exe --seed 42              play a specific world
+aegis.exe --save myslot          play in a named save slot (load-or-create)
+aegis-tools.exe saves            list save slots
+aegis.exe --pilot                play, with the control channel open alongside
+aegis.exe --headless --pilot     no window; driven entirely via the pilot
+aegis.exe --session name         name the pilot channel (default: "default")
 ```
 
 ## Saves (D-012 / D-028)
@@ -156,54 +156,65 @@ every tier, so saves are format v3.
 
 Build and run from the repo root:
 
-```
-dotnet build
-.\src\Aegis.Cli\bin\Debug\net10.0\aegis.exe --headless --pilot --seed 42
+```powershell
+dotnet build Aegis.slnx
+.\src\Aegis.Client\bin\Debug\net10.0\aegis.exe --headless --pilot --seed 42 --no-save
 ```
 
 Native (AOT) publish, from a shell where `vswhere.exe` is on PATH (the VS installer
 does not add it; it lives in `C:\Program Files (x86)\Microsoft Visual Studio\Installer`):
 
-```
+```powershell
+dotnet publish src\Aegis.Client\Aegis.Client.csproj -c Release -r win-x64
 dotnet publish src\Aegis.Cli\Aegis.Cli.csproj -c Release -r win-x64
 ```
 
-This produces a self-contained ~3 MB `aegis.exe` under `bin\Release\...\publish\` whose
-sim output is byte-identical to the Debug build (verified on seed 42).
+The repeatable package route is `scripts\release.ps1`. It publishes the SadConsole
+player as `aegis.exe` and the deterministic tool surface as `aegis-tools.exe`.
 
 ## The pilot channel
 
-A named-pipe control server (`aegis.pilot.<session>`) that a shell, script, or agent uses to drive a live game. The game renders to an in-memory frame; the pilot serves that exact frame as text, so observing the game never involves screenshots or window focus.
+A current-user-only named-pipe control server (`aegis.pilot.<session>`) lets a shell,
+script, or agent drive a live game. The game renders to an in-memory frame, so observing
+or controlling the client never requires screenshots, operating-system input, or window
+focus.
 
-The TUI itself scales to the terminal window (the map viewport flexes; sidebar and log stay fixed; below 80x24 the layout crops), and repaints on resize. **The pilot always renders at the fixed 80x24 baseline regardless of any window**, so agent-visible screens and screen-based tests stay deterministic.
+The SadConsole client owns a fixed 120 by 40 logical grid and uses `Fit` resizing. The
+pilot observes that same fixed grid regardless of the physical window size, so
+agent-visible screens and cell-frame tests stay deterministic.
 
 Client commands (each connects, acts, prints, exits):
 
-```
-aegis pilot screen               print the current 80x24 screen as text
-aegis pilot keys "kkllj>"        inject key presses; prints resulting screen + status line
-aegis pilot state                print the full game state as JSON
-aegis pilot ping                 check a session is alive
-aegis pilot quit                 stop the game
-aegis pilot ... --session name   target a named session
+```text
+aegis-tools.exe pilot screen               print the current 120 by 40 screen as text
+aegis-tools.exe pilot keys "kkllj>"        apply one atomic canonical-key batch
+aegis-tools.exe pilot state                print the full game state as JSON
+aegis-tools.exe pilot frame                print all 4,800 glyph and resolved RGB cells
+aegis-tools.exe pilot ping                 check a session is alive
+aegis-tools.exe pilot quit                 stop the game
+aegis-tools.exe pilot ... --session name   target a named session
 ```
 
 Keys are the same everywhere (TUI, pilot, sim): `hjkl`/`yubn` move, `.` wait, `g` grab, `>`/`<` enter/exit, `q` quit. Arrow keys work in the TUI and map to `hjkl`. Moving into a villager (`p`) opens the talk menu; digits ask topics and any other key closes it (menu keys are journaled like all others).
 
 Two usage patterns:
 
-- **Shared session**: the user runs `aegis --pilot` in their terminal and plays; an agent connects to the same session to observe (`screen`, `state`) or assist (`keys`). Both see the same game.
-- **Headless session**: `aegis --headless --pilot --session x` runs the game invisibly; everything happens through the pilot. This is the default way for an agent to playtest.
+- **Shared session**: the user runs `aegis.exe --pilot` and plays. An agent connects to
+  the same session through `aegis-tools.exe` to observe or assist without taking focus.
+- **Headless session**: `aegis.exe --headless --pilot --session x --no-save` runs the
+  game invisibly. This is the default way for an agent to playtest.
 
-Wire protocol (for non-CLI clients): one JSON object per line over the pipe, e.g. `{"cmd":"keys","keys":"llj"}` returns `{"ok":true,"screen":[...],"state":{...}}`. Commands: `ping`, `screen`, `state`, `keys`, `quit`. UTF-8 without BOM; a BOM written into a fresh pipe deadlocks both ends (learned the hard way; see PilotServer.cs).
-
-Troubleshooting: set `AEGIS_PILOT_TRACE=1` to get stderr traces from both server and client.
+Wire protocol: one JSON object per line over the pipe. For example,
+`{"cmd":"keys","keys":"llj"}` returns the resulting screen and state. Commands are
+`ping`, `screen`, `state`, `keys`, `frame`, and `quit`. Key batches are bounded and
+atomic relative to physical input. Session names are validated and bounded. Requests
+have a completion timeout. UTF-8 is BOM-less.
 
 ## Headless simulation
 
-```
-aegis sim --seed 42 --keys "llll....jjjj" [--quiet]
-aegis sim --seed 42 --keys-file artifacts/aegis-sweep/v102-keys1.txt [--quiet]
+```text
+aegis-tools.exe sim --seed 42 --keys "llll....jjjj" [--quiet]
+aegis-tools.exe sim --seed 42 --keys-file artifacts/aegis-sweep/v102-keys1.txt [--quiet]
 ```
 
 Builds the world, applies the key script synchronously, prints JSON: seed, keys applied, the full message log (`--quiet` omits it), and the final state snapshot. Deterministic: same seed and keys always produce byte-identical results. Intended for balance sweeps, regression checks, and CI.
@@ -212,11 +223,11 @@ when a long journey journal exceeds the Windows command-line limit.
 
 ## Journey and pacing diagnostics
 
-```
-aegis journey --seed 42 --cycles 12 --emit-keys
-aegis journey --seed 42 --cycles 12 --json
-aegis journey --seed 42 --cycles 12 --caster --json
-aegis journey --seed 42 --cycles 12 --companion --json
+```text
+aegis-tools.exe journey --seed 42 --cycles 12 --emit-keys
+aegis-tools.exe journey --seed 42 --cycles 12 --json
+aegis-tools.exe journey --seed 42 --cycles 12 --caster --json
+aegis-tools.exe journey --seed 42 --cycles 12 --companion --json
 ```
 
 The journey drives ordinary player keys through repeated crossings. `--emit-keys` adds
@@ -257,11 +268,11 @@ Its longer emitted journal replays exactly through `sim --keys-file`.
 digest, and returns exit code 2 for generator impurity or a hard prose-catalog failure.
 The default run covers 30 seeds across tiers 1-8.
 
-```
-aegis worldgen
-aegis worldgen --json
-aegis worldgen --dump
-aegis worldgen --dump --json
+```text
+aegis-tools.exe worldgen
+aegis-tools.exe worldgen --json
+aegis-tools.exe worldgen --dump
+aegis-tools.exe worldgen --dump --json
 ```
 
 The ordinary report charts generated-world measures and the family-aware prose audit.
@@ -281,6 +292,13 @@ skew, fixed-heavy categories, and cross-family collisions remain advisory warnin
 
 ## Architecture notes
 
-- `Aegis.Core` has zero console or I/O dependencies. `Presenter.Render(game)` produces a `Frame` (cell grid); `Frame.ToTextLines()` is what the pilot serves.
-- `Aegis.Cli` owns the frontends: `ConsoleRenderer` (VT diff renderer), `ConsoleInput`, `PilotServer`/`PilotClient`, `SimRunner`.
-- The engine runs single-threaded: console keys and pilot requests are marshalled onto one channel (`GameHost`), so concurrent input sources cannot corrupt determinism.
+- `Aegis.Core` has zero frontend or I/O dependencies. `Presenter.Render(game)` produces
+  the canonical `Frame`.
+- `Aegis.Host` owns saves, the serialized game-session queue, the pilot protocol, and
+  text and structured-frame observations. It has no SadConsole, MonoGame, or console
+  dependency.
+- `Aegis.Client` owns SadConsole, MonoGame, palette, font, resizing, and physical input.
+- `Aegis.Cli` produces `aegis-tools.exe` for pilot, sim, journey, worldgen, and the
+  retained legacy terminal comparison surface.
+- Physical keys and pilot batches enter one `GameSession` channel. The engine is only
+  processed by that session's single reader.

@@ -19,8 +19,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\Aegis.Client\Aegis.Client.csproj" />
     <ProjectReference Include="..\..\src\Aegis.Core\Aegis.Core.csproj" />
     <ProjectReference Include="..\..\src\Aegis.Cli\Aegis.Cli.csproj" />
+    <ProjectReference Include="..\..\src\Aegis.Host\Aegis.Host.csproj" />
   </ItemGroup>
 
 </Project>

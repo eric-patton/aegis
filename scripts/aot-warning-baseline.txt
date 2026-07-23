@@ -1,0 +1,7 @@
+IL2104|MonoGame.Framework
+IL2104|Newtonsoft.Json
+IL2104|SadConsole
+IL3053|Microsoft.CSharp
+IL3053|Newtonsoft.Json
+IL3053|SadConsole
+IL3053|System.Linq.Expressions

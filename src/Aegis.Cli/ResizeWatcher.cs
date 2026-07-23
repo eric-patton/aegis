@@ -1,4 +1,5 @@
 using System.Threading.Channels;
+using Aegis.Host;
 
 namespace Aegis.Cli;
 

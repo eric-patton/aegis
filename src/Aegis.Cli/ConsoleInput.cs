@@ -1,4 +1,5 @@
 using System.Threading.Channels;
+using Aegis.Host;
 
 namespace Aegis.Cli;
 
@@ -28,7 +29,7 @@ public static class ConsoleInput
                     ConsoleKey.LeftArrow => 'h',
                     ConsoleKey.RightArrow => 'l',
                     ConsoleKey.Escape => 'q',
-                    _ => char.ToLowerInvariant(info.KeyChar),
+                    _ => info.KeyChar,
                 };
 
                 if (key != '\0') writer.TryWrite(new HostMessage.Key(key));

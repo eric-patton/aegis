@@ -1,10 +1,10 @@
 # SadConsole client migration
 
-Status: Approved for implementation
+Status: Implemented, packaged campaign and explicit signoff pending
 
 Roadmap card: V1-10
 
-Governing decisions: D-175 and D-176
+Governing decisions: D-175, D-176, and D-177
 
 Spike evidence: `../artifacts/sadconsole-spike/RESULTS.md`
 

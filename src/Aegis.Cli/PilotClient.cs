@@ -1,6 +1,5 @@
-using System.IO.Pipes;
-using System.Text;
 using System.Text.Json;
+using Aegis.Host;
 
 namespace Aegis.Cli;
 
@@ -33,12 +32,13 @@ public static class PilotClient
         }
 
         if (sub is null)
-            return Fail("usage: aegis pilot <screen|keys <keys>|state|quit|ping> [--session name]");
+            return Fail("usage: aegis-tools pilot <screen|keys <keys>|state|frame|quit|ping> [--session name]");
 
         var request = sub switch
         {
             "screen" => new PilotRequest { Cmd = "screen" },
             "state" => new PilotRequest { Cmd = "state" },
+            "frame" => new PilotRequest { Cmd = "frame" },
             "quit" => new PilotRequest { Cmd = "quit" },
             "ping" => new PilotRequest { Cmd = "ping" },
             "keys" when keys is not null => new PilotRequest { Cmd = "keys", Keys = keys },
@@ -51,7 +51,7 @@ public static class PilotClient
         PilotResponse? response;
         try
         {
-            response = Exchange(session, request);
+            response = PilotConnection.Exchange(session, request);
         }
         catch (TimeoutException)
         {
@@ -66,7 +66,10 @@ public static class PilotClient
                 Console.WriteLine(line);
 
         if (response.State is not null && request.Cmd is "state")
-            Console.WriteLine(JsonSerializer.Serialize(response.State, PilotJsonPretty.Default.Snapshot));
+            Console.WriteLine(JsonSerializer.Serialize(response.State, CliJsonPretty.Default.Snapshot));
+
+        if (response.Frame is not null && request.Cmd is "frame")
+            Console.WriteLine(PilotWire.SerializeFrame(response.Frame));
 
         if (request.Cmd is "keys" && response.State is not null)
         {
@@ -83,36 +86,9 @@ public static class PilotClient
         return 0;
     }
 
-    private static PilotResponse? Exchange(string session, PilotRequest request)
-    {
-        Trace("connecting");
-        using var pipe = new NamedPipeClientStream(".", PilotWire.PipeName(session), PipeDirection.InOut);
-        pipe.Connect(timeout: 2000);
-        Trace("connected");
-
-        // Deliberately not disposing the wrappers: AutoFlush already pushed every byte,
-        // and a dispose-time flush would throw if the server (e.g. on "quit") closed first.
-        // Disposing the pipe itself closes the handle.
-        var reader = new StreamReader(pipe, PilotWire.Utf8NoBom, leaveOpen: true);
-        var writer = new StreamWriter(pipe, PilotWire.Utf8NoBom, leaveOpen: true) { AutoFlush = true };
-        Trace("streams ready");
-
-        writer.WriteLine(PilotWire.Serialize(request));
-        Trace("request written");
-        string? line = reader.ReadLine();
-        Trace($"response: {line ?? "<null>"}");
-        return line is null ? null : PilotWire.ParseResponse(line);
-    }
-
-    private static void Trace(string message)
-    {
-        if (Environment.GetEnvironmentVariable("AEGIS_PILOT_TRACE") == "1")
-            Console.Error.WriteLine($"[pilot-client] {message}");
-    }
-
     private static int Fail(string message)
     {
-        Console.Error.WriteLine($"aegis pilot: {message}");
+        Console.Error.WriteLine($"aegis-tools pilot: {message}");
         return 1;
     }
 }

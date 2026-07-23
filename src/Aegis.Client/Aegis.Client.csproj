@@ -1,20 +1,27 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>Aegis.Cli</RootNamespace>
-    <AssemblyName>aegis-tools</AssemblyName>
+    <RootNamespace>Aegis.Client</RootNamespace>
     <InvariantGlobalization>true</InvariantGlobalization>
     <PublishAot>true</PublishAot>
+    <AssemblyName>aegis</AssemblyName>
     <Version>1.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Aegis.Core\Aegis.Core.csproj" />
     <ProjectReference Include="..\Aegis.Host\Aegis.Host.csproj" />
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.4.1" />
+    <PackageReference Include="SadConsole.Host.MonoGame" Version="10.10.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TrimmerRootAssembly Include="SadConsole" />
+    <TrimmerRootAssembly Include="SadConsole.Host.MonoGame" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-22, end of the D-166 session)
+# Aegis handoff (updated 2026-07-22, end of the D-167 session)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,26 +8,27 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-166 currently at its head), then the parking lot of open
+  newest-first block (D-167 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-166)". Bump it whenever a decision lands.
+  "(D-001 through D-167)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence and the first
-  Path to 1.0 tranche are done; V1-02 is next (see "What is next" below).
-- `design/plan-1.0.md`: the canonical nine-card implementation queue. V1-01 is Verified;
-  V1-02 through V1-09 are Approved and pending in that order.
+  Path to 1.0 tranche are done; V1-03 is next (see "What is next" below).
+- `design/plan-1.0.md`: the canonical nine-card implementation queue. V1-01 and V1-02
+  are Verified; V1-03 through V1-09 are Approved and pending in that order.
 - `design/story/`: arc spec and world-story templates. Full story detail lives there.
 - `docs/dev-harness.md`: the pilot/sim/journey harness.
 
 ## Current state
 
-- Latest completed work: D-166, V1-01, the fourth high-fells site and finite fishing
-  loop. The preceding commit is `c2c576c`, D-165's approved V1-09 design and release gate.
-- Save format: `SaveCodec.Version = 92` (v91 = D-154, v92 = D-166; history comments in
+- Latest completed work: D-167, V1-02, the shared seasonal calendar, three climate bands,
+  forecasts, weather exposure, and the enabled stead-event follow-ons. D-166's V1-01
+  implementation is commit `ed48819`.
+- Save format: `SaveCodec.Version = 93` (v91 = D-154, v92 = D-166, v93 = D-167; history comments in
   `src/Aegis.Core/SaveCodec.cs`).
-- Tests: 848 green (`dotnet test tests/Aegis.Core.Tests/Aegis.Core.Tests.csproj -c Release
+- Tests: 862 green (`dotnet test tests/Aegis.Core.Tests/Aegis.Core.Tests.csproj -c Release
   --no-build`).
-- The D-166 Release build, full test run, sweep, replay, and worldgen purity gate are green.
+- The D-167 Release build, full test run, sweep, replay, and worldgen purity gate are green.
 
 ## Working conventions (were in user-level config, not visible to a new tool)
 
@@ -79,20 +80,21 @@ against the previous baseline set to see (and justify) drift. Then sim-replay at
 least seed 1's journal and require exact key/cycle/turn match. Then run the
 worldgen purity gate.
 
-**Current baselines are v95**, stored under `artifacts/aegis-sweep/`. The prior comparison
-set is v94. Every v95 twin pair is byte-identical:
+**Current baselines are v96**, stored under `artifacts/aegis-sweep/`. The prior comparison
+set is v95. Every v96 twin pair is byte-identical:
 
 | seed  | keys  | turns | deaths | fish caught | outcome                    |
 |-------|-------|-------|--------|-------------|----------------------------|
-| 1     | 25135 | 24009 | 7      | 96          | cycle 13, 12 crossings     |
-| 7     | 26128 | 24798 | 10     | 96          | cycle 13, 12 crossings     |
-| 99    | 29256 | 27491 | 12     | 96          | cycle 13, 12 crossings     |
-| 2024  | 25103 | 24090 | 9      | 96          | cycle 13, 12 crossings     |
-| 88888 | 28012 | 26304 | 7      | 92          | cycle 13, 12 crossings     |
+| 1     | 25260 | 24066 | 7      | 96          | cycle 13, 12 crossings     |
+| 7     | 26298 | 24998 | 9      | 96          | cycle 13, 12 crossings     |
+| 99    | 26662 | 25392 | 13     | 96          | cycle 13, 12 crossings     |
+| 2024  | 25198 | 24149 | 9      | 96          | cycle 13, 12 crossings     |
+| 88888 | 28253 | 26536 | 8      | 92          | cycle 13, 12 crossings     |
 
-Seed 1 sim replay: 25,135 keys, cycle 13, turn 24,009, line owned, three fresh reaches
-in the new world. Worldgen: 240 worlds, zero digest mismatches, 240 qualifying sites,
-all with three reaches and no resident enemy.
+Seed 1 sim replay: 25,260 keys, cycle 13, turn 24,066, autumn at position zero, line
+owned, and three fresh reaches in the new world. Worldgen: 240 worlds, zero digest
+mismatches, all twelve band-family weather cells populated (minimum 2,024 appearances),
+240 qualifying tarn sites, and all with three reaches.
 
 ## Engine invariants (break these and old saves die)
 
@@ -108,6 +110,10 @@ all with three reaches and no resident enemy.
   topics; deep-world steadholders already sit at the cap.
 - Coarse world tick = 160 turns (`SteadRaids.TickTurns`); the ScheduledFact
   calendar (`Upcoming`) runs on it.
+- Every world opens in autumn. The seed-drawn hard-winter tick 3-5 begins winter;
+  later seasons advance every three coarse ticks. Lowlands, road, and fells draw
+  independent deterministic three-card weather hands. Weather advances before schedule
+  and cadence work on each tick (D-167).
 - Movement keys h/j/k/l/y/u/b/n, `.` wait, `>` enter, `<` exit, `g` grab,
   `r` rest, `v` read (shrine only), `m` camp, `i` gear, `c` sheet, `e` eat,
   `o` order.
@@ -126,20 +132,23 @@ all with three reaches and no resident enemy.
 - Debug hooks on Game for tests: `Debug_SetPlayerPos`, `Debug_SetMount`,
   `Debug_ClearSite(kind)`, `Debug_GiveBook`, `Debug_BankLore`,
   `Debug_SetFellWinter(int)`, `Debug_HoldTheDeck`, `Debug_SetSky`.
+- D-167 adds `Debug_SetWeather(ClimateBand, WeatherFamily)`, `Debug_SetSeason`, and
+  `Debug_SteadEventEligible` for focused weather and event choreography.
 - Story-pinned seeds exist (e.g. master 42/43 cycle-2 stories); when a test breaks
   on a story draw, check whether a deliberate re-pin is recorded in decisions.md
   before "fixing" the world.
 
 ## What is next (queued, in recommended order)
 
-1. **V1-02: Weather and seasons v1** (`design/plan-1.0.md`, D-158). Its design is
-   Approved and implementation-ready. Build the shared seasonal calendar, three climate
-   bands, deterministic weather hands, forecasts, exposure rules, enabled stead events,
-   pilot behavior, persistence, presentation, evaluation, and its v93 save bump exactly
-   as the card specifies.
-2. **Verify V1-02 through this full sweep discipline**, then record its implementation
-   decision, check off tranche 2, and advance to V1-03.
-3. **V1-03 through V1-09 remain Approved in queue order.** Do not silently widen a card.
+1. **V1-03: D3 prose-variety infrastructure** (`design/plan-1.0.md`, D-159). Its design
+   is Approved and implementation-ready. Build fact-keyed surface composition, metadata,
+   provenance, a deterministic variation-key contract, the generate-then-curate audit,
+   report thresholds, and its required presentation and test coverage exactly as the card
+   specifies. This is primarily content/tooling work, but any engine change still takes
+   the complete sweep.
+2. **Verify V1-03 under its card and the HANDOFF discipline**, then record its
+   implementation decision, check off tranche 3, and advance to V1-04.
+3. **V1-04 through V1-09 remain Approved in queue order.** Do not silently widen a card.
    If implementation reveals a substantive contract conflict, present options and a
    recommendation to the user before changing the approved design.
 

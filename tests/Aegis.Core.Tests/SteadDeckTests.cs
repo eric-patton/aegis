@@ -136,7 +136,8 @@ public class SteadDeckTests
 
         game.Debug_DrawSteadEvent("drovers");
         NpcTests.BumpNpc(game, villager);
-        Assert.Contains(game.Topics, t => t.Label == "The season's news");
+        Assert.Contains(game.Topics, t => t.Label == "The season's news"
+            && t.Answer.Contains("It is autumn") && t.Answer.Contains("next"));
         game.ApplyKey('z');
 
         // Newest first: the wedding's news replaces the drovers' at the doors.

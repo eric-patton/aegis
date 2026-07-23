@@ -89,6 +89,7 @@ public class SteadMovesTests
     public void TheLastMeasure_CallsTheLevy()
     {
         var game = new Game(42);
+        game.Debug_HoldTheDeck();
         Wait(game, SteadRaids.TickTurns * 4); // two raids, then the watch eats down to 1
 
         Assert.Equal(1, game.Stores);
@@ -103,6 +104,7 @@ public class SteadMovesTests
     public void TheLarder_TakesTheLevysAnswer_NotBread()
     {
         var game = new Game(42);
+        game.Debug_HoldTheDeck();
         Wait(game, SteadRaids.TickTurns * 4);
         Assert.True(game.LevyStands);
         game.Player.Coin = 30;
@@ -131,6 +133,7 @@ public class SteadMovesTests
     public void ShortCoin_AnswersNothing_AndBuysNothing()
     {
         var game = new Game(42);
+        game.Debug_HoldTheDeck();
         Wait(game, SteadRaids.TickTurns * 4);
         Assert.True(game.LevyStands);
         game.Player.Coin = SteadLevy.AnswerCoin - 1;
@@ -180,6 +183,7 @@ public class SteadMovesTests
     public void TheCrossing_StandsBothMovesDown()
     {
         var game = new Game(42);
+        game.Debug_HoldTheDeck();
         Wait(game, SteadRaids.TickTurns * 4); // watch up, levy standing
         Assert.True(game.WatchStands);
         Assert.True(game.LevyStands);

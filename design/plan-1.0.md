@@ -28,7 +28,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 | Card | Tranche | Design status | Decisions | Implementation |
 |------|---------|---------------|-----------|----------------|
 | V1-01 | High-fells capstone, the black tarn | Verified | D-156, D-166 | Completed |
-| V1-02 | Weather and seasons v1 | Approved | D-158 | Pending |
+| V1-02 | Weather and seasons v1 | Verified | D-158, D-167 | Completed |
 | V1-03 | D3 prose-variety infrastructure | Approved | D-159 | Pending |
 | V1-04 | D1 pacing steering | Approved | D-160 | Pending |
 | V1-05 | Town and economy depth | Approved | D-161 | Pending |
@@ -46,7 +46,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 **Roadmap association:** Path to 1.0 tranche 1; B4 later regions; wilderness fishing  
 **Dependencies:** D-138 camping, D-140 town market, D-146 high fells, D-153 regional
 goods, D-155 release sequence  
-**Implementation status:** Completed and verified 2026-07-22; V1-02 is next
+**Implementation status:** Completed and verified 2026-07-22
 
 ### Approved behavior
 
@@ -116,14 +116,14 @@ goods, D-155 release sequence
 
 ## V1-02: Weather and seasons v1
 
-**Design status:** Approved
+**Design status:** Verified
 
-**Decisions:** D-158
+**Decisions:** D-158, D-167
 
 **Roadmap association:** Path to 1.0 tranche 2; weather and seasons; A2 follow-ons  
 **Known dependencies:** Scheduled facts, stead event deck, road sky, wolf-winter, regions,
 camping, economy, black tarn  
-**Implementation status:** Pending in queue order
+**Implementation status:** Completed and verified 2026-07-22; V1-03 is next
 
 ### Approved behavior
 
@@ -284,6 +284,30 @@ camping, economy, black tarn
 - Implementation is complete only after a clean Release build and tests, five-seed journey
   twins, exact sim replay, justified drift from the then-current baseline, and worldgen
   purity all pass under the HANDOFF sweep discipline.
+
+### Implementation record
+
+- D-167 builds the approved calendar, climate hands, forecasts, exposure rules, deck
+  gates, two weather cards, one-tick larder bargain, readers, snapshot, help, pilot,
+  journey metrics, and WorldEval coverage. Save v92 advances to v93.
+- The opening autumn's first card holds through any seed-drawn lead beyond the regular
+  three ticks, then the full three-card hand walks into winter. This preserves D-132's
+  tick 3-5 arrival without inventing a fourth or fifth autumn card.
+- Release build: zero warnings and zero errors. Tests: 862 passed, including 14 focused
+  `WeatherTests` plus the existing road, fells, schedule, facility, twist, economy,
+  fishing, gathering, combat, presentation, save, and replay coverage.
+- Five v96 twelve-crossing twin pairs for seeds 1, 7, 99, 2024, and 88888 are
+  byte-identical. All five reach cycle 13. Seed 1 replays exactly at 25,260 keys and
+  turn 24,066. Drift from v95 is bounded and follows seasonal stores, weather recovery,
+  and forecast timing.
+- The journey sweep records every weather family in every climate band. It exercises
+  exposed Wet, Wind, and Cold camps across the five first runs, three forecast deferrals,
+  Haying days, Late frost, offered, bought, and expired bargains. Focused tests prove the
+  Cold refusal, granary prevention, Shame refusal, friend price, roofs, waystones, pelt,
+  lowland leniency, and unchanged ordinary prices.
+- Worldgen evaluates 240 worlds twice with zero digest mismatches. Every one of the twelve
+  band-family cells has nonzero coverage, with the least common cell still appearing
+  2,024 times in the four-year-per-world hand audit.
 
 ### Explicit exclusions
 

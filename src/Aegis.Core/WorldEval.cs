@@ -16,7 +16,8 @@ public sealed record WorldMeasure(
     string Twist, string TwistVariant, int Waystones,
     int Npcs, int Villagers, int Facts, Dictionary<string, int> FactTypes,
     int StoryStorylets, List<string> StoryletIds,
-    List<SiteMeasure> Sites, int Gleanings, int HerbSpots, int TarnIronSeams, bool WildPony, int BreadBase);
+    List<SiteMeasure> Sites, int Gleanings, int HerbSpots, int TarnIronSeams, bool WildPony,
+    Dictionary<string, int> WeatherFamilies, int BreadBase);
 
 /// <summary>One tier's slice of the batch: how the generator spreads itself at that depth.</summary>
 public sealed record TierSummary(
@@ -86,11 +87,30 @@ public static class WorldEval
             HerbSpots: w.Herbs.Count,
             TarnIronSeams: w.TarnIronSeams.Count,
             WildPony: w.WildPonyPos is not null,
+            WeatherFamilies: WeatherCoverage(w.Seed),
             // The one generation-time price spread today: the blight's thin larder
             // prices bread at 6 where every other story opens at 4, mirroring
             // RationPrice's base term. Grows into a real spread when per-region
             // prices land (plan 2026-07 B3); the column is here so the chart is.
             BreadBase: story == CreepingBlightTemplate.Id ? 6 : 4);
+    }
+
+    /// <summary>
+    /// Four full years of deterministic hands, enough for the broad evaluator
+    /// to chart every band and family without advancing a live Game.
+    /// </summary>
+    public static Dictionary<string, int> WeatherCoverage(ulong worldSeed, int years = 4)
+    {
+        var counts = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var band in Enum.GetValues<ClimateBand>())
+            foreach (var family in Enum.GetValues<WeatherFamily>())
+                counts[$"{band.ToString().ToLowerInvariant()}:{family.ToString().ToLowerInvariant()}"] = 0;
+
+        for (int seasonIndex = 0; seasonIndex < years * 4; seasonIndex++)
+            foreach (var band in Enum.GetValues<ClimateBand>())
+                foreach (var family in WeatherCalendar.Hand(worldSeed, band, seasonIndex))
+                    counts[$"{band.ToString().ToLowerInvariant()}:{family.ToString().ToLowerInvariant()}"]++;
+        return counts;
     }
 
     /// <summary>
@@ -233,6 +253,7 @@ public static class WorldEval
         var m = Measure(w);
         Fold($"{m.Seed}|{m.Tier}|{m.WorldName}|{m.SettlementName}|{m.Story}|{m.Twist}|{m.TwistVariant}|{m.Waystones}|{m.Npcs}|{m.Facts}|{m.StoryStorylets}|{m.Gleanings}|{m.HerbSpots}|{m.TarnIronSeams}|{m.WildPony}");
         foreach (var kv in m.FactTypes) Fold($"{kv.Key}={kv.Value}");
+        foreach (var kv in m.WeatherFamilies) Fold($"{kv.Key}={kv.Value}");
         foreach (var id in m.StoryletIds) Fold(id);
         foreach (var s in m.Sites) Fold($"{s.Id}|{s.Kind}|{s.Spawns}|{s.Monsters}|{s.Stone}|{s.Coffer}|{s.FishingReaches}");
         foreach (var s in RawSurfaces(w)) Fold(s);

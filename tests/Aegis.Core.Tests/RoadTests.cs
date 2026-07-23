@@ -119,6 +119,7 @@ public class RoadTests
         var game = new Game(42);
         var spot = OpenGround(game.World.Overworld, game);
         game.Debug_SetPlayerPos(spot);
+        game.Debug_SetWeather(ClimateBand.Lowlands, WeatherFamily.Calm);
         game.Debug_HurtPlayer(10);
         game.Player.Rations = 1;
         game.Player.RawMeat = 2;

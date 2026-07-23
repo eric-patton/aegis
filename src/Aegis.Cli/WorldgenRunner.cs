@@ -93,12 +93,18 @@ public static class WorldgenRunner
             .Select(g => WorldEval.Summarize(g.Key, [.. g]))
             .ToList();
         var audit = WorldEval.AuditSkeletons(skeletons, top);
+        var weatherCoverage = measures
+            .SelectMany(m => m.WeatherFamilies)
+            .GroupBy(kv => kv.Key)
+            .OrderBy(g => g.Key, StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => g.Sum(kv => kv.Value));
 
         if (json)
         {
             var report = new WorldgenReport(
                 Seeds: seeds, Start: start, TierLo: tierLo, TierHi: tierHi,
                 Worlds: measures.Count, DigestMismatches: mismatches,
+                WeatherCoverage: weatherCoverage,
                 Tiers: tiers, Skeletons: audit, Measures: measures);
             Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(report, PilotJsonPretty.Default.WorldgenReport));
             return mismatches == 0 ? 0 : 2;
@@ -121,6 +127,8 @@ public static class WorldgenRunner
         }
         w.WriteLine();
         w.WriteLine(new string('-', 70));
+        w.WriteLine($"weather hands: {string.Join(", ", weatherCoverage.Select(kv => $"{kv.Key} x{kv.Value}"))}");
+        w.WriteLine();
         w.WriteLine($"prose skeletons (names struck out, {audit.Surfaces} surfaces):");
         w.WriteLine($"  {audit.DistinctSkeletons} distinct; {audit.RepeatShare:P1} of surfaces reuse a skeleton across worlds.");
         w.WriteLine($"  most reused:");
@@ -140,4 +148,5 @@ public static class WorldgenRunner
 /// <summary>The harness's machine-readable report (D-137): the prose report's facts as data, for CI charting.</summary>
 internal sealed record WorldgenReport(
     int Seeds, ulong Start, int TierLo, int TierHi, int Worlds, int DigestMismatches,
+    Dictionary<string, int> WeatherCoverage,
     List<TierSummary> Tiers, SkeletonSummary Skeletons, List<WorldMeasure> Measures);

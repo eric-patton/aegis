@@ -101,6 +101,11 @@ public static class JourneyPilot
             return g.Player.Coin >= TownCost(g, FellFishing.LinePrice)
                 ? OfferDigit(g, TradeGood.FishingLine) ?? 'z'
                 : 'z';
+        if (g.InTalkMenu && g.TalkNpc?.Id == "npc_steadholder" && g.SeasonBargainOpen)
+            return !g.SeasonBargainRefused && g.Stores < g.StoresMax
+                && g.Player.Coin >= g.SeasonBargainPrice
+                    ? OfferDigit(g, TradeGood.Ration) ?? 'z'
+                    : 'z';
         // The woodward's bench is a talk menu we drive on purpose too (D-072, D-073): with
         // hides cured or raw meat in hand, open the wood's edge, sell the lot and cook the
         // meat down to rations, then step back. The trade menu sits behind one talk digit
@@ -334,6 +339,15 @@ public static class JourneyPilot
             if (toHolder is not null) return toHolder;
         }
 
+        // The autumn cart stands for one tick only (D-158). If its measure is
+        // useful and affordable, the pilot puts it ahead of optional travel.
+        if (g.SeasonBargainOpen && !g.SeasonBargainRefused && g.Stores < g.StoresMax
+            && g.Player.Coin >= g.SeasonBargainPrice && Steadholder(g) is { } bargainHolder)
+        {
+            var toHolder = NavKey(g, g.World.Overworld, p.Pos, bargainHolder.Pos, OverworldBlocked(g));
+            if (toHolder is not null) return toHolder;
+        }
+
         // Take the nearest site still worth entering before the arch.
         var target = NearestUnclearedSite(g, skip);
 
@@ -366,7 +380,8 @@ public static class JourneyPilot
         // and mending, and the verges' herbs, all through real keys.
         if (RoadTripWanted(g, skip))
         {
-            if (p.Pos == g.World.RoadMouthPos) return '>';
+            if (p.Pos == g.World.RoadMouthPos)
+                return ColdDeferralWanted(g, ClimateBand.Road) ? '.' : '>';
             var toMouth = NavKey(g, g.World.Overworld, p.Pos, g.World.RoadMouthPos, OverworldBlocked(g));
             if (toMouth is not null) return toMouth;
         }
@@ -496,6 +511,16 @@ public static class JourneyPilot
         (g.Player.RawMeat > 0 || g.Player.TarnTrout > 0) && g.Player.Rations < Game.RationCap;
 
     /// <summary>
+    /// A bounded forecast wait (D-158): only Cold, only when the body lacks
+    /// supper or blood, and only when the next tick is known to improve.
+    /// A repeated Cold card is accepted rather than waited through twice.
+    /// </summary>
+    private static bool ColdDeferralWanted(Game g, ClimateBand band) =>
+        g.WeatherAt(band) == WeatherFamily.Cold
+        && g.ForecastAt(band) != WeatherFamily.Cold
+        && (g.Player.Rations == 0 || g.Player.Hp * 2 <= g.Player.EffectiveMaxHp);
+
+    /// <summary>
     /// The road's own errand loop (D-138): reclaim anything a fall left out
     /// here, hunt the glade, camp on the kill where the ground is plain, pick
     /// the verges, then take the mouth for home. Deterministic like everything
@@ -537,7 +562,8 @@ public static class JourneyPilot
                 var keeper = g.World.Waykeeper;
                 if (NavKey(g, road, p.Pos, keeper.Pos, blocked) is { } toKeeper) return toKeeper;
             }
-            if (p.Pos == g.World.FellMouthPos) return '>';
+            if (p.Pos == g.World.FellMouthPos)
+                return ColdDeferralWanted(g, ClimateBand.Fells) ? '.' : '>';
             if (NavKey(g, road, p.Pos, g.World.FellMouthPos, blocked) is { } toTrack) return toTrack;
         }
 

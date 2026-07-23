@@ -37,12 +37,11 @@ public static class Peddling
 }
 
 /// <summary>
-/// The road's own sky (D-138): weather as a standing condition, felt only on
-/// the east road where there is no roof to put between it and the walker.
-/// Redrawn on the coarse tick from its own stream, wherever the bearer stands,
-/// so replay always agrees on what the tops were doing.
+/// Compatibility names for D-138's original road sky. V1 weather uses the
+/// shared <see cref="WeatherFamily"/> grammar; tests and older readers may
+/// still use these local road names.
 /// </summary>
-public enum RoadSky { Clear, Rain, Cold }
+public enum RoadSky { Clear, Rain, Cold, Wind }
 
 /// <summary>
 /// The road's numbers (D-138, plan 2026-07 B1). The camp is the wilderness
@@ -584,11 +583,63 @@ public sealed class Game
     /// <summary>The season deck's stream (D-133): per-world, re-derived at the crossing with the calendar.</summary>
     private Rng _steadDeckRng;
 
-    /// <summary>The road's sky stream (D-138): per-world, re-derived at the crossing beside the deck's.</summary>
-    private Rng _roadSkyRng;
+    /// <summary>The seed-drawn tick on which the opening autumn becomes winter.</summary>
+    private int _winterDueTick;
 
-    /// <summary>What the tops are doing right now (D-138): felt on the road, redrawn each coarse tick.</summary>
-    public RoadSky Sky { get; private set; }
+    /// <summary>The current place on the shared seasonal calendar (D-158).</summary>
+    private WeatherMoment _weatherMoment;
+
+    /// <summary>Focused-test pins. Ordinary play leaves every entry null.</summary>
+    private readonly WeatherFamily?[] _debugWeather = new WeatherFamily?[3];
+    private WeatherMoment? _debugWeatherMoment;
+
+    public WorldSeason Season => (_debugWeatherMoment ?? _weatherMoment).Season;
+    public int SeasonPosition => (_debugWeatherMoment ?? _weatherMoment).Position;
+    public int SeasonIndex => (_debugWeatherMoment ?? _weatherMoment).SeasonIndex;
+    public int WinterDueTick => _winterDueTick;
+
+    /// <summary>Town shares the lowland sky despite opening off the road map.</summary>
+    public ClimateBand LocalClimate => CurrentSite?.Kind == SiteKind.Town
+        ? ClimateBand.Lowlands
+        : Area switch
+        {
+            Area.Road => ClimateBand.Road,
+            Area.Fells => ClimateBand.Fells,
+            _ => ClimateBand.Lowlands,
+        };
+
+    public WeatherFamily WeatherAt(ClimateBand band)
+    {
+        var moment = _debugWeatherMoment ?? _weatherMoment;
+        return _debugWeather[(int)band] ?? WeatherCalendar.At(World.Seed, band, moment);
+    }
+
+    public WeatherFamily ForecastAt(ClimateBand band)
+    {
+        if (_debugWeather[(int)band] is { } pinned) return pinned;
+        int tick = (Turn - _worldStartTurn) / SteadRaids.TickTurns;
+        var next = _debugWeatherMoment is { } fixedMoment
+            ? new WeatherMoment(fixedMoment.Season, fixedMoment.SeasonIndex,
+                Math.Min(WeatherCalendar.CardsPerHand - 1, fixedMoment.Position + 1))
+            : WeatherCalendar.AtTick(tick + 1, _winterDueTick);
+        return WeatherCalendar.At(World.Seed, band, next);
+    }
+
+    public WeatherFamily CurrentWeather => WeatherAt(LocalClimate);
+    public WeatherFamily LocalForecast => ForecastAt(LocalClimate);
+
+    /// <summary>D-138 compatibility read over the current local family.</summary>
+    public RoadSky Sky => CurrentWeather switch
+    {
+        WeatherFamily.Wet => RoadSky.Rain,
+        WeatherFamily.Cold => RoadSky.Cold,
+        WeatherFamily.Wind => RoadSky.Wind,
+        _ => RoadSky.Clear,
+    };
+
+    /// <summary>The autumn store offer currently standing on the larder board.</summary>
+    public bool SeasonBargainOpen { get; private set; }
+    private int _seasonBargainOpenedTick = -1;
 
     /// <summary>Test-only (D-133): a held deck deals nothing, so choreographed tick tests stay about the cadence.</summary>
     private bool _deckHeld;
@@ -1394,7 +1445,7 @@ public sealed class Game
         // sheet) still open; anything that would cost the field a turn spends it
         // on loosing the blow instead. There is no taking it back: that is the
         // whole of the commitment the field already read.
-        if (Player.HeaveTarget is { } heaveCell && cmd is not (Command.Gear or Command.Sheet))
+        if (Player.HeaveTarget is { } heaveCell && cmd is not (Command.Gear or Command.Sheet or Command.Help))
         {
             ResolveHeave(heaveCell);
             AdvanceTurn();
@@ -1403,7 +1454,7 @@ public sealed class Game
 
         // The levin held (D-091) commits the same way the heave does: the next
         // act that would cost a turn spends it saying the word instead.
-        if (Player.LevinTarget is { } levinCell && cmd is not (Command.Gear or Command.Sheet))
+        if (Player.LevinTarget is { } levinCell && cmd is not (Command.Gear or Command.Sheet or Command.Help))
         {
             ResolveLevin(levinCell);
             AdvanceTurn();
@@ -1432,10 +1483,20 @@ public sealed class Game
             Command.Parry => DoParry(),
             Command.Order => DoOrder(),
             Command.Camp => DoCamp(),
+            Command.Help => DoWeatherHelp(),
             _ => CommandMap.Delta(cmd) is { } d && DoMove(d.dx, d.dy),
         };
 
         if (tookTime) AdvanceTurn();
+    }
+
+    private bool DoWeatherHelp()
+    {
+        Log.Add(Turn, "Weather: Calm leaves travel and camp unchanged. Wind halves healing at an exposed camp.", LogTone.Info);
+        Log.Add(Turn, "Wet also stops step stamina recovery on the road and fells. Cold does the same and refuses a supperless camp there.", LogTone.Info);
+        Log.Add(Turn, "Lowland steps always recover. Roofs and Held Road waystones shelter camps; the great pelt answers the fells' extra Cold.", LogTone.Info);
+        Log.Add(Turn, "The sidebar's > mark is the next coarse tick's forecast. Waiting still advances every world clock.", LogTone.Info);
+        return false;
     }
 
     private bool DoMove(int dx, int dy)
@@ -1784,34 +1845,42 @@ public sealed class Game
     }
 
     /// <summary>
-    /// The walking's small recovery (D-138 factors the old +1): under a foul
-    /// road sky the weather takes it, which is the whole of "exposure" in v1:
-    /// no meter, no damage, just a road that no longer pays for itself and a
-    /// camp that mends less. In the valley nothing changes.
+    /// The walking's small recovery (D-138, D-158): Wet and Cold take it on
+    /// the road and fells. Wind still lets the legs answer, and lowland walking
+    /// remains forgiving under every family.
     /// </summary>
     private void StepRegen()
     {
-        if (Area != Area.Valley && Mode == MapMode.Overworld && Sky != RoadSky.Clear) return;
+        if (Area != Area.Valley && Mode == MapMode.Overworld
+            && WeatherCalendar.SuppressesWildStep(CurrentWeather)) return;
         Player.Stamina = Math.Min(Player.MaxStamina, Player.Stamina + 1);
     }
 
     /// <summary>The site whose mouth is at this position on THIS overworld (D-138).</summary>
     private Site? SiteHere(Pos p) => World.Sites.FirstOrDefault(s => s.Area == Area && s.OverworldPos == p);
 
-    /// <summary>The sky read aloud (D-138): said on taking the road, and again whenever the tick turns it.</summary>
-    private string SkyLine() => Sky switch
+    /// <summary>The local sky read aloud, without exposing another country's current card.</summary>
+    private string WeatherLine(ClimateBand band) => (band, WeatherAt(band)) switch
     {
-        RoadSky.Rain => "The sky over the road is grey wool, and the rain comes fine and stays: soaking weather, the kind that runs down the neck and takes the spring out of a stride.",
-        RoadSky.Cold => "The wind off the tops has teeth today. Cold weather on the road: the kind a fire answers and nothing else does.",
-        _ => "The sky over the road stands clear, and the walking is as good as walking gets.",
+        (ClimateBand.Lowlands, WeatherFamily.Wet) => "Rain stands over the low country, steady enough to darken every thatch and lane.",
+        (ClimateBand.Lowlands, WeatherFamily.Wind) => "A hard wind crosses the low country, worrying smoke flat along the roofs.",
+        (ClimateBand.Lowlands, WeatherFamily.Cold) => "Frost holds the low country, white in the shade and iron at the puddles.",
+        (ClimateBand.Lowlands, _) => "The low country stands fair, with easy light over field and roof.",
+        (ClimateBand.Road, WeatherFamily.Wet) => "The sky over the road is grey wool, and the rain comes fine and stays: soaking weather that takes the spring out of a stride.",
+        (ClimateBand.Road, WeatherFamily.Wind) => "A crosswind works the road from verge to verge. The walking still pays, but a campfire will fight for every spark.",
+        (ClimateBand.Road, WeatherFamily.Cold) => "The wind off the tops has teeth today. Cold weather on the road: supper and a fire are the answers.",
+        (ClimateBand.Road, _) => "The sky over the road stands clear, and the walking is as good as walking gets.",
+        (ClimateBand.Fells, WeatherFamily.Wet) => "Wet mist closes over the fells, beading on heath and stone until every step carries water.",
+        (ClimateBand.Fells, WeatherFamily.Wind) => "A gale walks the fells unhindered, flattening the heath and taking the heat out of any open fire.",
+        (ClimateBand.Fells, WeatherFamily.Cold) => "Killing cold sits on the fells. No lee lasts, and a supperless camp is no camp at all.",
+        _ => "The fells stand clear from heath to scree, good walking on ground that rarely grants it.",
     };
 
-    private RoadSky DrawSky() => _roadSkyRng.Next(6) switch
-    {
-        <= 2 => RoadSky.Clear,
-        <= 4 => RoadSky.Rain,
-        _ => RoadSky.Cold,
-    };
+    public string WeatherRead(ClimateBand band) =>
+        $"{WeatherCalendar.Name(band, WeatherAt(band))}; next {WeatherCalendar.Name(band, ForecastAt(band))}";
+
+    private string ForecastLine(ClimateBand band) =>
+        $"The next turn of the weather reads {WeatherCalendar.Name(band, ForecastAt(band))}.";
 
     private bool DoEnter()
     {
@@ -1955,7 +2024,8 @@ public sealed class Game
         if (toRoad)
         {
             Log.Add(Turn, $"You take the drove road east, up out of the valley and into the {World.RoadRegion.Name}. The stead's smoke drops behind the shoulder of the hills, and the road settles into its own long rhythm.", LogTone.Info);
-            Log.Add(Turn, SkyLine(), LogTone.Info);
+            Log.Add(Turn, WeatherLine(ClimateBand.Road), LogTone.Info);
+            Log.Add(Turn, ForecastLine(ClimateBand.Road), LogTone.Info);
         }
         else
         {
@@ -1986,7 +2056,8 @@ public sealed class Game
             Log.Add(Turn, FellWinterStands
                 ? $"You take the drovers' track up into the wolf-winter: the {World.FellRegion.Name} white to every horizon, the tarns lidded black, and nothing moving that is not hunting. Whatever hunts up here now is hungrier than it was."
                 : $"You take the drovers' track up off the road's shoulder and onto the {World.FellRegion.Name}: heath to every horizon, scree walling the ways, and not a roof in any of it. Whatever the night wants up here, a camp is the only answer you carry.", LogTone.Info);
-            Log.Add(Turn, SkyLine(), LogTone.Info);
+            Log.Add(Turn, WeatherLine(ClimateBand.Fells), LogTone.Info);
+            Log.Add(Turn, ForecastLine(ClimateBand.Fells), LogTone.Info);
         }
         else
         {
@@ -2021,7 +2092,7 @@ public sealed class Game
         var (food, made) = cookingFish ? FishCookPlan() : CookPlan();
         if (Player.Rations == 0 && (food == 0 || made == 0))
         {
-            if (Area != Area.Valley && Sky == RoadSky.Cold && !WaystoneShelter)
+            if (Area != Area.Valley && CurrentWeather == WeatherFamily.Cold && !WaystoneShelter)
             {
                 Log.Add(Turn, "A supperless camp under this wind is how walkers are found at the spring thaw. You keep your feet instead.", LogTone.Danger);
                 return false;
@@ -2044,7 +2115,7 @@ public sealed class Game
         }
 
         bool sheltered = WaystoneShelter;
-        bool foul = Area != Area.Valley && Sky != RoadSky.Clear && !sheltered;
+        bool foul = WeatherCalendar.HalvesExposedCamp(CurrentWeather) && !sheltered;
         Player.Rations--;
         int hpBefore = Player.Hp;
         int heal = RoadLife.CampHealBase + RoadLife.CampHealPerSurvival * Player.Skills.Level(SkillId.Survival);
@@ -2052,11 +2123,11 @@ public sealed class Game
         // The fells' cold has no lee (D-146): the frontier's exposure bites a
         // second time, so a cold night up there mends a quarter at best,
         // unless the great pelt (D-150) is in the bedroll doing its one work.
-        bool peltHolds = Area == Area.Fells && Sky == RoadSky.Cold && Player.WolfPelt;
-        if (Area == Area.Fells && Sky == RoadSky.Cold && !Player.WolfPelt) heal /= 2;
+        bool peltHolds = Area == Area.Fells && CurrentWeather == WeatherFamily.Cold && Player.WolfPelt;
+        if (Area == Area.Fells && CurrentWeather == WeatherFamily.Cold && !Player.WolfPelt) heal /= 2;
         if (peltHolds)
             Log.Add(Turn, "The great pelt goes over the bedroll, and the fells' cold stays on its own side of it all night.", LogTone.Info);
-        if (sheltered && Sky != RoadSky.Clear)
+        if (sheltered && CurrentWeather != WeatherFamily.Calm)
             Log.Add(Turn, "The waystone takes the weather off the fire as surely as a roof. Supper and the whole night are still owed.", LogTone.Info);
         Player.Hp = Math.Min(Player.EffectiveMaxHp, Player.Hp + heal);
         Player.Stamina = Player.MaxStamina;
@@ -3279,12 +3350,13 @@ public sealed class Game
     /// </summary>
     private List<(string Label, string Answer)> BuildWaykeeperTopics()
     {
-        string sky = Sky switch
+        string sky = WeatherAt(ClimateBand.Road) switch
         {
-            RoadSky.Rain => "Soaking weather out there; it gets into everything but the bones, and it is working on those.",
-            RoadSky.Cold => "The wind has teeth today. Camp cold on the tops in this and the spring thaw finds you.",
+            WeatherFamily.Wet => "Soaking weather out there; it gets into everything but the bones, and it is working on those.",
+            WeatherFamily.Wind => "Crosswind today. It lets the legs work, but an open camp will mend poorly.",
+            WeatherFamily.Cold => "The wind has teeth today. Camp cold on the tops in this and the spring thaw finds you.",
             _ => "Good walking weather, while it holds. It never holds.",
-        };
+        } + $" Next turn reads {WeatherCalendar.Name(ClimateBand.Road, ForecastAt(ClimateBand.Road))}.";
         string trail = World.RoadWildsSite.Cleared
             ? "The half-way glade is hunted quiet for now; the deer will forget, they always do."
             : "Deer come down to the half-way glade most evenings, if your supper still walks on legs.";
@@ -3300,6 +3372,7 @@ public sealed class Game
             + (FellWinterStands
                 ? " And not this season, walker, not without need: a wolf-winter sits up there, and hungry ground makes bold teeth."
                 : "")
+            + $" The tops stand under {WeatherCalendar.Name(ClimateBand.Fells, WeatherAt(ClimateBand.Fells))} now, with {WeatherCalendar.Name(ClimateBand.Fells, ForecastAt(ClimateBand.Fells))} next."
             + (World.BlackTarnSite.Cleared
                 ? " The black tarn has gone quiet too: all three known reaches worked until the water would answer no more."
                 : " The black tarn lies higher than the wolf-ground. Three reaches give to a hook and line before the water goes still; I keep the tackle here.")
@@ -3452,10 +3525,13 @@ public sealed class Game
         // every villager door carries an offer digit besides; the keeper
         // sweeps the stead's center, watches its seasons pass for a living,
         // and keeps a board with room.
-        if (World.Facts.All.LastOrDefault(f => f.Type == "event" && f.Subject
+        string forecast = $"\"It is {Season.ToString().ToLowerInvariant()}. The low country stands under {WeatherRead(ClimateBand.Lowlands)}."
+            + " The road and tops keep their own skies; the waykeeper reads those at the climb.\"";
+        string remembered = World.Facts.All.LastOrDefault(f => f.Type == "event" && f.Subject
                 is "hard_winter" or "muster_broken" or "far_fields" or "drovers"
-                or "fords_washout" or "washout_stood" or "wedding" or "wedding_put_off") is { } news)
-            topics.Add(("The season's news", news.Subject switch
+                or "fords_washout" or "washout_stood" or "wedding" or "wedding_put_off"
+                or "haying_days" or "late_frost" or "late_frost_stood" or "season_bargain_bought") is { } news
+            ? news.Subject switch
             {
                 "hard_winter" => "\"That winter was a fist. Snow to the sills and the fords iced shut; we fed every mouth from the lofts and burned green wood, and we are still counting what it cost us.\"",
                 "muster_broken" => "\"The hills were all fires one week and dark the next. Whatever gathered up there over its dead broke up before it came down on us, and we sleep the easier for never learning that night.\"",
@@ -3464,8 +3540,15 @@ public sealed class Game
                 "fords_washout" => "\"The river took the fords the way the old men said it would. What the low granary held went down the valley with the fence rails. We listen to the old men now. For a while, anyway.\"",
                 "washout_stood" => "\"The river took the fords the way the old men said it would, and the old men had their week of being right. But the new granary sat up on its staddle stones with the water talking underneath it, and not a measure went down the valley. Best boards ever bought in this stead, and the coin was not even ours.\"",
                 "wedding" => "\"There was a wedding, if you can believe it, with everything else this season has done. Two households under one roof-tree now, and the lanes still smell faintly of beer. Nobody is sorry.\"",
+                "haying_days" => "\"The haying came in dry. That sounds like no news until you have watched a year when it did not. One clean measure in the lofts, and every hand home before rain.\"",
+                "late_frost" => "\"The late frost took green heads and one measure after them. A forecast tells you what may come; it does not make the field less cold.\"",
+                "late_frost_stood" => "\"The late frost came, and the raised granary kept seed and old grain off the cold floor. Not a measure lost. Good boards answer more than rain.\"",
+                "season_bargain_bought" => "\"The autumn cart rolled lighter than it came, and our lofts stand one measure fuller. Coin has its seasons too.\"",
                 _ => "\"The banns were read, but the lofts had the last word: no stead feasts at the boards. They will stand up together in a better season. We say that about a lot of things now.\"",
-            }));
+            }
+            : "";
+        if (remembered.Length > 0)
+            topics.Add(("The season's news", forecast + " " + remembered));
 
         return topics;
     }
@@ -3578,7 +3661,11 @@ public sealed class Game
         // While the levy stands (D-105) the larder's digit becomes the levy's
         // answer: label text only, the same slot, so no digit shifts (D-041).
         if (npc.Id == "npc_steadholder")
-            offers.Add((TradeGood.Ration, "", LarderBarred
+            offers.Add((TradeGood.Ration, "", SeasonBargainOpen
+                ? SeasonBargainRefused
+                    ? "The season's grain bargain (the cart refuses your name)"
+                    : $"Take the season's grain bargain ({SeasonBargainPrice} coin for one store)"
+                : LarderBarred
                 ? "Buy a ration (the larder is barred to you)"
                 : LevyStands
                     ? $"Answer the stead's levy ({SteadLevy.AnswerCoin} coin against a carted measure)"
@@ -4894,6 +4981,13 @@ public sealed class Game
         if (TalkNpc!.Kind == NpcKind.Towner)
         {
             TryBuyTownRation();
+            return;
+        }
+        if (TalkNpc.Id == "npc_steadholder" && SeasonBargainOpen)
+        {
+            TrySeasonBargain();
+            _offers.Clear();
+            _offers.AddRange(BuildOffers(TalkNpc));
             return;
         }
         // The barred larder (D-086): a named thief is not sold bread. The refusal
@@ -8280,13 +8374,14 @@ public sealed class Game
         // quiet streak reset with the World bucket; the book itself spans the run.
         Teller.NewWorld(Player.Deaths);
         _steadDeckRng = new Rng(SeedTree.Derive(World.Seed, "stead_deck"));
-        // The road's sky (D-138): its own per-world stream beside the deck's,
-        // first drawn at arrival, redrawn each coarse tick wherever the bearer
-        // stands, so replay always agrees on the weather.
-        _roadSkyRng = new Rng(SeedTree.Derive(World.Seed, "road_sky"));
-        Sky = DrawSky();
         var rng = new Rng(SeedTree.Derive(World.Seed, "winter"));
         int due = 3 + rng.Next(3);
+        _winterDueTick = due;
+        _weatherMoment = WeatherCalendar.AtTick(0, due);
+        _debugWeatherMoment = null;
+        Array.Fill(_debugWeather, null);
+        SeasonBargainOpen = false;
+        _seasonBargainOpenedTick = -1;
         _schedule.Add(new ScheduledFact
         {
             Key = "hard_winter",
@@ -8323,6 +8418,38 @@ public sealed class Game
                 future.Foreshadow?.Invoke(this);
             }
         }
+    }
+
+    /// <summary>
+    /// Turns the shared calendar before any scheduled future or cadence work
+    /// (D-158). Only the weather over the bearer's current ground is narrated;
+    /// the other bands remain available through their readers.
+    /// </summary>
+    private void AdvanceWeather(int tick)
+    {
+        if (SeasonBargainOpen && _seasonBargainOpenedTick < tick)
+        {
+            SeasonBargainOpen = false;
+            World.Facts.Add("event", "season_bargain_expired", World.SettlementName,
+                $"The autumn grain bargain at {World.SettlementName}'s larder stood for one turn of the season and passed untaken.");
+        }
+
+        var oldMoment = _weatherMoment;
+        var band = LocalClimate;
+        var oldWeather = WeatherCalendar.At(World.Seed, band, oldMoment);
+        _weatherMoment = WeatherCalendar.AtTick(tick, _winterDueTick);
+
+        if (_weatherMoment.Season != oldMoment.Season)
+        {
+            string season = _weatherMoment.Season.ToString().ToLowerInvariant();
+            World.Facts.Add("season", $"{season}_{_weatherMoment.SeasonIndex}", World.Name,
+                $"The shared calendar of {World.Name} turned to {season} on coarse tick {tick}.");
+            Log.Add(Turn, $"The season turns to {season}. Every country keeps the same calendar, though each keeps its own sky.", LogTone.Info);
+        }
+
+        var newWeather = WeatherCalendar.At(World.Seed, band, _weatherMoment);
+        if (newWeather != oldWeather)
+            Log.Add(Turn, WeatherLine(band), LogTone.Info);
     }
 
     /// <summary>
@@ -8581,28 +8708,55 @@ public sealed class Game
         new SteadEvent
         {
             Key = "far_fields",
-            When = g => !g.World.Facts.Exists("event", "far_fields") && !g.CampCleared && g.Stores < g.StoresMax,
+            When = g => g.Season is WorldSeason.Spring or WorldSeason.Summer
+                && !g.World.Facts.Exists("event", "far_fields") && !g.CampCleared && g.Stores < g.StoresMax,
             Draw = g => g.FarFieldsComeGood(),
         },
         new SteadEvent
         {
             Key = "drovers",
-            When = g => !g.World.Facts.Exists("event", "drovers") && !g.LevyStands && g.Stores >= SteadDeck.DroversKeep,
+            When = g => g.Season == WorldSeason.Autumn
+                && !g.World.Facts.Exists("event", "drovers") && !g.LevyStands && g.Stores >= SteadDeck.DroversKeep,
             Draw = g => g.DroversComeThrough(),
         },
         new SteadEvent
         {
             Key = "fords_washout",
             Weight = 8,
-            When = g => !g.World.Facts.Exists("omen", "fords_washout"),
+            When = g => g.Season == WorldSeason.Spring && !g.World.Facts.Exists("omen", "fords_washout"),
             Draw = g => g.ForeshadowWashout(),
         },
         new SteadEvent
         {
             Key = "wedding",
             Weight = 8,
-            When = g => !g.World.Facts.Exists("omen", "banns_read") && g.Stores >= SteadDeck.FeastNeeds,
+            When = g => g.Season == WorldSeason.Summer
+                && !g.World.Facts.Exists("omen", "banns_read") && g.Stores >= SteadDeck.FeastNeeds,
             Draw = g => g.ForeshadowWedding(),
+        },
+        new SteadEvent
+        {
+            Key = "haying_days",
+            When = g => g.Season == WorldSeason.Summer
+                && g.WeatherAt(ClimateBand.Lowlands) == WeatherFamily.Calm
+                && !g.World.Facts.Exists("event", "haying_days") && g.Stores < g.StoresMax,
+            Draw = g => g.HayingDays(),
+        },
+        new SteadEvent
+        {
+            Key = "late_frost",
+            When = g => g.Season == WorldSeason.Spring
+                && g.WeatherAt(ClimateBand.Lowlands) == WeatherFamily.Cold
+                && !g.World.Facts.Exists("event", "late_frost")
+                && !g.World.Facts.Exists("event", "late_frost_stood"),
+            Draw = g => g.LateFrost(),
+        },
+        new SteadEvent
+        {
+            Key = "season_bargain",
+            When = g => g.Season == WorldSeason.Autumn && g.Stores < g.StoresMax
+                && !g.World.Facts.Exists("event", "season_bargain"),
+            Draw = g => g.OpenSeasonBargain(),
         },
     ];
 
@@ -8637,6 +8791,97 @@ public sealed class Game
         World.Facts.Add("event", "far_fields", World.SettlementName,
             $"An outlying farm the raiders never found sent its cart in under guard; {World.SettlementName}'s lofts took a measure the season had not promised.");
         Log.Add(Turn, $"A cart comes in under guard from the far fields, from an outlying farm the raiders never found: {World.SettlementName}'s lofts take a measure the season had not promised, and nobody asks the luck why.", LogTone.Reward);
+        if (SteadStores.PriceBump(Stores) < bumpBefore)
+            Log.Add(Turn, "Bread comes a coin back down for it.", LogTone.Info);
+        if (LevyStands && Stores >= SteadLevy.LiftedAt) LiftLevy();
+    }
+
+    /// <summary>Summer Calm gives the stead one clean haying day (D-158).</summary>
+    private void HayingDays()
+    {
+        int bumpBefore = SteadStores.PriceBump(Stores);
+        Stores = Math.Min(StoresMax, Stores + 1);
+        World.Facts.Add("event", "haying_days", World.SettlementName,
+            $"A run of calm summer weather gave {World.SettlementName} its haying days; one measure came into the lofts dry.");
+        Log.Add(Turn, $"The forecast holds fair through the haying. Every hand {World.SettlementName} can spare goes to the fields, and one measure comes into the lofts dry.", LogTone.Reward);
+        if (SteadStores.PriceBump(Stores) < bumpBefore)
+            Log.Add(Turn, "Bread comes a coin back down for it.", LogTone.Info);
+        if (LevyStands && Stores >= SteadLevy.LiftedAt) LiftLevy();
+    }
+
+    /// <summary>Spring Cold spends a measure unless the raised granary holds it (D-158).</summary>
+    private void LateFrost()
+    {
+        if (GranaryStands)
+        {
+            World.Facts.Add("event", "late_frost_stood", World.SettlementName,
+                $"A late spring frost silvered {World.SettlementName}'s fields, but the standing granary kept the seed and old grain safe.");
+            Log.Add(Turn, "The forecast frost comes late. The fields silver before dawn, but the granary keeps seed and old grain dry above the cold floor. Not a measure is lost.", LogTone.Reward);
+            return;
+        }
+
+        int bumpBefore = SteadStores.PriceBump(Stores);
+        int take = Math.Min(Stores, 1);
+        Stores -= take;
+        World.Facts.Add("event", "late_frost", World.SettlementName,
+            $"A late spring frost silvered {World.SettlementName}'s fields and cost the lofts one measure.");
+        Log.Add(Turn, take > 0
+            ? "The forecast frost comes late. Green heads silver before dawn, and one measure of the lofts is spent reseeding what the cold took."
+            : "The forecast frost comes late, but the lofts stand bare already. The stead has nothing left for the cold to take.", LogTone.Danger);
+        if (take > 0 && SteadStores.PriceBump(Stores) > bumpBefore)
+            Log.Add(Turn, "Bread is a coin dearer for it until the lofts are made good.", LogTone.Info);
+        if (take > 0 && Stores == 0)
+            LoftsBareOut(
+                $"{World.SettlementName}'s lofts went to the boards after a late frost took the last spring measure.",
+                "The late frost takes the last measure. The lofts stand at the boards, and there is nothing left worth a night's ride.");
+        if (!LevyStands && Stores <= SteadLevy.CalledAt) CallLevy();
+    }
+
+    private void OpenSeasonBargain()
+    {
+        SeasonBargainOpen = true;
+        _seasonBargainOpenedTick = (Turn - _worldStartTurn) / SteadRaids.TickTurns;
+        World.Facts.Add("event", "season_bargain", World.SettlementName,
+            $"An autumn grain bargain stood for one turn at {World.SettlementName}'s larder while the lofts were short of full.");
+        Log.Add(Turn, $"An autumn cart stands at the larder for one turn of the season. {SeasonBargainPrice} coin brings one measure into the lofts before it rolls on.", LogTone.Info);
+    }
+
+    public bool SeasonBargainRefused =>
+        SteadShame.RungFor(Shame) >= SteadShame.UnwelcomeRung;
+
+    public int SeasonBargainPrice =>
+        SteadRegard.RungFor(Regard) >= SteadRegard.FriendRung && Shame == 0 ? 4 : 6;
+
+    private void TrySeasonBargain()
+    {
+        if (SeasonBargainRefused)
+        {
+            SeasonBargainOpen = false;
+            World.Facts.Add("event", "season_bargain_refused", World.SettlementName,
+                $"The autumn grain bargain at {World.SettlementName} was refused to the bearer while their shame stood unwelcome.");
+            Log.Add(Turn, $"{TalkNpc!.Name} puts a hand over the tally. \"Not under your name. The cart rolls before this stead puts grain in a watched hand's account.\"", LogTone.Danger);
+            return;
+        }
+        if (Player.Coin < SeasonBargainPrice)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The cart asks {SeasonBargainPrice} coin, and you hold {Player.Coin}. It rolls when the season turns.\"");
+            return;
+        }
+        if (Stores >= StoresMax)
+        {
+            SeasonBargainOpen = false;
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The lofts are full. Keep your coin; another stead needs the cart.\"");
+            return;
+        }
+
+        int paid = SeasonBargainPrice;
+        int bumpBefore = SteadStores.PriceBump(Stores);
+        Player.Coin -= paid;
+        Stores++;
+        SeasonBargainOpen = false;
+        World.Facts.Add("event", "season_bargain_bought", World.SettlementName,
+            $"The bearer paid {paid} coin into {World.SettlementName}'s autumn grain bargain, restoring one measure without earning regard.");
+        Log.Add(Turn, $"You count {paid} coin onto the larder board. By dusk the cart is lighter and the lofts stand one measure fuller. ({Player.Coin} coin left)", LogTone.Reward);
         if (SteadStores.PriceBump(Stores) < bumpBefore)
             Log.Add(Turn, "Bread comes a coin back down for it.", LogTone.Info);
         if (LevyStands && Stores >= SteadLevy.LiftedAt) LiftLevy();
@@ -8912,7 +9157,9 @@ public sealed class Game
             _nightSpokenFor = false;
             _deckDealtThisTick = false;
             int raidsBeforeTick = Raids;
-            RunSchedule((Turn - _worldStartTurn) / SteadRaids.TickTurns);
+            int coarseTick = (Turn - _worldStartTurn) / SteadRaids.TickTurns;
+            AdvanceWeather(coarseTick);
+            RunSchedule(coarseTick);
             int storesBeforeCadence = Stores;
             if (!CampCleared && Stores > 0 && !_nightSpokenFor && CurrentSite?.Kind != SiteKind.GoblinCamp)
             {
@@ -8956,17 +9203,6 @@ public sealed class Game
             // same clock that landed it, the lifting's word walking to town
             // two ticks behind, the way the landing's did.
             if (_fellWinterTicks > 0 && --_fellWinterTicks == 0) WolfWinterLifts();
-
-            // The road's sky turns on the tick (D-138): the stream advances
-            // every tick wherever the bearer stands (replay's sameness), and
-            // the turning is narrated only where there is no roof against it.
-            var sky = DrawSky();
-            if (sky != Sky)
-            {
-                Sky = sky;
-                if (Area != Area.Valley && Mode == MapMode.Overworld)
-                    Log.Add(Turn, SkyLine(), LogTone.Info);
-            }
 
             // The teller writes its line last (D-145): the call it would have
             // made before the night, then what the night actually held.
@@ -10428,7 +10664,25 @@ public sealed class Game
     internal void Debug_HurtPlayer(int damage) => Player.Hp -= damage;
     internal void Debug_RaiseShame(int doors) => RaiseShame(doors);
     internal void Debug_LowerShame(int doors) => LowerShame(doors);
-    internal void Debug_SetSky(RoadSky sky) => Sky = sky; // the road's weather pinned (D-138), so camp tests stay about the camp
+    internal void Debug_SetSky(RoadSky sky) => Debug_SetWeather(LocalClimate, sky switch
+    {
+        RoadSky.Rain => WeatherFamily.Wet,
+        RoadSky.Cold => WeatherFamily.Cold,
+        RoadSky.Wind => WeatherFamily.Wind,
+        _ => WeatherFamily.Calm,
+    });
+    internal void Debug_SetWeather(ClimateBand band, WeatherFamily weather) => _debugWeather[(int)band] = weather;
+    internal void Debug_SetSeason(WorldSeason season, int position = 0)
+    {
+        int index = season switch
+        {
+            WorldSeason.Autumn => 0,
+            WorldSeason.Winter => 1,
+            WorldSeason.Spring => 2,
+            _ => 3,
+        };
+        _debugWeatherMoment = new WeatherMoment(season, index, Math.Clamp(position, 0, 2));
+    }
     internal void Debug_GrantGear(string id) => AcquireGear(GearCatalog.Create(id));
     internal void Debug_LearnSpell(SpellId id)
     {
@@ -10440,6 +10694,7 @@ public sealed class Game
     internal void Debug_Raid() => RaidTheStead();
     internal void Debug_SetStores(int stores) => Stores = stores;
     internal void Debug_DrawSteadEvent(string key) => TheSeasonDeck.First(e => e.Key == key).Draw(this);
+    internal bool Debug_SteadEventEligible(string key) => TheSeasonDeck.First(e => e.Key == key).When(this);
     internal void Debug_HoldTheDeck() => _deckHeld = true;
     internal void Debug_SetMount(Mount? mount) => Mount = mount;
     internal void Debug_GiveBook(BookId id) { if (!Player.Books.Contains(id)) Player.Books.Add(id); }
@@ -10646,6 +10901,15 @@ public sealed class Game
         CampCleared: CampCleared,
         OnRoad: OnRoad,
         Area: Area.ToString().ToLowerInvariant(),
+        Season: Season.ToString().ToLowerInvariant(),
+        SeasonPosition: SeasonPosition,
+        LowlandWeather: WeatherAt(ClimateBand.Lowlands).ToString().ToLowerInvariant(),
+        LowlandForecast: ForecastAt(ClimateBand.Lowlands).ToString().ToLowerInvariant(),
+        RoadWeather: WeatherAt(ClimateBand.Road).ToString().ToLowerInvariant(),
+        RoadForecast: ForecastAt(ClimateBand.Road).ToString().ToLowerInvariant(),
+        FellWeather: WeatherAt(ClimateBand.Fells).ToString().ToLowerInvariant(),
+        FellForecast: ForecastAt(ClimateBand.Fells).ToString().ToLowerInvariant(),
+        SeasonBargainOpen: SeasonBargainOpen,
         RoadSky: Sky.ToString().ToLowerInvariant(),
         RemnantExists: Remnant is not null,
         RemnantMap: Remnant?.MapId ?? "",
@@ -10831,6 +11095,15 @@ public sealed record Snapshot(
     bool CampCleared,
     bool OnRoad,
     string Area,
+    string Season,
+    int SeasonPosition,
+    string LowlandWeather,
+    string LowlandForecast,
+    string RoadWeather,
+    string RoadForecast,
+    string FellWeather,
+    string FellForecast,
+    bool SeasonBargainOpen,
     string RoadSky,
     bool RemnantExists,
     string RemnantMap,

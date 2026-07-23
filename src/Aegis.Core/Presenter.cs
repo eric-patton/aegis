@@ -839,6 +839,8 @@ public static class Presenter
                 Line(game.GraveTruceStands ? "The shared truce stands" : "Both books are shut", Hue.DarkCyan);
         }
         Line(new string('-', 22), Hue.DarkGray);
+        Line($"{game.Season}: {WeatherCalendar.Name(game.LocalClimate, game.CurrentWeather)} > {WeatherCalendar.Name(game.LocalClimate, game.LocalForecast)}",
+            game.CurrentWeather == WeatherFamily.Calm ? Hue.DarkGreen : Hue.DarkCyan);
         Line($"HP  {Bar(p.Hp, p.EffectiveMaxHp, 10)} {p.Hp}/{p.EffectiveMaxHp}", p.Hp * 3 <= p.EffectiveMaxHp ? Hue.Red : Hue.Gray);
         Line($"ST  {Bar(p.Stamina, p.MaxStamina, 10)} {p.Stamina}/{p.MaxStamina}", Hue.Gray);
         // The pool (D-091): unveiled with the first word, and never before.
@@ -897,7 +899,6 @@ public static class Presenter
         // The beast and its bags (D-100): named where it is, even from below.
         if (game.Mount is { } beast)
             Line($"{beast.Name} (bags {beast.Bags}c{(game.Mode == MapMode.Site ? ", above" : "")})", Hue.DarkYellow);
-        y++;
 
         if (game.Mode == MapMode.Site)
         {
@@ -986,18 +987,11 @@ public static class Presenter
         }
         else
         {
-            // The road names itself and its sky (D-138), and the fells theirs
-            // (D-146): weather is a standing condition off the valley, and
-            // the panel says what the body feels.
+            // Every country names itself. The shared season and local current
+            // plus forecast already stand at the top of the rail (D-158).
             if (game.Area != Area.Valley)
             {
                 Line(game.Area == Area.Fells ? $"The {game.World.FellRegion.Name}" : "The east road", Hue.White);
-                Line(game.Sky switch
-                {
-                    RoadSky.Rain => "Sky: rain, the road soaks",
-                    RoadSky.Cold => game.Area == Area.Fells ? "Sky: killing cold, no lee" : "Sky: cold wind off the tops",
-                    _ => "Sky: clear, good walking",
-                }, game.Sky == RoadSky.Clear ? Hue.DarkGreen : Hue.DarkCyan);
             }
             else
             {
@@ -1053,7 +1047,7 @@ public static class Presenter
         Line("f loose  e eat  d drink", Hue.DarkGray);
         Line("z cast  i gear  c you", Hue.DarkGray);
         Line("x stance  a parry  o order", Hue.DarkGray);
-        Line("m camp  q quit", Hue.DarkGray);
+        Line("m camp  ? weather  q quit", Hue.DarkGray);
     }
 
     private static string Bar(int value, int max, int slots)

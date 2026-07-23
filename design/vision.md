@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-166); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-167); the research behind it lives in `../research/`.
 
 ---
 
@@ -40,7 +40,10 @@ weight stays on exposed travel and camping, never hidden combat or resource roll
 forecasts at the sidebar and travel thresholds make timing the counterplay; roofs, supper,
 waystones, and the great pelt are the answers already in the world. The stead event deck
 reads the calendar too, so explicit seasonal facts can move stores, prices, and local deals
-without turning every ordinary weather card into an economy modifier (D-158).
+without turning every ordinary weather card into an economy modifier (D-158, built and
+Verified D-167). The opening autumn holds its first card through any seed-drawn lead beyond
+the regular three ticks, then walks the full hand into winter, preserving both the older
+hard-winter arrival and the shared cadence.
 
 ### Worldgen: history first
 At world creation, a causal-grammar history generator (the Caves of Qud model) produces the **world fact graph**: settlements, factions, notable NPCs, wars, grudges, shortages, ruins, and relics, all as ID-referenced facts with causes. This graph is the source of truth for everything: quests query it, dialogue cites it, prices derive from it, items are inscribed with it. Generated history the player cannot touch is wasted, so all of it is queryable in-fiction: books (if you can read), bards, gravestones, rumor, and the ask-about system.

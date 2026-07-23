@@ -52,7 +52,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   Sleight/Larceny split Approved D-162); **town life opened** (knucklebones D-108;
   carousing + the light-purse read D-123)
 - Story templates: **6** built (Raided Stead plus Blight, Throne, Faiths, Gold Rush, Long Siege)
-- Path to 1.0: **1 of 9 tranches Verified** (V1-01 D-166); V1-02 is next
+- Path to 1.0: **2 of 9 tranches Verified** (V1-01 D-166, V1-02 D-167); V1-03 is next
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
@@ -146,14 +146,15 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   companions, factions, and consequence depth; then the next full-density region and
   the release audit. Open-ended catalogs remain tracked but do not block 1.0 unless a
   later decision explicitly promotes them into the gate. All nine cards are Approved
-  through D-165. V1-01 is built and Verified under D-166, so V1-02 is next in queue order.
+  through D-165. V1-01 and V1-02 are built and Verified under D-166 and D-167, so
+  V1-03 is next in queue order.
 
 ### Path to 1.0 tracker (ordered, adopted D-155/D-157)
 
 - [x] 1. B4 capstone: fourth high-fells site at full regional density
   (V1-01 design Approved D-156; built and Verified D-166)
-- [ ] 2. Weather and seasons v1 plus the enabled A2 event follow-ons
-  (V1-02 design Approved D-158; implementation pending)
+- [x] 2. Weather and seasons v1 plus the enabled A2 event follow-ons
+  (V1-02 design Approved D-158; built and Verified D-167)
 - [ ] 3. D3 prose-variety infrastructure and repetition audit
   (V1-03 design Approved D-159; implementation pending)
 - [ ] 4. D1 pacing steering
@@ -184,7 +185,7 @@ infinite prerequisite for completion.
 
 - [x] Deterministic engine: hierarchical seed tree, fact graph, worldgen (D-002, D-013, D-018)
 - [x] Layered-map presentation, TUI render layer (Frame/Presenter) (D-001)
-- [x] Save system: seed + input journal, replay-on-load, currently v92 (D-012, D-028, D-166)
+- [x] Save system: seed + input journal, replay-on-load, currently v93 (D-012, D-028, D-166, D-167)
 - [x] NG+ crossing: waygate, coin -> Legend, tier-deepening worldgen (D-011, D-029)
 - [x] The Aegis as diegetic companion voice (D-010, D-019)
 - [x] The full trans-world Aegis story arc: reveal ladder -> the keeping -> the mending -> steady state (D-020, D-026, D-037, D-038, D-039, D-045, D-060)
@@ -383,9 +384,9 @@ KDM-derived lane; full reasoning in `design/plan-2026-07.md`.
 - [x] A2: Stead event storylets on the tick beyond the raids: small, mixed-valence,
   consequence-dense, several foreshadowed via A1 (the fanfic test applies) (D-131,
   built D-133: four cards, two through the calendar, one cancellable)
-- [ ] A2 follow-ons (D-133; design Approved D-158, implementation pending): season-gate
-  the existing deck, add Haying days and Late frost, and add the season's bargain that
-  reads Regard and Shame; arrivals with names still want A5
+- [x] A2 follow-ons (D-133, D-158, built D-167): the existing deck is season-gated;
+  Haying days and Late frost read the lowland hand; the one-tick season's bargain reads
+  stores, Regard, and Shame without adding a talk digit. Arrivals with names still want A5
 - [x] A3 v1: Facility ladder, first three (palisade, watchtower, granary): coin sinks
   that modify existing systems (raids, watch, stores); this is the stead half of the
   open D-025/D-036 sink-ladder box; regard capped at a one-time acknowledgment per
@@ -726,9 +727,9 @@ kind, and the evaluation harness that hardens every generator change.
   library is the recurring tier 7+ structure while further bands remain optional
   catalog growth (D-033..D-058, D-151, D-152)
 - [~] Scar list: three shipped (eye, hand, look); the dragging step and more open (D-098)
-- [ ] Weather / seasons (design Approved D-158, implementation pending): one shared
-  season, three climate bands, four weather families, one-tick forecasts, exposed travel
-  and camp effects, and A2 event follow-ons
+- [x] Weather / seasons (design Approved D-158, built and Verified D-167): one shared
+  season, three independent climate bands, deterministic three-card hands, four weather
+  families, one-tick forecasts, exposed travel and camp effects, and the A2 follow-ons
 - [~] Region entities, biome names, culture-flavored name pools, world epithets (D-049;
   region entities and region names built D-143: two named countries per world on their
   own stream; culture-flavored pools and world epithets still open on the race list and
@@ -774,6 +775,18 @@ kind, and the evaluation harness that hardens every generator change.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-22: **D-167 weather and seasons v1 is built and Verified.** V1-02 puts every
+  world under one autumn-first calendar, preserves the seed-drawn hard-winter arrival,
+  and gives lowlands, road, and high fells independent deterministic three-card hands
+  across Calm, Wet, Wind, and Cold. One-tick forecasts, local narration, sidebar and
+  snapshot reads, exposed walking and camp rules, existing shelter answers, season-gated
+  stead cards, Haying days, Late frost, and the one-tick season's bargain are live. The
+  pilot and journey reports exercise the system, and WorldEval charts every band-family
+  cell. Save v92 advances to v93. Release builds with zero warnings and errors; all 862
+  tests pass; five v96 twelve-crossing twin pairs are byte-identical; seed 1 replays
+  exactly at 25,260 keys and turn 24,066; and worldgen reports zero digest mismatches
+  across 240 worlds with nonzero coverage in all twelve weather cells. Tranche 2 is
+  checked off. V1-03 prose-variety infrastructure is next.
 - 2026-07-22: **D-166 the black tarn is built and Verified.** V1-01 closes the current
   high-fells density tranche with a deterministic fourth site, three reachable finite
   fishing reaches, permanent tackle, Survival-scaled trout, fixed-fire and camp cooking,

@@ -174,6 +174,23 @@ public static class JourneyRunner
         int maxWrath = 0;
         int raidsSuffered = 0;
         int prevRaids = 0;
+        var weatherTicks = Enum.GetValues<ClimateBand>()
+            .SelectMany(b => Enum.GetValues<WeatherFamily>().Select(f => $"{b.ToString().ToLowerInvariant()}:{f.ToString().ToLowerInvariant()}"))
+            .ToDictionary(k => k, _ => 0, StringComparer.Ordinal);
+        var exposedCamps = Enum.GetValues<WeatherFamily>()
+            .ToDictionary(f => f.ToString().ToLowerInvariant(), _ => 0, StringComparer.Ordinal);
+        foreach (var band in Enum.GetValues<ClimateBand>())
+            weatherTicks[$"{band.ToString().ToLowerInvariant()}:{game.WeatherAt(band).ToString().ToLowerInvariant()}"]++;
+        int forecastDeferrals = 0;
+        int coldCampRefusals = 0;
+        int hayingDays = 0;
+        int lateFrosts = 0;
+        int granaryPreventions = 0;
+        int bargainsOffered = 0;
+        int bargainsBought = 0;
+        int bargainsRefused = 0;
+        int bargainsExpired = 0;
+        bool forecastDeferralActive = false;
         string stop;
 
         while (true)
@@ -263,6 +280,23 @@ public static class JourneyRunner
             int tarnIronBefore = game.Player.TarnIron;
             int ironBloomBefore = game.Player.IronBloom;
             int fishBefore = game.Player.TarnTrout;
+            int tellerTicksBefore = game.Teller.Readings.Count;
+            var campWeatherBefore = game.CurrentWeather;
+            bool campShelteredBefore = game.WaystoneShelter;
+            bool hayingBefore = game.World.Facts.Exists("event", "haying_days");
+            bool frostBefore = game.World.Facts.Exists("event", "late_frost");
+            bool frostStoodBefore = game.World.Facts.Exists("event", "late_frost_stood");
+            bool bargainBefore = game.World.Facts.Exists("event", "season_bargain");
+            bool bargainBoughtBefore = game.World.Facts.Exists("event", "season_bargain_bought");
+            bool bargainRefusedBefore = game.World.Facts.Exists("event", "season_bargain_refused");
+            bool bargainExpiredBefore = game.World.Facts.Exists("event", "season_bargain_expired");
+            bool forecastWait = key == '.' && game.Mode == MapMode.Overworld
+                && ((game.Area == Area.Valley && game.Player.Pos == game.World.RoadMouthPos
+                        && game.WeatherAt(ClimateBand.Road) == WeatherFamily.Cold
+                        && game.ForecastAt(ClimateBand.Road) != WeatherFamily.Cold)
+                    || (game.Area == Area.Road && game.Player.Pos == game.World.FellMouthPos
+                        && game.WeatherAt(ClimateBand.Fells) == WeatherFamily.Cold
+                        && game.ForecastAt(ClimateBand.Fells) != WeatherFamily.Cold));
             int temperedBefore = game.Player.AllGear.Count(item => item.TarnTempered);
             int fishRoomBefore = Math.Max(0, Game.RationCap - rationsBefore);
             int fishMadeBefore = Math.Min(Math.Min(fishBefore, fishRoomBefore)
@@ -361,6 +395,22 @@ public static class JourneyRunner
             if (areaBefore == Area.Valley && game.Area == Area.Road) roadsTaken++;
             if (areaBefore == Area.Road && game.Area == Area.Fells) fellsTaken++;
             if (key == 'm' && game.Turn > turnBefore) nightsCamped++;
+            if (key == 'm' && game.Turn > turnBefore && !campShelteredBefore)
+                exposedCamps[campWeatherBefore.ToString().ToLowerInvariant()]++;
+            if (key == 'm' && game.Turn == turnBefore && campWeatherBefore == WeatherFamily.Cold)
+                coldCampRefusals++;
+            if (forecastWait && !forecastDeferralActive) forecastDeferrals++;
+            forecastDeferralActive = forecastWait;
+            if (game.Teller.Readings.Count > tellerTicksBefore || game.Cycle != cycleBefore)
+                foreach (var band in Enum.GetValues<ClimateBand>())
+                    weatherTicks[$"{band.ToString().ToLowerInvariant()}:{game.WeatherAt(band).ToString().ToLowerInvariant()}"]++;
+            if (!hayingBefore && game.World.Facts.Exists("event", "haying_days")) hayingDays++;
+            if (!frostBefore && game.World.Facts.Exists("event", "late_frost")) lateFrosts++;
+            if (!frostStoodBefore && game.World.Facts.Exists("event", "late_frost_stood")) granaryPreventions++;
+            if (!bargainBefore && game.World.Facts.Exists("event", "season_bargain")) bargainsOffered++;
+            if (!bargainBoughtBefore && game.World.Facts.Exists("event", "season_bargain_bought")) bargainsBought++;
+            if (!bargainRefusedBefore && game.World.Facts.Exists("event", "season_bargain_refused")) bargainsRefused++;
+            if (!bargainExpiredBefore && game.World.Facts.Exists("event", "season_bargain_expired")) bargainsExpired++;
             // The gate walked (D-140): each entry into the town is a market day.
             if (!inTownBefore && game.CurrentSite?.Kind == SiteKind.Town) marketsWalked++;
             // The school and the bond (D-141): a Smithing use grown inside the
@@ -518,6 +568,17 @@ public static class JourneyRunner
                 MaxWrath: maxWrath,
                 WrathTitle: RaiderWrath.TitleOf(maxWrath),
                 RaidsSuffered: raidsSuffered,
+                WeatherTicks: weatherTicks,
+                ExposedCamps: exposedCamps,
+                ForecastDeferrals: forecastDeferrals,
+                ColdCampRefusals: coldCampRefusals,
+                HayingDays: hayingDays,
+                LateFrosts: lateFrosts,
+                GranaryPreventions: granaryPreventions,
+                BargainsOffered: bargainsOffered,
+                BargainsBought: bargainsBought,
+                BargainsRefused: bargainsRefused,
+                BargainsExpired: bargainsExpired,
                 PacingNights: game.Teller.Readings.Count,
                 PacingSpaceCalls: game.Teller.SpaceCalls,
                 PacingPressCalls: game.Teller.PressCalls,
@@ -559,7 +620,11 @@ public static class JourneyRunner
             saltBought, saltSold, tarnIronMined, tarnIronSmelted,
             ironBloomsTempered, ironItemsTempered, ironBloomsSold, coinFromIron,
             fishCaught, fishCooked, fishRations, fishSold, coinFromFish,
-            maxRegard, maxWrath, raidsSuffered, game.Teller);
+            maxRegard, maxWrath, raidsSuffered,
+            weatherTicks, exposedCamps, forecastDeferrals, coldCampRefusals,
+            hayingDays, lateFrosts, granaryPreventions,
+            bargainsOffered, bargainsBought, bargainsRefused, bargainsExpired,
+            game.Teller);
         return 0;
     }
 
@@ -647,7 +712,12 @@ public static class JourneyRunner
         int tarnIronMined, int tarnIronSmelted, int ironBloomsTempered, int ironItemsTempered,
         int ironBloomsSold, int coinFromIron,
         int fishCaught, int fishCooked, int fishRations, int fishSold, int coinFromFish,
-        int maxRegard, int maxWrath, int raidsSuffered, Storyteller teller)
+        int maxRegard, int maxWrath, int raidsSuffered,
+        Dictionary<string, int> weatherTicks, Dictionary<string, int> exposedCamps,
+        int forecastDeferrals, int coldCampRefusals,
+        int hayingDays, int lateFrosts, int granaryPreventions,
+        int bargainsOffered, int bargainsBought, int bargainsRefused, int bargainsExpired,
+        Storyteller teller)
     {
         var w = Console.Out;
         w.WriteLine($"AEGIS JOURNEY   seed {seed}   target {cycles} crossing(s)"
@@ -744,6 +814,9 @@ public static class JourneyRunner
             w.WriteLine($"         the fell iron: worked {tarnIronMined} raw piece(s), smelted {tarnIronSmelted}, tempered {ironItemsTempered} piece(s) with {ironBloomsTempered} bloom(s), and sold {ironBloomsSold} bloom(s) for {coinFromIron} coin through the carriers (D-153, D-154).");
         if (fishCaught + fishCooked + fishSold > 0)
             w.WriteLine($"         the black tarn: caught {fishCaught} tarn trout, cooked {fishCooked} into {fishRations} ration(s), and sold {fishSold} for {coinFromFish} coin at the town counter (D-156).");
+        w.WriteLine($"         the weather: regional tick counts {string.Join(", ", weatherTicks.Select(kv => $"{kv.Key} {kv.Value}"))} (D-158).");
+        w.WriteLine($"           exposed camps by family: {string.Join(", ", exposedCamps.Select(kv => $"{kv.Key} {kv.Value}"))}; forecast deferrals {forecastDeferrals}; Cold refusals {coldCampRefusals}.");
+        w.WriteLine($"           seasonal events: Haying days {hayingDays}, Late frost {lateFrosts}, granary prevention {granaryPreventions}; bargains {bargainsOffered} offered, {bargainsBought} bought, {bargainsRefused} refused, {bargainsExpired} expired.");
         w.WriteLine($"         the stead: came to hold the bearer as {(maxRegard > 0 ? SteadRegard.TitleOf(maxRegard) : "a stranger")} at its warmest "
                     + $"(peak regard {maxRegard}, reset at every crossing) (D-076).");
         w.WriteLine($"         the dens: came to hold the bearer as {(maxWrath > 0 ? RaiderWrath.TitleOf(maxWrath) : "no one at all")} at their most fearful "
@@ -806,6 +879,10 @@ internal sealed record JourneyReport(
     int IronBloomsSold, int CoinFromIron,
     int FishCaught, int FishCooked, int FishRations, int FishSold, int CoinFromFish,
     int MaxRegard, string RegardTitle, int MaxWrath, string WrathTitle, int RaidsSuffered,
+    Dictionary<string, int> WeatherTicks, Dictionary<string, int> ExposedCamps,
+    int ForecastDeferrals, int ColdCampRefusals,
+    int HayingDays, int LateFrosts, int GranaryPreventions,
+    int BargainsOffered, int BargainsBought, int BargainsRefused, int BargainsExpired,
     int PacingNights, int PacingSpaceCalls, int PacingPressCalls,
     int PacingDealtUnderSpace, int PacingQuietUnderPress,
     string? Keys,

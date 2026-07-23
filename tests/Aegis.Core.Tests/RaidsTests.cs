@@ -73,6 +73,7 @@ public class RaidsTests
         // Two raiders slain (the dread rung, D-078) drop the dens below the
         // raiding line: wrath's first faction-scale consequence, named once.
         var game = WrathTests.ArrangeCamp(42);
+        game.Debug_HoldTheDeck();
         WrathTests.SlayNext(game);
         WrathTests.SlayNext(game);
         Assert.Equal(2, game.Wrath);

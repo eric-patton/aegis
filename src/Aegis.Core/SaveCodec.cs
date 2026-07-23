@@ -330,10 +330,14 @@ namespace Aegis.Core;
 /// v92 when D-156 set the black tarn in the fells: a new mouth and three finite
 /// fishing reaches change walks and 'g', the waykeeper and town gained menu
 /// digits, and carried tackle and trout change cooking, trade, and camp state.
+/// v93 when D-158 put every country under one seasonal calendar: regional
+/// weather hands now change walking and camps, season gates change stead-deck
+/// outcomes, the autumn bargain changes a standing larder digit, and '?' gained
+/// a weather read where an older journal's key was ignored.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 92;
+    public const int Version = 93;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

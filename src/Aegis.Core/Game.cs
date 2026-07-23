@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed, Forge, Bond, Plea, Salt, Script, Book, GraveBargain, TarnSmelt, IronBloom, TarnTemper }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed, Forge, Bond, Plea, Salt, Script, Book, GraveBargain, TarnSmelt, IronBloom, TarnTemper, FishingLine, CookFish, TarnTrout }
 
 /// <summary>
 /// The cart's counter (D-124): the road's prices. The ration a coin or two
@@ -112,6 +112,16 @@ public static class FellIron
     public const int SmeltCoin = 2;
     public const int BloomPrice = 4;
     public const int TemperWear = 10;
+}
+
+/// <summary>The black tarn's finite fishing economy (D-156).</summary>
+public static class FellFishing
+{
+    public const int ReachesPerWorld = 3;
+    public const int WorkTurns = 8;
+    public const int MaxYield = 3;
+    public const int LinePrice = 6;
+    public const int TroutPrice = 3;
 }
 
 /// <summary>
@@ -1643,6 +1653,10 @@ public sealed class Game
                 Log.Add(Turn, SiteHere(p)!.Cleared
                     ? "The wolf-gill. Bone still whitens its floor, but nothing moves down there now except what the wind does."
                     : "The ground opens at your feet: a gill cut deep through the scree, its floor strewn white with old bone, drove-years of it. Something down there keeps a clean larder. Press > to climb down.", LogTone.Danger);
+            else if (t == Terrain.TarnEntrance)
+                Log.Add(Turn, SiteHere(p)!.Cleared
+                    ? "The black tarn lies still below its banks. Every known reach has given what it will in this world's walking."
+                    : "A black tarn lies cupped in the tops, dark water under a darker bank. Three old reaches show where a carried line may be worked. Press > to go down.", LogTone.Info);
             else if (t == Terrain.TarnIron)
                 Log.Add(Turn, "A dark seam shows where water has opened the scree. A hafted tool and time could work the tarn-iron free. Press g to work it.", LogTone.Info);
             else if (t == Terrain.FellMouth)
@@ -1692,6 +1706,10 @@ public sealed class Game
                     }, LogTone.Info);
             else if (t == Terrain.ExitLadder)
                 Log.Add(Turn, "Daylight above. Press < to climb out.");
+            else if (t == Terrain.FishingReach && CurrentSite!.Kind == SiteKind.BlackTarn)
+                Log.Add(Turn, Player.FishingLine
+                    ? "An old fishing reach, the bank worn flat where patient feet stood. Press g to set the hook and line."
+                    : "An old fishing reach, the bank worn flat where patient feet stood. It wants a hook and line.", LogTone.Info);
             else if (t == Terrain.Hearth && CurrentSite!.Kind == SiteKind.Threshold && Player.Resolution != Resolution.None)
                 Log.Add(Turn, Player.Resolution == Resolution.Kept
                     ? "The Hearth. It leans toward you the way a fire leans toward its keeper. The count is warm to the touch."
@@ -1867,6 +1885,10 @@ public sealed class Game
                 Log.Add(Turn, "You step in under the harrow's roof. Tallow-smoke, raked ash, and old stone: the room is bare the way a thing is bare on purpose.", LogTone.Info);
             else if (site.Kind == SiteKind.Town)
                 Log.Add(Turn, $"You pass under the gate arch into {World.TownName}. Lanes, smoke, stall-cloth, and more faces in one look than the stead shows in a season, none of them yours to know yet.", LogTone.Info);
+            else if (site.Kind == SiteKind.BlackTarn)
+                Log.Add(Turn, site.Cleared
+                    ? "You go down to the black tarn. The banks keep the marks of your three sittings, and the water keeps its own counsel now."
+                    : "You go down to the black tarn. Water fills the bowl of the ground, black under the open sky, with three banks worn flat by hands that knew where to wait.", LogTone.Info);
             else
                 Log.Add(Turn, site.Kind switch
                 {
@@ -1995,8 +2017,9 @@ public sealed class Game
             return false;
         }
 
-        var (meat, made) = CookPlan();
-        if (Player.Rations == 0 && (meat == 0 || made == 0))
+        bool cookingFish = Player.TarnTrout > 0;
+        var (food, made) = cookingFish ? FishCookPlan() : CookPlan();
+        if (Player.Rations == 0 && (food == 0 || made == 0))
         {
             if (Area != Area.Valley && Sky == RoadSky.Cold && !WaystoneShelter)
             {
@@ -2009,12 +2032,15 @@ public sealed class Game
             return true;
         }
 
-        if (meat > 0 && made > 0)
+        if (food > 0 && made > 0)
         {
-            Player.RawMeat -= meat;
+            if (cookingFish) Player.TarnTrout -= food;
+            else Player.RawMeat -= food;
             Player.Rations += made;
             GainSkill(SkillId.Cooking);
-            Log.Add(Turn, $"You build the fire up and spit {meat} cut{(meat == 1 ? "" : "s")} over it, the way the woodward would: {made} ration{(made == 1 ? "" : "s")} for the road. ({Player.Rations} carried, {Player.RawMeat} raw left)", LogTone.Reward);
+            Log.Add(Turn, cookingFish
+                ? $"You build the fire up and lay {food} tarn trout by the coals: {made} ration{(made == 1 ? "" : "s")} for the road. ({Player.Rations} carried, {Player.TarnTrout} fish left)"
+                : $"You build the fire up and spit {food} cut{(food == 1 ? "" : "s")} over it, the way the woodward would: {made} ration{(made == 1 ? "" : "s")} for the road. ({Player.Rations} carried, {Player.RawMeat} raw left)", LogTone.Reward);
         }
 
         bool sheltered = WaystoneShelter;
@@ -2438,6 +2464,10 @@ public sealed class Game
             && World.TarnIronSeams.Contains(Player.Pos))
             return WorkTarnIron();
 
+        if (Mode == MapMode.Site && CurrentSite is { Kind: SiteKind.BlackTarn } tarn
+            && tarn.FishingReaches.Contains(Player.Pos))
+            return WorkFishingReach(tarn);
+
         if (Mode == MapMode.Site && CurrentSite is { StonePos: { } stonePos, StoneRead: false } && Player.Pos == stonePos)
             return ReadGravenStone(CurrentSite);
 
@@ -2602,6 +2632,40 @@ public sealed class Game
         GainSkill(SkillId.Survival);
         Log.Add(Turn, $"You work the dark seam loose with the {tool.Name}, slow enough to keep iron apart from stone. It gives {taken} piece{(taken == 1 ? "" : "s")} of tarn-iron{(winterOpened ? ", the frost having opened the seam deeper" : "")}. ({Player.TarnIron} raw iron carried, {tool.Wear}/{tool.MaxWear} wear)", LogTone.Reward);
         for (int i = 1; i < FellIron.WorkTurns; i++) AdvanceTurn();
+        return true;
+    }
+
+    /// <summary>
+    /// Works one finite fishing reach at the black tarn (D-156). The line is
+    /// permanent, the catch is certain, Survival fattens it without another
+    /// roll, and eight exposed turns are the whole cost of the sitting.
+    /// </summary>
+    private bool WorkFishingReach(Site tarn)
+    {
+        if (!Player.FishingLine)
+        {
+            Log.Add(Turn, "The dark water moves below the bank, but bare hands are no argument with it. A hook and line would make this a sitting instead of a wish.", LogTone.Info);
+            return false;
+        }
+
+        int caught = Math.Min(FellFishing.MaxYield,
+            1 + Player.Skills.Bonus(SkillId.Survival));
+        var reach = Player.Pos;
+        tarn.FishingReaches.Remove(reach);
+        tarn.Map[reach] = Terrain.Heath;
+        Player.TarnTrout += caught;
+        World.Facts.Add("resource-state", $"black_tarn_{reach.X}_{reach.Y}", World.FellRegion.Name,
+            "One of the black tarn's three fishing reaches was worked until the water there went still.");
+        GainSkill(SkillId.Survival);
+        Log.Add(Turn, $"You work the hook and line through a long sitting, reading the black water by the small pulls it gives. The reach gives {caught} tarn trout. ({Player.TarnTrout} carried)", LogTone.Reward);
+        if (tarn.FishingReaches.Count == 0)
+        {
+            tarn.Cleared = true;
+            World.Facts.Add("resource-state", "black_tarn_worked", World.FellRegion.Name,
+                "All three known reaches at the black tarn were worked in this world's walking.");
+            Log.Add(Turn, "The third bank goes quiet. The tarn will give no more in this world's walking.", LogTone.Reward);
+        }
+        for (int i = 1; i < FellFishing.WorkTurns; i++) AdvanceTurn();
         return true;
     }
 
@@ -3236,6 +3300,9 @@ public sealed class Game
             + (FellWinterStands
                 ? " And not this season, walker, not without need: a wolf-winter sits up there, and hungry ground makes bold teeth."
                 : "")
+            + (World.BlackTarnSite.Cleared
+                ? " The black tarn has gone quiet too: all three known reaches worked until the water would answer no more."
+                : " The black tarn lies higher than the wolf-ground. Three reaches give to a hook and line before the water goes still; I keep the tackle here.")
             + $" Four tarn-iron seams show dark along the wet scree. The forge in {World.TownName} will take the stone to bloom, and the carriers buy what comes out.\"";
         return
         [
@@ -3590,6 +3657,7 @@ public sealed class Game
         {
             offers.Add((TradeGood.Ration, "", $"Buy road bread ({TitheBuy(Peddling.RationPrice)} coin{TitheLabel})"));
             offers.Add((TradeGood.Bed, "", $"A bed for the night ({TitheBuy(RoadLife.BedCoin)} coin{TitheLabel})"));
+            offers.Add((TradeGood.FishingLine, "", FishingLineLabel()));
         }
         // The market's stalls (D-140): each keeps its own counter, one or two
         // digits, always listed (D-041). The mongers buy what the wilds
@@ -3605,6 +3673,7 @@ public sealed class Game
                     // salt at the town's price, appended after the loaf so no
                     // digit shifts (D-041), the label counting the pack.
                     offers.Add((TradeGood.Salt, "", SaltSaleLabel()));
+                    offers.Add((TradeGood.TarnTrout, "", TarnTroutSaleLabel()));
                     break;
                 case "npc_hidemonger":
                     offers.Add((TradeGood.Hide, "", HideSaleLabel()));
@@ -3686,6 +3755,14 @@ public sealed class Game
     private string SaltSaleLabel() => Player.Salt > 0
         ? $"Sell your salt ({Player.Salt} sack{(Player.Salt == 1 ? "" : "s")} at {TownMarket.SaltPrice}c{(TitheCounter ? ", less 1 coin road tithe" : "")})"
         : "Sell your salt (you carry none)";
+
+    private string FishingLineLabel() => Player.FishingLine
+        ? "A hook and line (yours already)"
+        : $"Buy a hook and line ({TitheBuy(FellFishing.LinePrice)} coin{TitheLabel}; carried for good)";
+
+    private string TarnTroutSaleLabel() => Player.TarnTrout > 0
+        ? $"Sell your tarn trout ({Player.TarnTrout} at {FellFishing.TroutPrice}c, {TitheSale(Player.TarnTrout * FellFishing.TroutPrice + TownHaggle())} coin{(TitheCounter ? "; 1 coin road tithe" : "")})"
+        : "Sell tarn trout (none carried)";
 
     /// <summary>The fence's entry (D-124): what the pack holds with a past, at the cart's uncurious rate.</summary>
     private string FenceLabel()
@@ -3853,6 +3930,9 @@ public sealed class Game
             // The stable (D-100 stage 2): one digit that cycles the gathered
             // beasts, put-up / lead-out / swap read from the state, no submenu.
             offers.Add((TradeGood.Stable, "", StableLabel()));
+            // The black tarn's catch (D-156): a separate fixed-fire entry,
+            // appended so every earlier bench digit remains where it was.
+            offers.Add((TradeGood.CookFish, "", FishCookLabel()));
         }
         // The stillroom (D-081): the simples at their true price, and the
         // wound-dressing at the table where that work was always done.
@@ -4549,6 +4629,7 @@ public sealed class Game
             {
                 case TradeGood.Hide: TrySellHides(); break;
                 case TradeGood.Cook: TryCook(); break;
+                case TradeGood.CookFish: TryCookFish(); break;
                 case TradeGood.Herb: TrySellHerbs(); break;
                 case TradeGood.Lesson: TryLearnLesson(arg); break;
                 case TradeGood.Mending: TryBuyMending(); break; // the stillroom's table (D-081)
@@ -4723,13 +4804,17 @@ public sealed class Game
     /// Cooking skill squeezes extra meals from the same carcass, all bounded by what
     /// a walking body can carry, so a full larder cooks nothing and wastes no meat.
     /// </summary>
-    private (int Meat, int Rations) CookPlan()
+    private (int Used, int Rations) CookPlan(int carried)
     {
         int room = Math.Max(0, RationCap - Player.Rations);
-        int fromMeat = Math.Min(Player.RawMeat, room);
-        int made = Math.Min(fromMeat + Player.Skills.Bonus(SkillId.Cooking), room);
-        return (fromMeat, made);
+        int used = Math.Min(carried, room);
+        int made = Math.Min(used + Player.Skills.Bonus(SkillId.Cooking), room);
+        return (used, made);
     }
+
+    private (int Meat, int Rations) CookPlan() => CookPlan(Player.RawMeat);
+
+    private (int Fish, int Rations) FishCookPlan() => CookPlan(Player.TarnTrout);
 
     /// <summary>The cook entry's label (D-073): what the fire will make of the meat in hand.</summary>
     private string CookLabel()
@@ -4763,6 +4848,35 @@ public sealed class Game
         Player.Rations += made;
         GainSkill(SkillId.Cooking);
         Log.Add(Turn, $"You spit {meat} cut{(meat == 1 ? "" : "s")} over the woodward's fire and come away with {made} ration{(made == 1 ? "" : "s")}. ({Player.Rations} carried, {Player.RawMeat} raw left)", LogTone.Reward);
+    }
+
+    /// <summary>The fixed fire's separate fish entry (D-156), kept distinct so selling remains a choice.</summary>
+    private string FishCookLabel()
+    {
+        if (Player.TarnTrout == 0) return "Cook tarn trout (none to cook)";
+        var (_, made) = FishCookPlan();
+        return made == 0
+            ? $"Cook tarn trout ({Player.TarnTrout} fish, larder full)"
+            : $"Cook your tarn trout ({Player.TarnTrout} fish into {made} ration{(made == 1 ? "" : "s")})";
+    }
+
+    private void TryCookFish()
+    {
+        if (Player.TarnTrout == 0)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The fire is ready, but your creel is empty.\"");
+            return;
+        }
+        var (fish, made) = FishCookPlan();
+        if (made == 0)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Your larder is full. Keep the trout cold and cook it when the road has made room.\"");
+            return;
+        }
+        Player.TarnTrout -= fish;
+        Player.Rations += made;
+        GainSkill(SkillId.Cooking);
+        Log.Add(Turn, $"You lay {fish} tarn trout by the woodward's fire and come away with {made} ration{(made == 1 ? "" : "s")}. ({Player.Rations} carried, {Player.TarnTrout} fish left)", LogTone.Reward);
     }
 
     private void TryBuyRation()
@@ -4977,6 +5091,45 @@ public sealed class Game
             Player.SaltLineHeard = true;
             Log.Add(Turn, "\"Bought in one country and sold in another, and the difference is yours for the carrying. That is coin the road itself paid you, bearer: the first you have earned by knowing where things are wanted.\"", LogTone.Aegis);
         }
+    }
+
+    /// <summary>The waykeeper's permanent tackle (D-156), outside every gear slot.</summary>
+    private void TryBuyFishingLine()
+    {
+        if (Player.FishingLine)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"The line in your pack will outlast both of us if you dry it before you sleep. One is enough.\"");
+            return;
+        }
+        int price = TitheBuy(FellFishing.LinePrice);
+        if (Player.Coin < price)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"{price} coin for hook and line, and you hold {Player.Coin}. The tarn waits better than either of us.\"");
+            return;
+        }
+        Player.Coin -= price;
+        Player.FishingLine = true;
+        CountTithe();
+        Log.Add(Turn, $"A horn winder, waxed line, and three small hooks go into your pack. No weapon, no burden, just the means to ask dark water for supper. ({Player.Coin} coin left)", LogTone.Reward);
+    }
+
+    /// <summary>The provisioner's fish lot (D-156), under ordinary town terms.</summary>
+    private void TrySellTarnTrout()
+    {
+        if (TownCounterBarred()) return;
+        if (Player.TarnTrout == 0)
+        {
+            Log.Add(Turn, $"{TalkNpc!.Name}: \"Tarn trout fetch {FellFishing.TroutPrice} coin each while they are cold. Your creel is empty today.\"");
+            return;
+        }
+
+        int fish = Player.TarnTrout;
+        int paid = TitheSale(fish * FellFishing.TroutPrice + TownHaggle());
+        Player.TarnTrout = 0;
+        Player.Coin += paid;
+        CountTithe();
+        Log.Add(Turn, $"You lay {fish} tarn trout on the provisioner's board. {TalkNpc!.Name} checks the gills, weighs the lot, and pays {paid} coin. ({Player.Coin} now)", LogTone.Reward);
+        FeedCommerce();
     }
 
     private void TryBuyMending()
@@ -5270,6 +5423,11 @@ public sealed class Game
                     break;
                 case TradeGood.Fence: TryFenceTrinkets(); break;
                 case TradeGood.Bed: TryBedDown(); break;        // the wayhouse's roof (D-138)
+                case TradeGood.FishingLine:
+                    TryBuyFishingLine();
+                    _offers.Clear();
+                    _offers.AddRange(BuildOffers(TalkNpc!));
+                    break;
                 // The town school's sitting (D-141): the label reads the
                 // iron's wear, so the menu refreshes like the hide sale does.
                 case TradeGood.Forge:
@@ -5321,6 +5479,11 @@ public sealed class Game
                 // menu refreshes read-true either end (D-041).
                 case TradeGood.Salt:
                     if (TalkNpc!.Kind == NpcKind.Peddler) TryBuySalt(); else TrySellSalt();
+                    _offers.Clear();
+                    _offers.AddRange(BuildOffers(TalkNpc!));
+                    break;
+                case TradeGood.TarnTrout:
+                    TrySellTarnTrout();
                     _offers.Clear();
                     _offers.AddRange(BuildOffers(TalkNpc!));
                     break;
@@ -10355,6 +10518,7 @@ public sealed class Game
         TwistVariant: World.RoadHolder?.ToString().ToLowerInvariant() ?? "",
         Waystones: string.Join(",", World.Waystones.Select(p => $"{p.X}:{p.Y}")),
         TarnIronSeams: string.Join(",", World.TarnIronSeams.Select(p => $"{p.X}:{p.Y}")),
+        FishingReaches: World.BlackTarnSite.FishingReaches.Count,
         RoadTithes: RoadTithes,
         GraveTruceStands: GraveTruceStands,
         Oaths: string.Join(",", World.Oaths.Select(OathCatalog.IdOf)),
@@ -10398,6 +10562,8 @@ public sealed class Game
         Herb: Player.Herb,
         TarnIron: Player.TarnIron,
         IronBloom: Player.IronBloom,
+        FishingLine: Player.FishingLine,
+        TarnTrout: Player.TarnTrout,
         Draughts: Player.Draughts,
         Focus: Player.Focus,
         MaxFocus: Player.MaxFocus,
@@ -10540,6 +10706,7 @@ public sealed record Snapshot(
     string TwistVariant,
     string Waystones,
     string TarnIronSeams,
+    int FishingReaches,
     int RoadTithes,
     bool GraveTruceStands,
     string Oaths,
@@ -10583,6 +10750,8 @@ public sealed record Snapshot(
     int Herb,
     int TarnIron,
     int IronBloom,
+    bool FishingLine,
+    int TarnTrout,
     int Draughts,
     int Focus,
     int MaxFocus,

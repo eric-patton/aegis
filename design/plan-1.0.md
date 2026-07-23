@@ -27,7 +27,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 
 | Card | Tranche | Design status | Decisions | Implementation |
 |------|---------|---------------|-----------|----------------|
-| V1-01 | High-fells capstone, the black tarn | Approved | D-156 | Pending |
+| V1-01 | High-fells capstone, the black tarn | Verified | D-156, D-166 | Completed |
 | V1-02 | Weather and seasons v1 | Approved | D-158 | Pending |
 | V1-03 | D3 prose-variety infrastructure | Approved | D-159 | Pending |
 | V1-04 | D1 pacing steering | Approved | D-160 | Pending |
@@ -39,12 +39,14 @@ criteria, and decision associations for the nine 1.0 tranches.
 
 ## V1-01: High-fells capstone, the black tarn
 
-**Design status:** Approved  
-**Decisions:** D-156  
+**Design status:** Verified
+
+**Decisions:** D-156, D-166
+
 **Roadmap association:** Path to 1.0 tranche 1; B4 later regions; wilderness fishing  
 **Dependencies:** D-138 camping, D-140 town market, D-146 high fells, D-153 regional
 goods, D-155 release sequence  
-**Implementation status:** Pending in queue order; V1-01 is now cleared to begin
+**Implementation status:** Completed and verified 2026-07-22; V1-02 is next
 
 ### Approved behavior
 
@@ -88,8 +90,23 @@ goods, D-155 release sequence
 - Worldgen evaluation proves one black tarn with exactly three reachable fishing reaches
   per world across a broad seed sample.
 - The full engine sweep passes: clean Release build and tests, five-seed journey twins,
-  exact sim replay, justified drift from v95, and worldgen purity.
+  exact sim replay, justified drift from the previous v94 baseline, and worldgen purity.
 - The D-155 path tracker checks off tranche 1 only after implementation and verification.
+
+### Verification record
+
+- Release build: zero warnings and zero errors. Full suite: 848 of 848 tests passed,
+  including 10 focused Black Tarn tests and broad deterministic generation coverage.
+- Five seeds completed twelve crossings twice each. Every v95 twin pair is byte-identical.
+  Across the five first runs the pilot caught and sold 476 trout. Cooking remained at zero
+  because the pilot reached the activity with a full ration bag; fixed-fire and camp
+  cooking are exercised by focused tests.
+- Seed 1 sim replay matches exactly at 25,135 keys, cycle 13, turn 24,009. The worldgen
+  purity gate generated 240 worlds with zero digest mismatches; every world contained one
+  qualifying site with exactly three reaches and no resident enemy.
+- Drift from v94 is expected and accepted: the added fells errand spends travel and
+  fishing turns, adds a town sale, and changes later pilot progression. D-166 records the
+  implementation and closes tranche 1.
 
 ### Explicit exclusions
 

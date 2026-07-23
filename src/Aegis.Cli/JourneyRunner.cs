@@ -160,6 +160,13 @@ public static class JourneyRunner
         int ironItemsTempered = 0;
         int ironBloomsSold = 0;
         int coinFromIron = 0;
+        // The black tarn (D-156): catch, cooking, and the town sale, watched
+        // through the carried fish counter and the exact key that spends it.
+        int fishCaught = 0;
+        int fishCooked = 0;
+        int fishRations = 0;
+        int fishSold = 0;
+        int coinFromFish = 0;
         // The stead's regard at its height (D-076): a per-world Fame, reset at every
         // crossing, so the run's peak is the warmest any one stead came to hold the
         // bearer, watched by the counter's high-water mark on every key.
@@ -255,7 +262,19 @@ public static class JourneyRunner
             int saltBefore = game.Player.Salt;
             int tarnIronBefore = game.Player.TarnIron;
             int ironBloomBefore = game.Player.IronBloom;
+            int fishBefore = game.Player.TarnTrout;
             int temperedBefore = game.Player.AllGear.Count(item => item.TarnTempered);
+            int fishRoomBefore = Math.Max(0, Game.RationCap - rationsBefore);
+            int fishMadeBefore = Math.Min(Math.Min(fishBefore, fishRoomBefore)
+                + game.Player.Skills.Bonus(SkillId.Cooking), fishRoomBefore);
+            bool fishCookAction = fishBefore > 0 && fishRoomBefore > 0
+                && (key == 'm' || (game.InTradeMenu && key >= '1'
+                    && key <= '0' + game.TradeOffers.Count
+                    && game.TradeOffers[key.Value - '1'].Good == TradeGood.CookFish));
+            bool fishSaleAction = fishBefore > 0 && game.InTalkMenu
+                && game.TalkNpc?.Id == "npc_provisioner" && key > '0' + game.Topics.Count
+                && key <= '0' + game.Topics.Count + game.Offers.Count
+                && game.Offers[key.Value - '1' - game.Topics.Count].Good == TradeGood.TarnTrout;
             game.ApplyKey(key.Value);
             keys.Append(key.Value);
             totalKeys++;
@@ -374,6 +393,18 @@ public static class JourneyRunner
                     coinFromIron += Math.Max(0, game.Player.Coin - coinBefore);
                 }
             }
+            if (game.Player.TarnTrout > fishBefore)
+                fishCaught += game.Player.TarnTrout - fishBefore;
+            else if (game.Player.TarnTrout < fishBefore && fishCookAction)
+            {
+                fishCooked += fishBefore - game.Player.TarnTrout;
+                fishRations += fishMadeBefore;
+            }
+            else if (game.Player.TarnTrout < fishBefore && fishSaleAction)
+            {
+                fishSold += fishBefore - game.Player.TarnTrout;
+                coinFromFish += Math.Max(0, game.Player.Coin - coinBefore);
+            }
             // The stead's regard, at its high-water mark (D-076): it resets at each
             // crossing, so the peak is the warmest one stead ever came to hold the bearer.
             maxRegard = Math.Max(maxRegard, game.Regard);
@@ -477,6 +508,11 @@ public static class JourneyRunner
                 IronItemsTempered: ironItemsTempered,
                 IronBloomsSold: ironBloomsSold,
                 CoinFromIron: coinFromIron,
+                FishCaught: fishCaught,
+                FishCooked: fishCooked,
+                FishRations: fishRations,
+                FishSold: fishSold,
+                CoinFromFish: coinFromFish,
                 MaxRegard: maxRegard,
                 RegardTitle: SteadRegard.TitleOf(maxRegard),
                 MaxWrath: maxWrath,
@@ -522,6 +558,7 @@ public static class JourneyRunner
             forgeSittings, bondsSworn, game.Player.Skills.Level(SkillId.Smithing),
             saltBought, saltSold, tarnIronMined, tarnIronSmelted,
             ironBloomsTempered, ironItemsTempered, ironBloomsSold, coinFromIron,
+            fishCaught, fishCooked, fishRations, fishSold, coinFromFish,
             maxRegard, maxWrath, raidsSuffered, game.Teller);
         return 0;
     }
@@ -609,6 +646,7 @@ public static class JourneyRunner
         int saltBought, int saltSold,
         int tarnIronMined, int tarnIronSmelted, int ironBloomsTempered, int ironItemsTempered,
         int ironBloomsSold, int coinFromIron,
+        int fishCaught, int fishCooked, int fishRations, int fishSold, int coinFromFish,
         int maxRegard, int maxWrath, int raidsSuffered, Storyteller teller)
     {
         var w = Console.Out;
@@ -704,6 +742,8 @@ public static class JourneyRunner
             w.WriteLine($"         the caravan leg: loaded {saltBought} sack(s) of salt at the cart and sold {saltSold} at the town counter, the margin earned by the walk (D-144).");
         if (tarnIronMined + tarnIronSmelted + ironBloomsSold > 0)
             w.WriteLine($"         the fell iron: worked {tarnIronMined} raw piece(s), smelted {tarnIronSmelted}, tempered {ironItemsTempered} piece(s) with {ironBloomsTempered} bloom(s), and sold {ironBloomsSold} bloom(s) for {coinFromIron} coin through the carriers (D-153, D-154).");
+        if (fishCaught + fishCooked + fishSold > 0)
+            w.WriteLine($"         the black tarn: caught {fishCaught} tarn trout, cooked {fishCooked} into {fishRations} ration(s), and sold {fishSold} for {coinFromFish} coin at the town counter (D-156).");
         w.WriteLine($"         the stead: came to hold the bearer as {(maxRegard > 0 ? SteadRegard.TitleOf(maxRegard) : "a stranger")} at its warmest "
                     + $"(peak regard {maxRegard}, reset at every crossing) (D-076).");
         w.WriteLine($"         the dens: came to hold the bearer as {(maxWrath > 0 ? RaiderWrath.TitleOf(maxWrath) : "no one at all")} at their most fearful "
@@ -764,6 +804,7 @@ internal sealed record JourneyReport(
     int SaltBought, int SaltSold,
     int TarnIronMined, int TarnIronSmelted, int IronBloomsTempered, int IronItemsTempered,
     int IronBloomsSold, int CoinFromIron,
+    int FishCaught, int FishCooked, int FishRations, int FishSold, int CoinFromFish,
     int MaxRegard, string RegardTitle, int MaxWrath, string WrathTitle, int RaidsSuffered,
     int PacingNights, int PacingSpaceCalls, int PacingPressCalls,
     int PacingDealtUnderSpace, int PacingQuietUnderPress,

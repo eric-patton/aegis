@@ -1,6 +1,6 @@
 namespace Aegis.Core;
 
-public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort, Songhall, Leaguer, Wilds, Harrow, Town, Cairn, Gill }
+public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort, Songhall, Leaguer, Wilds, Harrow, Town, Cairn, Gill, BlackTarn }
 
 /// <summary>A monster placed at generation time: kind, cell, and generated stats (D-011).</summary>
 public readonly record struct MonsterSpawn(MonsterKind Kind, Pos Pos, int Hp, string? Epithet = null, bool Chief = false);
@@ -55,6 +55,12 @@ public sealed class Site
 
     /// <summary>Whether the lock has been tried (D-122): one sitting per lock per world, opened or held.</summary>
     public bool CofferTried { get; set; }
+
+    /// <summary>
+    /// The black tarn's finite banks (D-156). Removing a cell works that reach
+    /// for this world; the next generated world restores all three.
+    /// </summary>
+    public List<Pos> FishingReaches { get; init; } = [];
 }
 
 /// <summary>
@@ -161,6 +167,9 @@ public sealed class World
     public Site FellCairnSite => Sites.First(s => s.Id == "fell-cairn");
 
     public Site FellGillSite => Sites.First(s => s.Id == "fell-gill");
+
+    /// <summary>The black tarn (D-156): the fells' finite fishing water.</summary>
+    public Site BlackTarnSite => Sites.First(s => s.Id == "black-tarn");
     public required List<Site> Sites { get; init; }
     public required List<Npc> Npcs { get; init; }
 
@@ -1411,12 +1420,56 @@ public static class WorldGen
             throw new InvalidOperationException("Fells generation could not place every tarn-iron seam.");
         foreach (var seam in tarnIronSeams) fells[seam] = Terrain.TarnIron;
 
+        // The black tarn (D-156): the fells' fourth and final site in this
+        // density tranche. Its placement draws after every prior fells draw,
+        // so all established ground, mouths, herbs, and iron hold to the tile.
+        // The first pass prefers a natural wet edge; the relaxed tail keeps
+        // every world valid even where the generated water lies behind scree.
+        var blackTarnRng = new Rng(SeedTree.Derive(fellSeed, "black-tarn"));
+        Pos blackTarnPos = default;
+        bool blackTarnFound = false;
+        for (int attempt = 0; attempt < 1200 && !blackTarnFound; attempt++)
+        {
+            var p = new Pos(blackTarnRng.Range(3, FellsW - 3), blackTarnRng.Range(2, FellsH - 2));
+            if (fells[p] is not (Terrain.Heath or Terrain.Hills) || !Reachable(fells, fellHome, p)
+                || fellHerbs.Contains(p) || tarnIronSeams.Contains(p)
+                || sites.Any(s => s.Area == Area.Fells && s.OverworldPos.Manhattan(p) < 5)) continue;
+            bool wetEdge = Directions.All8.Any(d =>
+            {
+                var q = p.Plus(d.dx, d.dy);
+                return fells.InBounds(q) && fells[q] == Terrain.Water;
+            });
+            if (attempt < 800 && !wetEdge) continue;
+            blackTarnPos = p;
+            blackTarnFound = true;
+        }
+        if (!blackTarnFound)
+            throw new InvalidOperationException("Fells generation could not place the black tarn.");
+        fells[blackTarnPos] = Terrain.TarnEntrance;
+        CarvePathIfDisconnected(fells, fellHome, blackTarnPos);
+        var (blackTarnMap, blackTarnEntry, fishingReaches) = GenerateBlackTarn();
+        sites.Add(new Site
+        {
+            Id = "black-tarn",
+            Kind = SiteKind.BlackTarn,
+            Map = blackTarnMap,
+            OverworldPos = blackTarnPos,
+            EntryPos = blackTarnEntry,
+            Area = Area.Fells,
+            Spawns = [],
+            ChestPos = blackTarnEntry,
+            ChestLooted = true,
+            FishingReaches = fishingReaches,
+        });
+
         facts.Add("site", "fells", $"{fellTrack.X},{fellTrack.Y}",
             "A drovers' track climbs off the road's north shoulder onto the high fells: heath and scree and no roof anywhere, wolf-country by every account that comes down with the hides to prove it.");
         facts.Add("site", "fell-gill", $"{gillPos.X},{gillPos.Y}",
             "A gill cuts the tops above the drovers' track, scree-walled and strewn white with old bone. The drovers count their dogs twice passing it, and the old she-wolf the tale gives it has outlived every man who swore to bring her pelt down.");
         facts.Add("site", "fell-cairn", $"{cairnPos.X},{cairnPos.Y}",
             "On the tops above the drovers' track stands a kerbed cairn older than any road under it. The drovers water anywhere but its lee, and none of them will say why in daylight.");
+        facts.Add("site", "black-tarn", $"{blackTarnPos.X},{blackTarnPos.Y}",
+            "A black tarn lies cupped high on the fells, its banks walked by drovers who carry a line and keep their supper in mind. Three reaches are known to give before the water goes still.");
         // The countries named (D-143, plan 2026-07 B3): the region becomes an
         // entity, on its own derived stream after every existing draw, so all
         // prior placement, casting, and story stay byte-identical. The valley
@@ -2516,6 +2569,49 @@ public static class WorldGen
 
     public const int GillW = 30;
     public const int GillH = 12;
+
+    public const int BlackTarnW = 30;
+    public const int BlackTarnH = 13;
+
+    /// <summary>
+    /// The black tarn (D-156): one authored bank around dark water, with three
+    /// distinct reachable fishing reaches. There are no tenants or random
+    /// catches here; the finite banks are the whole site state.
+    /// </summary>
+    private static (GameMap Map, Pos Entry, List<Pos> Reaches) GenerateBlackTarn()
+    {
+        var map = new GameMap("black-tarn", BlackTarnW, BlackTarnH, Terrain.Heath);
+        for (int x = 0; x < BlackTarnW; x++)
+        {
+            map[new Pos(x, 0)] = Terrain.Scree;
+            map[new Pos(x, BlackTarnH - 1)] = Terrain.Scree;
+        }
+        for (int y = 0; y < BlackTarnH; y++)
+        {
+            map[new Pos(0, y)] = Terrain.Scree;
+            map[new Pos(BlackTarnW - 1, y)] = Terrain.Scree;
+        }
+
+        var center = new Pos(18, 6);
+        for (int y = 2; y < BlackTarnH - 2; y++)
+            for (int x = 9; x < BlackTarnW - 2; x++)
+            {
+                double dx = (x - center.X) / 6.0;
+                double dy = (y - center.Y) / 3.0;
+                if (dx * dx + dy * dy <= 1.0) map[new Pos(x, y)] = Terrain.Water;
+            }
+
+        var entry = new Pos(2, center.Y);
+        var reaches = new List<Pos>
+        {
+            new(center.X, 2),
+            new(center.X - 7, center.Y),
+            new(center.X + 7, center.Y),
+        };
+        foreach (var reach in reaches) map[reach] = Terrain.FishingReach;
+        map[entry] = Terrain.ExitLadder;
+        return (map, entry, reaches);
+    }
 
     /// <summary>
     /// The wolf-gill (D-150): a scree-walled ravine, the fells' third site.

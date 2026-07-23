@@ -209,6 +209,18 @@ public sealed class Player
     /// </summary>
     public int IronBloom { get; set; }
 
+    /// <summary>
+    /// The waykeeper's hook and line (D-156): permanent tackle carried outside
+    /// the gear slots. It has no wear, survives death, and crosses with the bearer.
+    /// </summary>
+    public bool FishingLine { get; set; }
+
+    /// <summary>
+    /// Tarn trout taken from the black tarn (D-156): carried food or freight,
+    /// surviving death and crossings until cooked or sold.
+    /// </summary>
+    public int TarnTrout { get; set; }
+
     // Gear (D-041): the other half of the build. Banked like attributes: the
     // remnant never takes it, and it crosses waygates untouched (vision secs 8, 10).
 

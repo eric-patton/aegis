@@ -231,6 +231,46 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-166: The line on the black water: the tarn and its three reaches (2026-07-22)
+
+V1-01 is built and Verified under its approved D-156 contract. The high fells now hold a
+fourth deterministic site, a water-and-bank map with exactly three reachable fishing
+reaches and no resident enemy. The waykeeper sells one permanent hook and line for 6
+coin. It occupies no gear slot, has no durability, and survives death and every crossing.
+At an unworked reach, `g` spends eight exposed turns and takes `1 + Survival bonus` tarn
+trout, capped at 3. The sitting feeds Survival once, the reach is finite for that world,
+and the site completes only after all three reaches are worked. The next world deals all
+three anew.
+
+The trout are a distinct carried good. A fixed cooking fire and the existing camp model
+both turn fish into rations through the current Cooking bonus and five-ration cap, feeding
+Cooking on a successful batch. The town provisioner buys the remaining lot for 3 coin a
+fish through the existing Commerce, guild, tithe, haggle, and town-law rules. This gives
+the activity three honest outputs: Survival and Cooking growth, food, and coin. The site
+has live and completed presentation, distinct entrance and reach glyphs, sidebar guidance,
+a world fact, and a reader on the existing waykeeper topic without breaking the nine-digit
+menu cap.
+
+The implementation end-appends the new site, terrain, and trade-good identities. Its
+named `black-tarn` stream draws after every established fells draw and keeps the entrance
+off earlier sites, herbs, and tarn-iron, so the existing frontier placements remain fixed.
+Snapshots expose line ownership, carried trout, and remaining reaches. WorldEval includes
+the reach count in the purity digest. The journey pilot buys the line, works all three
+reaches, uses the cooking path when ration room exists, and sells surplus; prose and JSON
+report caught, cooked, rationed, sold, and sale-coin totals. Save v91 advances to v92 for
+the new menu digits, terrain, carried state, and `g` behavior.
+
+Verification is complete: Release builds with zero warnings; all 848 tests pass, including
+10 focused Black Tarn tests and a broad 100-seed reachability sample; five twelve-crossing
+v95 journey twins are byte-identical and every run reaches cycle 13; the first runs catch
+476 trout and sell all 476 after finding no ration room; seed 1 replays exactly at 25,135
+keys, cycle 13, turn 24,009; and `worldgen --json` reports zero digest mismatches across
+240 worlds, each with one qualifying site, three reaches, and no resident enemy. Drift
+from v94 is expected: the new fells errand, its exposed turns, and town sale change pilot
+routing and progression. No exclusion in D-156 moved. Weather effects on fishing remain
+V1-02 work, and renewable pools, bait, tackle wear, random catches, resident fights, and
+fish spoilage remain outside the 1.0 contract.
+
 ### D-165: The country at the road's wet end, and the build that may call itself finished (2026-07-22)
 
 V1-09 is Approved as the ninth and final implementation-ready card on the design-first

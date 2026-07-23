@@ -45,13 +45,14 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - Skills: **14 built of 18; the final four designed** (D-162 approves Alchemy,
   Athletics, Stealth, and Larceny, implementation pending)
 - Activity families: **wilderness-living core built** (hunting, selling, cooking, foraging:
-  D-070..D-074; Athletics rush Approved D-162), the **craft family opened** (cooking
+  D-070..D-074; finite high-fells fishing D-166; Athletics rush Approved D-162), the **craft family opened** (cooking
   D-073; alchemy v1 D-090, with its skill curve Approved D-162), and the **crime family
   complete on its named verbs** (pilfering D-086; pickpocketing + Sleight D-107;
   lockpicking D-122; fencing at the peddler's cart D-124; burglary proper D-127; the
   Sleight/Larceny split Approved D-162); **town life opened** (knucklebones D-108;
   carousing + the light-purse read D-123)
 - Story templates: **6** built (Raided Stead plus Blight, Throne, Faiths, Gold Rush, Long Siege)
+- Path to 1.0: **1 of 9 tranches Verified** (V1-01 D-166); V1-02 is next
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
@@ -144,13 +145,13 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   town and economy depth; character and activity breadth; combat and magic depth;
   companions, factions, and consequence depth; then the next full-density region and
   the release audit. Open-ended catalogs remain tracked but do not block 1.0 unless a
-  later decision explicitly promotes them into the gate. All nine cards are now Approved
-  through D-165, so implementation begins at V1-01 and proceeds in queue order.
+  later decision explicitly promotes them into the gate. All nine cards are Approved
+  through D-165. V1-01 is built and Verified under D-166, so V1-02 is next in queue order.
 
 ### Path to 1.0 tracker (ordered, adopted D-155/D-157)
 
-- [ ] 1. B4 capstone: fourth high-fells site at full regional density
-  (V1-01 design Approved D-156; implementation pending)
+- [x] 1. B4 capstone: fourth high-fells site at full regional density
+  (V1-01 design Approved D-156; built and Verified D-166)
 - [ ] 2. Weather and seasons v1 plus the enabled A2 event follow-ons
   (V1-02 design Approved D-158; implementation pending)
 - [ ] 3. D3 prose-variety infrastructure and repetition audit
@@ -183,7 +184,7 @@ infinite prerequisite for completion.
 
 - [x] Deterministic engine: hierarchical seed tree, fact graph, worldgen (D-002, D-013, D-018)
 - [x] Layered-map presentation, TUI render layer (Frame/Presenter) (D-001)
-- [x] Save system: seed + input journal, replay-on-load, currently v91 (D-012, D-028, D-154)
+- [x] Save system: seed + input journal, replay-on-load, currently v92 (D-012, D-028, D-166)
 - [x] NG+ crossing: waygate, coin -> Legend, tier-deepening worldgen (D-011, D-029)
 - [x] The Aegis as diegetic companion voice (D-010, D-019)
 - [x] The full trans-world Aegis story arc: reveal ladder -> the keeping -> the mending -> steady state (D-020, D-026, D-037, D-038, D-039, D-045, D-060)
@@ -317,8 +318,9 @@ infinite prerequisite for completion.
   D-073, D-074); camping shipped with the road (D-138: 'm' anywhere plain on an
   overworld, the supper's ration buying the mending, Survival deepening it, the kill
   cooked at the fire); fells extraction feeds Survival through finite tarn-iron seams
-  (D-153); D-162 approves live-pressure Athletics rushes; tracking and broader climbing
-  or swimming remain pending or excluded (D-006)
+  (D-153); fishing ships as three finite high-fells reaches with a cook-or-sell trout
+  yield (D-166); D-162 approves live-pressure Athletics rushes; tracking and broader
+  climbing or swimming remain pending or excluded (D-006)
 - [x] A hide-buyer with room to grow: the woodward's trade sub-menu, hides to coin (D-071)
 - [x] Crime: all four of D-006's named verbs shipped. Pickpocketing (D-107, v55: 'p' beside one
   of the stead's folk, the Sleight skill's dice, one try per pocket per world; clean lifts pay
@@ -464,11 +466,11 @@ between them as play. Starts after the stead layer's core lands.
   elite beast, the pelt answering the fells' cold, the drover's cache); the country's
   own goods loop D-153 (four finite tarn-iron seams, Survival-scaled extraction, town
   smelting into blooms, guild sale, pilot and worldgen measure live), deepened D-154 with
-  the first bloom recipe and the sell-or-use choice; still open: a
-  possible fourth site, then further regions one at a time. V1-01 approves the fourth
-  fells site (D-156), and V1-09 approves the Salt Fen as the fourth named country with a
+  the first bloom recipe and the sell-or-use choice; brought to full current density in
+  D-166 with the fourth site, three finite fishing reaches, permanent tackle, trout as a
+  cook-or-sell good, and full pilot and worldgen proof. V1-09 approves the Salt Fen as the fourth named country with a
   roofed hamlet, four sites, salt work, the fen adder, a bounded local arc, and release
-  observability (D-165). Both remain implementation pending; regions beyond the fens are
+  observability (D-165), still implementation pending. Regions beyond the fens are
   post-1.0 (D-131, D-146, D-147, D-149, D-150, D-153, D-154, D-156, D-165)
 
 ### Magic (v1 shipped, D-091)
@@ -772,6 +774,15 @@ kind, and the evaluation harness that hardens every generator change.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-22: **D-166 the black tarn is built and Verified.** V1-01 closes the current
+  high-fells density tranche with a deterministic fourth site, three reachable finite
+  fishing reaches, permanent tackle, Survival-scaled trout, fixed-fire and camp cooking,
+  town sale through the established economy rules, complete presentation, persistence,
+  pilot policy, journey metrics, snapshots, and WorldEval coverage. Save v91 advances to
+  v92. Release builds cleanly and all 848 tests pass. Five v95 twelve-crossing journey
+  pairs are byte-identical, seed 1 replays exactly at 25,135 keys and turn 24,009, and
+  worldgen reports zero digest mismatches across 240 worlds with exactly three reaches in
+  every qualifying site. Tranche 1 is checked off. V1-02 weather and seasons is next.
 - 2026-07-22: **D-165 the Salt Fen and the 1.0 release gate are designed.** V1-09 is
   Approved but not implemented. The fourth named country opens from the town end of the
   road with a roofed hamlet, four full sites, three finite weather-gated salt pans, one

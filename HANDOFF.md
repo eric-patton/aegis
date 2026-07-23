@@ -1,4 +1,4 @@
-# Aegis handoff (written 2026-07-21, end of the D-150 session)
+# Aegis handoff (updated 2026-07-22, end of the D-166 session)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,23 +8,26 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-150 currently at its head), then the parking lot of open
+  newest-first block (D-166 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-150)". Bump it whenever a decision lands.
-- `design/plan-2026-07.md`: the current build plan. Steps 1-13 are done; step 14 is
-  next (see "What is next" below).
+  "(D-001 through D-166)". Bump it whenever a decision lands.
+- `design/plan-2026-07.md`: the current build plan. The original sequence and the first
+  Path to 1.0 tranche are done; V1-02 is next (see "What is next" below).
+- `design/plan-1.0.md`: the canonical nine-card implementation queue. V1-01 is Verified;
+  V1-02 through V1-09 are Approved and pending in that order.
 - `design/story/`: arc spec and world-story templates. Full story detail lives there.
 - `docs/dev-harness.md`: the pilot/sim/journey harness.
 
 ## Current state
 
-- Latest commits (newest first): `faf6015` roadmap tidy, `6d1c6fe` D-150 the
-  wolf-gill, `6183ae2` D-149 the wolf-winter, `1ed34d5` D-148 letters and Lore.
-- Save format: `SaveCodec.Version = 88` (v86 = D-148, v87 = D-149, v88 = D-150;
-  history comments in `src/Aegis.Core/SaveCodec.cs`).
-- Tests: 820 green (`dotnet test` at the solution root).
-- Working tree clean at the time of writing.
+- Latest completed work: D-166, V1-01, the fourth high-fells site and finite fishing
+  loop. The preceding commit is `c2c576c`, D-165's approved V1-09 design and release gate.
+- Save format: `SaveCodec.Version = 92` (v91 = D-154, v92 = D-166; history comments in
+  `src/Aegis.Core/SaveCodec.cs`).
+- Tests: 848 green (`dotnet test tests/Aegis.Core.Tests/Aegis.Core.Tests.csproj -c Release
+  --no-build`).
+- The D-166 Release build, full test run, sweep, replay, and worldgen purity gate are green.
 
 ## Working conventions (were in user-level config, not visible to a new tool)
 
@@ -76,18 +79,20 @@ against the previous baseline set to see (and justify) drift. Then sim-replay at
 least seed 1's journal and require exact key/cycle/turn match. Then run the
 worldgen purity gate.
 
-**Current baselines are v92** (the previous session's scratchpad files are gone;
-these numbers are the record, and the sweeps regenerate deterministically):
+**Current baselines are v95**, stored under `artifacts/aegis-sweep/`. The prior comparison
+set is v94. Every v95 twin pair is byte-identical:
 
-| seed  | keys  | turns | deaths | outcome                          |
-|-------|-------|-------|--------|----------------------------------|
-| 1     | 23112 | 21467 | 8      | cycle 13, 12 crossings, gill 12/12 |
-| 7     | 26736 | 22031 | 8      | cycle 13, 12 crossings, gill 12/12 |
-| 99    | 30023 | 27610 | 10     | cycle 13, 12 crossings, gill 12/12 |
-| 2024  | 23101 | 21570 | 10     | cycle 13, 12 crossings, gill 12/12 |
-| 88888 | 23664 | 21943 | 8      | cycle 13, 12 crossings, gill 12/12 |
+| seed  | keys  | turns | deaths | fish caught | outcome                    |
+|-------|-------|-------|--------|-------------|----------------------------|
+| 1     | 25135 | 24009 | 7      | 96          | cycle 13, 12 crossings     |
+| 7     | 26128 | 24798 | 10     | 96          | cycle 13, 12 crossings     |
+| 99    | 29256 | 27491 | 12     | 96          | cycle 13, 12 crossings     |
+| 2024  | 25103 | 24090 | 9      | 96          | cycle 13, 12 crossings     |
+| 88888 | 28012 | 26304 | 7      | 92          | cycle 13, 12 crossings     |
 
-Seed 1 sim replay: 23112 keys, cycle 13, turn 21467, wolfPelt true.
+Seed 1 sim replay: 25,135 keys, cycle 13, turn 24,009, line owned, three fresh reaches
+in the new world. Worldgen: 240 worlds, zero digest mismatches, 240 qualifying sites,
+all with three reaches and no resident enemy.
 
 ## Engine invariants (break these and old saves die)
 
@@ -127,21 +132,21 @@ Seed 1 sim replay: 23112 keys, cycle 13, turn 21467, wolfPelt true.
 
 ## What is next (queued, in recommended order)
 
-1. **Plan step 14: D2 twist worlds** (`design/plan-2026-07.md`). Do NOT start
-   building: its parked design questions in the decisions.md parking lot
-   explicitly need the user's answers first. Run a design Q&A, record the picks
-   as a decision, then build.
-2. **More B4 fells depth**: a fourth fell site, or the fells' own goods/economy.
-3. **D-148's deferred book titles**: a smithing text, a town-law primer,
-   folk-tales (see D-148's deferrals in decisions.md).
-4. **The respawn/re-tenanting question** (D-150 deferral): cleared sites stay
-   cleared within a world today; whether anything re-tenants is an open design
-   question for the user.
+1. **V1-02: Weather and seasons v1** (`design/plan-1.0.md`, D-158). Its design is
+   Approved and implementation-ready. Build the shared seasonal calendar, three climate
+   bands, deterministic weather hands, forecasts, exposure rules, enabled stead events,
+   pilot behavior, persistence, presentation, evaluation, and its v93 save bump exactly
+   as the card specifies.
+2. **Verify V1-02 through this full sweep discipline**, then record its implementation
+   decision, check off tranche 2, and advance to V1-03.
+3. **V1-03 through V1-09 remain Approved in queue order.** Do not silently widen a card.
+   If implementation reveals a substantive contract conflict, present options and a
+   recommendation to the user before changing the approved design.
 
 ## Handoff hygiene
 
 When a feature lands: verify (tests + the sweep discipline above), commit, write
 the decision entry (newest-first block head), tick the roadmap, bump the vision
 counter, and note deferred work in the decision's deferrals so it is never lost.
-Keep this file current only if the workflow itself changes; state lives in the
-docs above.
+Keep this file's baselines and next-card pointer current with each completed tranche;
+the detailed state lives in the docs above.

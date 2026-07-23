@@ -4,7 +4,7 @@ namespace Aegis.Core;
 
 /// <summary>One site as the harness reads it: what stands there, and what it holds.</summary>
 public sealed record SiteMeasure(
-    string Id, string Kind, int Spawns, string Monsters, bool Stone, bool Coffer);
+    string Id, string Kind, int Spawns, string Monsters, bool Stone, bool Coffer, int FishingReaches);
 
 /// <summary>
 /// One generated world reduced to the numbers the expressive-range charts want
@@ -61,7 +61,7 @@ public static class WorldEval
             .Select(s => new SiteMeasure(
                 s.Id, s.Kind.ToString().ToLowerInvariant(), s.Spawns.Count,
                 string.Join(",", s.Spawns.Select(sp => sp.Kind).Distinct().Select(k => k.ToString().ToLowerInvariant())),
-                s.StonePos is not null, s.CofferPos is not null))
+                s.StonePos is not null, s.CofferPos is not null, s.FishingReaches.Count))
             .ToList();
 
         string story = w.Facts.OfType("story").FirstOrDefault()?.Subject ?? "none";
@@ -234,7 +234,7 @@ public static class WorldEval
         Fold($"{m.Seed}|{m.Tier}|{m.WorldName}|{m.SettlementName}|{m.Story}|{m.Twist}|{m.TwistVariant}|{m.Waystones}|{m.Npcs}|{m.Facts}|{m.StoryStorylets}|{m.Gleanings}|{m.HerbSpots}|{m.TarnIronSeams}|{m.WildPony}");
         foreach (var kv in m.FactTypes) Fold($"{kv.Key}={kv.Value}");
         foreach (var id in m.StoryletIds) Fold(id);
-        foreach (var s in m.Sites) Fold($"{s.Id}|{s.Kind}|{s.Spawns}|{s.Monsters}|{s.Stone}|{s.Coffer}");
+        foreach (var s in m.Sites) Fold($"{s.Id}|{s.Kind}|{s.Spawns}|{s.Monsters}|{s.Stone}|{s.Coffer}|{s.FishingReaches}");
         foreach (var s in RawSurfaces(w)) Fold(s);
         return h.ToString("x16");
     }

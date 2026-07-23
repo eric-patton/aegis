@@ -814,6 +814,8 @@ public static class Presenter
         Terrain.GillEntrance => ('%', Hue.White, Hue.Black),
         Terrain.Waystone => ('+', Hue.White, Hue.DarkCyan),
         Terrain.TarnIron => ('i', Hue.DarkCyan, Hue.Black),
+        Terrain.TarnEntrance => ('o', Hue.Blue, Hue.Black),
+        Terrain.FishingReach => ('f', Hue.Cyan, Hue.DarkBlue),
         _ => ('?', Hue.Magenta, Hue.Black),
     };
 
@@ -854,6 +856,8 @@ public static class Presenter
         Line($"Coin    {p.Coin}", Hue.Yellow);
         Line($"Essence {p.Essence}", Hue.Cyan);
         if (p.Rations > 0) Line($"Rations {p.Rations}", Hue.Green);
+        if (p.TarnTrout > 0) Line($"Trout   {p.TarnTrout}", Hue.Cyan);
+        if (p.FishingLine) Line("Hook and line", Hue.DarkCyan);
         // The vials (D-090): the stillroom's craft rides the rail beside the bread.
         if (p.Draughts > 0) Line($"Vials   {p.Draughts}", Hue.Green);
         if (p.Legend > 0) Line($"Legend  {p.Legend}", Hue.Magenta);
@@ -907,6 +911,7 @@ public static class Presenter
                 SiteKind.Ringfort => "The ringfort",
                 SiteKind.Songhall => "The songhall",
                 SiteKind.Leaguer => "The fen-leaguer",
+                SiteKind.BlackTarn => "The black tarn",
                 // The town names itself (D-140): a market, not a delve.
                 SiteKind.Town => game.World.TownName,
                 _ => "Goblin cave",
@@ -922,8 +927,12 @@ public static class Presenter
                     Line("The gate arch: < leaves", Hue.Yellow);
             }
             int alive = game.LiveMonstersHere.Count();
-            if (game.CurrentSite.Kind != SiteKind.Town)
+            if (game.CurrentSite.Kind == SiteKind.BlackTarn)
+                Line($"Fishing reaches: {game.CurrentSite.FishingReaches.Count}", Hue.Cyan);
+            else if (game.CurrentSite.Kind != SiteKind.Town)
                 Line($"Foes here: {alive}", alive > 0 ? Hue.Red : Hue.DarkGreen);
+            if (game.CurrentSite.Kind == SiteKind.BlackTarn && game.CurrentMap[p.Pos] == Terrain.FishingReach)
+                Line(p.FishingLine ? "Fishing reach: g works" : "Fishing reach: needs line", Hue.Cyan);
             if (game.InAim) Line("Shaft set: choose a line", Hue.Cyan);
             if (game.InThrust) Line("Spear leveled: choose a line", Hue.Cyan);
             if (game.InHeave) Line("Feet set: choose a line", Hue.DarkYellow);
@@ -1007,6 +1016,7 @@ public static class Presenter
             if (here == Terrain.WildsEntrance) Line("Game-trail: > enters", Hue.Green);
             if (here == Terrain.CairnEntrance) Line("Kerb gap: > stoops in", Hue.Gray);
             if (here == Terrain.GillEntrance) Line("Bone-gill: > climbs down", Hue.White);
+            if (here == Terrain.TarnEntrance) Line("Black tarn: > goes down", Hue.Cyan);
             if (here == Terrain.SonghallEntrance) Line("Songhall door: > enters", Hue.Cyan);
             if (here == Terrain.HarrowEntrance) Line("Harrow door: > enters", Hue.White);
             if (here == Terrain.ThresholdEntrance)

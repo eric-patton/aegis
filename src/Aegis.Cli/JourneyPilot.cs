@@ -97,6 +97,10 @@ public static class JourneyPilot
         // (D-050), sent along whatever line bears a target.
         if (g.InTalkMenu && g.TalkNpc?.Kind == NpcKind.Smith)
             return SmithBuyDigit(g) ?? SmithBraceDigit(g) ?? 'z';
+        if (g.InTalkMenu && g.TalkNpc?.Kind == NpcKind.Waykeeper && !g.Player.FishingLine)
+            return g.Player.Coin >= TownCost(g, FellFishing.LinePrice)
+                ? OfferDigit(g, TradeGood.FishingLine) ?? 'z'
+                : 'z';
         // The woodward's bench is a talk menu we drive on purpose too (D-072, D-073): with
         // hides cured or raw meat in hand, open the wood's edge, sell the lot and cook the
         // meat down to rations, then step back. The trade menu sits behind one talk digit
@@ -187,6 +191,8 @@ public static class JourneyPilot
             // sales feed Commerce), then leave by the gate.
             if (site.Kind == SiteKind.Town)
                 return TownMove(g);
+            if (site.Kind == SiteKind.BlackTarn)
+                return BlackTarnMove(g, site);
             // Still work to do here: clear it. The wilds is hunted, not fought (D-070):
             // game flees, so the generic close-and-bump never catches it; the hunt loosens
             // a shaft at a hart on a clear line, or herds it into a corner. The fells'
@@ -473,9 +479,12 @@ public static class JourneyPilot
         var combe = g.World.FellWildsSite;
         var cairn = g.World.FellCairnSite;
         var gill = g.World.FellGillSite;
+        var tarn = g.World.BlackTarnSite;
         bool owed = (!combe.Cleared && !skip.Contains(combe.Id))
             || (!cairn.Cleared && !skip.Contains(cairn.Id))
-            || (!gill.Cleared && !skip.Contains(gill.Id));
+            || (!gill.Cleared && !skip.Contains(gill.Id))
+            || (!tarn.Cleared && !skip.Contains(tarn.Id)
+                && (g.Player.FishingLine || g.Player.Coin >= TownCost(g, FellFishing.LinePrice) + 10));
         bool ironOwed = g.World.TarnIronSeams.Count > 0
             && g.Player.Weapon is { Family: SkillId.Hafted, Worn: false };
         return (owed || ironOwed)
@@ -484,7 +493,7 @@ public static class JourneyPilot
 
     /// <summary>Camp is worth a night (D-138): raw meat to cook and room to carry what it makes.</summary>
     private static bool RoadCampWanted(Game g) =>
-        g.Player.RawMeat > 0 && g.Player.Rations < Game.RationCap;
+        (g.Player.RawMeat > 0 || g.Player.TarnTrout > 0) && g.Player.Rations < Game.RationCap;
 
     /// <summary>
     /// The road's own errand loop (D-138): reclaim anything a fall left out
@@ -522,6 +531,12 @@ public static class JourneyPilot
         // camps, picks, and brings the walk back down to this road.
         if (FellTripWanted(g, skip))
         {
+            if (!p.FishingLine && !g.World.BlackTarnSite.Cleared
+                && !skip.Contains(g.World.BlackTarnSite.Id))
+            {
+                var keeper = g.World.Waykeeper;
+                if (NavKey(g, road, p.Pos, keeper.Pos, blocked) is { } toKeeper) return toKeeper;
+            }
             if (p.Pos == g.World.FellMouthPos) return '>';
             if (NavKey(g, road, p.Pos, g.World.FellMouthPos, blocked) is { } toTrack) return toTrack;
         }
@@ -538,7 +553,7 @@ public static class JourneyPilot
         // unsworn proven name sends the walk through the gate too, and both
         // errands clear themselves inside. Salt in the pack (D-144) is the
         // caravan leg's whole reason to exist: it sells only in there.
-        if (g.Player.Hide > 0 || g.Player.Herb > 0 || g.Player.Salt > 0
+        if (g.Player.Hide > 0 || g.Player.Herb > 0 || g.Player.Salt > 0 || g.Player.TarnTrout > 0
             || SmeltErrand(g) || g.Player.IronBloom > 0
             || ForgeErrand(g) || BondErrand(g) || ScribeErrand(g))
         {
@@ -594,6 +609,15 @@ public static class JourneyPilot
             if (NavKey(g, fells, p.Pos, gill.OverworldPos, blocked) is { } toGill) return toGill;
         }
 
+        // The black tarn (D-156): a quiet fourth errand after the dangerous
+        // mouths, every finite reach worked before the camp cooks what fits.
+        var tarn = g.World.BlackTarnSite;
+        if (p.FishingLine && !tarn.Cleared && !skip.Contains(tarn.Id))
+        {
+            if (p.Pos == tarn.OverworldPos) return '>';
+            if (NavKey(g, fells, p.Pos, tarn.OverworldPos, blocked) is { } toTarn) return toTarn;
+        }
+
         if (RoadCampWanted(g) && fells[p.Pos] is Terrain.Heath or Terrain.Grass or Terrain.Hills)
             return 'm';
 
@@ -618,6 +642,23 @@ public static class JourneyPilot
     }
 
     /// <summary>
+    /// The black tarn's finite loop (D-156): walk each remaining bank, work it
+    /// with 'g', then take the same daylight out. No combat policy belongs here.
+    /// </summary>
+    private static char? BlackTarnMove(Game g, Site tarn)
+    {
+        var p = g.Player;
+        foreach (var reach in tarn.FishingReaches.OrderBy(r => Chebyshev(p.Pos, r))
+                     .ThenBy(r => r.Y).ThenBy(r => r.X))
+        {
+            if (p.Pos == reach) return 'g';
+            if (NavKey(g, tarn.Map, p.Pos, reach, Empty) is { } toReach) return toReach;
+        }
+        if (p.Pos == tarn.EntryPos) return '<';
+        return NavKey(g, tarn.Map, p.Pos, tarn.EntryPos, Empty);
+    }
+
+    /// <summary>
     /// The town walked (D-140): to each stall that buys what we carry, sell
     /// (the bump opens the talk, the digit above sells the lot), then out by
     /// the gate arch. People block like people everywhere; the goal cell is
@@ -635,6 +676,7 @@ public static class JourneyPilot
         else if (g.Player.IronBloom > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_guildmaster");
         else if (g.Player.Hide > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_hidemonger");
         else if (g.Player.Herb > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_herbmonger");
+        else if (g.Player.TarnTrout > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_provisioner");
         // The caravan leg's far end (D-144): salt in the pack sells at the
         // provisioner's board, the same one-press lot as the hides.
         else if (g.Player.Salt > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_provisioner");
@@ -670,6 +712,7 @@ public static class JourneyPilot
         if (g.TalkNpc.Id == "npc_guildmaster" && g.Player.IronBloom > 0) return OfferDigit(g, TradeGood.IronBloom);
         if (g.TalkNpc!.Id == "npc_hidemonger" && g.Player.Hide > 0) return OfferDigit(g, TradeGood.Hide);
         if (g.TalkNpc.Id == "npc_herbmonger" && g.Player.Herb > 0) return OfferDigit(g, TradeGood.Herb);
+        if (g.TalkNpc.Id == "npc_provisioner" && g.Player.TarnTrout > 0) return OfferDigit(g, TradeGood.TarnTrout);
         // The salt lot (D-144): the same predicate that sent the walk.
         if (g.TalkNpc.Id == "npc_provisioner" && g.Player.Salt > 0) return OfferDigit(g, TradeGood.Salt);
         // The forge and the bond (D-141): the same predicates that sent the
@@ -1126,7 +1169,7 @@ public static class JourneyPilot
     /// Herbs stopped being his business in D-082: they ride to the stillroom now.</summary>
     private static bool BenchErrand(Game g) =>
         g.Player.Hide > 0
-        || (g.Player.RawMeat > 0 && g.Player.Rations < Game.RationCap);
+        || ((g.Player.RawMeat > 0 || g.Player.TarnTrout > 0) && g.Player.Rations < Game.RationCap);
 
     /// <summary>
     /// At the open bench, the digit for the next piece of business (D-072, D-073): sell the
@@ -1161,6 +1204,7 @@ public static class JourneyPilot
             return 'z';
         }
         if (g.Player.Hide > 0) return TradeDigit(g, TradeGood.Hide);
+        if (g.Player.TarnTrout > 0 && g.Player.Rations < Game.RationCap) return TradeDigit(g, TradeGood.CookFish);
         if (g.Player.RawMeat > 0 && g.Player.Rations < Game.RationCap) return TradeDigit(g, TradeGood.Cook);
         // The beasts (D-100): buy the stead's mule with surplus coin, and turn the
         // stable when the roster wants a different road out front.

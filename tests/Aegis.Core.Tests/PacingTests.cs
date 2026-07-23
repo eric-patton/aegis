@@ -252,7 +252,7 @@ public class PacingTests
         foreach (char key in keys) live.ApplyKey(key);
         var replay = SaveCodec.Replay(seed, keys);
 
-        Assert.Equal(97, SaveCodec.Version);
+        Assert.Equal(98, SaveCodec.Version);
         Assert.Equal(live.Stores, replay.Stores);
         Assert.Equal(live.Upcoming, replay.Upcoming);
         Assert.Equal(live.Teller.Readings, replay.Teller.Readings);

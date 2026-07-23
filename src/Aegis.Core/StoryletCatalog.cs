@@ -1543,6 +1543,53 @@ public static class StoryletCatalog
             Effect = g => g.CastTalkNpcAsGuest(GuestRole.Huntsman),
         },
 
+        new Storylet
+        {
+            Id = "the-grain-road",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.World,
+            Priority = 11,
+            When = g => g.CanBeginGrainRoad,
+            Lines =
+            [
+                ("The villager looks from the levy's tally to the road east. \"The carriers have our bond, and the town has grain. What it lacks is a name willing to walk between the two books. I will take mine.\"", LogTone.Info),
+                ("\"Bring them living to the guildhall, bearer. Grain is slow help, and mortal help is slower. That does not make either small.\"", LogTone.Aegis),
+            ],
+            Effect = g => g.CastTalkNpcAsGuest(GuestRole.Crofter),
+        },
+
+        new Storylet
+        {
+            Id = "the-road-remembered",
+            Trigger = StoryletTrigger.Rest,
+            Scope = StoryletScope.Character,
+            Priority = 12,
+            When = g => g.Player.GuestSuccessMemoryArmed
+                && !g.Player.GuestSuccessMemoryConsumed
+                && g.Cycle > g.Player.GuestSuccessMemoryCycle,
+            Lines =
+            [
+                ("At the shrine, the Aegis speaks a name from an older road and the deed that brought that mortal home. No one in this world knows it. The shield does.", LogTone.Aegis),
+            ],
+            Effect = g => g.ConsumeGuestSuccessMemory(),
+        },
+
+        new Storylet
+        {
+            Id = "the-road-mourned",
+            Trigger = StoryletTrigger.Rest,
+            Scope = StoryletScope.Character,
+            Priority = 12,
+            When = g => g.Player.GuestLossMemoryArmed
+                && !g.Player.GuestLossMemoryConsumed
+                && g.Cycle > g.Player.GuestLossMemoryCycle,
+            Lines =
+            [
+                ("At the shrine, the Aegis speaks a name it carried out of an older world. The count is private, exact, and not offered to the strangers sleeping nearby.", LogTone.Aegis),
+            ],
+            Effect = g => g.ConsumeGuestLossMemory(),
+        },
+
         // The memorial thread: a guest who fell with beats enough banked is
         // remembered aloud, once, by the stead that lost them. The beloved
         // fact is written at the fall itself; this is where it is cashed.
@@ -1570,11 +1617,54 @@ public static class StoryletCatalog
             Trigger = StoryletTrigger.Talk,
             Scope = StoryletScope.World,
             Priority = 6,
-            When = g => g.TalkNpc?.Kind == NpcKind.Villager && g.Player.Scars.Count > 0,
+            Requires = [new FactPattern("scar")],
+            When = g => g.TalkNpc?.Kind == NpcKind.Villager,
             Lines =
             [
                 ("The villager's eyes go where stead eyes always go, to what the road has kept of you, and they do not pretend otherwise. \"You have paid for standing between us and it. We see that here. We are not in the habit of forgetting it.\"", LogTone.Info),
                 ("\"They keep their own count of you, bearer. A rougher arithmetic than mine, and kinder.\"", LogTone.Aegis),
+            ],
+        },
+
+        new Storylet
+        {
+            Id = "the-eye-aftercare",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.World,
+            Priority = 7,
+            Requires = [new FactPattern("scar-mended", "taken_eye")],
+            When = g => g.TalkNpc?.Id == "npc_herbwife",
+            Lines =
+            [
+                ("The herbwife checks the mended eye in the doorway light, then nods once. \"Depth is back. Keep smoke out of it another week, and stop testing it against sunsets.\"", LogTone.Info),
+            ],
+        },
+
+        new Storylet
+        {
+            Id = "the-hand-aftercare",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.World,
+            Priority = 7,
+            Requires = [new FactPattern("scar-mended", "crushed_hand")],
+            When = g => g.TalkNpc?.Id is "npc_smith" or "npc_townsmith",
+            Lines =
+            [
+                ("The smith works each joint of the fitted brace, listens to the hinge, and tightens one strap. \"Iron remembers its measure. Let it carry only the part the bone cannot.\"", LogTone.Info),
+            ],
+        },
+
+        new Storylet
+        {
+            Id = "the-haunting-aftercare",
+            Trigger = StoryletTrigger.Talk,
+            Scope = StoryletScope.World,
+            Priority = 7,
+            Requires = [new FactPattern("scar-mended", "haunted_look")],
+            When = g => g.TalkNpc?.Kind == NpcKind.Skald,
+            Lines =
+            [
+                ("The skald studies the space behind your shoulder and finds it empty. \"Good. The verse has kept what it was given. Do not go borrowing it back.\"", LogTone.Info),
             ],
         },
 

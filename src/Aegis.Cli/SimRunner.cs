@@ -14,6 +14,7 @@ public static class SimRunner
     {
         ulong seed = 1;
         string keys = "";
+        string? keysFile = null;
         bool quiet = false;
 
         for (int i = 0; i < args.Length; i++)
@@ -22,11 +23,22 @@ public static class SimRunner
             {
                 case "--seed": seed = ulong.Parse(args[++i]); break;
                 case "--keys": keys = args[++i]; break;
+                case "--keys-file": keysFile = args[++i]; break;
                 case "--quiet": quiet = true; break;
                 default:
                     Console.Error.WriteLine($"aegis sim: unexpected argument '{args[i]}'");
                     return 1;
             }
+        }
+
+        if (keysFile is not null)
+        {
+            if (keys.Length > 0)
+            {
+                Console.Error.WriteLine("aegis sim: use either --keys or --keys-file, not both");
+                return 1;
+            }
+            keys = File.ReadAllText(keysFile);
         }
 
         var game = new Game(seed, firstWake: true);

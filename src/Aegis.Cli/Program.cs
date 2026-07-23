@@ -46,8 +46,8 @@ for (int i = 0; i < args.Length; i++)
                 aegis [--seed N] [--save slot] [--pilot] [--headless] [--session name]
                 aegis saves [--save-dir dir]
                 aegis pilot <screen|keys "<keys>"|state|quit|ping> [--session name]
-                aegis sim --seed N --keys "<keys>" [--quiet]
-                aegis journey --seed N --cycles K [--emit-keys] [--rogue] [--caster]
+                aegis sim --seed N (--keys "<keys>" | --keys-file path) [--quiet]
+                aegis journey --seed N --cycles K [--emit-keys] [--rogue] [--caster] [--companion]
                 aegis worldgen [--seeds N] [--start S] [--tiers A-B] [--json] [--dump]
 
                 --save      play in a named slot: loads it if it exists, creates it if not;

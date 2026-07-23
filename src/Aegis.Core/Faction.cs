@@ -34,17 +34,18 @@ public static class SteadRegard
     public const int OwnRung = 3;
 
     /// <summary>Regard required for a rung: 1, 3, 5. A plain step, not a curve; the stead counts in deeds, not songs.</summary>
-    public static int Threshold(int rung) => 2 * rung - 1;
+    public static int Threshold(int rung, bool closedDoor = false) =>
+        2 * rung - 1 + (closedDoor ? 1 : 0);
 
-    public static int RungFor(int regard)
+    public static int RungFor(int regard, bool closedDoor = false)
     {
         int rung = 0;
-        while (rung < MaxRung && regard >= Threshold(rung + 1)) rung++;
+        while (rung < MaxRung && regard >= Threshold(rung + 1, closedDoor)) rung++;
         return rung;
     }
 
     /// <summary>What the folk of the stead call the bearer, in their own plain words.</summary>
-    public static string TitleOf(int regard) => RungFor(regard) switch
+    public static string TitleOf(int regard, bool closedDoor = false) => RungFor(regard, closedDoor) switch
     {
         1 => "a known face here",
         2 => "a friend to the stead",

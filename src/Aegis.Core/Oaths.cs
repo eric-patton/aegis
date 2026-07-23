@@ -9,6 +9,8 @@ public enum OathId
     OldBlood,
     LeanDark,
     HushedName,
+    ClosedDoor,
+    LongCount,
 }
 
 /// <summary>One oath's catalog entry. Blurbs are written for the terms menu: one line, plain register.</summary>
@@ -34,6 +36,8 @@ public static class OathCatalog
         new(OathId.OldBlood, "the old blood", "every blow lands 1 deeper", 2),
         new(OathId.LeanDark, "the lean dark", "essence comes up halved", 1),
         new(OathId.HushedName, "the hushed name", "the songs fall silent", 1),
+        new(OathId.ClosedDoor, "the closed door", "regard comes one deed later", 1),
+        new(OathId.LongCount, "the long count", "the toll drains every second turn", 1),
     ];
 
     public static OathDef Def(OathId id) => All.First(o => o.Id == id);
@@ -48,6 +52,8 @@ public static class OathCatalog
         OathId.OldBlood => "old_blood",
         OathId.LeanDark => "lean_dark",
         OathId.HushedName => "hushed_name",
+        OathId.ClosedDoor => "closed_door",
+        OathId.LongCount => "long_count",
         _ => id.ToString().ToLowerInvariant(),
     };
 }

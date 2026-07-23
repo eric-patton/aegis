@@ -37,8 +37,11 @@ public static class DeathsToll
     /// soul against the count (the Toll resilience D-015 promised Will), a tenth
     /// of the fill per point, never below a floor that keeps clustering real.
     /// </summary>
-    public static int FillFor(bool heavy, int will) =>
-        Math.Max(40, (heavy ? HeavyFill : Fill) - 10 * Math.Max(0, will - AttributeSet.Baseline));
+    public static int TierContribution(int tier) => Math.Min(40, 10 * Math.Max(0, tier - 4));
+
+    public static int FillFor(bool heavy, int will, int tier = 1) =>
+        Math.Max(40, (heavy ? HeavyFill : Fill) + TierContribution(tier)
+            - 10 * Math.Max(0, will - AttributeSet.Baseline));
 
     /// <summary>
     /// The scar a death's shape asks for (matched to the death, D-098): the
@@ -72,6 +75,13 @@ public static class DeathsToll
         ScarId.TakenEye => "the taken eye",
         ScarId.CrushedHand => "the crushed hand",
         _ => "the haunted look",
+    };
+
+    public static string IdOf(ScarId id) => id switch
+    {
+        ScarId.TakenEye => "taken_eye",
+        ScarId.CrushedHand => "crushed_hand",
+        _ => "haunted_look",
     };
 
     /// <summary>What the mark costs, said plainly the moment it lands (D-009's legibility).</summary>

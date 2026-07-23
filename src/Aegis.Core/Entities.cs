@@ -456,6 +456,24 @@ public sealed class Player
 
     public bool HasScar(ScarId id) => Scars.Contains(id);
 
+    /// <summary>The fitted brace earned by repairing the crushed hand once. A fresh crushed hand suppresses it.</summary>
+    public bool FittedBrace { get; set; }
+
+    /// <summary>The first completed mortal road is carried until a later shrine rest answers it.</summary>
+    public bool GuestSuccessMemoryArmed { get; set; }
+    public bool GuestSuccessMemoryConsumed { get; set; }
+    public int GuestSuccessMemoryCycle { get; set; }
+
+    /// <summary>The first beloved mortal loss is carried until a later shrine rest answers it.</summary>
+    public bool GuestLossMemoryArmed { get; set; }
+    public bool GuestLossMemoryConsumed { get; set; }
+    public int GuestLossMemoryCycle { get; set; }
+
+    /// <summary>Character-scoped recognition of the three launch beasts.</summary>
+    public bool MuleRecognized { get; set; }
+    public bool CourserRecognized { get; set; }
+    public bool FellPonyRecognized { get; set; }
+
     /// <summary>The Aegis speaks once at the first standing rise (D-048); never again.</summary>
     public bool StandingLineHeard { get; set; }
 
@@ -700,11 +718,11 @@ public sealed class Monster
 public sealed class Intent
 {
     public required IntentKind Kind { get; init; }
-    public required Pos TargetCell { get; init; }
+    public required Pos TargetCell { get; set; }
     public int TurnsUntilResolve { get; set; } = 1;
 
     /// <summary>Every legal cell of a shaped intent. Empty means TargetCell alone.</summary>
-    public Pos[] Footprint { get; init; } = [];
+    public Pos[] Footprint { get; set; } = [];
 
     /// <summary>The caster's blood when a hostile working began, used by its honest interruption rule.</summary>
     public int HitPointsAtCommit { get; init; }
@@ -714,7 +732,7 @@ public sealed class Intent
     /// lie. Only the sword-thegn's measured cut sets it, and only against a
     /// bearer whose read of the kind is short of keen.
     /// </summary>
-    public Pos? FeintCell { get; init; }
+    public Pos? FeintCell { get; set; }
 }
 
 public enum IntentKind

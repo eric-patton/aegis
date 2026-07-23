@@ -43,6 +43,7 @@ public static class JourneyRunner
         bool wits = false; // the perception-build demo (D-084): the eye raised first.
         bool rogue = false;
         bool caster = false;
+        bool companion = false;
 
         for (int i = 0; i < args.Length; i++)
         {
@@ -59,6 +60,7 @@ public static class JourneyRunner
                 case "--wits": wits = true; break;
                 case "--rogue": rogue = true; break;
                 case "--caster": caster = true; break;
+                case "--companion": companion = true; break;
                 default:
                     Console.Error.WriteLine($"aegis journey: unexpected argument '{args[i]}'");
                     return 1;
@@ -242,7 +244,7 @@ public static class JourneyRunner
                 if (k > siteKeyBudget) skip.Add(activeSite);
             }
 
-            char? key = JourneyPilot.NextKey(game, skip, wits, rogue, caster);
+            char? key = JourneyPilot.NextKey(game, skip, wits, rogue, caster, companion);
             // The door counts as the site (D-146's lesson): a death on the very
             // key that steps in (a pack waiting at the mouth) must land on the
             // site's own death budget, or the give-up machinery never sees a
@@ -558,6 +560,7 @@ public static class JourneyRunner
                 WitsDemo: wits,
                 Rogue: rogue,
                 Caster: caster,
+                Companion: companion,
                 CycleReached: game.Cycle,
                 Tier: game.World.Tier,
                 CurrentTwist: WorldTwistCatalog.IdOf(game.World.Twist),
@@ -668,7 +671,7 @@ public static class JourneyRunner
                 FishSold: fishSold,
                 CoinFromFish: coinFromFish,
                 MaxRegard: maxRegard,
-                RegardTitle: SteadRegard.TitleOf(maxRegard),
+                RegardTitle: SteadRegard.TitleOf(maxRegard, companion),
                 MaxWrath: maxWrath,
                 WrathTitle: RaiderWrath.TitleOf(maxWrath),
                 RaidsSuffered: raidsSuffered,
@@ -711,6 +714,45 @@ public static class JourneyRunner
                     r.DeckOutcome.ToString().ToLowerInvariant(),
                     r.CardKey,
                     r.SpaceAllowanceSpentAtCall)).ToList(),
+                CompanionGuestOffers: game.GuestArcOffers,
+                CompanionGuestStarts: game.GuestArcStarts,
+                CompanionGuestCompletions: game.GuestArcCompletions,
+                CompanionFarewells: game.GuestFarewells,
+                CompanionGuestDeaths: game.GuestDeaths,
+                CompanionGuestBeats: game.GuestBeatsEarned,
+                CompanionCareActions: game.GuestCareActions,
+                CompanionHoldOrders: game.GuestHoldOrders,
+                CompanionFollowOrders: game.GuestFollowOrders,
+                CompanionTargets: game.PhysicalTargetsOnFellows,
+                CompanionEvasions: game.FellowEvasions,
+                CompanionHeldImpacts: game.HeldFellowImpacts,
+                CompanionShotRefusals: game.GuestShotRefusals,
+                GrainCartScheduled: game.GrainCartScheduled,
+                GrainCartDelivered: game.GrainCartDelivered,
+                GrainDeliveries: game.GrainDeliveries,
+                GrainStoresRestored: game.GrainStoresRestored,
+                GrainLevyLifts: game.GrainLevyLifts,
+                BeastWarmCamps: game.BeastWarmCamps,
+                PonyFeedings: game.PonyFeedings,
+                PonyTamings: game.PonyTamings,
+                PonyRiddenSteps: game.PonyRiddenSteps,
+                MuleRecognized: game.Player.MuleRecognized,
+                CourserRecognized: game.Player.CourserRecognized,
+                FellPonyRecognized: game.Player.FellPonyRecognized,
+                GuestSuccessMemoryArmed: game.Player.GuestSuccessMemoryArmed,
+                GuestSuccessMemoryConsumed: game.Player.GuestSuccessMemoryConsumed,
+                GuestLossMemoryArmed: game.Player.GuestLossMemoryArmed,
+                GuestLossMemoryConsumed: game.Player.GuestLossMemoryConsumed,
+                TollFills: game.TollFills,
+                LastTollBase: game.LastTollBase,
+                LastTollTierContribution: game.LastTollTierContribution,
+                ScarsCured: game.ScarsCured,
+                FittedBrace: game.Player.FittedBrace,
+                BraceParries: game.BraceParries,
+                ClosedDoorStands: game.ClosedDoorStands,
+                LongCountStands: game.World.Oaths.Contains(OathId.LongCount),
+                LongCountSkippedDrains: game.LongCountSkippedDrains,
+                CurrentBurden: game.World.Burden,
                 Keys: emitKeys ? keys.ToString() : null,
                 Crossings: crossings.Select(c => new JourneyCrossingDto(
                     FromCycle: c.FromCycle,
@@ -733,7 +775,7 @@ public static class JourneyRunner
             return 0;
         }
 
-        Report(seed, cycles, wits, rogue, caster, crossings, stop, game, totalKeys, keys, emitKeys,
+        Report(seed, cycles, wits, rogue, caster, companion, crossings, stop, game, totalKeys, keys, emitKeys,
             remnantsReclaimed, coinReclaimed, essenceReclaimed,
             chestsLooted, chestCoin, gearTaken, knacksTaken,
             resolvedAs, resolvedCycle, laidCycle, mendedCycle, legendFromBurden,
@@ -825,7 +867,8 @@ public static class JourneyRunner
             : $"on the overworld at ({game.Player.Pos.X},{game.Player.Pos.Y})";
 
     private static void Report(
-        ulong seed, int cycles, bool wits, bool rogue, bool caster, List<Crossing> crossings, string stop,
+        ulong seed, int cycles, bool wits, bool rogue, bool caster, bool companion,
+        List<Crossing> crossings, string stop,
         Game game, int totalKeys, StringBuilder keys, bool emitKeys,
         int remnantsReclaimed, int coinReclaimed, int essenceReclaimed,
         int chestsLooted, int chestCoin, int gearTaken, int knacksTaken,
@@ -857,7 +900,8 @@ public static class JourneyRunner
         w.WriteLine($"AEGIS JOURNEY   seed {seed}   target {cycles} crossing(s)"
                     + (wits ? "   [--wits: the keen-eyed walk (D-084)]" : "")
                     + (rogue ? "   [--rogue: the crooked trade (D-162)]" : "")
-                    + (caster ? "   [--caster: seven workings (D-163)]" : ""));
+                    + (caster ? "   [--caster: seven workings (D-163)]" : "")
+                    + (companion ? "   [--companion: roads carried together (D-164)]" : ""));
         w.WriteLine(new string('=', 62));
 
         if (crossings.Count == 0)
@@ -930,6 +974,19 @@ public static class JourneyRunner
         string workingSummary = string.Join(", ", Enum.GetValues<SpellId>()
             .Select(id => $"{SpellCatalog.IdOf(id)} {game.WorkingCasts(id)}/{game.WorkingEffects(id)}"));
         w.WriteLine($"           workings: {workingSummary} (casts/effects){(caster ? "; caster route" : "")}.");
+        if (companion)
+        {
+            w.WriteLine($"         companions: arcs {game.GuestArcOffers} offered, {game.GuestArcStarts} begun, {game.GuestArcCompletions} completed, {game.GuestFarewells} farewells, {game.GuestDeaths} deaths; "
+                        + $"beats {game.GuestBeatsEarned}, care {game.GuestCareActions}, hold/follow {game.GuestHoldOrders}/{game.GuestFollowOrders}.");
+            w.WriteLine($"           field: "
+                        + $"targets {game.PhysicalTargetsOnFellows}, evasions {game.FellowEvasions}, held impacts {game.HeldFellowImpacts}, refused shots {game.GuestShotRefusals}.");
+            w.WriteLine($"           grain: scheduled {game.GrainCartScheduled}, delivered here {game.GrainCartDelivered}, carts {game.GrainDeliveries}, stores restored {game.GrainStoresRestored}, levies lifted {game.GrainLevyLifts}.");
+            w.WriteLine($"           beasts: warm camps {game.BeastWarmCamps}, pony feedings/tamings/ridden steps {game.PonyFeedings}/{game.PonyTamings}/{game.PonyRiddenSteps}; "
+                        + $"beasts recognized mule {game.Player.MuleRecognized}, courser {game.Player.CourserRecognized}, fell pony {game.Player.FellPonyRecognized}; "
+                        + $"fitted brace {game.Player.FittedBrace}, brace parries {game.BraceParries}.");
+            w.WriteLine($"           consequences: Toll fills {game.TollFills}, last base/tier {game.LastTollBase}/{game.LastTollTierContribution}, scars cured {game.ScarsCured}; "
+                        + $"closed door {game.ClosedDoorStands}, long count {game.World.Oaths.Contains(OathId.LongCount)}, skipped drains {game.LongCountSkippedDrains}, burden {game.World.Burden}.");
+        }
         w.WriteLine($"         the arc: climbed the reveal ladder to {ArcReach(game)} (D-068).");
         if (resolvedCycle > 0)
             w.WriteLine($"           answered the keeping ({resolvedAs.ToString().ToLowerInvariant()}) at the Hearth in cycle {resolvedCycle}.");
@@ -1027,7 +1084,8 @@ internal sealed record JourneyCrossingDto(
     List<JourneySiteDto> Sites, List<JourneyReadDto> BestiaryBefore, List<JourneyReadDto> BestiaryAfter);
 
 internal sealed record JourneyReport(
-    ulong Seed, int TargetCrossings, bool WitsDemo, bool Rogue, bool Caster, int CycleReached, int Tier, string CurrentTwist, int CrossingsMade, string Stop,
+    ulong Seed, int TargetCrossings, bool WitsDemo, bool Rogue, bool Caster, bool Companion,
+    int CycleReached, int Tier, string CurrentTwist, int CrossingsMade, string Stop,
     int KeysPressed, int Turns, int Deaths, string Scars,
     int RemnantsReclaimed, int CoinReclaimed, int EssenceReclaimed,
     int ChestsLooted, int ChestCoin, int GearTaken,
@@ -1074,5 +1132,18 @@ internal sealed record JourneyReport(
     int PacingLongestQuiet, int PacingMinimumDealGap, int PacingMaximumDealGap,
     int PacingCadenceRolls, List<PacingCardDto> PacingCards,
     List<PacingReadingDto> PacingReadings,
+    int CompanionGuestOffers, int CompanionGuestStarts, int CompanionGuestCompletions,
+    int CompanionFarewells, int CompanionGuestDeaths, int CompanionGuestBeats,
+    int CompanionCareActions, int CompanionHoldOrders, int CompanionFollowOrders,
+    int CompanionTargets, int CompanionEvasions, int CompanionHeldImpacts, int CompanionShotRefusals,
+    bool GrainCartScheduled, bool GrainCartDelivered,
+    int GrainDeliveries, int GrainStoresRestored, int GrainLevyLifts,
+    int BeastWarmCamps, int PonyFeedings, int PonyTamings, int PonyRiddenSteps,
+    bool MuleRecognized, bool CourserRecognized, bool FellPonyRecognized,
+    bool GuestSuccessMemoryArmed, bool GuestSuccessMemoryConsumed,
+    bool GuestLossMemoryArmed, bool GuestLossMemoryConsumed,
+    int TollFills, int LastTollBase, int LastTollTierContribution, int ScarsCured,
+    bool FittedBrace, int BraceParries,
+    bool ClosedDoorStands, bool LongCountStands, int LongCountSkippedDrains, int CurrentBurden,
     string? Keys,
     List<JourneyCrossingDto> Crossings);

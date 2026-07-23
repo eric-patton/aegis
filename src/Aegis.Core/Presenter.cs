@@ -485,7 +485,7 @@ public static class Presenter
         // D-162 pairs the end-appended eighteen-skill ledger into two stable
         // enum-order columns. Nine rows leave the taught and Legend ledgers,
         // plus a pending question, readable at the 80x24 baseline.
-        int boxH = choice is null ? 16 : 17 + choice.Options.Length;
+        int boxH = choice is null ? 17 : 18 + choice.Options.Length;
         int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
         int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
 
@@ -533,14 +533,22 @@ public static class Presenter
                 : $"Legend {p.Legend,4}",
             game.Standing > 0 ? Hue.Magenta : Hue.Gray);
 
+        string burden = p.Burden is { } carried ? CreationCatalog.BurdenOf(carried).Name : "-";
+        string marks = p.Scars.Count > 0
+            ? string.Join(", ", p.Scars.Select(DeathsToll.NameOf))
+            : "no scars";
+        frame.Write(x0 + 2, y0 + 5 + skillRows,
+            $"Burden {burden}; {marks}{(p.FittedBrace ? "; fitted brace" : "")}",
+            p.Scars.Count > 0 ? Hue.DarkYellow : Hue.Gray);
+
         if (choice is not null)
         {
-            frame.Write(x0 + 2, y0 + 5 + skillRows,
+            frame.Write(x0 + 2, y0 + 6 + skillRows,
                 choice.Level >= 4
                     ? $"{SkillSet.NameOf(choice.Skill)} has deepened into a second question:"
                     : $"{SkillSet.NameOf(choice.Skill)} has settled into a question:", Hue.Cyan);
             for (int i = 0; i < choice.Options.Length; i++)
-                frame.Write(x0 + 2, y0 + 6 + skillRows + i,
+                frame.Write(x0 + 2, y0 + 7 + skillRows + i,
                     $"{i + 1}) {choice.Options[i].Name}: {choice.Options[i].Blurb}", Hue.White);
             frame.Write(x0 + 2, y0 + boxH - 1,
                 $" 1-{choice.Options.Length} choose, for good; any other key closes ", Hue.DarkGray);
@@ -889,7 +897,7 @@ public static class Presenter
         if (game.Standing > 0) Line($" {LegendStanding.TitleOf(game.Standing)}", Hue.DarkGray);
         // The stead's regard (D-076): per-world and transient, so it lives on the
         // live rail, not the permanent sheet, right under the songs' own standing.
-        if (game.Regard > 0) Line($" {SteadRegard.TitleOf(game.Regard)}", Hue.Green);
+        if (game.Regard > 0) Line($" {game.RegardTitle}", Hue.Green);
         // The raiders' wrath (D-078): the enemy ledger, in the enemy's color.
         if (game.Wrath > 0) Line($" {RaiderWrath.TitleOf(game.Wrath)}", Hue.Red);
         // The stead's suspicion (D-086): the home ledger's dark side, beside the
@@ -910,6 +918,8 @@ public static class Presenter
         // they are.
         foreach (var scar in p.Scars)
             Line($" {DeathsToll.NameOf(scar)}", Hue.DarkGray);
+        if (p.FittedBrace)
+            Line(p.HasScar(ScarId.CrushedHand) ? " fitted brace (suppressed)" : " fitted brace", Hue.DarkGray);
         // The one who walks with you (D-097): their blood on the rail beside
         // yours, because it is yours to keep.
         if (game.Guest is { Alive: true } guest)

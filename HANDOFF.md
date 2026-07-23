@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-23, end of the D-172 session)
+# Aegis handoff (updated 2026-07-23, end of the D-173 session)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,29 +8,29 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-172 currently at its head), then the parking lot of open
+  newest-first block (D-173 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-172)". Bump it whenever a decision lands.
+  "(D-001 through D-173)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence and the first
-  seven Path to 1.0 tranches are done; V1-08 is next (see "What is next" below).
-- `design/plan-1.0.md`: the canonical nine-card implementation queue. V1-01 through V1-07
-  are Verified; V1-08 and V1-09 are Approved and pending in that order.
+  eight Path to 1.0 tranches are done; V1-09 is next (see "What is next" below).
+- `design/plan-1.0.md`: the canonical nine-card implementation queue. V1-01 through V1-08
+  are Verified; V1-09 is Approved and pending.
 - `design/story/`: arc spec and world-story templates. Full story detail lives there.
 - `docs/dev-harness.md`: the pilot/sim/journey harness.
 
 ## Current state
 
-- Latest completed work: D-172, V1-07, exact flanking, the enemy follow-ons, five
-  level-6 martial questions, the rune-tongue and Will resistance, Severing and Mending,
-  two Spellcraft questions, and default plus caster journey coverage.
-- Save format: `SaveCodec.Version = 97` (v91 = D-154, v92 = D-166, v93 = D-167,
-  v94 = D-169, v95 = D-170, v96 = D-171, v97 = D-172; history comments in
-  `src/Aegis.Core/SaveCodec.cs`).
-- Tests: 940 green (`dotnet test tests/Aegis.Core.Tests/Aegis.Core.Tests.csproj -c Release
+- Latest completed work: D-173, V1-08, companion combat parity, the grain road, bounded
+  companion memories, faction readers, beast warmth and recognition, scar aftermath,
+  the fitted brace, tier-scaled Toll, and the final two launch oaths.
+- Save format: `SaveCodec.Version = 98` (v91 = D-154, v92 = D-166, v93 = D-167,
+  v94 = D-169, v95 = D-170, v96 = D-171, v97 = D-172, v98 = D-173; history
+  comments in `src/Aegis.Core/SaveCodec.cs`).
+- Tests: 968 green (`dotnet test tests/Aegis.Core.Tests/Aegis.Core.Tests.csproj -c Release
   --no-build`).
-- The D-172 Release build, full test run, combat and magic diagnostics, sweep, default
-  and caster replays, and worldgen purity gate are green.
+- The D-173 Release build, full test run, companion diagnostics, sweep, default and
+  companion replays, and worldgen purity gate are green.
 
 ## Working conventions (were in user-level config, not visible to a new tool)
 
@@ -67,10 +67,12 @@ The canonical design truth stays where it always was:
   - `aegis journey --seed N --cycles 12 --emit-keys` plays a full bot run and
     prints stats; its last line is `keys (N): <journal>`, strip the prefix with
     `-replace "^keys \(\d+\): ",""` to get the raw key journal.
-  - `aegis sim --seed N --keys "<journal>"` replays keys and prints a JSON
-    snapshot. Replaying a journey's journal must reproduce the journey's end state
-    exactly (keys, cycle, turn). Truncated journals replay safely, which makes
-    prefix-replay a valid probe of mid-run state.
+  - `aegis sim --seed N --keys "<journal>"` or
+    `aegis sim --seed N --keys-file "<path>"` replays keys and prints a JSON snapshot.
+    Use the file form for journals beyond the Windows command-line limit. Replaying a
+    journey's journal must reproduce the journey's end state exactly (keys, cycle, turn).
+    Truncated journals replay safely, which makes prefix-replay a valid probe of mid-run
+    state.
   - `aegis worldgen --json` generates every world twice and hash-compares; exit 0
     is the purity gate (exit 2 = nondeterminism).
 
@@ -83,28 +85,33 @@ against the previous baseline set to see (and justify) drift. Then sim-replay at
 least seed 1's journal and require exact key/cycle/turn match. Then run the
 worldgen purity gate.
 
-**Current baselines are v101**, stored under `artifacts/aegis-sweep/`. The prior comparison
-set is v100. Every v101 twin pair is byte-identical to its mate. Drift is expected and
-justified by rune-tongue placement and combat, exact flanking, the Severed sweep,
-Severing and Mending, and the pilot's safe threat answers:
+**Current baselines are v102**, stored under `artifacts/aegis-sweep/`. The prior comparison
+set is v101. Every v102 twin pair is byte-identical to its mate. Drift is expected and
+justified by nearest-body targeting, automatic fellow evasion, full-lane physical
+resolution, fewer deaths and recovery loops, and bounded pilot-route repairs:
 
-| seed  | keys  | turns | deaths | rune / hostile begun-interrupted-resisted-landed | outcome                |
-|-------|-------|-------|--------|---------------------------------------------------|------------------------|
-| 1     | 26950 | 25885 | 9      | 8 / 41-11-0-16                                   | cycle 13, 12 crossings |
-| 7     | 32865 | 25888 | 9      | 8 / 29-10-0-9                                    | cycle 13, 12 crossings |
-| 99    | 31738 | 27578 | 10     | 8 / 99-17-0-42                                   | cycle 13, 12 crossings |
-| 2024  | 35101 | 33255 | 7      | 8 / 32-11-0-11                                   | cycle 13, 12 crossings |
-| 88888 | 35877 | 34135 | 8      | 8 / 41-13-11-11                                  | cycle 13, 12 crossings |
+| seed  | keys  | turns | deaths | drift keys / turns / deaths | outcome                |
+|-------|-------|-------|--------|------------------------------|------------------------|
+| 1     | 26891 | 25825 | 9      | -59 / -60 / 0                | cycle 13, 12 crossings |
+| 7     | 32920 | 25931 | 9      | +55 / +43 / 0                | cycle 13, 12 crossings |
+| 99    | 31218 | 27006 | 8      | -520 / -572 / -2             | cycle 13, 12 crossings |
+| 2024  | 35273 | 33414 | 7      | +172 / +159 / 0              | cycle 13, 12 crossings |
+| 88888 | 33008 | 31845 | 7      | -2869 / -2290 / -1           | cycle 13, 12 crossings |
 
-Every default run encounters hostile workings and successfully uses Severing and
-Mending. Seed 1 sim replay: 26950 keys, cycle 13, turn 25885, nine deaths. The opt-in
-caster seed-1 route demonstrates all seven workings, takes the full word and answering
-word, completes in 27182 keys and 26065 turns, and replays exactly. All five default
-JSON journeys and the caster JSON journey match their prose metrics. Worldgen: 240 worlds,
-zero digest mismatches, 87,722 prose surfaces (12,689 fact details, 20,752 topics, 50,663
-storylet lines, 3,138 scene lines, 240 rumors, 240 ledger entries), five families at their
-declared coverage, zero hard failures, and the two expected warnings for legacy fixed
-surfaces and fixed-heavy composition.
+Seed 1 sim replay: 26,891 keys, cycle 13, turn 25,825, nine deaths. The opt-in
+companion seed-6 route completes twelve crossings in 38,588 keys and 33,481 turns. It
+demonstrates every required live companion, faction, beast, scar, Toll, brace, and oath
+route and replays exactly through `sim --keys-file`. Its report records 19 guest starts,
+14 completions, five organic guest deaths, 47 care acts, 19 physical target choices,
+15 evasions, one refused shot, ten grain deliveries, six warm camps, all three beast
+recognitions, 12 pony tamings, 91 ridden steps, both bounded memories, one cured scar,
+312 brace parries, a 40-point capped tier contribution, and both new oaths. The route
+never deliberately kills a guest. All five default JSON journeys and the companion JSON
+journey match their prose metrics. Worldgen: 240 worlds, zero digest mismatches, 89,402
+prose surfaces (12,689 fact details, 20,752 topics, 52,343 storylet lines, 3,138 scene
+lines, 240 rumors, 240 ledger entries), five families at their declared coverage, zero
+hard failures, and the same two expected warnings for legacy fixed surfaces and
+fixed-heavy composition.
 
 ## Engine invariants (break these and old saves die)
 
@@ -141,6 +148,19 @@ surfaces and fixed-heavy composition.
   ordinary causal turns, and uppercase local movement validates a complete rush before
   spending stamina or time. Sleight owns pockets and locks; Larceny owns pilfering,
   burglary, and fencing (D-171).
+- Physical enemy intent chooses the nearest visible living bearer, mortal guest, or shade,
+  with ties favoring the bearer. Marked physical footprints strike every occupied cell.
+  Following fellows take one stable legal escape from imminent visible marks before other
+  behavior, while held fellows keep the ordered risk. Bearer-shaped magic remains
+  bearer-only (D-173).
+- Companion success and beloved-loss memories are separate, character-scoped, bounded,
+  later-world Aegis remembrances. The grain delivery is world-scoped and delayed one
+  coarse tick. Beast recognition and the fitted brace are character-scoped. Oaths remain
+  world-scoped, and `ClosedDoor` plus `LongCount` are end-appended ids 8 and 9 (D-173).
+- Toll tier contribution is additive after the ordinary or heavy base, capped at 40
+  before the existing Will reduction and floor. Scar and mend facts use stable scar ids.
+  A current crushed-hand scar suppresses the fitted-brace parry edge until repaired
+  (D-173).
 - Movement keys h/j/k/l/y/u/b/n, `.` wait, `>` enter, `<` exit, `g` grab,
   `r` rest, `v` read (shrine or owned loft desk), `m` camp, `i` gear, `c` sheet, `e` eat,
   `o` order. Uppercase H/J/K/L/Y/U/B/N rush on local combat maps.
@@ -172,20 +192,25 @@ surfaces and fixed-heavy composition.
 - D-172's focused acceptance lives in `CombatMagicDepthTests`: catalogs, flank geometry,
   enemy follow-ons, martial and Spellcraft knacks, hostile and player magic,
   presentation, persistence, and replay.
+- D-173's focused acceptance lives in `CompanionConsequencesTests`: target selection,
+  footprints, evasion, guest arcs and memories, faction and beast state, scars, Toll,
+  brace behavior, oaths, presentation, persistence, and replay. Legacy guest, shade,
+  charge, pacing, Toll, and weather tests pin the changed shared contracts.
 - Story-pinned seeds exist (e.g. master 42/43 cycle-2 stories); when a test breaks
   on a story draw, check whether a deliberate re-pin is recorded in decisions.md
   before "fixing" the world.
 
 ## What is next (queued, in recommended order)
 
-1. **V1-08: companions, factions, and consequences** (`design/plan-1.0.md`, D-164). Its design is
-   Approved and implementation-ready. Read the complete card before editing and preserve
-   every stated boundary and dependency.
-2. **Verify V1-08 under its card and the HANDOFF discipline**, then record its
-   implementation decision, check off tranche 8, and advance to V1-09.
-3. **V1-09 remains Approved after V1-08.** Do not silently widen a card.
-   If implementation reveals a substantive contract conflict, present options and a
-   recommendation to the user before changing the approved design.
+1. **V1-09: next region and 1.0 release closure** (`design/plan-1.0.md`, D-165).
+   Its design is Approved and implementation-ready. Read the complete card before editing
+   and preserve every stated boundary and dependency.
+2. **Verify V1-09 under its card and the HANDOFF discipline**, then record its
+   implementation decision, check off tranche 9, and complete the release and roadmap
+   audits required by the card.
+3. Do not silently widen the final card. If implementation reveals a substantive contract
+   conflict, present options and a recommendation to the user before changing the approved
+   design.
 
 ## Handoff hygiene
 

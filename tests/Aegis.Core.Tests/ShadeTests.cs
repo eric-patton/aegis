@@ -136,6 +136,12 @@ public class ShadeTests
     {
         var game = StandTheShade();
         var goblin = new Monster { Kind = MonsterKind.Goblin, Pos = OpenAt(game, game.Shade!.Pos, 1), SiteId = "goblin-camp", Hp = 60 };
+        goblin.Intent = new Intent
+        {
+            Kind = IntentKind.CrushingBlow,
+            TargetCell = game.Player.Pos,
+            TurnsUntilResolve = 3,
+        };
         game.Monsters.Add(goblin);
 
         game.ApplyKey('.');

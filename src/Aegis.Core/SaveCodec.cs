@@ -348,10 +348,14 @@ namespace Aegis.Core;
 /// v97 when D-163 closed combat and magic depth: flank geometry, enemy
 /// follow-ons, new martial and Spellcraft knacks, rune-tongue generation,
 /// hostile workings, severing, and mending all change replayed outcomes.
+/// v98 when D-164 closed companion, faction, and consequence depth: physical
+/// intents gained fellow targets and evasions, the grain road added a delayed
+/// cart, beasts warm camps, Toll scales by tier, braces alter parry costs, and
+/// two new oath digits change world rules.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 97;
+    public const int Version = 98;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

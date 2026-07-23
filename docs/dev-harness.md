@@ -203,9 +203,12 @@ Troubleshooting: set `AEGIS_PILOT_TRACE=1` to get stderr traces from both server
 
 ```
 aegis sim --seed 42 --keys "llll....jjjj" [--quiet]
+aegis sim --seed 42 --keys-file artifacts/aegis-sweep/v102-keys1.txt [--quiet]
 ```
 
 Builds the world, applies the key script synchronously, prints JSON: seed, keys applied, the full message log (`--quiet` omits it), and the final state snapshot. Deterministic: same seed and keys always produce byte-identical results. Intended for balance sweeps, regression checks, and CI.
+Use exactly one of `--keys` or `--keys-file`. The file form is the canonical replay path
+when a long journey journal exceeds the Windows command-line limit.
 
 ## Journey and pacing diagnostics
 
@@ -213,6 +216,7 @@ Builds the world, applies the key script synchronously, prints JSON: seed, keys 
 aegis journey --seed 42 --cycles 12 --emit-keys
 aegis journey --seed 42 --cycles 12 --json
 aegis journey --seed 42 --cycles 12 --caster --json
+aegis journey --seed 42 --cycles 12 --companion --json
 ```
 
 The journey drives ordinary player keys through repeated crossings. `--emit-keys` adds
@@ -240,6 +244,12 @@ successful effects for every working. `--caster` selects the deterministic caste
 which prioritizes Mind and Will, demonstrates all seven workings, and takes the full word
 and answering word. Its emitted journal replays through `sim` exactly like the default
 route.
+
+D-164/D-173 add companion-consequence diagnostics to both forms: mortal guest arcs and
+memories, physical target choices and evasions, shot refusal, the grain road, beast warmth
+and recognition, pony use, scar cures, fitted-brace parries, tier-scaled Toll, and the
+final two launch oaths. `--companion` selects the bounded deterministic companion route.
+Its longer emitted journal replays exactly through `sim --keys-file`.
 
 ## Worldgen and prose curation
 

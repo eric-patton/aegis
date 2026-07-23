@@ -144,8 +144,9 @@ public class RingfortTests
         int hpBefore = game.Player.Hp;
         game.ApplyKey('.');
         Assert.True(game.Player.Hp < hpBefore, "the charge did not land");
-        Assert.Equal(1, boar.Pos.Chebyshev(game.Player.Pos));
-        Assert.Equal(0, boar.ExposedTurns);
+        Assert.NotEqual(start, boar.Pos);
+        Assert.NotEqual(game.Player.Pos, boar.Pos);
+        Assert.True(boar.ExposedTurns > 0);
         Assert.Contains(game.Log.Recent(3), e => e.Text.Contains("full on the tusks"));
     }
 

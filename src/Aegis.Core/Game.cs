@@ -297,8 +297,99 @@ public sealed class Game
             MaxHp = 16,
             Hp = 16,
         };
+        if (role != GuestRole.Shade)
+        {
+            GuestArcOffers++;
+            GuestArcStarts++;
+        }
+        if (role == GuestRole.Crofter)
+        {
+            World.Facts.Add("arc", "grain_road_started", npc.Id,
+                $"{npc.Name} left their stead work to walk the bonded grain road.");
+        }
         InTalkMenu = false;
         TalkNpc = null;
+    }
+
+    internal bool CanBeginGrainRoad =>
+        LevyStands && GuildSworn && Guest is null
+        && !World.Facts.Exists("arc", "grain_road_started")
+        && !World.Facts.Exists("portfolio", "grain_road")
+        && TalkNpc is { Kind: NpcKind.Villager } npc
+        && npc.Id != "npc_woodward";
+
+    private void ArmGuestSuccessMemory()
+    {
+        if (Player.GuestSuccessMemoryArmed || Player.GuestSuccessMemoryConsumed) return;
+        Player.GuestSuccessMemoryArmed = true;
+        Player.GuestSuccessMemoryCycle = Cycle;
+    }
+
+    private void ArmGuestLossMemory()
+    {
+        if (Player.GuestLossMemoryArmed || Player.GuestLossMemoryConsumed) return;
+        Player.GuestLossMemoryArmed = true;
+        Player.GuestLossMemoryCycle = Cycle;
+    }
+
+    internal void ConsumeGuestSuccessMemory()
+    {
+        Player.GuestSuccessMemoryArmed = false;
+        Player.GuestSuccessMemoryConsumed = true;
+    }
+
+    internal void ConsumeGuestLossMemory()
+    {
+        Player.GuestLossMemoryArmed = false;
+        Player.GuestLossMemoryConsumed = true;
+    }
+
+    private void CompleteGrainRoad()
+    {
+        if (Guest is not { Alive: true, Role: GuestRole.Crofter } guest
+            || guest.NpcId is not { } npcId || _guestNpc is not { } home
+            || GrainRoadCompleted)
+            return;
+
+        World.Facts.Add("portfolio", "grain_road", npcId,
+            $"{guest.Name} reached the carriers' guildhall alive, and the bonded grain road was entered in the guild's book.");
+        World.Npcs.Add(home);
+        Guest = null;
+        _guestNpc = null;
+        GuestArcCompletions++;
+        ArmGuestSuccessMemory();
+        ScheduleGrainCart();
+        Log.Add(Turn, $"{guest.Name} puts their name under the carriers' mark. The guildmaster closes the book and calls for a cart on the next turn of the season.", LogTone.Reward);
+        Log.Add(Turn, "\"A road between two ledgers, carried on mortal feet. It is counted.\"", LogTone.Aegis);
+    }
+
+    private void ScheduleGrainCart()
+    {
+        if (GrainCartScheduled || GrainCartDelivered) return;
+        _schedule.Add(new ScheduledFact
+        {
+            Key = "grain_cart",
+            DueTick = (Turn - _worldStartTurn) / SteadRaids.TickTurns + 1,
+            Fire = g => g.DeliverGrainCart(),
+        });
+    }
+
+    private void DeliverGrainCart()
+    {
+        int before = Stores;
+        Stores = Math.Min(StoresMax, Stores + 2);
+        int restored = Stores - before;
+        GrainDeliveries++;
+        GrainStoresRestored += restored;
+        World.Facts.Add("faction", "grain_delivered", World.SettlementName,
+            $"The carriers' bonded cart reached {World.SettlementName}; {restored} measure{(restored == 1 ? "" : "s")} entered the lofts.");
+        Log.Add(Turn, $"A guild cart comes down the east road under the carriers' mark. {restored} measure{(restored == 1 ? "" : "s")} finds room in {World.SettlementName}'s lofts, and the road is entered in both books.", LogTone.Reward);
+        if (LevyStands && Stores >= SteadLevy.LiftedAt)
+        {
+            GrainLevyLifts++;
+            LiftLevy();
+        }
+        RaiseRegard(1, $"The cart's tally bears your bond. {World.SettlementName} knows whose road brought it.");
     }
     public MapMode Mode { get; private set; } = MapMode.Overworld;
     public int Turn { get; private set; }
@@ -473,6 +564,9 @@ public sealed class Game
     /// <see cref="Standing"/>, which carries between worlds.
     /// </summary>
     public int Regard => RegardOf(FactionId.Stead);
+    public bool ClosedDoorStands => World.Oaths.Contains(OathId.ClosedDoor);
+    public int RegardRung => SteadRegard.RungFor(Regard, ClosedDoorStands);
+    public string RegardTitle => SteadRegard.TitleOf(Regard, ClosedDoorStands);
 
     /// <summary>The raiders' wrath at the bearer (D-078): the enemy ledger, one notch per raider slain.</summary>
     public int Wrath => InfamyOf(FactionId.Raiders);
@@ -591,6 +685,36 @@ public sealed class Game
     public int SweepsDodged { get; private set; }
     public int SweepsLanded { get; private set; }
     public int BoardlessWarderClosures { get; private set; }
+    public int PhysicalTargetsOnFellows { get; private set; }
+    public int FellowEvasions { get; private set; }
+    public int HeldFellowImpacts { get; private set; }
+    public int GuestShotRefusals { get; private set; }
+    public int GuestArcOffers { get; private set; }
+    public int GuestArcStarts { get; private set; }
+    public int GuestArcCompletions { get; private set; }
+    public int GuestFarewells { get; private set; }
+    public int GuestDeaths { get; private set; }
+    public int GuestBeatsEarned { get; private set; }
+    public int GuestCareActions { get; private set; }
+    public int GuestHoldOrders { get; private set; }
+    public int GuestFollowOrders { get; private set; }
+    public int GrainDeliveries { get; private set; }
+    public int GrainStoresRestored { get; private set; }
+    public int GrainLevyLifts { get; private set; }
+    public int BeastWarmCamps { get; private set; }
+    public int PonyFeedings { get; private set; }
+    public int PonyTamings { get; private set; }
+    public int PonyRiddenSteps { get; private set; }
+    public int BraceParries { get; private set; }
+    public int ScarsCured { get; private set; }
+    public int TollFills { get; private set; }
+    public int LastTollBase { get; private set; }
+    public int LastTollTierContribution { get; private set; }
+    public int LongCountSkippedDrains { get; private set; }
+
+    public bool GrainRoadCompleted => World.Facts.Exists("portfolio", "grain_road");
+    public bool GrainCartScheduled => _schedule.Any(f => f.Key == "grain_cart");
+    public bool GrainCartDelivered => World.Facts.Exists("faction", "grain_delivered");
 
     private readonly int[] _workingCasts = new int[SpellCatalog.All.Count];
     private readonly int[] _workingEffects = new int[SpellCatalog.All.Count];
@@ -842,7 +966,7 @@ public sealed class Game
     /// friend's price. Suspicion closes it (D-086): the folk do not extend a
     /// friend's terms to one held unwelcome, however the deeds once weighed.
     /// </summary>
-    private bool FriendsPrice => SteadRegard.RungFor(Regard) >= SteadRegard.FriendRung
+    private bool FriendsPrice => RegardRung >= SteadRegard.FriendRung
         && SteadShame.RungFor(Shame) < SteadShame.UnwelcomeRung;
 
     /// <summary>Whether the steadholder bars the larder to the bearer (D-086): bread is not sold to a named thief.</summary>
@@ -854,7 +978,7 @@ public sealed class Game
     /// closes it like the friend's terms (D-086): know-how is trust made plain,
     /// and the folk do not put their craft into a hand they are watching.
     /// </summary>
-    private bool SteadsTeaching => SteadRegard.RungFor(Regard) >= SteadRegard.OwnRung
+    private bool SteadsTeaching => RegardRung >= SteadRegard.OwnRung
         && SteadShame.RungFor(Shame) < SteadShame.UnwelcomeRung;
 
     /// <summary>How far one wear event moves the ledger: the spent edge (D-047) doubles it.</summary>
@@ -1871,6 +1995,7 @@ public sealed class Game
             {
                 target = far;
                 Player.Pos = far;
+                if (steed.Kind == MountKind.FellPony) PonyRiddenSteps++;
                 StepRegen();
                 DescribeTileIfNotable(far);
                 _storylets.TryFire(this, StoryletTrigger.EnterTile, map[far]);
@@ -2390,9 +2515,18 @@ public sealed class Game
                 Log.Add(Turn, "A supperless camp under this wind is how walkers are found at the spring thaw. You keep your feet instead.", LogTone.Danger);
                 return false;
             }
+            int before = Player.Hp;
+            if (BeastWarmthApplies())
+            {
+                Player.Hp = Math.Min(Player.EffectiveMaxHp, Player.Hp + 1);
+                BeastWarmCamps++;
+            }
+            RecognizeCampBeast();
             Player.Stamina = Player.MaxStamina;
             for (int i = 1; i < RoadLife.CampTurns; i++) AdvanceTurn();
-            Log.Add(Turn, "A cold camp: no supper, a coat for a blanket, and the small hours counted awake. The legs get their spring back by morning; nothing else does.", LogTone.Info);
+            Log.Add(Turn, Player.Hp > before
+                ? "A cold camp, but the beast beside you keeps one small measure of warmth in the night. The legs get their spring back by morning."
+                : "A cold camp: no supper, a coat for a blanket, and the small hours counted awake. The legs get their spring back by morning; nothing else does.", LogTone.Info);
             return true;
         }
 
@@ -2422,7 +2556,13 @@ public sealed class Game
             Log.Add(Turn, "The great pelt goes over the bedroll, and the fells' cold stays on its own side of it all night.", LogTone.Info);
         if (sheltered && CurrentWeather != WeatherFamily.Calm)
             Log.Add(Turn, "The waystone takes the weather off the fire as surely as a roof. Supper and the whole night are still owed.", LogTone.Info);
+        if (BeastWarmthApplies())
+        {
+            heal++;
+            BeastWarmCamps++;
+        }
         Player.Hp = Math.Min(Player.EffectiveMaxHp, Player.Hp + heal);
+        RecognizeCampBeast();
         Player.Stamina = Player.MaxStamina;
         Player.Focus = Player.MaxFocus;
         foreach (var friend in Fellows)
@@ -2436,6 +2576,26 @@ public sealed class Game
             ? $"You camp in what shelter the ground gives, supper eaten under a dripping hood. Sleep comes thin under weather, but it comes. (+{Player.Hp - hpBefore} mended, {Player.Rations} ration{(Player.Rations == 1 ? "" : "s")} left)"
             : $"You make camp: fire, supper, and the long quiet with the dark held off at arm's length. The road's ache goes out of you by morning. (+{Player.Hp - hpBefore} mended, {Player.Rations} ration{(Player.Rations == 1 ? "" : "s")} left)", LogTone.Reward);
         return true;
+    }
+
+    private bool BeastWarmthApplies() =>
+        !WaystoneShelter && Mount is { } beast && beast.Area == Area
+        && beast.Pos.Chebyshev(Player.Pos) <= 1;
+
+    private void RecognizeCampBeast()
+    {
+        if (Mount is not { } beast || beast.Area != Area || beast.Pos.Chebyshev(Player.Pos) > 1)
+            return;
+
+        bool first = beast.Kind switch
+        {
+            MountKind.Mule when !Player.MuleRecognized => Player.MuleRecognized = true,
+            MountKind.Courser when !Player.CourserRecognized => Player.CourserRecognized = true,
+            MountKind.FellPony when !Player.FellPonyRecognized => Player.FellPonyRecognized = true,
+            _ => false,
+        };
+        if (!first) return;
+        Log.Add(Turn, $"The first full night beside {beast.Name} settles a small understanding between you. No rein or tally could have made it.", LogTone.Info);
     }
 
     /// <summary>
@@ -2525,9 +2685,16 @@ public sealed class Game
         ListsWins = 0;
         _formalBout = null;
         _formalPendingResolution = false;
-        // World-bound (D-097): a living guest never crosses; their world keeps
-        // them. The farewell and the portfolio fact are stage 2's work.
+        // World-bound mortal company returns to its own roster before the arch.
+        // An unfinished road earns no portfolio and moves no faction ledger.
+        if (Guest is { Alive: true } departing)
+        {
+            if (_guestNpc is { } home) World.Npcs.Add(home);
+            Log.Add(Turn, $"{departing.Name} stops before the arch. \"My road is in this world, not the next. Go well, and leave me mine.\" They turn back toward home.", LogTone.Info);
+            GuestFarewells++;
+        }
         Guest = null;
+        _guestNpc = null;
         // The called thing does not cross either (D-099): only the word does,
         // knowledge like every working, to be said again in the new dark.
         Shade = null;
@@ -3438,6 +3605,12 @@ public sealed class Game
     /// </summary>
     private bool StartTalk(Npc npc)
     {
+        if (npc.Id == "npc_guildmaster" && Guest is { Alive: true, Role: GuestRole.Crofter })
+        {
+            CompleteGrainRoad();
+            return true;
+        }
+
         TalkNpc = npc;
         InTalkMenu = true;
         _topics.Clear();
@@ -3552,7 +3725,7 @@ public sealed class Game
                     $"{npc.Name}, {npc.Role} of {World.SettlementName}, has spoken with the bearer.");
                 // The stead's regard reaches ahead of the bearer (D-076): once the
                 // folk hold you a friend, even the ones you have not met greet you as one.
-                int rung = SteadRegard.RungFor(Regard);
+                int rung = RegardRung;
                 Log.Add(Turn, rung >= 2
                     ? "\"No stranger to this stead, whatever your name. Word of you came in ahead of your feet.\""
                     : rung >= 1
@@ -3615,9 +3788,20 @@ public sealed class Game
             string muster = MusterLooms
                 ? " And the hills show more fires this month, not fewer. Mustering over their dead, the wanderers say. When that comes down on us it will not come gentle."
                 : "";
+            string watch = WatchStands
+                ? " The stead's watch stands on the lofts now, turning raiders away and eating from the grain it guards."
+                : World.Facts.Exists("event", "watch_posted")
+                    ? " The watch has stood down, and the fold walls are quiet again."
+                    : "";
+            string levy = LevyStands
+                ? " The levy still stands: the last measure is spoken for, and the larder opens only when grain comes in."
+                : World.Facts.Exists("event", "levy_met")
+                    ? " The levy was met, and the larder has opened its board again."
+                    : "";
             var context = ProseCatalog.ContextFor(World, grievance).With(
                 ("raided", raided), ("crowded", crowded), ("order", order), ("muster", muster));
-            topics.Add(("The goblin raids", ProseCatalog.Render(World, grievance, ProseSurfaceKind.Topic, context).RawText));
+            topics.Add(("The goblin raids",
+                ProseCatalog.Render(World, grievance, ProseSurfaceKind.Topic, context).RawText + watch + levy));
         }
 
         // The season's news is NOT on this list (D-139): the topic-budget
@@ -5204,6 +5388,9 @@ public sealed class Game
         }
         Player.Coin -= DeathsToll.EyeCureCoin;
         Player.Scars.Remove(ScarId.TakenEye);
+        ScarsCured++;
+        World.Facts.Add("scar-mended", DeathsToll.IdOf(ScarId.TakenEye), Player.Name,
+            "The taken eye was seen to and the world's depth returned.");
         Log.Add(Turn, "The work takes the whole of an afternoon: her thinnest blade, three of the ranked simples steeped to a paste, and a stillness you did not know your body kept. When the cloth comes off, the world has its depth back.", LogTone.Reward);
         Log.Add(Turn, $"\"{AegisVoice.ScarMendedLine}\"", LogTone.Aegis);
     }
@@ -5227,6 +5414,10 @@ public sealed class Game
         }
         Player.Coin -= DeathsToll.BraceCoin;
         Player.Scars.Remove(ScarId.CrushedHand);
+        Player.FittedBrace = true;
+        ScarsCured++;
+        World.Facts.Add("scar-mended", DeathsToll.IdOf(ScarId.CrushedHand), Player.Name,
+            "The crushed hand was repaired and fitted to a worked iron brace.");
         Log.Add(Turn, "The smith measures the wrong-set knuckles twice and builds to the crookedness instead of against it: thin straps of worked iron, jointed where the hand forgot how, laced snug over the old break. You make a fist. It answers like a fist.", LogTone.Reward);
         Log.Add(Turn, "\"Wear it to bed. It grips steadier than the bone ever did; do not tell the bone.\"", LogTone.Info);
         Log.Add(Turn, $"\"{AegisVoice.ScarMendedLine}\"", LogTone.Aegis);
@@ -5251,6 +5442,9 @@ public sealed class Game
         }
         Player.Essence -= DeathsToll.LayingEssence;
         Player.Scars.Remove(ScarId.HauntedLook);
+        ScarsCured++;
+        World.Facts.Add("scar-mended", DeathsToll.IdOf(ScarId.HauntedLook), Player.Name,
+            "The haunted look was sung to rest and no longer followed the bearer.");
         Log.Add(Turn, "The skald hears the whole of it out, and then sings: not a song about you, a song about it, named and measured and given its own verse to live in, where the songs keep what is done. The weight behind your eyes goes with the last line.", LogTone.Reward);
         Log.Add(Turn, $"\"{AegisVoice.ScarMendedLine}\"", LogTone.Aegis);
     }
@@ -5258,7 +5452,7 @@ public sealed class Game
     /// <summary>The stead's beast entry (D-100): always listed, the label reading the state (D-041).</summary>
     private string MuleLabel() =>
         Mount is not null ? "The mule (yours; it waits without)"
-        : SteadRegard.RungFor(Regard) < SteadRegard.FriendRung
+        : RegardRung < SteadRegard.FriendRung
             ? $"Buy the stead's mule ({MountCatalog.MuleCoin} coin; a beast is sold to friends)"
             : $"Buy the stead's mule ({MountCatalog.MuleCoin} coin)";
 
@@ -5274,7 +5468,7 @@ public sealed class Game
             Log.Add(Turn, "\"You have the stead's beast already. Feed it something green now and then; it has opinions.\"");
             return;
         }
-        if (SteadRegard.RungFor(Regard) < SteadRegard.FriendRung)
+        if (RegardRung < SteadRegard.FriendRung)
         {
             Log.Add(Turn, "\"That mule was foaled on this land and it will not leave with a stranger. Be more than that to the stead, and we will talk.\"");
             return;
@@ -7154,15 +7348,18 @@ public sealed class Game
             Log.Add(Turn, "No blow is shown at your ground; there is nothing for a guard to meet.");
             return false;
         }
+        bool braceParry = Player.Weapon is not null && Player.FittedBrace
+            && !Player.HasScar(ScarId.CrushedHand);
         int parryCost = Player.Weapon is null && Player.HasPerk(PerkId.CaughtWrist)
             ? 1
-            : GuardBreak.ParryCost;
+            : braceParry ? 1 : GuardBreak.ParryCost;
         if (Player.Stamina < parryCost)
         {
             Log.Add(Turn, "Your arms are too spent to set the guard; this one must be answered by feet.", LogTone.Combat);
             return false;
         }
         Player.Stamina -= parryCost;
+        if (braceParry) BraceParries++;
         _parryTarget = foe;
         Log.Add(Turn, $"You set your guard on the shown line and hold your ground against the {foe.Name}.", LogTone.Combat);
         return true;
@@ -7316,6 +7513,8 @@ public sealed class Game
             else { Player.Rations--; mended = 2; spent = "You put bread in their hands and make them sit until it is eaten"; }
             guest.Hp = Math.Min(guest.MaxHp, guest.Hp + mended);
             guest.Beats++; // care spent banks a beat (D-097 stage 2)
+            GuestBeatsEarned++;
+            GuestCareActions++;
             Log.Add(Turn, $"{spent}: {guest.Name} is mended {mended}. ({guest.Hp}/{guest.MaxHp})", LogTone.Reward);
             return true;
         }
@@ -7325,6 +7524,8 @@ public sealed class Game
         if (muleBeside) return DoSaddlebags();
 
         guest.Holding = !guest.Holding;
+        if (guest.Holding) GuestHoldOrders++;
+        else GuestFollowOrders++;
         Log.Add(Turn, (guest.Role, guest.Holding) switch
         {
             (GuestRole.Shade, true) => "\"Hold here.\" The shade stills where it stands, patient as the stone its word was cut in.",
@@ -7350,6 +7551,7 @@ public sealed class Game
         }
         Player.Rations--;
         World.WildPonyFed++;
+        PonyFeedings++;
         if (World.WildPonyFed < MountCatalog.PonyFeedings)
         {
             Log.Add(Turn, World.WildPonyFed == 1
@@ -7360,6 +7562,7 @@ public sealed class Game
 
         World.WildPonyPos = null;
         var pony = new Mount { Kind = MountKind.FellPony, Pos = wildPos };
+        PonyTamings++;
         Log.Add(Turn, "The third bread is eaten against your chest, and when you turn away the pony turns with you: shaggy, sure-footed, and done pretending it was not lonely. The fell pony is yours.", LogTone.Reward);
         Log.Add(Turn, "It fears nothing it has already outlived: alone of the beasts, it will stand tethered at the uncanny mouths.", LogTone.Info);
         if (Mount is null)
@@ -7445,6 +7648,7 @@ public sealed class Game
         {
             friend.Hp = friend.MaxHp;
             friend.Beats++;
+            GuestBeatsEarned++;
             string[] fireside =
             [
                 "I have not slept a night away from my own bench in years. The wood will keep. It kept before me.",
@@ -8034,8 +8238,16 @@ public sealed class Game
         // of each other, and every raider felled toward the huntsman's debt.
         if (Guest is { Alive: true } fellow)
         {
-            if (fellow.Pos.Chebyshev(Player.Pos) <= 3) fellow.Beats++;
-            if (target.Kind == MonsterKind.Goblin) fellow.Beats++;
+            if (fellow.Pos.Chebyshev(Player.Pos) <= 3)
+            {
+                fellow.Beats++;
+                GuestBeatsEarned++;
+            }
+            if (target.Kind == MonsterKind.Goblin)
+            {
+                fellow.Beats++;
+                GuestBeatsEarned++;
+            }
         }
         CheckSiteCleared(CurrentSite!);
     }
@@ -8088,8 +8300,7 @@ public sealed class Game
         if (CommandMap.Delta(CommandMap.FromKey(key)) is { } d)
         {
             SoftTread = false;
-            LooseShaft(d.dx, d.dy);
-            AdvanceTurn();
+            if (LooseShaft(d.dx, d.dy)) AdvanceTurn();
         }
         else
         {
@@ -8891,9 +9102,24 @@ public sealed class Game
     /// cells at the furthest. Cover breaks it exactly as it breaks the graven
     /// men's throws: the pillars answer to both sides now.
     /// </summary>
-    private void LooseShaft(int dx, int dy)
+    private bool LooseShaft(int dx, int dy)
     {
         var bow = Player.Bow!;
+
+        var sight = Player.Pos;
+        for (int step = 0; step < BowRange; step++)
+        {
+            sight = sight.Plus(dx, dy);
+            if (!CurrentMap.Walkable(sight)) break;
+            if (Guest is { Alive: true } guest && guest.Pos == sight)
+            {
+                GuestShotRefusals++;
+                Log.Add(Turn, $"{guest.Name} is the first living body in that line. You lower the bow with wind, string, and shaft unspent.", LogTone.Info);
+                return false;
+            }
+            if (LiveMonstersHere.Any(m => m.Pos == sight)) break;
+        }
+
         Player.Stamina -= LooseCost;
 
         // The string frays a little with every draw, hit or miss: wear is the
@@ -8917,7 +9143,7 @@ public sealed class Game
             if (!map.Walkable(pos))
             {
                 Log.Add(Turn, "The shaft splinters against stone.", LogTone.Combat);
-                return;
+                return true;
             }
 
             var target = Monsters.FirstOrDefault(m => m.Alive && m.SiteId == CurrentSite!.Id && m.Pos == pos);
@@ -8943,7 +9169,7 @@ public sealed class Game
                 target.Aware = true;
                 Log.Add(Turn, "The shaft thuds into the linden board and stands there, quivering.", LogTone.Combat);
                 if (target.Dormant) RouseLeaguer(target);
-                return;
+                return true;
             }
 
             // The picked moment (D-055): a body mid-motion, winding up or
@@ -8981,10 +9207,11 @@ public sealed class Game
             // Only a shaft that found a body teaches (D-014's cost gating held
             // to its spirit: distance and stone would school a scarecrow).
             GainSkill(SkillId.Ranged);
-            return;
+            return true;
         }
 
         Log.Add(Turn, "The shaft flies the length of its line and finds only distance.", LogTone.Combat);
+        return true;
     }
 
     /// <summary>
@@ -9111,13 +9338,13 @@ public sealed class Game
         // something looks out of. Every gain of regard loses one, never below
         // one: the deeds still count, they just count colder.
         if (Player.HasScar(ScarId.HauntedLook)) amount = Math.Max(1, amount - 1);
-        int rungBefore = SteadRegard.RungFor(Regard);
+        int rungBefore = RegardRung;
         _factionRegard[FactionId.Stead] = Regard + amount;
-        int rungAfter = SteadRegard.RungFor(Regard);
+        int rungAfter = RegardRung;
         Log.Add(Turn, line, LogTone.Reward);
         if (rungAfter > rungBefore)
         {
-            Log.Add(Turn, $"In {World.SettlementName} you are {SteadRegard.TitleOf(Regard)} now.", LogTone.Reward);
+            Log.Add(Turn, $"In {World.SettlementName} you are {RegardTitle} now.", LogTone.Reward);
             // Every rung crossed is written to the graph (D-085): reputation
             // becomes a fact other content can require, the seam the rumor and
             // every richer boon gate through. World facts die with the world,
@@ -10011,7 +10238,7 @@ public sealed class Game
         SteadShame.RungFor(Shame) >= SteadShame.UnwelcomeRung;
 
     public int SeasonBargainPrice =>
-        SteadRegard.RungFor(Regard) >= SteadRegard.FriendRung && Shame == 0 ? 4 : 6;
+        RegardRung >= SteadRegard.FriendRung && Shame == 0 ? 4 : 6;
 
     private void TrySeasonBargain()
     {
@@ -10211,7 +10438,8 @@ public sealed class Game
             // The huntsman's debt paid (D-097 stage 2): the arc ends where it
             // aimed. The guest goes home to the bench, the going home is the
             // portfolio, and a stead believes its own.
-            if (Guest is { Alive: true } guest && guest.NpcId is { } npcId && _guestNpc is { } home)
+            if (Guest is { Alive: true, Role: GuestRole.Huntsman } guest
+                && guest.NpcId is { } npcId && _guestNpc is { } home)
             {
                 Log.Add(Turn, $"{guest.Name} stands a long moment over the cold fire-pits, counting something private. \"That is the debt paid. Mine, and the wood's. I will walk the rest of my roads alone now, and gladly.\"", LogTone.Info);
                 Log.Add(Turn, "\"They stepped out of a whole life to see this done, bearer. Few do. It is counted for them too.\"", LogTone.Aegis);
@@ -10219,6 +10447,8 @@ public sealed class Game
                     $"{guest.Name} walked with the bearer until the camp broke, and keeps the wood's edge with a straighter back for it.");
                 World.Npcs.Add(home);
                 RaiseRegard(1, $"{guest.Name} carries the tale home themselves. A stead believes its own.");
+                GuestArcCompletions++;
+                ArmGuestSuccessMemory();
                 Guest = null;
                 _guestNpc = null;
             }
@@ -10471,7 +10701,10 @@ public sealed class Game
                 // dropped the bearer is written, so the scar can match the death.
                 var windup = monster.Intent?.Kind;
                 int hpBefore = Player.Hp;
+                bool hadIntent = monster.Intent is not null;
                 ActMonster(monster);
+                if (!hadIntent && monster.Intent is not null)
+                    RetargetPhysicalIntent(monster);
                 if (_formalBout is null && hpBefore > 0 && Player.Hp <= 0)
                 {
                     _deathShape = (monster.Kind, windup);
@@ -10520,7 +10753,10 @@ public sealed class Game
         // The Death's Toll (D-098) drains a point a turn: time is the only
         // mercy in the count, and the crossing back under the line is spoken,
         // so the bearer always knows which side of it they stand on.
-        if (Player.Toll > 0 && --Player.Toll == DeathsToll.Line - 1)
+        bool tollDrains = !World.Oaths.Contains(OathId.LongCount)
+            || (Turn - _worldStartTurn) % 2 == 0;
+        if (Player.Toll > 0 && !tollDrains) LongCountSkippedDrains++;
+        if (Player.Toll > 0 && tollDrains && --Player.Toll == DeathsToll.Line - 1)
             Log.Add(Turn, "The toll's count settles below the line. A fall now would leave no mark.", LogTone.Info);
 
         // The grave-cold (D-096) works its way out a turn at a time.
@@ -10594,6 +10830,9 @@ public sealed class Game
                 bool landed = intent.Footprint.Length > 0
                     ? intent.Footprint.Contains(Player.Pos)
                     : Player.Pos == struckCell;
+                var struckFellows = Fellows.Where(f => intent.Footprint.Length > 0
+                    ? intent.Footprint.Contains(f.Pos)
+                    : f.Pos == struckCell).ToList();
                 // The guard set (D-125) meets the blow it was set against. A
                 // feinting striker can never be the set target: the shown mark
                 // the declaration demanded was never on the bearer's cell.
@@ -10697,7 +10936,7 @@ public sealed class Game
                         if (flankPressure > 0) EnemyFlanks++;
                         RockBearer(GuardBreak.CheckPressure + flankPressure);
                     }
-                    else
+                    else if (struckFellows.Count == 0)
                         Log.Add(Turn, "The board's full weight goes through the place you left, and the carl stamps to keep its feet.", LogTone.Combat);
                 }
                 else if (landed)
@@ -10756,26 +10995,7 @@ public sealed class Game
                         }
                     }
                 }
-                else if (Fellows.FirstOrDefault(f => intent.Footprint.Length > 0
-                    ? intent.Footprint.Contains(f.Pos)
-                    : f.Pos == struckCell) is { } struck)
-                {
-                    // The second body (D-097, D-099): a fellow standing on the
-                    // marked ground takes the blow meant for it, whole. No
-                    // stance, no iron, no Aegis: what guards the bearer never
-                    // guarded them.
-                    int roll = RollFor(intent.Kind);
-                    if (monster.Kind == MonsterKind.Goblin) roll = RaiderRoster.Armed(monster.Grudge, RaiderWrath.Steadied(Wrath, roll));
-                    if (monster.Kind == MonsterKind.Wight) roll = MoundGrudge.Riled(Grudge, roll);
-                    struck.Hp -= roll;
-                    Log.Add(Turn, struck.Alive
-                        ? struck.Role == GuestRole.Shade
-                            ? $"The blow finds the shade on the marked ground: it is torn for {roll}!"
-                            : $"The blow finds {struck.Name} on the marked ground: they are opened for {roll}!"
-                        : $"The blow comes down on {struck.Name}, full weight.", LogTone.Danger);
-                    if (!struck.Alive) FellowFalls(struck);
-                }
-                else
+                else if (struckFellows.Count == 0)
                 {
                     Log.Add(Turn, intent.Kind switch
                     {
@@ -10791,6 +11011,32 @@ public sealed class Game
                             : "The sword-thegn's measured cut parts air, and it does not seem surprised.",
                         _ => $"The {monster.Name}'s crushing blow splinters empty stone.",
                     }, LogTone.Combat);
+                }
+
+                if (PhysicalIntent(intent.Kind)
+                    && intent.Kind is not IntentKind.BoarCharge and not IntentKind.LoftedStone)
+                {
+                    foreach (var struck in struckFellows)
+                    {
+                        if (struck.Holding) HeldFellowImpacts++;
+                        if (intent.Kind == IntentKind.BoardCheck)
+                        {
+                            Log.Add(Turn, $"The linden board takes {struck.Name} squarely, all thrown mass and no edge.", LogTone.Danger);
+                            continue;
+                        }
+                        int roll = RollFor(intent.Kind);
+                        if (monster.Kind == MonsterKind.Goblin)
+                            roll = RaiderRoster.Armed(monster.Grudge, RaiderWrath.Steadied(Wrath, roll));
+                        if (monster.Kind == MonsterKind.Wight)
+                            roll = MoundGrudge.Riled(Grudge, roll);
+                        struck.Hp -= roll;
+                        Log.Add(Turn, struck.Alive
+                            ? struck.Role == GuestRole.Shade
+                                ? $"The blow finds the shade on the marked ground: it is torn for {roll}!"
+                                : $"The blow finds {struck.Name} on the marked ground: they are opened for {roll}!"
+                            : $"The blow comes down on {struck.Name}, full weight.", LogTone.Danger);
+                        if (!struck.Alive) FellowFalls(struck);
+                    }
                 }
 
                 // The blow spent, the board leaves its line (D-053): hit or
@@ -10903,6 +11149,35 @@ public sealed class Game
         if (dist <= 8) StepToward(monster);
     }
 
+    private static bool PhysicalIntent(IntentKind kind) =>
+        !MagicalIntent(kind) && kind != IntentKind.RallyCry;
+
+    private void RetargetPhysicalIntent(Monster monster)
+    {
+        if (_formalBout is not null || monster.Intent is not { } intent
+            || !PhysicalIntent(intent.Kind))
+            return;
+
+        int bearerDistance = monster.Pos.Chebyshev(Player.Pos);
+        var target = Fellows
+            .Where(f => monster.Pos.Chebyshev(f.Pos) < bearerDistance)
+            .Where(f => CurrentMap.LineOfSight(monster.Pos, f.Pos))
+            .OrderBy(f => monster.Pos.Chebyshev(f.Pos))
+            .ThenBy(f => f.Role == GuestRole.Shade ? 1 : 0)
+            .FirstOrDefault();
+        if (target is null) return;
+
+        int dx = target.Pos.X - intent.TargetCell.X;
+        int dy = target.Pos.Y - intent.TargetCell.Y;
+        intent.TargetCell = target.Pos;
+        if (intent.Footprint.Length > 0)
+            intent.Footprint = intent.Footprint.Select(p => p.Plus(dx, dy)).ToArray();
+        if (intent.FeintCell is { } feint)
+            intent.FeintCell = feint.Plus(dx, dy);
+        PhysicalTargetsOnFellows++;
+        Log.Add(Turn, $"The {monster.Name}'s marked line turns toward {target.Name}, the nearer living body.", LogTone.Danger);
+    }
+
     /// <summary>
     /// A raider on the guest's blood (D-097): no telegraph, a plain cut at
     /// arm's reach, a stride otherwise. Guests take blows the way the field
@@ -10913,6 +11188,17 @@ public sealed class Game
         int dist = monster.Pos.Chebyshev(guest.Pos);
         if (dist == 1)
         {
+            if (_combatRng.Chance(0.45))
+            {
+                monster.Intent = new Intent
+                {
+                    Kind = IntentKind.CrushingBlow,
+                    TargetCell = guest.Pos,
+                };
+                PhysicalTargetsOnFellows++;
+                Log.Add(Turn, $"The {monster.Name} heaves its club high, eyes fixed on {guest.Name}'s ground!", LogTone.Danger);
+                return;
+            }
             int damage = RaiderRoster.Armed(monster.Grudge, RaiderWrath.Steadied(Wrath, _combatRng.Range(2, 5)));
             guest.Hp -= damage;
             Log.Add(Turn, guest.Alive
@@ -10955,6 +11241,8 @@ public sealed class Game
 
         if (Mode == MapMode.Site)
         {
+            if (!guest.Holding && TryEvadeMarkedGround(guest)) return;
+
             var foe = Monsters.Where(m => m.Alive && m.Aware && !m.Dormant && m.SiteId == CurrentSite!.Id
                     && m.Kind is not MonsterKind.Severed and not MonsterKind.Hart
                     && !(m.Kind == MonsterKind.Wight && GraveTruceStands)
@@ -10992,6 +11280,37 @@ public sealed class Game
 
         if (guest.Holding || guest.Pos.Chebyshev(Player.Pos) <= 1) return;
         GuestStepToward(guest);
+    }
+
+    private bool TryEvadeMarkedGround(Guest guest)
+    {
+        var visibleMarks = LiveMonstersHere
+            .Where(m => m.Intent is { TurnsUntilResolve: <= 1 } intent
+                && PhysicalIntent(intent.Kind)
+                && CurrentMap.LineOfSight(guest.Pos, m.Pos))
+            .SelectMany(m => m.Intent!.Footprint.Length > 0
+                ? m.Intent.Footprint
+                : [m.Intent.TargetCell])
+            .ToHashSet();
+        if (!visibleMarks.Contains(guest.Pos)) return false;
+
+        var safe = Directions.All8
+            .Select((d, index) => (Cell: guest.Pos.Plus(d.dx, d.dy), Index: index))
+            .Where(c => CurrentMap.Walkable(c.Cell)
+                && c.Cell != Player.Pos
+                && !visibleMarks.Contains(c.Cell)
+                && !Fellows.Any(f => f != guest && f.Pos == c.Cell)
+                && !MountAt(c.Cell)
+                && !LiveMonstersHere.Any(m => m.Pos == c.Cell))
+            .OrderBy(c => c.Cell.Manhattan(Player.Pos))
+            .ThenBy(c => c.Index)
+            .FirstOrDefault();
+        if (safe.Cell == default || safe.Cell == guest.Pos) return false;
+
+        guest.Pos = safe.Cell;
+        FellowEvasions++;
+        Log.Add(Turn, $"{guest.Name} reads the marked ground and takes one clean step outside it.", LogTone.Combat);
+        return true;
     }
 
     /// <summary>One greedy stride back toward the bearer, around bodies and stone.</summary>
@@ -11105,6 +11424,7 @@ public sealed class Game
     /// </summary>
     private void GuestFalls(Guest guest)
     {
+        GuestDeaths++;
         Log.Add(Turn, $"{guest.Name} goes down, and does not move again.", LogTone.Danger);
         Log.Add(Turn, "\"I could not reach them, bearer. I was never made to hold but one.\"", LogTone.Aegis);
         if (guest.NpcId is { } npcId)
@@ -11112,8 +11432,11 @@ public sealed class Game
             World.Facts.Add("guest-fell", npcId, World.SettlementName,
                 $"{guest.Name} fell on the bearer's road, and {World.SettlementName} keeps the name.");
             if (guest.Beats >= 3)
+            {
                 World.Facts.Add("guest-beloved", npcId, World.SettlementName,
                     $"{guest.Name} shared the road's bread and blood with the bearer, and the small kindnesses were counted.");
+                ArmGuestLossMemory();
+            }
             RaiseShame(1);
             Log.Add(Turn, $"{World.SettlementName} will hear how {guest.Name} ended, and in whose company. Doors will be slower for a while.", LogTone.Danger);
             _guestNpc = null;
@@ -11650,20 +11973,31 @@ public sealed class Game
         var map = CurrentSite!.Map;
         int sx = Math.Sign(intent.TargetCell.X - monster.Pos.X);
         int sy = Math.Sign(intent.TargetCell.Y - monster.Pos.Y);
+        var cursor = monster.Pos;
+        bool struckAny = false;
         for (int step = 0; step < BowRange; step++)
         {
-            var next = monster.Pos.Plus(sx, sy);
+            var next = cursor.Plus(sx, sy);
             if (next == Player.Pos)
             {
                 int damage = Absorb(_combatRng.Range(7, 11), telegraphed: true);
                 Player.Hp -= damage;
+                struckAny = true;
                 Log.Add(Turn, $"The war-boar takes you full on the tusks for {damage}: the lane was its whole argument!", LogTone.Danger);
                 // Sheer mass (D-126): the charge rocks the guard the way the
                 // heave rocks a foe's, by weight alone.
                 int flankPressure = EnemyFlanksBearer(monster) ? 1 : 0;
                 if (flankPressure > 0) EnemyFlanks++;
                 RockBearer(GuardBreak.BearerCharge + flankPressure);
-                return;
+            }
+            foreach (var fellow in Fellows.Where(f => f.Pos == next).ToList())
+            {
+                int damage = _combatRng.Range(7, 11);
+                fellow.Hp -= damage;
+                struckAny = true;
+                if (fellow.Holding) HeldFellowImpacts++;
+                Log.Add(Turn, $"{fellow.Name} takes the charge's whole weight for {damage}.", LogTone.Danger);
+                if (!fellow.Alive) FellowFalls(fellow);
             }
             if (!map.Walkable(next) || Monsters.Any(m => m.Alive && m != monster && m.SiteId == monster.SiteId && m.Pos == next))
             {
@@ -11671,10 +12005,13 @@ public sealed class Game
                 Log.Add(Turn, "The charge slams to its end against stone; the boar stands blown, flanks heaving.", LogTone.Combat);
                 return;
             }
-            monster.Pos = next;
+            cursor = next;
+            if (next != Player.Pos && !FellowAt(next)) monster.Pos = next;
         }
         monster.ExposedTurns = 2;
-        Log.Add(Turn, "The boar ploughs through where you stood and slews to a stop, blown.", LogTone.Combat);
+        Log.Add(Turn, struckAny
+            ? "The boar carries through the whole marked lane and slews to a stop, blown."
+            : "The boar ploughs through where you stood and slews to a stop, blown.", LogTone.Combat);
     }
 
     /// <summary>How far a warder's loft carries: past the bows, because the mere was dug to be sat behind.</summary>
@@ -11814,6 +12151,7 @@ public sealed class Game
     private void ResolveLoft(Monster monster, Intent intent)
     {
         int dist = Player.Pos.Chebyshev(intent.TargetCell);
+        bool struckAny = dist <= 1;
         if (dist == 0)
         {
             int damage = Absorb(_combatRng.Range(7, 11), telegraphed: true);
@@ -11830,6 +12168,22 @@ public sealed class Game
         {
             Log.Add(Turn, "The stone comes down where you stood and bursts, loud over the water.", LogTone.Combat);
         }
+        foreach (var fellow in Fellows.ToList())
+        {
+            int fellowDist = fellow.Pos.Chebyshev(intent.TargetCell);
+            if (fellowDist > 1) continue;
+            int roll = _combatRng.Range(7, 11);
+            int damage = fellowDist == 0 ? roll : Math.Max(1, roll / 2);
+            fellow.Hp -= damage;
+            struckAny = true;
+            if (fellow.Holding) HeldFellowImpacts++;
+            Log.Add(Turn, fellowDist == 0
+                ? $"The sling-stone takes {fellow.Name} square for {damage}!"
+                : $"The burst rakes {fellow.Name} a stride off for {damage}.", LogTone.Danger);
+            if (!fellow.Alive) FellowFalls(fellow);
+        }
+        if (!struckAny)
+            Log.Add(Turn, "No living body stood inside the burst.", LogTone.Combat);
         monster.ExposedTurns = 2;
         Log.Add(Turn, "The cast made, the sling-warder's board hangs wide while the arm gathers back.", LogTone.Combat);
     }
@@ -12003,6 +12357,8 @@ public sealed class Game
         {
             if (Player.HasScar(scar)) continue;
             Player.Scars.Add(scar);
+            World.Facts.Add("scar", DeathsToll.IdOf(scar), Player.Name,
+                $"{DeathsToll.NameOf(scar)} landed under the Death's Toll.");
             Log.Add(Turn, $"Something does not come all the way back with you: {DeathsToll.NameOf(scar)}.", LogTone.Danger);
             Log.Add(Turn, DeathsToll.CostOf(scar), LogTone.Danger);
             Log.Add(Turn, $"\"{AegisVoice.ScarLine}\"", LogTone.Aegis);
@@ -12135,7 +12491,10 @@ public sealed class Game
         // roll anywhere: the fairness was on the rail before the fall.
         bool scarring = Player.Toll >= DeathsToll.Line;
         bool heavy = _deathShape?.Kind is MonsterKind.Thegn or MonsterKind.Hart;
-        Player.Toll += DeathsToll.FillFor(heavy, Player.Attributes[Attr.Will]);
+        LastTollBase = heavy ? DeathsToll.HeavyFill : DeathsToll.Fill;
+        LastTollTierContribution = DeathsToll.TierContribution(World.Tier);
+        TollFills++;
+        Player.Toll += DeathsToll.FillFor(heavy, Player.Attributes[Attr.Will], World.Tier);
         if (scarring) LandScar();
         _deathShape = null;
         _deathHand = null;
@@ -12145,6 +12504,18 @@ public sealed class Game
     // Test hooks: deterministic surgery for unit tests, never used by frontends.
     internal void Debug_SetPlayerPos(Pos p) => Player.Pos = p;
     internal void Debug_SetGuest(Guest? guest) => Guest = guest;
+    internal void Debug_RetargetPhysicalIntent(Monster monster) => RetargetPhysicalIntent(monster);
+    internal void Debug_CallLevy()
+    {
+        Stores = Math.Min(Stores, SteadLevy.CalledAt);
+        CallLevy();
+    }
+    internal void Debug_StartGuest(string npcId, GuestRole role)
+    {
+        TalkNpc = World.Npcs.First(n => n.Id == npcId);
+        CastTalkNpcAsGuest(role);
+    }
+    internal void Debug_CompleteGrainRoad() => CompleteGrainRoad();
     internal void Debug_SetMode(MapMode mode)
     {
         Mode = mode;
@@ -12341,7 +12712,7 @@ public sealed class Game
         Standing: Standing,
         Title: LegendStanding.TitleOf(Standing),
         Regard: Regard,
-        RegardTitle: SteadRegard.TitleOf(Regard),
+        RegardTitle: RegardTitle,
         Wrath: Wrath,
         WrathTitle: RaiderWrath.TitleOf(Wrath),
         Raids: Raids,
@@ -12450,7 +12821,38 @@ public sealed class Game
         StaggerTurns: Player.StaggerTurns,
         Deaths: Player.Deaths,
         Toll: Player.Toll,
+        TollTierContribution: DeathsToll.TierContribution(World.Tier),
         Scars: string.Join(",", Player.Scars.Select(s => s.ToString().ToLowerInvariant())),
+        FittedBrace: Player.FittedBrace,
+        BraceActive: Player.FittedBrace && !Player.HasScar(ScarId.CrushedHand),
+        BraceParries: BraceParries,
+        GuestName: Guest?.Name ?? "",
+        GuestRole: Guest?.RoleName ?? "",
+        GuestHp: Guest?.Hp ?? 0,
+        GuestHolding: Guest?.Holding ?? false,
+        GuestArcStarts: GuestArcStarts,
+        GuestArcCompletions: GuestArcCompletions,
+        GuestFarewells: GuestFarewells,
+        PhysicalTargetsOnFellows: PhysicalTargetsOnFellows,
+        FellowEvasions: FellowEvasions,
+        HeldFellowImpacts: HeldFellowImpacts,
+        GuestShotRefusals: GuestShotRefusals,
+        GrainRoadCompleted: GrainRoadCompleted,
+        GrainCartScheduled: GrainCartScheduled,
+        GrainCartDelivered: GrainCartDelivered,
+        GrainDeliveries: GrainDeliveries,
+        GrainStoresRestored: GrainStoresRestored,
+        GuestSuccessMemoryArmed: Player.GuestSuccessMemoryArmed,
+        GuestSuccessMemoryConsumed: Player.GuestSuccessMemoryConsumed,
+        GuestLossMemoryArmed: Player.GuestLossMemoryArmed,
+        GuestLossMemoryConsumed: Player.GuestLossMemoryConsumed,
+        MountKind: Mount?.Kind.ToString().ToLowerInvariant() ?? "",
+        BeastWarmCamps: BeastWarmCamps,
+        MuleRecognized: Player.MuleRecognized,
+        CourserRecognized: Player.CourserRecognized,
+        FellPonyRecognized: Player.FellPonyRecognized,
+        ClosedDoorStands: ClosedDoorStands,
+        LongCountStands: World.Oaths.Contains(OathId.LongCount),
         MonstersAlive: Monsters.Count(m => m.Alive),
         StoryletsFired: StoryletsFired,
         CampCleared: CampCleared,
@@ -12688,7 +13090,38 @@ public sealed record Snapshot(
     int StaggerTurns,
     int Deaths,
     int Toll,
+    int TollTierContribution,
     string Scars,
+    bool FittedBrace,
+    bool BraceActive,
+    int BraceParries,
+    string GuestName,
+    string GuestRole,
+    int GuestHp,
+    bool GuestHolding,
+    int GuestArcStarts,
+    int GuestArcCompletions,
+    int GuestFarewells,
+    int PhysicalTargetsOnFellows,
+    int FellowEvasions,
+    int HeldFellowImpacts,
+    int GuestShotRefusals,
+    bool GrainRoadCompleted,
+    bool GrainCartScheduled,
+    bool GrainCartDelivered,
+    int GrainDeliveries,
+    int GrainStoresRestored,
+    bool GuestSuccessMemoryArmed,
+    bool GuestSuccessMemoryConsumed,
+    bool GuestLossMemoryArmed,
+    bool GuestLossMemoryConsumed,
+    string MountKind,
+    int BeastWarmCamps,
+    bool MuleRecognized,
+    bool CourserRecognized,
+    bool FellPonyRecognized,
+    bool ClosedDoorStands,
+    bool LongCountStands,
     int MonstersAlive,
     int StoryletsFired,
     bool CampCleared,

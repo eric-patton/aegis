@@ -201,6 +201,8 @@ public class TollTests
     {
         var game = new Game(42);
         game.Player.Scars.Add(ScarId.CrushedHand);
+        game.World.Facts.Add("scar", "crushed_hand", game.Player.Name,
+            "The crushed hand landed under the Death's Toll.");
         game.Player.Coin = DeathsToll.BraceCoin;
         NpcTests.BumpNpc(game, game.World.Smith);
         game.ApplyKey(OfferKey(game, TradeGood.Brace));
@@ -253,6 +255,8 @@ public class TollTests
     {
         var game = new Game(42);
         game.Player.Scars.Add(ScarId.CrushedHand);
+        game.World.Facts.Add("scar", DeathsToll.IdOf(ScarId.CrushedHand), game.Player.Name,
+            "The crushed hand was recorded when it landed.");
         var mourner = game.World.Npcs.First(n => n.Kind == NpcKind.Villager);
 
         // Higher-priority one-shot talk beats may claim the first talks; they

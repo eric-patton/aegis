@@ -34,7 +34,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 | V1-05 | Town and economy depth | Verified | D-161, D-170 | Completed |
 | V1-06 | Character and activity breadth | Verified | D-162, D-171 | Completed |
 | V1-07 | Combat and magic depth | Verified | D-163, D-172 | Completed |
-| V1-08 | Companions, factions, and consequences | Approved | D-164 | Pending |
+| V1-08 | Companions, factions, and consequences | Verified | D-164, D-173 | Completed |
 | V1-09 | Next region and 1.0 release closure | Approved | D-165 | Pending |
 
 ## V1-01: High-fells capstone, the black tarn
@@ -1091,9 +1091,9 @@ faction depth
 
 ## V1-08: Companions, factions, and consequences
 
-**Design status:** Approved
+**Design status:** Verified
 
-**Decisions:** D-164
+**Decisions:** D-164, D-173
 
 **Roadmap association:** Path to 1.0 tranche 8; companion, faction, and scar follow-ons
 
@@ -1104,7 +1104,7 @@ Death's Toll, scars, storylets, oaths, and the journey pilot
 **Recommended implementation point:** eighth card, after V1-07 and before the final
 region and release card
 
-**Implementation status:** Pending in queue order
+**Implementation status:** Completed and verified 2026-07-23; V1-09 follows under D-165
 
 ### Approved behavior
 
@@ -1270,6 +1270,18 @@ region and release card
   2024, and 88888 through two byte-identical twelve-world journeys each, compare and
   justify drift from v97, replay seed 1 to exact keys, cycle, and turn, exercise the
   companion journey, and pass `worldgen --json`.
+
+### Implementation and verification
+
+D-173 completes this card at save v98. Release builds with zero warnings and all 968
+tests pass, including 28 focused companion-consequence checks. Sweep v102 holds five
+byte-identical twin pairs and every seed reaches cycle 13. Default seed 1 replays all
+26,891 keys exactly to turn 25,825. The companion seed-6 route completes twelve crossings
+and replays all 38,588 keys exactly to turn 33,481. It exercises the required guest,
+faction, beast, scar, Toll, brace, and oath diagnostics without deliberately killing a
+guest. The 240-world purity gate reports zero digest mismatches and zero hard prose
+failures across 89,402 surfaces. `sim --keys-file` supplies exact replay for journals
+longer than the Windows command-line limit.
 
 ### Explicit exclusions
 

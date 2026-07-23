@@ -231,6 +231,71 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-173: The road kept company: companion consequence depth built (2026-07-23)
+
+V1-08 is built and Verified under D-164's approved boundary. Physical enemy intent now
+judges the nearest visible living bearer, mortal guest, or shade while ties stay with the
+bearer and bearer-shaped magic stays bearer-only. Marked physical footprints resolve
+against every occupied cell. A following fellow reads imminent visible marks and takes
+one stable legal step clear before doing anything else, while a held fellow accepts the
+ordered danger. A living mortal guest who stands first in a bow line refuses the shot
+without time, stamina, wear, or skill use; the shade remains permeable.
+
+The second mortal arc is live through the Crofter and the bonded grain road. Its full
+gate, ordinary guest mortality, guildhall completion, one-tick scheduled cart, capped
+Stores restoration, levy lift, Regard, portfolio and faction facts, and no-delivery death
+branch all use existing state rather than a new scalar. Unresolved living guests receive
+an outgoing-world farewell. The first successful mortal arc and first beloved loss each
+arm one character-scoped Aegis memory, eligible only at a later-world shrine rest and
+consumed once. The raids reader now tells the live watch and levy truth. No later NPC
+inherits knowledge it could not have.
+
+Living unstabled beasts beside an exposed camp add one blood after all ordinary weather,
+shelter, pelt, and camp arithmetic. Mule, courser, and fell pony each carry one permanent
+recognition beat. Scar landings and mends write stable paired facts, with one aftermath
+and three aftercare consumers. Repairing the crushed hand fits a permanent brace: with a
+wielded weapon and no current crushed-hand scar, a parry costs one stamina. A later
+matching scar suppresses that edge until repaired. Toll fill now adds the approved
+tier term after its ordinary or heavy base, capped at 40 before the existing Will
+reduction and floor. The sheet and snapshot expose scars, burden, brace state, and exact
+Toll contribution.
+
+`ClosedDoor` and `LongCount` are end-appended as the eighth and ninth oath ids. Both weigh
+one. The first moves the Stead Regard thresholds to 2, 4, and 6 without changing gains;
+the second drains Toll on alternating completed turns. The crossing menu remains exactly
+within its nine-digit ceiling, and both effects stay world-scoped and pay ordinary Burden
+and Legend.
+
+The opt-in `journey --companion` route drives the approved work through ordinary keys.
+Its report carries guest arcs and memories, physical targeting and evasion, the refused
+shot, grain state, beast warmth and recognition, pony use, Toll, scars, brace parries,
+and both oath effects in prose and JSON. The route also hardened three old pilot seams:
+stagger now spends a safe turn instead of repeating a refused attack, optional road
+errands are checked for reachability and twist eligibility before travel, and the
+ordinary ray reader treats a mortal guest as the first body so only the explicit
+companion lesson attempts the refusal. `sim --keys-file` supplies the same replay path
+for journals longer than Windows can carry in one command line.
+
+Save v97 advances to v98. Release builds with zero warnings and all 968 tests pass,
+including 28 focused `CompanionConsequencesTests` plus upgraded guest, shade, and charge
+contracts. Sweep v102 holds five byte-identical twin pairs. All seeds reach cycle 13:
+seed 1 is 26,891 keys, turn 25,825, nine deaths; seed 7 is 32,920 / 25,931 / nine;
+seed 99 is 31,218 / 27,006 / eight; seed 2024 is 35,273 / 33,414 / seven; seed 88888
+is 33,008 / 31,845 / seven. Drift from v101 is explained by nearest-body targeting,
+automatic fellow evasion, full-lane physical resolution, and the bounded pilot repairs.
+Default seed 1 replays exactly. Companion seed 6 completes twelve crossings in 38,588
+keys and 33,481 turns, demonstrates every required live route including one cured scar,
+312 fitted-brace parries, and the capped 40-point tier contribution, and replays exactly.
+Worldgen remains pure across 240 worlds with zero digest mismatches and zero hard prose
+failures across 89,402 surfaces; the same two legacy fixed-surface warnings remain.
+
+Options set aside remain D-164's explicit exclusions: a permanent party or second
+controlled unit, companion equipment or progression, a new faction or Town Fame ladder,
+beast combat and husbandry, a larger scar catalog, oath pagination, and Calling social
+follow-ons. Deferred to V1-09 or post-1.0: the two approved Calling readers, predators at
+wild mouths, further mortal roles and arcs, more faction edges, additional scars and
+oaths, and every new-region or release concern.
+
 ### D-172: A word left standing: combat and magic depth built (2026-07-23)
 
 V1-07 is built and Verified under D-163's approved boundary. Exact opposite-cell

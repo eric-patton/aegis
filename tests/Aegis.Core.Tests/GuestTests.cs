@@ -112,6 +112,12 @@ public class GuestTests
             var guest = MakeGuest(role, OpenAt(game, game.Player.Pos, 1));
             game.Debug_SetGuest(guest);
             var foe = new Monster { Kind = MonsterKind.Goblin, Pos = OpenAt(game, guest.Pos, 1), SiteId = "goblin-camp", Hp = 60 };
+            foe.Intent = new Intent
+            {
+                Kind = IntentKind.CrushingBlow,
+                TargetCell = game.Player.Pos,
+                TurnsUntilResolve = 3,
+            };
             game.Monsters.Add(foe);
 
             game.ApplyKey('.');
@@ -161,9 +167,11 @@ public class GuestTests
         game.Monsters.Add(raider);
 
         // The raider stands beside the guest and far from the bearer: its
-        // iron goes where the blood is nearest.
+        // iron goes where the blood is nearest. The answer may now be the
+        // fellow's clean step off marked ground rather than blood paid.
         game.ApplyKey('.');
-        Assert.True(guest.Hp < guest.MaxHp || !guest.Alive);
+        Assert.True(guest.Hp < guest.MaxHp || !guest.Alive
+            || game.PhysicalTargetsOnFellows > 0 && game.FellowEvasions > 0);
     }
 
     [Fact]

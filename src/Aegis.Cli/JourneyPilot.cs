@@ -73,7 +73,8 @@ public static class JourneyPilot
     /// <paramref name="wits"/> plays the perception build (D-084): Wits raised first,
     /// to the point innate acuity clears D-061's dulling floor, then the usual rotation.
     /// </summary>
-    public static char? NextKey(Game g, IReadOnlySet<string> skip, bool wits = false, bool rogue = false, bool caster = false)
+    public static char? NextKey(Game g, IReadOnlySet<string> skip, bool wits = false,
+        bool rogue = false, bool caster = false, bool companion = false)
     {
         var p = g.Player;
 
@@ -110,9 +111,11 @@ public static class JourneyPilot
         // hides cured or raw meat in hand, open the wood's edge, sell the lot and cook the
         // meat down to rations, then step back. The trade menu sits behind one talk digit
         // (D-071), so it is opened, driven, and left in turn.
-        if (g.InTradeMenu) return BenchDigit(g, skip);
+        if (g.InTradeMenu) return BenchDigit(g, skip, companion);
         if (g.InTalkMenu && g.TalkNpc?.Id == "npc_woodward"
-            && (BenchErrand(g) || MuleBuyWanted(g) || StableTurnWanted(g, skip)))
+            && (!companion || g.GrainRoadCompleted)
+            && (BenchErrand(g) || MuleBuyWanted(g) || StableTurnWanted(g, skip)
+                || companion && CompanionStableTurnWanted(g)))
             return TradeOpenDigit(g) ?? 'z';
         // The stillroom (D-081, D-082): with sprigs in the satchel, or an eye to be
         // seen to (D-098), open the herbwife's bench the same way and do the business.
@@ -138,7 +141,10 @@ public static class JourneyPilot
         if (g.InTalkMenu && g.TalkNpc?.Kind == NpcKind.Peddler)
             return (FenceErrand(g) ? OfferDigit(g, TradeGood.Fence)
                 : SaltBuyErrand(g) ? OfferDigit(g, TradeGood.Salt) : null) ?? 'z';
-        if (g.InAim) return AimDirection(g) ?? 'z';
+        if (g.InAim)
+            return companion && g.Guest is { Alive: true } aimingGuest
+                ? CompanionRefusalLine(g, aimingGuest) ?? AimDirection(g) ?? 'z'
+                : AimDirection(g) ?? 'z';
         // The words (D-091, D-099): the open cast menu is driven toward the one
         // working wanted now (release, calling, or ward); anything else closes it.
         if (g.InCastMenu) return CastMenuDigit(g, caster) ?? 'z';
@@ -159,6 +165,15 @@ public static class JourneyPilot
         if (g.InThresholdMenu) return ThresholdAnswer;
         if (g.InLayingMenu) return LayingDigit(g);
         if (StuckInMenu(g)) return 'z';
+
+        if (companion && g.Guest is { Alive: true } roadGuest
+            && g.Mode == MapMode.Overworld && !g.LiveMonstersHere.Any()
+            && (g.World.WildPonyPos is not { } wild
+                || wild.Chebyshev(g.Player.Pos) > 1))
+        {
+            if (g.GuestShotRefusals > 0 && g.GuestHoldOrders == 0) return 'o';
+            if (roadGuest.Holding) return 'o';
+        }
 
         // Wear the best iron in hand before anything else (D-066). A stronger piece
         // taken from a deep chest sits useless in the pack until it is put on, and
@@ -197,7 +212,7 @@ public static class JourneyPilot
             // road yielded at the stalls that pay the world's best coin (the
             // sales feed Commerce), then leave by the gate.
             if (site.Kind == SiteKind.Town)
-                return TownMove(g);
+                return TownMove(g, companion);
             if (site.Kind == SiteKind.BlackTarn)
                 return BlackTarnMove(g, site);
             // Still work to do here: clear it. The wilds is hunted, not fought (D-070):
@@ -207,6 +222,7 @@ public static class JourneyPilot
             // first, not chased like deer. Otherwise climb back to daylight.
             if (!site.Cleared && !skip.Contains(site.Id))
             {
+                if (companion && CompanionFieldKey(g) is { } companionKey) return companionKey;
                 if (QuietTrainingKey(g) is { } quiet) return quiet;
                 if (RushTrainingKey(g) is { } rush) return rush;
                 if (g.World.Twist == WorldTwist.HornedLaw && site.Kind == SiteKind.Wilds
@@ -243,7 +259,7 @@ public static class JourneyPilot
         // own way of living already absorbs, lighting each with its digit, then crosses. The
         // toggle only ever adds a term here (it never presses a digit for one already lit),
         // so the set climbs to the sworn one and the cross fires exactly once, no oscillation.
-        if (g.InCrossingMenu) return CrossingKey(g);
+        if (g.InCrossingMenu) return CrossingKey(g, companion);
 
         // Up on the fells (D-146) the errands are the frontier's own: hunt the
         // wolves' combe, camp where the heath allows, pick the high herbs, and
@@ -253,13 +269,57 @@ public static class JourneyPilot
         // Out east (D-138) the errands are the road's own: hunt the half-way
         // glade, camp on the kill, pick the verges, and come home. Everything
         // below this line is the valley's business and navigates the valley's map.
-        if (g.OnRoad) return RoadMove(g, skip);
+        if (g.OnRoad) return RoadMove(g, skip, companion);
 
         // The vision is a rung of the ladder taken by resting (D-068): once the guilt has
         // been spoken at a crossing, the next rest at the shrine pulls the bearer under
         // into the forging-memory. So rest even with nothing to raise or mend when that
         // rung still waits, and seek the shrine out for it below.
         bool needVision = NeedVision(p);
+
+        if (companion && CompanionPonyKey(g) is { } pony) return pony;
+        if (companion && g.GrainRoadCompleted
+            && CompanionRecognitionCampKey(g) is { } recognitionCamp)
+            return recognitionCamp;
+
+        if (companion && g.GrainRoadCompleted && CompanionStableTurnWanted(g)
+            && Woodward(g) is { } stableKeeper)
+        {
+            var toStable = NavKey(g, g.World.Overworld, p.Pos, stableKeeper.Pos, OverworldBlocked(g));
+            if (toStable is not null) return toStable;
+        }
+
+        if (companion && g.Guest is { Alive: true, Role: GuestRole.Crofter })
+        {
+            if (p.Pos == g.World.RoadMouthPos) return '>';
+            return NavKey(g, g.World.Overworld, p.Pos, g.World.RoadMouthPos, OverworldBlocked(g));
+        }
+
+        if (companion && g.GuildSworn && g.LevyStands && g.Guest is null
+            && !g.GrainRoadCompleted && EligibleCrofter(g) is { } crofter)
+        {
+            var toCrofter = NavKey(g, g.World.Overworld, p.Pos, crofter.Pos, OverworldBlocked(g));
+            if (toCrofter is not null) return toCrofter;
+        }
+
+        if (companion && g.GrainCartDelivered && !g.CampCleared && g.Guest is null
+            && (g.Raids > 0 || g.Wrath > 0) && Woodward(g) is { } debt)
+        {
+            var toDebt = NavKey(g, g.World.Overworld, p.Pos, debt.Pos, OverworldBlocked(g));
+            if (toDebt is not null) return toDebt;
+        }
+
+        if (companion && g.Guest is { Alive: true, Role: GuestRole.Huntsman }
+            && (g.PhysicalTargetsOnFellows == 0 || g.FellowEvasions == 0
+                || g.GuestShotRefusals == 0)
+            && g.World.Sites.Any(s => s.Area is Area.Road or Area.Fells
+                && !s.Cleared && !skip.Contains(s.Id)
+                && g.Monsters.Any(m => m.Alive && m.SiteId == s.Id)))
+        {
+            if (p.Pos == g.World.RoadMouthPos) return '>';
+            var toField = NavKey(g, g.World.Overworld, p.Pos, g.World.RoadMouthPos, OverworldBlocked(g));
+            if (toField is not null) return toField;
+        }
 
         // The bearer's own pot (D-162): buy the stillcraft once it is
         // affordable, then keep enough sprigs out of the herbwife's scale to
@@ -321,7 +381,9 @@ public static class JourneyPilot
         // the hides sell (the coin funds the smith just below, or rides to the arch) and the
         // meat cooks down to rations. One trip does both, and a trip empties the bag, so it
         // fires once per world's hunt, no more.
-        if ((BenchErrand(g) || MuleBuyWanted(g) || BagFetchWanted(g, skip)) && Woodward(g) is { } ward)
+        if ((!companion || g.GrainRoadCompleted)
+            && (BenchErrand(g) || MuleBuyWanted(g) || BagFetchWanted(g, skip))
+            && Woodward(g) is { } ward)
         {
             var toWard = NavKey(g, g.World.Overworld, p.Pos, ward.Pos, OverworldBlocked(g));
             if (toWard is not null) return toWard;
@@ -369,8 +431,41 @@ public static class JourneyPilot
             if (toHolder is not null) return toHolder;
         }
 
+        bool companionBondTrip = companion && !g.GuildSworn && !g.CampCleared
+            && ((BondErrand(g) || g.Player.Hide > 0 || g.Player.Herb > 0)
+                    && RoadReachable(g, g.World.TownSite.OverworldPos)
+                || g.World.Twist != WorldTwist.HornedLaw
+                    && !g.World.RoadWildsSite.Cleared && !skip.Contains(g.World.RoadWildsSite.Id)
+                    && RoadReachable(g, g.World.RoadWildsSite.OverworldPos));
+
         // Take the nearest site still worth entering before the arch.
         var target = NearestUnclearedSite(g, skip);
+        if (companionBondTrip) target = null;
+        if (companion && !g.GuildSworn && !g.CampCleared && g.GrainDeliveries == 0)
+        {
+            var beforeCamp = g.World.Sites
+                .Where(s => s.Area == g.Area && s.Kind != SiteKind.GoblinCamp
+                    && !s.Cleared && !skip.Contains(s.Id)
+                    && g.Monsters.Any(m => m.Alive && m.SiteId == s.Id))
+                .OrderBy(s => Chebyshev(p.Pos, s.OverworldPos))
+                .ThenBy(s => s.Id, StringComparer.Ordinal)
+                .FirstOrDefault();
+            if (beforeCamp is not null)
+                target = beforeCamp;
+            else if (!g.LevyStands)
+                target = null;
+        }
+        if (companion && g.Guest is { Alive: true, Role: GuestRole.Huntsman })
+        {
+            var demonstration = g.World.Sites
+                .Where(s => s.Area == g.Area && s.Kind != SiteKind.GoblinCamp
+                    && !s.Cleared && !skip.Contains(s.Id)
+                    && g.Monsters.Any(m => m.Alive && m.SiteId == s.Id))
+                .OrderBy(s => Chebyshev(p.Pos, s.OverworldPos))
+                .ThenBy(s => s.Id, StringComparer.Ordinal)
+                .FirstOrDefault();
+            if (demonstration is not null) target = demonstration;
+        }
 
         // The bank (D-100): with the road still working, surplus coin rides the mule's
         // bags at the bearer's side; what the beast carries does not fall with the
@@ -399,7 +494,7 @@ public static class JourneyPilot
         // settled, take the mouth and work the road's own ground. The trip
         // exercises travel, the hunt half a journey out, the camp's cooking
         // and mending, and the verges' herbs, all through real keys.
-        if (RoadTripWanted(g, skip))
+        if (RoadTripWanted(g, skip) || companionBondTrip)
         {
             if (p.Pos == g.World.RoadMouthPos)
                 return ColdDeferralWanted(g, ClimateBand.Road) ? '.' : '>';
@@ -517,8 +612,20 @@ public static class JourneyPilot
         // sealed off must not become a shuttle the trip can never put down.
         var trail = g.World.RoadWildsSite;
         bool hartTrailOwed = g.World.Twist != WorldTwist.HornedLaw
-            && !trail.Cleared && !skip.Contains(trail.Id);
-        return hartTrailOwed || FellTripWanted(g, skip);
+            && !trail.Cleared && !skip.Contains(trail.Id)
+            && RoadReachable(g, trail.OverworldPos);
+        bool fellsOwed = FellTripWanted(g, skip)
+            && RoadReachable(g, g.World.FellMouthPos);
+        return hartTrailOwed || fellsOwed;
+    }
+
+    private static bool RoadReachable(Game g, Pos target)
+    {
+        if (g.World.RoadHomePos == target) return true;
+        var blocked = g.World.Npcs
+            .Where(n => n.SiteId is null && n.Area == Area.Road)
+            .Select(n => n.Pos).ToHashSet();
+        return NavKey(g, g.World.Road, g.World.RoadHomePos, target, blocked) is not null;
     }
 
     /// <summary>
@@ -567,11 +674,18 @@ public static class JourneyPilot
     /// the verges, then take the mouth for home. Deterministic like everything
     /// the pilot does: same seed, same road.
     /// </summary>
-    private static char? RoadMove(Game g, IReadOnlySet<string> skip)
+    private static char? RoadMove(Game g, IReadOnlySet<string> skip, bool companion)
     {
         var p = g.Player;
         var road = g.World.Road;
         var blocked = OverworldBlocked(g);
+
+        if (companion && g.Guest is { Alive: true, Role: GuestRole.Crofter })
+        {
+            var gate = g.World.TownSite.OverworldPos;
+            if (p.Pos == gate) return '>';
+            return NavKey(g, road, p.Pos, gate, blocked);
+        }
 
         if (g.Remnant is { } rem && rem.MapId == road.Id && rem.Coin + rem.Essence > 0)
         {
@@ -601,7 +715,9 @@ public static class JourneyPilot
                 && !skip.Contains(g.World.BlackTarnSite.Id))
             {
                 var keeper = g.World.Waykeeper;
-                if (NavKey(g, road, p.Pos, keeper.Pos, blocked) is { } toKeeper) return toKeeper;
+                if (p.Coin >= TownCost(g, FellFishing.LinePrice)
+                    && NavKey(g, road, p.Pos, keeper.Pos, blocked) is { } toKeeper)
+                    return toKeeper;
             }
             if (p.Pos == g.World.FellMouthPos)
                 return ColdDeferralWanted(g, ClimateBand.Fells) ? '.' : '>';
@@ -733,7 +849,7 @@ public static class JourneyPilot
     /// the gate arch. People block like people everywhere; the goal cell is
     /// the monger, so the bump lands the talk.
     /// </summary>
-    private static char? TownMove(Game g)
+    private static char? TownMove(Game g, bool companion)
     {
         var p = g.Player;
         var town = g.CurrentMap;
@@ -745,7 +861,9 @@ public static class JourneyPilot
         if (g.FormalBout is not null) return FightOrApproach(g);
 
         Npc? stall = null;
-        if (SmeltErrand(g)) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_townsmith");
+        if (companion && g.Guest is { Alive: true, Role: GuestRole.Crofter })
+            stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_guildmaster");
+        else if (SmeltErrand(g)) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_townsmith");
         else if (TemperErrand(g)) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_townsmith");
         else if (g.Player.IronBloom > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_guildmaster");
         else if (g.Player.Hide > 0) stall = g.NpcsHere.FirstOrDefault(n => n.Id == "npc_hidemonger");
@@ -1179,6 +1297,14 @@ public static class JourneyPilot
             && !foes.Any(m => m.Intent is { } it && Threatens(it, p.Pos) && it.TurnsUntilResolve <= 1))
             return 'g';
 
+        if (p.StaggerTurns > 0)
+        {
+            bool threatened = foes.Any(m => m.Intent is { } it && Threatens(it, p.Pos));
+            if (threatened && ChooseDodge(g, foes) is { } staggeredDodge)
+                return staggeredDodge;
+            return '.';
+        }
+
         // A following binding is answered by the speaker or the sight line,
         // never by moving off its first cell. Severing has already had first
         // refusal above; without it, wound the adjacent caster or step behind
@@ -1203,6 +1329,9 @@ public static class JourneyPilot
         bool aimed = foes.Any(m => m.Intent is { } it && Threatens(it, p.Pos));
         if (aimed)
         {
+            if (p.FittedBrace && !p.HasScar(ScarId.CrushedHand)
+                && p.Weapon is not null && g.ParryOpen && p.Stamina >= 1)
+                return 'a';
             if (ChooseDodge(g, foes) is { } dodge) return dodge;
             // Nowhere safe to step: better to answer a blow than take it standing.
         }
@@ -1230,6 +1359,132 @@ public static class JourneyPilot
         var blocked = foes.Where(m => m != nearest).Select(m => m.Pos).ToHashSet();
         return NavKey(g, g.CurrentMap, p.Pos, nearest.Pos, blocked)
             ?? NavKey(g, g.CurrentMap, p.Pos, nearest.Pos, Empty);
+    }
+
+    /// <summary>
+    /// The opt-in companion field lesson (D-164): care first, then one honest
+    /// hold-and-follow cycle. With a bow, a held huntsman lets one foe close
+    /// until friend, foe, and bearer share a line, then the bearer attempts the
+    /// refused shot without spending the turn. Every move is an ordinary key.
+    /// </summary>
+    private static char? CompanionFieldKey(Game g)
+    {
+        if (g.Guest is not { Alive: true, Role: GuestRole.Huntsman } guest
+            || !g.LiveMonstersHere.Any())
+            return null;
+
+        bool care = guest.Hp < guest.MaxHp && guest.Pos.Chebyshev(g.Player.Pos) == 1
+            && (g.Player.Draughts > 0 || g.Player.Herb > 0 || g.Player.Rations > 0);
+        if (care) return 'o';
+
+        if (!guest.Holding && (g.PhysicalTargetsOnFellows == 0 || g.FellowEvasions == 0)
+            && CompanionMarkedGroundKey(g, guest) is { } markedGround)
+            return markedGround;
+
+        if (g.GuestShotRefusals == 0 && g.Player.Bow is not null
+            && g.PhysicalTargetsOnFellows > 0 && g.FellowEvasions > 0)
+        {
+            var foes = g.LiveMonstersHere
+                .Where(m => m.Aware && !m.Dormant && m.Kind != MonsterKind.Hart)
+                .OrderBy(m => m.Pos.Chebyshev(guest.Pos))
+                .ThenBy(m => m.Pos.Y).ThenBy(m => m.Pos.X)
+                .ToList();
+            if (CompanionRefusalLine(g, guest) is not null)
+            {
+                if (!guest.Holding) return 'o';
+                return g.Player.Stamina >= LooseCost(g.Player) ? 'f' : '.';
+            }
+
+            foreach (var foe in foes)
+            {
+                if (CompanionFiringCell(g, guest, foe) is not { } firingCell) continue;
+                if (g.Player.Pos == firingCell) return guest.Holding ? 'f' : 'o';
+                if (g.Player.Pos != firingCell)
+                {
+                    var blocked = LiveFoeCells(g);
+                    blocked.Add(guest.Pos);
+                    if (NavKey(g, g.CurrentMap, g.Player.Pos, firingCell, blocked) is { } step)
+                        return step;
+                }
+            }
+            return null;
+        }
+
+        if (guest.Holding && g.GuestFollowOrders < g.GuestHoldOrders)
+            return 'o';
+        return null;
+    }
+
+    private static char? CompanionMarkedGroundKey(Game g, Guest guest)
+    {
+        var candidates = g.LiveMonstersHere
+            .Where(m => m.Aware && !m.Dormant && m.Intent is null
+                && m.Kind is MonsterKind.Wight or MonsterKind.Severed or MonsterKind.Graven
+                    or MonsterKind.Hound or MonsterKind.Carl or MonsterKind.Boar
+                    or MonsterKind.Wolf or MonsterKind.GreatWolf or MonsterKind.Warder
+                    or MonsterKind.Thegn)
+            .OrderBy(m => m.Pos.Chebyshev(guest.Pos))
+            .ThenBy(m => m.Pos.Y).ThenBy(m => m.Pos.X)
+            .ToList();
+        foreach (var foe in candidates)
+        {
+            int guestDistance = foe.Pos.Chebyshev(guest.Pos);
+            if (guestDistance < foe.Pos.Chebyshev(g.Player.Pos)) return '.';
+
+            foreach (var (dx, dy) in Directions.All8)
+            {
+                var next = g.Player.Pos.Plus(dx, dy);
+                if (!g.CurrentMap.Walkable(next)
+                    || next == guest.Pos
+                    || g.LiveMonstersHere.Any(m => m.Pos == next))
+                    continue;
+                if (foe.Pos.Chebyshev(next) > guestDistance)
+                    return KeyFor(dx, dy);
+            }
+        }
+        return null;
+    }
+
+    private static Pos? CompanionFiringCell(Game g, Guest guest, Monster foe)
+    {
+        int dx = Math.Sign(foe.Pos.X - guest.Pos.X);
+        int dy = Math.Sign(foe.Pos.Y - guest.Pos.Y);
+        if (dx == 0 && dy == 0) return null;
+        var ray = guest.Pos;
+        bool aligned = false;
+        for (int step = 1; step < Game.BowRange; step++)
+        {
+            ray = ray.Plus(dx, dy);
+            if (ray == foe.Pos) { aligned = true; break; }
+        }
+        if (!aligned) return null;
+        var firingCell = guest.Pos.Plus(-dx, -dy);
+        return g.CurrentMap.Walkable(firingCell)
+            && !g.LiveMonstersHere.Any(m => m.Pos == firingCell)
+            ? firingCell
+            : null;
+    }
+
+    private static char? CompanionRefusalLine(Game g, Guest guest)
+    {
+        foreach (var (dx, dy) in Directions.All8)
+        {
+            var cell = g.Player.Pos;
+            bool passedGuest = false;
+            for (int step = 0; step < Game.BowRange; step++)
+            {
+                cell = cell.Plus(dx, dy);
+                if (!g.CurrentMap.Walkable(cell)) break;
+                if (cell == guest.Pos)
+                {
+                    passedGuest = true;
+                    continue;
+                }
+                if (g.LiveMonstersHere.Any(m => m.Pos == cell))
+                    return passedGuest ? KeyFor(dx, dy) : null;
+            }
+        }
+        return null;
     }
 
     private static readonly HashSet<Pos> Empty = new();
@@ -1352,6 +1607,8 @@ public static class JourneyPilot
             {
                 pos = pos.Plus(dx, dy);
                 if (!map.Walkable(pos)) break; // the shaft splinters on stone: no target this way.
+                if (g.Guest is { Alive: true } guest && guest.Pos == pos)
+                    break; // the mortal body is the first body: this is not an ordinary shot.
                 var foe = g.Monsters.FirstOrDefault(
                     m => m.Alive && m.SiteId == g.CurrentSite!.Id && m.Pos == pos);
                 if (foe is null) continue; // open ground: the shaft flies on.
@@ -1502,6 +1759,9 @@ public static class JourneyPilot
 
     private static Npc? Herbwife(Game g) => g.World.Npcs.FirstOrDefault(n => n.Id == "npc_herbwife");
 
+    private static Npc? EligibleCrofter(Game g) =>
+        g.World.Npcs.FirstOrDefault(n => n.Kind == NpcKind.Villager && n.Id != "npc_woodward");
+
     private static bool StillcraftPurchaseWanted(Game g) =>
         !g.Player.HasLesson(LessonId.Stillcraft)
         && g.Player.Herb >= g.DraughtNeed
@@ -1537,7 +1797,7 @@ public static class JourneyPilot
     /// (D-071/D-073), so the bench empties in a few keys and never oscillates, and the
     /// errand only sends the bearer here once per world's hunt.
     /// </summary>
-    private static char BenchDigit(Game g, IReadOnlySet<string> skip)
+    private static char BenchDigit(Game g, IReadOnlySet<string> skip, bool companion)
     {
         // The scrivener's stable shelf (D-161): the talk menu opens it, then
         // the fixed catalog digit buys the same next title BookBuy selected.
@@ -1582,7 +1842,8 @@ public static class JourneyPilot
         // The beasts (D-100): buy the stead's mule with surplus coin, and turn the
         // stable when the roster wants a different road out front.
         if (MuleBuyWanted(g)) return TradeDigit(g, TradeGood.Beast);
-        if (StableTurnWanted(g, skip)) return TradeDigit(g, TradeGood.Stable);
+        if (StableTurnWanted(g, skip) || companion && CompanionStableTurnWanted(g))
+            return TradeDigit(g, TradeGood.Stable);
         return 'z';
     }
 
@@ -1623,7 +1884,7 @@ public static class JourneyPilot
     /// </summary>
     private static bool MuleBuyWanted(Game g) =>
         !OwnsMule(g) && g.Mount is null
-        && SteadRegard.RungFor(g.Regard) >= SteadRegard.FriendRung
+        && g.RegardRung >= SteadRegard.FriendRung
         && g.Player.Coin >= MountCatalog.MuleCoin && SurplusCoin(g);
 
     /// <summary>Sites are done and a stabled beast still holds coin: the bank must come home before the arch.</summary>
@@ -1643,6 +1904,18 @@ public static class JourneyPilot
         return NearestUnclearedSite(g, skip) is not null
             && g.Stable.Any(b => b.Kind == MountKind.Courser)
             && g.Mount?.Kind != MountKind.Courser;
+    }
+
+    private static bool CompanionStableTurnWanted(Game g)
+    {
+        bool Unrecognized(Mount beast) => beast.Kind switch
+        {
+            MountKind.Mule => !g.Player.MuleRecognized,
+            MountKind.Courser => !g.Player.CourserRecognized,
+            _ => !g.Player.FellPonyRecognized,
+        };
+        return g.Stable.Any(Unrecognized)
+            && (g.Mount is null || !Unrecognized(g.Mount));
     }
 
     /// <summary>
@@ -2187,18 +2460,68 @@ public static class JourneyPilot
     private static readonly OathId[] SwornOaths =
         { OathId.HungryRoad, OathId.SpentEdge, OathId.HushedName };
 
+    private static readonly OathId[] CompanionOaths =
+        { OathId.HungryRoad, OathId.SpentEdge, OathId.HushedName, OathId.ClosedDoor, OathId.LongCount };
+
     /// <summary>
     /// The next key at the open arch (D-069): light each sworn oath not yet lit (its digit is
     /// its one-indexed place in the catalog, the very index the terms menu toggles by), then
     /// cross. Because a digit only ever adds a term here, the chosen set climbs monotonically
     /// to <see cref="SwornOaths"/> and the '>' fires exactly once, so the menu cannot loop.
     /// </summary>
-    private static char CrossingKey(Game g)
+    private static char CrossingKey(Game g, bool companion)
     {
-        foreach (var oath in SwornOaths)
+        foreach (var oath in companion ? CompanionOaths : SwornOaths)
             if (!g.ChosenOaths.Contains(oath))
                 return (char)('1' + OathIndex(oath));
         return '>';
+    }
+
+    private static char? CompanionPonyKey(Game g)
+    {
+        if (g.World.WildPonyPos is not { } pony || g.Player.Rations == 0) return null;
+        if (pony.Chebyshev(g.Player.Pos) == 1) return 'o';
+
+        var blocked = OverworldBlocked(g);
+        foreach (var (dx, dy) in Directions.All8)
+        {
+            var beside = pony.Plus(dx, dy);
+            if (!g.World.Overworld.Walkable(beside) || blocked.Contains(beside)) continue;
+            if (NavKey(g, g.World.Overworld, g.Player.Pos, beside, blocked) is { } step)
+                return step;
+        }
+        return null;
+    }
+
+    private static char? CompanionRecognitionCampKey(Game g)
+    {
+        if (g.Mode != MapMode.Overworld || g.Mount is not { } beast
+            || beast.Area != g.Area || beast.Pos.Chebyshev(g.Player.Pos) > 1)
+            return null;
+
+        bool recognized = beast.Kind switch
+        {
+            MountKind.Mule => g.Player.MuleRecognized,
+            MountKind.Courser => g.Player.CourserRecognized,
+            _ => g.Player.FellPonyRecognized,
+        };
+        if (recognized) return null;
+
+        static bool CampGround(Terrain terrain) =>
+            terrain is Terrain.Grass or Terrain.Forest or Terrain.Hills or Terrain.Heath;
+
+        var map = g.CurrentMap;
+        if (CampGround(map[g.Player.Pos])) return 'm';
+
+        var camp = (from y in Enumerable.Range(0, map.Height)
+                    from x in Enumerable.Range(0, map.Width)
+                    select new Pos(x, y))
+            .Where(cell => CampGround(map[cell]))
+            .OrderBy(cell => cell.Manhattan(g.Player.Pos))
+            .ThenBy(cell => cell.Y).ThenBy(cell => cell.X)
+            .FirstOrDefault();
+        if (camp == default) return null;
+        return NavKey(g, map, g.Player.Pos, camp, OverworldBlocked(g));
     }
 
     /// <summary>The one-indexed digit's index for an oath: its place in the catalog, which is what <see cref="Game"/>'s terms menu keys off (key - '1').</summary>

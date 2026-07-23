@@ -2,13 +2,13 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-174); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-175); the research behind it lives in `../research/`.
 
 ---
 
 ## 1. What Aegis Is
 
-Aegis is a single-player, turn-based, terminal (TUI) RPG written in C#. It aims for the tone and depth of Elden Ring and Kingdom Come: Deliverance with none of the real-time action: the same reads, commitment, danger, and earned mastery, delivered through decisions instead of reflexes.
+Aegis is a single-player, turn-based, tiled TUI RPG written in C#. It aims for the tone and depth of Elden Ring and Kingdom Come: Deliverance with none of the real-time action: the same reads, commitment, danger, and earned mastery, delivered through decisions instead of reflexes.
 
 You are nobody, in a world that was generated last Tuesday and has three hundred years of history anyway. Something ancient has fastened itself to you. It will not let you die. It calls itself the Aegis, and it is the reason you can do the impossible thing: when this world's story is finished, cross into another, and another, each meaner than the last, forever.
 
@@ -248,16 +248,20 @@ And the loop closes on itself: **your finished characters enter the mythology.**
 
 ## 11. Technology
 
-- **C# / .NET**, NativeAOT single-file publish. TUI via a lean custom render layer (or Terminal.Gui v2); the hard 80% is the deterministic simulation core, not the rendering.
+- **C# / .NET**, Windows x64 Native AOT. The player uses SadConsole and MonoGame with
+  an Aegis-owned tiled font, exact RGB palette, and fixed logical frame. `Aegis.Core`
+  remains I/O-free, and Frame plus Presenter remain the canonical render model. The hard
+  80% is still the deterministic simulation core, not the host.
 - **Save architecture**: versioned seed and campaign-generator contract for regenerable content, append-only key journal for authored/player-mutated state.
 - **RNG**: hierarchical seed tree (master seed hashed with stable subsystem/region/site identifiers); subsystems never share a stream.
 - **Content**: storylets and line banks; format v1 spec'd in `storylets.md` (C# catalog now, designed to map 1:1 onto data files when volume demands).
-- **1.0 release**: Windows x64, self-contained Native AOT zip, spoiler-free README,
+- **1.0 release**: Windows x64, self-contained Native AOT zip containing the player and
+  its fixed SDL2 and OpenAL dependencies, spoiler-free README,
   release notes, required notices, SHA-256 manifest, clean-extraction smokes, zero known
   blocker or major defects, and a fresh signed-off manual packaged campaign. Installers,
   telemetry, networking, automatic migration, code signing, and non-Windows packages are
-  outside the launch contract. The automated candidate machinery ships under D-174;
-  manual packaged signoff remains the final gate (D-165).
+  outside the launch contract. D-175 supersedes the terminal candidate and adds V1-10,
+  the SadConsole migration and replacement packaged signoff gate.
 
 ## 12. Open Items
 
@@ -270,7 +274,7 @@ And the loop closes on itself: **your finished characters enter the mythology.**
 ## 13. Document Map
 
 - `roadmap.md`: the living feature tracker and roadmap (what is built, partial, left, open)
-- `decisions.md`: the decision audit trail with rationale (172 and counting)
+- `decisions.md`: the decision audit trail with rationale (175 and counting)
 - `storylets.md`: storylet format and fact-graph schema spec (D-030)
 - `story/aegis-arc.md`: the trans-world Aegis arc spec (Canon: The Ledger; D-026)
 - `story/world-story-templates.md`: the world-story template contract, iron rules, and the template pool (six landed through D-130)

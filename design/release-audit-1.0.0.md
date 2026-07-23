@@ -1,10 +1,12 @@
 # Aegis 1.0.0 release audit
 
-This is the durable audit for V1-09 under D-165 and D-174. Automated evidence may be
-regenerated. The manual section is a human gate and cannot be inferred from automated
-tools.
+This is the durable audit for V1-09 under D-165 and D-174, amended by D-175. Automated
+evidence may be regenerated. The manual section is a human gate and cannot be inferred
+from automated tools.
 
 ## Candidate identity
+
+Status: superseded by D-175. This package cannot receive final 1.0 signoff.
 
 - Product version: 1.0.0
 - Save version: 99
@@ -72,16 +74,20 @@ route replays exactly at 35,094 keys, cycle 13, and turn 33,981. Generator 1 reg
 
 ### Open
 
-No blocker, major, minor, prose, or cosmetic defect is currently accepted for release.
-Any new finding is entered here with severity, reproduction, disposition, and signoff.
+1. Major presentation portability defect: the terminal client inherits palette, font,
+   and theme behavior from the user's terminal environment, so the intended presentation
+   is not controlled by Aegis. The user did not approve the terminal candidate and
+   approved the SadConsole replacement direction under D-175. Disposition: supersede the
+   package, implement V1-10, rerun the release gates, and restart the fresh manual
+   campaign. This is not accepted for release.
 
 ## Roadmap classification
 
 Every remaining `[ ]` or `[~]` line in `design/roadmap.md` is classified line by line.
-The only launch-gate partials are V1-09 and its release-package line, both waiting on the
-manual packaged campaign. All other incomplete families are labeled post-1.0 under
-D-165. The open design-question parking lot is also explicitly post-1.0 unless promoted
-by a later decision.
+The launch-gate partials are V1-09, V1-10, presentation, and the replacement release
+package. All other incomplete families are labeled post-1.0 under D-165. The open
+design-question parking lot is also explicitly post-1.0 unless promoted by a later
+decision.
 
 ## Important-fact and conflict audit
 
@@ -100,7 +106,8 @@ by a later decision.
 
 ## Manual packaged campaign protocol
 
-Status: pending explicit user signoff.
+Status: terminal candidate superseded. Restart from step 1 with the replacement
+SadConsole package.
 
 Use only the cleanly extracted package. Do not use a development binary, pilot, debug
 hook, edited journal, or an existing slot.
@@ -126,9 +133,10 @@ hook, edited journal, or an existing slot.
 
 ## Final signoff
 
-- User verdict: pending
-- Date: pending
+- User verdict: terminal candidate not approved; SadConsole replacement approved
+- Date: 2026-07-23
 - Final cycle and turn: pending
-- Defects accepted: none
+- Defects accepted: none; the presentation defect requires replacement
 - V1-09 status: Implemented, not yet Verified
-- Aegis 1.0 status: release candidate, not yet signed off
+- V1-10 status: Draft, not yet implemented
+- Aegis 1.0 status: release recovery, no active candidate

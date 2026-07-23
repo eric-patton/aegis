@@ -3,7 +3,7 @@
 This is the canonical implementation queue for the finite road to Aegis 1.0 adopted
 in D-155 and made design-first in D-157. `design/roadmap.md` remains the source of
 truth for feature status. This file owns the approved scope, dependencies, acceptance
-criteria, and decision associations for the nine 1.0 tranches.
+criteria, and decision associations for the ten 1.0 tranches.
 
 ## Working contract
 
@@ -12,7 +12,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 - Substantive choices are made with the user, recorded in `design/decisions.md`, and
   associated with the card here. Implementation discoveries amend the card through a
   later decision rather than silently changing its contract.
-- No 1.0 card enters implementation until every card is Approved. This frontloads
+- No 1.0 card enters implementation until every unbuilt card is Approved. This frontloads
   dependencies and removes design pauses from the build sequence.
 - Approval fixes player-facing behavior, system boundaries, persistence, dependencies,
   and acceptance criteria. Exact prose, generated geometry, and balance tuning remain
@@ -20,7 +20,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 - A card reaches Implemented when its approved behavior exists. It reaches Verified only
   after its focused checks and any required engine sweep pass, its roadmap lines close,
   and its documentation is current.
-- Work explicitly excluded from all nine cards is post-1.0 unless a later user decision
+- Work explicitly excluded from all ten cards is post-1.0 unless a later user decision
   promotes it into the gate.
 
 ## Queue at a glance
@@ -35,7 +35,8 @@ criteria, and decision associations for the nine 1.0 tranches.
 | V1-06 | Character and activity breadth | Verified | D-162, D-171 | Completed |
 | V1-07 | Combat and magic depth | Verified | D-163, D-172 | Completed |
 | V1-08 | Companions, factions, and consequences | Verified | D-164, D-173 | Completed |
-| V1-09 | Next region and 1.0 release closure | Implemented | D-165, D-174 | Manual signoff pending |
+| V1-09 | Next region and 1.0 release closure | Implemented | D-165, D-174 | Original candidate superseded |
+| V1-10 | SadConsole client and release recovery | Draft | D-175 | Design review pending |
 
 ## V1-01: High-fells capstone, the black tarn
 
@@ -1497,7 +1498,7 @@ this card becomes Verified.
   activity depth; deeper faction relations, caster reputation and town law; playable
   memory scenes and other recurring-story expansion; external content files,
   localization and modding; and non-Windows packages.
-- Aegis is 1.0-ready only when all nine cards are Verified; the complete engine and
+- Aegis is 1.0-ready only when all ten cards are Verified; the complete engine and
   release journeys pass; save and generator contracts pass; the clean package passes
   smoke tests; the manual campaign is signed off; the roadmap has no unclassified open
   line; every important shipped fact has a reader; every live conflict has an exit;
@@ -1553,12 +1554,99 @@ this card becomes Verified.
 - No installer, updater, telemetry, network dependency, code signing, cloud save,
   automatic migration, remote CI or release, Linux package, or macOS package.
 
+## V1-10: SadConsole client and release recovery
+
+**Design status:** Draft for user review
+
+**Decision:** D-175
+
+**Roadmap association:** Path to 1.0 tranche 10; presentation; tooling and verification;
+Windows x64 release package
+
+**Dependencies:** V1-09 implemented under D-174; existing D-027 pilot and sim contract;
+D-175 compatibility and focus-free control spike
+
+**Implementation status:** Not started
+
+### Player-facing outcome
+
+- Aegis launches into its own tiled window rather than inheriting colors, font, and
+  layout behavior from a terminal application.
+- The packaged font, exact RGB palette, 120 by 40 logical frame, `Fit` resize behavior,
+  and letterboxing make the supported presentation consistent across Windows themes and
+  terminal settings.
+- Existing canonical keyboard commands remain valid. Arrow keys remain physical aliases.
+- The complete required frame stays visible through supported resizing.
+- A fresh save can be created, played, closed, and reloaded through the new client.
+
+### Architecture and automation
+
+- `Aegis.Core`, `Frame`, `Presenter`, canonical characters, save v99, and generator 1
+  remain unchanged unless implementation discovers a separately approved engine need.
+- Add a frontend-neutral `Aegis.Host` library for the serialized session queue, saves,
+  and pilot transport.
+- Add an `Aegis.Client` Windows `WinExe` using SadConsole and MonoGame. It produces the
+  shipping `aegis.exe`.
+- Retain `Aegis.Cli` as `aegis-tools.exe` for pilot, sim, journey, worldgen, release
+  diagnostics, and the legacy comparison client during migration.
+- Physical and pilot inputs share one queue and one `Game.ApplyKey`, save append, and
+  render path.
+- Pilot control is opt-in and current-user-only. It never uses focus changes,
+  operating-system input injection, UI Automation, or screen automation.
+- Preserve `ping`, `screen`, `state`, `keys`, and `quit`. Add `frame`, returning the
+  120 by 40 glyph and resolved RGB cell grid for focus-free visual inspection.
+
+### Release recovery
+
+- The D-174 terminal candidate is superseded and cannot receive final signoff.
+- The replacement Windows x64 zip contains the SadConsole player, SDL2, OpenAL, tools,
+  spoiler-free documents, third-party notices, and a complete SHA-256 manifest.
+- Keep Windows x64 Native AOT with explicit roots for `SadConsole` and
+  `SadConsole.Host.MonoGame`.
+- Pin the exact known third-party IL2104 and IL3053 warning set. Any new or changed
+  warning fails release verification. Ordinary Release builds and tests stay at zero
+  warnings.
+- Rebuild the candidate from clean output, run clean-extraction startup, render, pilot,
+  input, save, tool, hash, and shutdown smokes, then restart the fresh guided campaign.
+
+### Acceptance and verification
+
+- Focused tests pin every physical key alias, case-sensitive command, resize contract,
+  palette mapping, cell copy, pilot command, current-user-only pipe, request timeout,
+  save append, and orderly shutdown.
+- Frame parity tests compare the SadConsole cell model with the existing Presenter output
+  over creation, overworld, local, menu, combat, death, and later-world surfaces without
+  asserting story prose in release logs.
+- A Windows integration test launches the packaged client, advances it through pilot
+  keys, observes state and frame, and quits while a different foreground window identity
+  remains unchanged.
+- A manual physical-keyboard checkpoint covers arrows, printable keys, shifted movement,
+  Enter where supported, Backspace where supported, Escape, held-key behavior, focus
+  loss, and return from focus loss without stale repeats.
+- Kill all Aegis processes, build Release, run all repository tests, run the complete
+  default and release twin journeys, replay both seed-1 journals, and pass worldgen
+  purity. With no engine change, every D-174 engine result must remain byte-identical.
+- Publish and verify the clean SadConsole package, then complete a fresh packaged
+  campaign. V1-09 and V1-10 become Verified only after explicit user approval.
+
+### Explicit exclusions
+
+- No engine mechanic, content, balance, world generation, or story change.
+- No new canonical gameplay character.
+- No animation, particles, sound, controller, touch, or mouse-only command.
+- No runtime third-party font or theme loading.
+- No installer, updater, telemetry, networking, cloud save, signing, Linux package, or
+  macOS package.
+- No removal of the legacy terminal renderer before V1-10 verification.
+
+The complete implementation contract is `design/sadconsole-client-migration.md`.
+
 ## 1.0 gate
 
 The release gate remains the one adopted in D-155 and detailed in
-`design/plan-2026-07.md`, now made executable by D-165: all nine tranches Verified, full
-engine and release sweeps green, a clean Windows x64 package, a fresh manual packaged
-playthrough signed off, no known blocker or major defects, current save, generator, help,
-release, and design documentation, every important fact with a reader, every live conflict
-with a designed exit, and every remaining roadmap line explicitly promoted or classified
-as post-1.0.
+`design/plan-2026-07.md`, made executable by D-165 and amended by D-175: all ten
+tranches Verified, full engine and release sweeps green, a clean Windows x64 SadConsole
+package, a fresh manual packaged playthrough signed off, no known blocker or major
+defects, current save, generator, help, release, and design documentation, every
+important fact with a reader, every live conflict with a designed exit, and every
+remaining roadmap line explicitly promoted or classified as post-1.0.

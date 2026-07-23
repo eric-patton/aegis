@@ -231,6 +231,60 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-175: Aegis owns the glass: SadConsole and the focus-free pilot (2026-07-23)
+
+The 1.0 player moves from the host terminal to an Aegis-owned SadConsole window.
+The user approved the direction after the guided candidate playtest showed that terminal
+palette and theme ownership could make the intended presentation vary by environment.
+SadConsole 10.10.1 with MonoGame DesktopGL 3.8.4.1 is the target host. Aegis owns the
+packaged tiled font, exact RGB palette, 120 by 40 logical frame, `Fit` resizing, and
+letterboxing. `Aegis.Core`, `Frame`, `Presenter`, canonical character commands, the save
+journal, generator contract, and verification runners remain the source of truth.
+
+The pilot remains the exclusive automation surface and becomes a hard client contract.
+Physical SadConsole input and pilot key batches enter one serialized host queue and reach
+the same `Game.ApplyKey` and save-append path. Pilot control is opt-in, local to the
+current Windows user, and never uses operating-system input, focus changes, window
+messages, UI Automation, or screenshots. The existing `ping`, `screen`, `state`, `keys`,
+and `quit` requests remain, and the migration adds a structured 120 by 40 `frame`
+observation with glyph and resolved RGB data. The agent uses headless sessions for
+automation and may attach to a user-launched visible session without disturbing whatever
+application has focus.
+
+The isolated spike under `artifacts/sadconsole-spike/` built cleanly on .NET 10, rendered
+the real Aegis frame, accepted mouse input, preserved the whole frame through a resize,
+and launched as Windows x64 Native AOT after explicitly rooting `SadConsole` and
+`SadConsole.Host.MonoGame`. A Release and a Native AOT control proof both applied
+canonical keys over a named pipe, advanced game state, returned the encoded frame, and
+quit while the same Brave window remained foreground throughout. No operating-system
+input was synthesized. The repository suite remained 980 passed and zero failed.
+
+Native AOT remains the target, but the package is now a self-contained zip rather than a
+strict single file: `aegis.exe`, `SDL2.dll`, `openal.dll`, the separate developer and
+pilot tool executable, documents, notices, and hashes. Known third-party IL2104 and
+IL3053 analysis warnings require an exact audited allowlist, clean-extraction startup and
+pilot smokes, and failure on any new warning. Ordinary Release builds and tests remain
+zero-warning gates. This amends D-002's open renderer choice and single-file expectation
+without changing its C# or deterministic-core rationale.
+
+The previous D-174 candidate is superseded before manual signoff. V1-09 stays Implemented
+and not Verified. V1-10 is added as the active release-blocking client migration, with its
+complete Draft contract in `design/sadconsole-client-migration.md`; tracked
+implementation waits for explicit approval of that contract. Save v99 and generator 1
+hold if the migration preserves every canonical key meaning and engine result. Any key
+meaning or engine drift stops the migration for a new decision, version ruling, and the
+complete HANDOFF sweep. The replacement SadConsole package must pass the full release
+sweeps and a fresh guided manual campaign before V1-09 and V1-10 can both become
+Verified.
+
+Options set aside: continuing to depend on terminal colors; changing only ANSI color
+sequences; shipping a browser or webview client; injecting real or synthetic keyboard
+events for automation; merging player and console tools into one Windows subsystem
+executable; removing the legacy terminal renderer before parity is proven; and giving
+SadConsole any engine or RNG responsibility. Deferred beyond 1.0: animated tiles, sound,
+controller and touch input, user-installed themes or fonts, installers, signing,
+telemetry, networking, cloud saves, and non-Windows packages.
+
 ### D-174: The white road through the reeds: the Salt Fen and the 1.0 candidate built (2026-07-23)
 
 V1-09 is built under D-165's approved boundary. The Salt Fen is the fourth named

@@ -31,7 +31,7 @@ public class FrontierTests
             var a = WorldGen.Generate(seed);
             var b = WorldGen.Generate(seed);
 
-            Assert.Equal(3, a.Regions.Count);
+            Assert.Equal(4, a.Regions.Count);
             Assert.Equal(a.FellRegion.Name, b.FellRegion.Name);
             Assert.Equal(a.FellRegion.Name, a.Facts.Find("region", "fells")!.Object);
 

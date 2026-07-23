@@ -46,9 +46,10 @@ for (int i = 0; i < args.Length; i++)
                 aegis [--seed N] [--save slot] [--pilot] [--headless] [--session name]
                 aegis saves [--save-dir dir]
                 aegis pilot <screen|keys "<keys>"|state|quit|ping> [--session name]
-                aegis sim --seed N (--keys "<keys>" | --keys-file path) [--quiet]
-                aegis journey --seed N --cycles K [--emit-keys] [--rogue] [--caster] [--companion]
-                aegis worldgen [--seeds N] [--start S] [--tiers A-B] [--json] [--dump]
+                aegis sim --seed N (--keys "<keys>" | --keys-file path) [--quiet] [--generator N]
+                aegis journey --seed N --cycles K [--emit-keys] [--rogue] [--caster] [--companion] [--generator N]
+                aegis journey --release [--seed N] [--json]
+                aegis worldgen [--seeds N] [--start S] [--tiers A-B] [--json] [--dump] [--generator N]
 
                 --save      play in a named slot: loads it if it exists, creates it if not;
                             every action is journaled immediately (quit any time, nothing lost)
@@ -149,8 +150,8 @@ static int ListSaves(string[] rest)
         string detail;
         try
         {
-            var (seed, keys) = Aegis.Core.SaveCodec.Parse(SaveFile.ReadContent(file));
-            detail = $"seed {seed}, {keys.Length} actions";
+            var (seed, generatorVersion, keys) = Aegis.Core.SaveCodec.Parse(SaveFile.ReadContent(file));
+            detail = $"seed {seed}, generator {generatorVersion}, {keys.Length} actions";
         }
         catch (FormatException ex)
         {

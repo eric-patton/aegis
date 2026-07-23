@@ -53,7 +53,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   carousing + the light-purse read D-123)
 - Story templates: **6** built (Raided Stead plus Blight, Throne, Faiths, Gold Rush, Long Siege)
 - Path to 1.0: **8 of 9 tranches Verified** (V1-01 D-166, V1-02 D-167, V1-03 D-168,
-  V1-04 D-169, V1-05 D-170, V1-06 D-171, V1-07 D-172, V1-08 D-173); V1-09 is next
+  V1-04 D-169, V1-05 D-170, V1-06 D-171, V1-07 D-172, V1-08 D-173); V1-09 is
+  Implemented under D-174 and awaits the clean packaged manual signoff before verification
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
@@ -148,7 +149,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   the release audit. Open-ended catalogs remain tracked but do not block 1.0 unless a
   later decision explicitly promotes them into the gate. All nine cards are Approved
   through D-165. V1-01 through V1-08 are built and Verified under D-166 through D-173,
-  so V1-09 is next in queue order.
+  so V1-09 is the active release-candidate gate.
 
 ### Path to 1.0 tracker (ordered, adopted D-155/D-157)
 
@@ -168,8 +169,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   (V1-07 design Approved D-163; built and Verified D-172)
 - [x] 8. Companions, factions, and consequences depth tranche
   (V1-08 design Approved D-164; built and Verified D-173)
-- [ ] 9. Next full-density region, launch content closure, and the 1.0 release audit
-  (V1-09 design Approved D-165; implementation pending)
+- [~] 9. Next full-density region, launch content closure, and the 1.0 release audit
+  (V1-09 design Approved D-165; built D-174; automated release gates complete, fresh
+  packaged manual playthrough and explicit user signoff pending)
 
 The detailed tranche contents and design statuses live in `design/plan-1.0.md`; the
 1.0-ready gate also remains in `design/plan-2026-07.md`. A tranche flips
@@ -186,8 +188,8 @@ infinite prerequisite for completion.
 
 - [x] Deterministic engine: hierarchical seed tree, fact graph, worldgen (D-002, D-013, D-018)
 - [x] Layered-map presentation, TUI render layer (Frame/Presenter) (D-001)
-- [x] Save system: seed + input journal, replay-on-load, currently v98
-  (D-012, D-028, D-166, D-167, D-169, D-170, D-171, D-172, D-173)
+- [x] Save system: seed + input journal, replay-on-load, currently v99 with campaign-scoped
+  generator 1 (D-012, D-028, D-166, D-167, D-169, D-170, D-171, D-172, D-173, D-174)
 - [x] NG+ crossing: waygate, coin -> Legend, tier-deepening worldgen (D-011, D-029)
 - [x] The Aegis as diegetic companion voice (D-010, D-019)
 - [x] The full trans-world Aegis story arc: reveal ladder -> the keeping -> the mending -> steady state (D-020, D-026, D-037, D-038, D-039, D-045, D-060)
@@ -198,9 +200,9 @@ infinite prerequisite for completion.
 - [x] Player ranged: the hunting bow (D-050) and the ash-spear reach thrust (D-056)
 - [x] Knowledge-sharpened telegraphs: bestiary read tiers, dulling across NG+ (D-061)
 - [x] Wits given combat meaning (read clarity) (D-059)
-- [~] Enemy variety: 9 monster families across tier bands 2-7, plus the hart (fleeing game,
-  D-070); the fen adder is Approved for V1-09, while further families remain post-1.0
-  catalog growth (D-033, D-040, D-044, D-053, D-057, D-058, D-165)
+- [~] Enemy variety: the launch roster now includes the fen adder and rune-tongue beside
+  the established tier bands and game families; further families are post-1.0 catalog
+  growth under D-165 (D-033, D-040, D-044, D-053, D-057, D-058, D-163, D-165, D-174)
 - [x] Posture / second bar, break-and-riposte: every foe's guard rocked by paid blows
   (1), the wall (2), the heave (3), and the parry (4); at the brim the stagger and the
   flat +4 riposte through the open door (D-125)
@@ -243,16 +245,18 @@ infinite prerequisite for completion.
 - [x] Character creation flow: the asking at the first wake, in-fiction, journaled keys,
   fate door for the rolled bearer (D-092)
 - [~] Folk: five original anchors shipped, tilt + trait each (D-092 supersedes D-017's
-  example roster, keeps its structure); per-world regenerated cultures/standing still pending
+  example roster, keeps its structure); per-world regenerated cultures and standing are
+  post-1.0 under D-165
 - [~] Backgrounds: seven pasts seed starting skills, extras, and a `past` fact (D-092);
   illiterate starts live (D-148: scribe's-ward and hedge-healer wake lettered at Lore 1,
   the other five learn at the scrivener's desk); D-171 rehooks hedge-healer to Alchemy,
   wayfarer to Athletics, and oathbreaker's second skill to Larceny under D-162;
-  per-world recultured societies still pending
+  per-world recultured societies are post-1.0 under D-165
 - [x] Creation stage 2: burdens (one buys a second thing), vows, the remembered face, the
   keepsake's keyed storylet thread + NG+ placement when unpicked (D-093)
 - [ ] Creation follow-ons: the face cast into real faction NPCs; NPC line banks adopting
-  the name; folk-aware recultured societies in worldgen; keepsake content past the song (D-093)
+  the name; folk-aware recultured societies in worldgen; keepsake content past the song
+  (post-1.0 under D-165; D-093)
 - [x] Literacy skill + books gating recipes/techniques/lore (D-148: Lore 1 is literacy;
   three opening books with concrete keeps; D-154 adds the fourth, a smithing text whose
   recipe spends tarn-iron; the scrivener teaches letters for coin; D-170 adds the
@@ -271,16 +275,17 @@ infinite prerequisite for completion.
   the stead's bench (D-135: use-grown by filing wear off owned iron) with its town school open
   (D-141: the forge files for coin away from home, and the drawn-temper lesson deepens every sitting),
   then fed by smelting the fells' tarn-iron into blooms (D-153) and using a bloom in the
-  first book-taught durability recipe (D-154)
+  first book-taught durability recipe (D-154); further recipes and skill feeds are
+  post-1.0 under D-165
 - [~] Wilderness skills: Hunting (D-070), Survival (D-074, foraging), and Athletics
-  rushes (D-171) ship; broader wilderness verbs remain later growth (vision §3)
+  rushes (D-171) ship; broader wilderness verbs are post-1.0 under D-165 (vision §3)
 - [x] Subterfuge skills: deterministic two-turn Stealth and the distinct Larceny trade
   ship under D-162/D-171 (vision §3)
 - [~] Social skills: Commerce seeded at the market town (D-140: use-grown, fed only by
   lots sold above the valley's own price, its level added in coin to every town lot);
   Persuasion seeded at the moot-stone (D-142: use-grown, fed only by pleas that truly
   moved the warden's book, the fine itself the cost, its level shaving the fine toward
-  the floor); both want more feeds as town life deepens (vision §3)
+  the floor); further feeds are post-1.0 under D-165 (vision §3)
 - [x] Mind skills: Spellcraft shipped (D-091: use-grown, fed only by workings that did work,
   feeding power and the levin's grip); Lore shipped (D-148: literacy IS Lore 1, fed by the
   scrivener's sittings and pages not yet worked through; graven script exempt by doctrine)
@@ -288,10 +293,10 @@ infinite prerequisite for completion.
   stillcraft, paying D-087's deferred fourth slot; D-141 the drawn temper, the town school's
   showing, gated on Smithing 1; D-148 the wort-cunning, the first book-taught lesson, the
   herbal its only price; D-154 the bloom-temper, learned from the red smithing book and
-  practiced with one tarn-iron bloom); quest-taught still pending
+  practiced with one tarn-iron bloom); quest-taught growth is post-1.0 under D-165
 - [~] Knacks: level-2 questions for Alchemy, Athletics, Stealth, Larceny, and Sleight
   ship under D-162/D-171; level-4/6 noncombat and 3-option questions
-  remain later catalog growth (D-055)
+  are post-1.0 catalog growth under D-165 (D-055)
 
 ### The Life: activities & economy (all 4 families opened: wilderness, craft, crime, town life)
 
@@ -304,7 +309,7 @@ infinite prerequisite for completion.
   Commerce); the first regional production chain shipped (D-153: finite tarn-iron seams,
   town smelting, and guild bloom sales), then gained its first use-versus-sale choice
   (D-154: one bloom gives one eligible iron piece 10 more wear once); caravan/arbitrage
-  at scale pending
+  at scale is post-1.0 under D-165
 - [x] Vendor sub-menu pattern: one talk digit opens a bench with its own nine slots (D-071);
   proven general by the second bench (D-081, the herbwife's stillroom: herbs at the
   apothecary's 5c vs the wood's-edge 4c, the first price-choice/arbitrage in the economy;
@@ -317,14 +322,14 @@ infinite prerequisite for completion.
   as a player trade by repair and forge schooling (D-135/D-141), then deepened by smelting
   tarn-iron to blooms (D-153); its first recipe now ships (D-154: the Lore-2 red book teaches
   a one-bloom, one-time +10 wear temper for eligible ironwork); more recipes, commissions,
-  and worked goods pending (D-006, D-025)
+  and worked goods are post-1.0 under D-165 (D-006, D-025)
 - [~] Wilderness living: hunting + sell path + cooking + foraging shipped (D-070, D-071,
   D-073, D-074); camping shipped with the road (D-138: 'm' anywhere plain on an
   overworld, the supper's ration buying the mending, Survival deepening it, the kill
   cooked at the fire); fells extraction feeds Survival through finite tarn-iron seams
   (D-153); fishing ships as three finite high-fells reaches with a cook-or-sell trout
   yield (D-166); live-pressure Athletics rushes ship under D-162/D-171; tracking and broader
-  climbing or swimming remain pending or excluded (D-006)
+  climbing and tracking are post-1.0, and swimming is excluded from 1.0 under D-165 (D-006)
 - [x] A hide-buyer with room to grow: the woodward's trade sub-menu, hides to coin (D-071)
 - [x] Crime: all four of D-006's named verbs shipped. Pickpocketing (D-107, v55: 'p' beside one
   of the stead's folk, the Sleight skill's dice, one try per pocket per world; clean lifts pay
@@ -347,8 +352,8 @@ infinite prerequisite for completion.
 - [x] A consumer for the secret/burgled_house fact (the stead reading an entered house) (D-127,
   built D-128: the bolted dark, the lane's new iron and kept-in dog, forbidden forever once
   shame/housebroken gives the lane a face)
-- [ ] A consumer for shame/housebroken in its turn (the named housebreaker meeting the lane
-  that knows) (V1-09 design Approved D-165; implementation pending)
+- [x] A consumer for shame/housebroken in its turn (the named housebreaker meeting the lane
+  that knows) (V1-09 design Approved D-165; built and tested D-174)
 - [x] The peddler's stock growing with tiers: exotic goods, a second arbitrage leg, the
   caravan seed (D-124, D-025; built D-144: salt on the cart, two and the tier capped at
   six, bought at 5 and resold at the provisioner's 8, the bearer as the caravan)
@@ -360,15 +365,16 @@ infinite prerequisite for completion.
   skald's hearth, 5 coin once per world, no rung and no ledger, the lane remembering who
   poured); caravan/arbitrage shipped (D-144: the salt leg, the first buy-to-resell
   trade); the law-day lists, judicial challenge, guild loft, and fitted workshop ship under
-  D-161/D-170 (D-006)
+  D-161/D-170; additional town-life growth is post-1.0 under D-165 (D-006)
 - [x] A consumer for the light_purse fact (the stead reading a fleeced bearer, gated on the
   live net like the lucky hand's talk) (D-108, built D-123)
 - [x] Carousing as a round-standing verb at the hearth (D-108, built D-123)
 - [~] Aspirational sink ladder: property, retinue, master training, commissions (D-025, D-036);
   the stead half shipped whole as the five-work facility ladder (A3 v1 D-134, A3 v2 D-135),
   the town half now includes the world-scoped guild loft and fitted workshop under
-  D-161/D-170; retinue and broader master training remain open
-- [~] Grow the wood's-edge bench: cooking (D-073) + foraged-goods sale (D-074) shipped; hunting gear/lessons pending (D-071)
+  D-161/D-170; retinue and broader master training are post-1.0 under D-165
+- [~] Grow the wood's-edge bench: cooking (D-073) and foraged-goods sale (D-074) shipped;
+  hunting gear and lessons are post-1.0 under D-165 (D-071)
 
 ### The stead layer (plan 2026-07 Phase A, adopted D-131)
 
@@ -380,9 +386,9 @@ KDM-derived lane; full reasoning in `design/plan-2026-07.md`.
   hold conditions on the coarse tick; first uses: the hard winter (seed-drawn,
   foreshadowed, uncancellable) and the dens' muster (set by the cull, broken by the
   camp emptied first) (D-131, built D-132)
-- [ ] A1 follow-ons (D-132): the peddler's one capped Salt Fen restock is Approved for
-  V1-09 (D-165; implementation pending); the calendar in the Snapshot for D4 and the
-  deck-on-the-calendar plus after-the-fact talk readers landed with A2 (D-133)
+- [x] A1 follow-ons (D-132): the peddler's one capped Salt Fen restock ships under
+  D-165/D-174; the calendar in the Snapshot for D4 and the deck-on-the-calendar plus
+  after-the-fact talk readers landed with A2 (D-133)
 - [x] A2: Stead event storylets on the tick beyond the raids: small, mixed-valence,
   consequence-dense, several foreshadowed via A1 (the fanfic test applies) (D-131,
   built D-133: four cards, two through the calendar, one cancellable)
@@ -471,10 +477,10 @@ between them as play. Starts after the stead layer's core lands.
   smelting into blooms, guild sale, pilot and worldgen measure live), deepened D-154 with
   the first bloom recipe and the sell-or-use choice; brought to full current density in
   D-166 with the fourth site, three finite fishing reaches, permanent tackle, trout as a
-  cook-or-sell good, and full pilot and worldgen proof. V1-09 approves the Salt Fen as the fourth named country with a
-  roofed hamlet, four sites, salt work, the fen adder, a bounded local arc, and release
-  observability (D-165), still implementation pending. Regions beyond the fens are
-  post-1.0 (D-131, D-146, D-147, D-149, D-150, D-153, D-154, D-156, D-165)
+  cook-or-sell good, and full pilot and worldgen proof. V1-09 builds the Salt Fen as the
+  fourth named country with a roofed hamlet, four sites, salt work, the fen adder, a
+  bounded local arc, and release observability (D-165, D-174). Regions beyond the fens
+  are post-1.0 under D-165 (D-131, D-146, D-147, D-149, D-150, D-153, D-154, D-156)
 
 ### Magic (v1 shipped, D-091)
 
@@ -491,9 +497,9 @@ between them as play. Starts after the stead layer's core lands.
   (names the floor, sharpens the reads, shows the pretenders), and the calling (held Focus
   gives the shade shape) (D-091, D-099)
 - [ ] Attunement capacity from found world objects (D-022; excluded from V1-07 by D-163,
-  post-1.0 unless later promoted)
+  post-1.0 under D-165)
 - [ ] Caster social texture: awe, suspicion, faction attention (D-022; excluded from
-  V1-07 by D-163, post-1.0 unless later promoted)
+  V1-07 by D-163, post-1.0 under D-165)
 - [x] Severing and Mending as the sixth and seventh workings (V1-07 design Approved
   D-163; built and Verified D-172)
 - [x] The rune-tongue, hostile magical pressure, and deterministic Will resistance
@@ -503,7 +509,7 @@ between them as play. Starts after the stead layer's core lands.
 - [x] The pilot learning to read stones and say words (policy increment, D-072/D-082 line) (D-091) (D-103)
 - [x] Character creation hook: a known word as one possible precious starting thing (D-091 -> D-092)
 - [ ] Spell list growth past the seven V1-07 workings / school content design
-  (◇ parking lot; D-163)
+  (post-1.0 under D-165; ◇ parking lot; D-163)
 
 ### Factions & the living world
 
@@ -567,8 +573,8 @@ between them as play. Starts after the stead layer's core lands.
   stilling itself: dead laid to rest keep no ledgers
 - [~] Mound follow-ons (D-106): the villagers' mound topic reads the grudge aloud
   (D-113: the pacing lights and the mound's tally, the bearer never named, the dogs
-  knowing more). Still open: a raiders-mound edge if one earns its keep; a
-  desecration verb beyond the grave-goods
+  knowing more). A raiders-mound edge and a desecration verb beyond grave-goods are
+  post-1.0 under D-165
 - [x] Bounded Nemesis-style leader/lieutenant roster with memory (D-023; delivered D-110,
   no save bump): the camp's chief and two lieutenants named from their own seed stream,
   the stead's rumor and a nemesis/chief fact carrying the name from the first morning,
@@ -602,7 +608,8 @@ between them as play. Starts after the stead layer's core lands.
   built and Verified D-173): an active levy, a sworn carriers' bond, a mortal Crofter road,
   and a delayed guild cart move Stores, levy state, Regard, and narrated facts without a
   new faction scalar
-- [ ] (Unblocks: full-form story templates, institution/zealot/warden roles) (D-035)
+- [ ] Full-form story templates and broader institution, zealot, and warden roles
+  (post-1.0 under D-165; D-035)
 
 ### Companions
 
@@ -615,8 +622,8 @@ between them as play. Starts after the stead layer's core lands.
   waygate (D-024, D-099, vision §7)
 - [x] Pilot cast policy: the warded delver + shade doctrine, every journey now reads the
   stones, says the ward, and stands a shade on uncanny ground (D-103)
-- [ ] Calling follow-ons: a villager noticing the shade and the warder's response to the
-  called uncanny are Approved for V1-09 (D-165; implementation pending)
+- [x] Calling follow-ons: a villager noticing the shade and the warder's response to the
+  called uncanny ship once per world without numeric consequence (D-165, D-174)
 - [x] Guest companions: role-cast from world NPCs, can permanently die (D-024, D-097):
   the guest engine (follow, fight to their measure, body-block, 'o' contextual order
   key, tending from the satchel, doors/death-wake shared) plus the first full arc:
@@ -643,7 +650,7 @@ between them as play. Starts after the stead layer's core lands.
 - [x] Beast warmth and recognition (D-100, V1-08 design Approved D-164; built and
   Verified D-173): one blood after weather-modified exposed camp healing, one character beat per
   beast kind, and an opt-in pilot road for the fell pony
-- [ ] Predators at wild mouths (D-100; classified post-1.0 by D-164)
+- [ ] Predators at wild mouths (post-1.0 under D-164/D-165)
 
 ### Death, stakes & consequence
 
@@ -664,7 +671,7 @@ between them as play. Starts after the stead layer's core lands.
 - [x] Toll and scar launch closure (D-098, V1-08 design Approved D-164; built and
   Verified D-173): scar and scar-mended facts with consumers, the fitted brace's wielded-parry
   edge, capped tier-scaled Toll fill, and sheet plus snapshot presentation
-- [ ] The dragging step and further scar catalog (D-098; classified post-1.0 by D-164)
+- [ ] The dragging step and further scar catalog (post-1.0 under D-164/D-165; D-098)
 
 ### Narrative & dialogue
 
@@ -677,12 +684,12 @@ between them as play. Starts after the stead layer's core lands.
 - [x] Story template: War of Faiths at slice scale (cast by office on D-115's institutions, tier 2+) (D-020, scoped D-114, built D-116)
 - [x] Story template: Gold Rush at slice scale (the old quarry fenced by a kind lie, tier 3+) (D-121)
 - [x] Story template 6: the Long Siege at slice scale (the fen-leaguer's grateful fear, tier 6+) (D-130)
-- [ ] Story template 7+ (◇ parking lot: the dying god's succession)
+- [ ] Story template 7+ (post-1.0 under D-165; ◇ parking lot: the dying god's succession)
 - [x] Dialogue-tree scenes with visible skill checks (D-021, built D-117: storylets open modal scenes through the journaled key path; the shuttered window is the first, with the game's first visible check)
 - [x] Scene conversion: the faiths' claim at the shrine as the three-way choice D-116 parked (say it whole, wield it behind a visible check, keep it) (D-117 follow-on, built D-118)
 - [x] Scene conversions for the remaining plot beats: the blight and throne climaxes (D-117 follow-on, built D-119)
 - [x] Cross-world withheld consumer: the unsaid crosses as a silence fact, hushed or not, and later worlds retell the wrong story for true (D-118/D-119 deferral, built D-120)
-- [ ] NPC depth: per-role voices, schedules, movement (D-031)
+- [ ] NPC depth: per-role voices, schedules, movement (post-1.0 under D-165; D-031)
 
 ### Pacing, worldgen & NG+ freshness (plan 2026-07 Phase D, adopted D-131)
 
@@ -723,21 +730,23 @@ kind, and the evaluation harness that hardens every generator change.
 
 ### Content catalogs (breadth, grow over time)
 
-- [~] Gear: 10 items; req axes Might/Vigor/Grace; deep signature verbs pending (D-041, D-056)
+- [~] Gear: 10 items; req axes Might/Vigor/Grace; further item and signature-verb
+  catalogs are post-1.0 under D-165 (D-041, D-056)
 - [~] Oaths: 9 live; the launch roster is full with the closed door and long count
   end-appended at V1-08 (D-047, D-051, D-164, D-173); further terms are post-1.0 growth
-- [~] Legend: 5 rungs, 3 hospitality boons; rungs past 5 open (D-048)
+  under D-165
+- [~] Legend: 5 rungs, 3 hospitality boons; rungs past 5 are post-1.0 under D-165 (D-048)
 - [~] Hostility-tier bands: 2-6 distinct + tier-7 recombination; the D-151/D-152 twist
-  library is the recurring tier 7+ structure while further bands remain optional
-  catalog growth (D-033..D-058, D-151, D-152)
-- [~] Scar list: three shipped (eye, hand, look); the dragging step and more open (D-098)
+  library is the recurring tier 7+ structure while further bands are post-1.0 catalog
+  growth under D-165 (D-033..D-058, D-151, D-152)
+- [~] Scar list: three shipped (eye, hand, look); the dragging step and further scars
+  are post-1.0 under D-165 (D-098)
 - [x] Weather / seasons (design Approved D-158, built and Verified D-167): one shared
   season, three independent climate bands, deterministic three-card hands, four weather
   families, one-tick forecasts, exposed travel and camp effects, and the A2 follow-ons
 - [~] Region entities, biome names, culture-flavored name pools, world epithets (D-049;
   region entities and region names built D-143: two named countries per world on their
-  own stream; culture-flavored pools and world epithets still open on the race list and
-  the mythology pipe)
+  own stream; culture-flavored pools and world epithets are post-1.0 under D-165)
 
 ### Tooling & verification, built
 
@@ -755,14 +764,17 @@ kind, and the evaluation harness that hardens every generator change.
   tenancy, name variety, the family-aware prose audit, a double-generate purity gate wired
   to the exit code, `--json` for CI, `--dump` for grouped curation, and `--dump --json` for
   one structured surface per line)
-- [ ] Release journey and Windows x64 package (V1-09 design Approved D-165;
-  implementation pending): a machine-gated twelve-world coverage route, campaign-scoped
-  generator 1, repeatable Native AOT packaging, hashes, clean-extraction smoke tests,
-  defect audit, roadmap classification, and fresh manual packaged playthrough
+- [~] Release journey and Windows x64 package (V1-09 design Approved D-165; built D-174):
+  the machine-gated twelve-world route, campaign-scoped generator 1, repeatable Native
+  AOT packaging, hashes, clean-extraction smokes, defect audit, and roadmap
+  classification are built; fresh packaged manual playthrough and explicit signoff remain
 
 ---
 
 ## Open design questions (mirror of the `decisions.md` parking lot)
+
+All questions below are classified post-1.0 under D-165 unless a later decision promotes
+one into a release.
 
 - ◇ Folk cultures: how worldgen recultures the five folk per world, and whether factions read folk (D-017, D-092)
 - ◇ Spell list growth past the seven V1-07 workings / school-shaped content, if any
@@ -780,6 +792,18 @@ kind, and the evaluation harness that hardens every generator change.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-23: **D-174 the Salt Fen and the automated 1.0 candidate are built.**
+  V1-09 opens the fourth named country with its independent climate, roofed hamlet,
+  exact four-site mix, finite salt work, ordinary fen adder, bounded compact account,
+  delayed capped peddler restock, and three promoted readers. Save v98 advances to v99
+  with campaign-scoped generator 1. `journey --release` carries a nine-row machine gate,
+  and the repeatable Windows x64 release script publishes Native AOT, hashes, packages,
+  extracts, verifies, and smokes the candidate. Release builds are clean and all 980
+  tests pass. Five default and five release twin pairs are byte-identical, both seed 1
+  journals replay exactly, and generator 1 is pure across 240 worlds and 93,002 prose
+  surfaces. The roadmap, important-fact, conflict, and defect audits are complete.
+  V1-09 remains Implemented and partial until the clean package completes its final
+  script and the user signs off the fresh packaged campaign.
 - 2026-07-23: **D-173 companion, faction, and consequence depth is built and
   Verified.** V1-08 closes companion combat parity, the Crofter grain road, bounded
   success and loss memories, live watch and levy readers, beast warmth and recognition,

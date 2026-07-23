@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-173); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-174); the research behind it lives in `../research/`.
 
 ---
 
@@ -33,7 +33,7 @@ You are nobody, in a world that was generated last Tuesday and has three hundred
 ### Weather and seasons
 Every world opens in autumn under one shared seasonal calendar, with winter beginning on
 the existing seed-drawn hard-winter tick and later seasons advancing every three coarse
-ticks. Lowlands, road, high fells, and the D-165 Salt Fen express that calendar through
+ticks. Lowlands, road, high fells, and the D-165/D-174 Salt Fen express that calendar through
 independent deterministic weather hands using four readable families: Calm, Wet, Wind,
 and Cold. Weather's direct
 weight stays on exposed travel and camping, never hidden combat or resource rolls. One-tick
@@ -49,12 +49,12 @@ hard-winter arrival and the shared cadence.
 At world creation, a causal-grammar history generator (the Caves of Qud model) produces the **world fact graph**: settlements, factions, notable NPCs, wars, grudges, shortages, ruins, and relics, all as ID-referenced facts with causes. This graph is the source of truth for everything: quests query it, dialogue cites it, prices derive from it, items are inscribed with it. Generated history the player cannot touch is wasted, so all of it is queryable in-fiction: books (if you can read), bards, gravestones, rumor, and the ask-about system.
 
 Hierarchical seeds (master seed hashed per subsystem/region/site) keep every world
-reproducible; saves are seed plus journal. D-165 freezes generator 1 per campaign in the
-save header for 1.0. A supported old campaign keeps its recorded generator through later
+reproducible; saves are seed plus journal. D-174 builds D-165's generator 1 freeze per
+campaign in the v99 save header. A supported old campaign keeps its recorded generator through later
 crossings, while new campaigns use the newest supported one; a future build retains the
 old entry point or rejects it explicitly, never silently redealing an old journal.
 
-The launch world has four named countries once D-165 lands. The Salt Fen is the fourth:
+The launch world has four named countries under D-165/D-174. The Salt Fen is the fourth:
 a bounded causeway country off the town end of the east road, with its own hamlet and
 climate band, firm banks and reeds around impassable bog and water, exactly four regional
 sites, three finite salt pans, and one ordinary fen-adder family. Its salters' compact is
@@ -188,8 +188,8 @@ When you fall:
 Saves are part of the design: autosave fires at the instant of death, before the penalty
 screen, carrying all consequence state. Manual saves exist for life reasons; an optional
 Ironman toggle enforces the stakes architecturally. Product, save-format, and generator
-versions are separate. The 1.0 contract is product 1.0.0, expected save v99 after the nine
-cards land in order, and campaign-pinned generator 1 (D-165).
+versions are separate. The release candidate is product 1.0.0, save v99, and
+campaign-pinned generator 1 (D-165, D-174).
 
 ---
 
@@ -256,7 +256,8 @@ And the loop closes on itself: **your finished characters enter the mythology.**
   release notes, required notices, SHA-256 manifest, clean-extraction smokes, zero known
   blocker or major defects, and a fresh signed-off manual packaged campaign. Installers,
   telemetry, networking, automatic migration, code signing, and non-Windows packages are
-  outside the launch contract (D-165).
+  outside the launch contract. The automated candidate machinery ships under D-174;
+  manual packaged signoff remains the final gate (D-165).
 
 ## 12. Open Items
 

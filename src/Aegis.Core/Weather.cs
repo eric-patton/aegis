@@ -4,7 +4,7 @@ namespace Aegis.Core;
 public enum WorldSeason { Autumn, Winter, Spring, Summer }
 
 /// <summary>The three independent local expressions of the shared season (D-158).</summary>
-public enum ClimateBand { Lowlands, Road, Fells }
+public enum ClimateBand { Lowlands, Road, Fells, Fens }
 
 /// <summary>The four mechanical weather families shared by every climate band (D-158).</summary>
 public enum WeatherFamily { Calm, Wet, Wind, Cold }
@@ -66,7 +66,8 @@ public static class WeatherCalendar
         {
             ClimateBand.Lowlands => "weather_lowlands",
             ClimateBand.Road => "weather_road",
-            _ => "weather_fells",
+            ClimateBand.Fells => "weather_fells",
+            _ => "weather_fens",
         };
         var rng = new Rng(SeedTree.Derive(worldSeed, stream, seasonIndex));
         var hand = new WeatherFamily[CardsPerHand];
@@ -92,8 +93,11 @@ public static class WeatherCalendar
             case ClimateBand.Road:
                 weights[0] = 3; weights[1] = 5; weights[2] = 5; weights[3] = 3;
                 break;
-            default:
+            case ClimateBand.Fells:
                 weights[0] = 2; weights[1] = 3; weights[2] = 5; weights[3] = 6;
+                break;
+            default:
+                weights[0] = 2; weights[1] = 6; weights[2] = 6; weights[3] = 2;
                 break;
         }
 
@@ -123,6 +127,10 @@ public static class WeatherCalendar
         (ClimateBand.Fells, WeatherFamily.Calm) => "clear",
         (ClimateBand.Fells, WeatherFamily.Wet) => "wet mist",
         (ClimateBand.Fells, WeatherFamily.Wind) => "gale",
+        (ClimateBand.Fens, WeatherFamily.Calm) => "still",
+        (ClimateBand.Fens, WeatherFamily.Wet) => "driving rain",
+        (ClimateBand.Fens, WeatherFamily.Wind) => "salt wind",
+        (ClimateBand.Fens, WeatherFamily.Cold) => "fen frost",
         _ => "killing cold",
     };
 

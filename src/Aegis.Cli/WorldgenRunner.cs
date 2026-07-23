@@ -24,6 +24,7 @@ public static class WorldgenRunner
         bool json = false;
         bool dump = false;
         int top = 12;
+        int generatorVersion = WorldGen.CurrentGeneratorVersion;
 
         for (int i = 0; i < args.Length; i++)
         {
@@ -40,6 +41,7 @@ public static class WorldgenRunner
                 case "--json": json = true; break;
                 case "--dump": dump = true; break;
                 case "--top": top = int.Parse(args[++i]); break;
+                case "--generator": generatorVersion = int.Parse(args[++i]); break;
                 default:
                     Console.Error.WriteLine($"aegis worldgen: unexpected argument '{args[i]}'");
                     return 1;
@@ -48,6 +50,11 @@ public static class WorldgenRunner
         if (tierLo < 1 || tierHi < tierLo || seeds < 1)
         {
             Console.Error.WriteLine("aegis worldgen: --seeds must be >= 1 and --tiers a valid range from 1 up");
+            return 1;
+        }
+        if (!WorldGen.SupportedGeneratorVersions.Contains(generatorVersion))
+        {
+            Console.Error.WriteLine($"aegis worldgen: generator {generatorVersion} is not supported");
             return 1;
         }
 
@@ -61,11 +68,11 @@ public static class WorldgenRunner
             for (int i = 0; i < seeds; i++)
             {
                 ulong seed = start + (ulong)i;
-                var world = WorldGen.Generate(seed, tier);
+                var world = WorldGen.Generate(seed, tier, generatorVersion: generatorVersion);
 
                 // The purity check: the generator is a function of (seed, tier)
                 // and nothing else. A second call must land the same digest.
-                if (WorldEval.Digest(WorldGen.Generate(seed, tier)) != WorldEval.Digest(world))
+                if (WorldEval.Digest(WorldGen.Generate(seed, tier, generatorVersion: generatorVersion)) != WorldEval.Digest(world))
                 {
                     mismatches++;
                     Console.Error.WriteLine($"aegis worldgen: seed {seed} tier {tier} did not regenerate identically");
@@ -122,6 +129,7 @@ public static class WorldgenRunner
         {
             var report = new WorldgenReport(
                 Seeds: seeds, Start: start, TierLo: tierLo, TierHi: tierHi,
+                GeneratorVersion: generatorVersion,
                 Worlds: measures.Count, DigestMismatches: mismatches,
                 WeatherCoverage: weatherCoverage,
                 Prose: proseAudit,
@@ -131,7 +139,7 @@ public static class WorldgenRunner
         }
 
         var w = Console.Out;
-        w.WriteLine($"AEGIS WORLDGEN   {seeds} seed(s) from {start}, tiers {tierLo}-{tierHi}   ({measures.Count} worlds)");
+        w.WriteLine($"AEGIS WORLDGEN   generator {generatorVersion}, {seeds} seed(s) from {start}, tiers {tierLo}-{tierHi}   ({measures.Count} worlds)");
         w.WriteLine(new string('=', 70));
         foreach (var t in tiers)
         {
@@ -172,7 +180,7 @@ public static class WorldgenRunner
 
 /// <summary>The harness's machine-readable report (D-137): the prose report's facts as data, for CI charting.</summary>
 internal sealed record WorldgenReport(
-    int Seeds, ulong Start, int TierLo, int TierHi, int Worlds, int DigestMismatches,
+    int Seeds, ulong Start, int TierLo, int TierHi, int GeneratorVersion, int Worlds, int DigestMismatches,
     Dictionary<string, int> WeatherCoverage,
     ProseAuditSummary Prose,
     List<TierSummary> Tiers, SkeletonSummary Skeletons, List<WorldMeasure> Measures);

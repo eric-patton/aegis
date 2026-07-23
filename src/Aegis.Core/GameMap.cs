@@ -49,6 +49,17 @@ public enum Terrain : byte
     LoftStrongbox,
     LoftWorkshop,
     LawDayRing,
+    FenMouth,
+    Reed,
+    Causeway,
+    Bog,
+    HamletEntrance,
+    SaltworkEntrance,
+    FenWildsEntrance,
+    FenWatchEntrance,
+    FenVaultEntrance,
+    SaltPan,
+    ExhaustedPan,
 }
 
 /// <summary>
@@ -62,6 +73,7 @@ public enum Area : byte
     Valley,
     Road,
     Fells,
+    Fens,
 }
 
 public static class TerrainInfo
@@ -72,6 +84,7 @@ public static class TerrainInfo
         Terrain.Wall => false,
         Terrain.House => false,
         Terrain.Scree => false, // the fells' shattered rock (D-146): feet find no purchase.
+        Terrain.Bog => false,
         _ => true,
     };
 

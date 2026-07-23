@@ -736,6 +736,7 @@ public static class Presenter
                 // is their weather too.
                 NpcKind.Towner => Hue.Yellow,
                 NpcKind.GraveTally => Hue.Cyan,
+                NpcKind.Fenfolk => Hue.DarkCyan,
                 _ => Hue.Green,
             });
 
@@ -754,6 +755,7 @@ public static class Presenter
                 MonsterKind.Wolf => 'f',
                 MonsterKind.GreatWolf => 'F',
                 MonsterKind.RuneTongue => 'r',
+                MonsterKind.FenAdder => 'a',
                 _ => 'g',
             };
             // The chief told apart on the map (D-113): the roster's leader is a
@@ -779,6 +781,7 @@ public static class Presenter
                 MonsterKind.Wolf => Hue.Gray,
                 MonsterKind.GreatWolf => Hue.White,
                 MonsterKind.RuneTongue => Hue.Magenta,
+                MonsterKind.FenAdder => Hue.DarkGreen,
                 _ => Hue.Red,
             };
             PutWorld(monster.Pos, ch, monster.Intent is null ? calm : Hue.White,
@@ -845,6 +848,17 @@ public static class Presenter
         Terrain.LoftStrongbox => ('$', Hue.Yellow, Hue.Black),
         Terrain.LoftWorkshop => ('k', Hue.DarkCyan, Hue.Black),
         Terrain.LawDayRing => (':', Hue.Yellow, Hue.Black),
+        Terrain.FenMouth => ('=', Hue.Cyan, Hue.Black),
+        Terrain.Reed => ('"', Hue.DarkGreen, Hue.Black),
+        Terrain.Causeway => ('=', Hue.DarkYellow, Hue.Black),
+        Terrain.Bog => ('~', Hue.DarkGreen, Hue.Black),
+        Terrain.HamletEntrance => ('h', Hue.Yellow, Hue.Black),
+        Terrain.SaltworkEntrance => ('s', Hue.White, Hue.Black),
+        Terrain.FenWildsEntrance => ('"', Hue.Green, Hue.Black),
+        Terrain.FenWatchEntrance => ('v', Hue.DarkGreen, Hue.Black),
+        Terrain.FenVaultEntrance => ('n', Hue.Gray, Hue.Black),
+        Terrain.SaltPan => ('_', Hue.White, Hue.DarkBlue),
+        Terrain.ExhaustedPan => ('.', Hue.DarkGray, Hue.Black),
         _ => ('?', Hue.Magenta, Hue.Black),
     };
 
@@ -1117,6 +1131,14 @@ public static class Presenter
                     : $"{game.World.TownName}'s gate: > goes in", Hue.Yellow);
             if (here == Terrain.FellMouth)
                 Line(game.Area == Area.Fells ? "Drovers' track: > climbs down" : "Drovers' track: > takes the fells", Hue.Gray);
+            if (here == Terrain.FenMouth)
+                Line(game.Area == Area.Fens ? "Fen causeway: > takes the road" : "Fen causeway: > enters", Hue.Cyan);
+            if (here == Terrain.HamletEntrance) Line("Hamlet path: > enters", Hue.Yellow);
+            if (here == Terrain.SaltworkEntrance) Line("Saltwork: > enters", Hue.White);
+            if (here == Terrain.FenWildsEntrance) Line("Reed trail: > enters", Hue.Green);
+            if (here == Terrain.FenWatchEntrance) Line("Watch bank: > enters", Hue.DarkGreen);
+            if (here == Terrain.FenVaultEntrance) Line("Vault stair: > enters", Hue.Gray);
+            if (here == Terrain.SaltPan) Line("Salt pan: g works", Hue.White);
             if (here == Terrain.Waystone)
                 Line("Waystone shelter: m camps", Hue.Cyan);
             if (here == Terrain.TarnIron)

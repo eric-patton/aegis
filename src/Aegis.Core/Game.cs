@@ -8,7 +8,7 @@ public enum MapMode { Overworld, Site }
 /// seller can carry more than the shared talk-menu's nine digits will hold. <see cref="Hide"/>
 /// runs the other way, coin the bearer's own hand earned from what the wilds gave (D-070).
 /// </summary>
-public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed, Forge, Bond, Plea, Salt, Script, Book, GraveBargain, TarnSmelt, IronBloom, TarnTemper, FishingLine, CookFish, TarnTrout, Shelf, Loft, Workshop, Lists, Judicial }
+public enum TradeGood { Ration, Mending, Gear, Repair, Lesson, Pledge, Trade, Hide, Cook, Herb, Draught, Surgery, Brace, Laying, Beast, Stable, Bones, Round, Fence, Facility, Bed, Forge, Bond, Plea, Salt, Script, Book, GraveBargain, TarnSmelt, IronBloom, TarnTemper, FishingLine, CookFish, TarnTrout, Shelf, Loft, Workshop, Lists, Judicial, FenRation, FenBed, CompactMeasure, CompactRoad }
 
 /// <summary>
 /// The cart's counter (D-124): the road's prices. The ration a coin or two
@@ -209,10 +209,12 @@ public static class GuardBreak
 /// only through <see cref="Apply(Command)"/>, and all randomness flows from the seed
 /// tree. Frontends (TUI, pilot, sim) are pure drivers around this class.
 /// </summary>
-public sealed class Game
+public sealed partial class Game
 {
     /// <summary>The save identity: every world in this game derives from it.</summary>
     public ulong MasterSeed { get; }
+
+    public int GeneratorVersion { get; }
 
     /// <summary>Which world of the chain this is, 1-based. Also the Hostility Tier (D-011).</summary>
     public int Cycle { get; private set; } = 1;
@@ -421,6 +423,7 @@ public sealed class Game
     {
         Area.Road => World.RoadHerbs,
         Area.Fells => World.FellHerbs,
+        Area.Fens => [],
         _ => World.Herbs,
     };
 
@@ -803,7 +806,7 @@ public sealed class Game
     private WeatherMoment _weatherMoment;
 
     /// <summary>Focused-test pins. Ordinary play leaves every entry null.</summary>
-    private readonly WeatherFamily?[] _debugWeather = new WeatherFamily?[3];
+    private readonly WeatherFamily?[] _debugWeather = new WeatherFamily?[4];
     private WeatherMoment? _debugWeatherMoment;
 
     public WorldSeason Season => (_debugWeatherMoment ?? _weatherMoment).Season;
@@ -818,6 +821,7 @@ public sealed class Game
         {
             Area.Road => ClimateBand.Road,
             Area.Fells => ClimateBand.Fells,
+            Area.Fens => ClimateBand.Fens,
             _ => ClimateBand.Lowlands,
         };
 
@@ -1065,7 +1069,7 @@ public sealed class Game
     /// <summary>Total storylets fired this character, all worlds (observability).</summary>
     public int StoryletsFired => _storylets.TotalFired;
 
-    public Game(ulong seed) : this(seed, firstWake: false) { }
+    public Game(ulong seed) : this(seed, firstWake: false, WorldGen.CurrentGeneratorVersion) { }
 
     /// <summary>
     /// The real game always wakes with the asking (D-092): the TUI, the save
@@ -1073,11 +1077,14 @@ public sealed class Game
     /// journal begins with the creation answers. The plain constructor keeps
     /// the instant, unmade wake for the test suite's fixed key scripts.
     /// </summary>
-    public Game(ulong seed, bool firstWake)
+    public Game(ulong seed, bool firstWake) : this(seed, firstWake, WorldGen.CurrentGeneratorVersion) { }
+
+    public Game(ulong seed, bool firstWake, int generatorVersion)
     {
         MasterSeed = seed;
+        GeneratorVersion = generatorVersion;
         // Cycle 1 uses the master seed directly, so pre-crossing saves stay replayable.
-        World = WorldGen.Generate(seed);
+        World = WorldGen.Generate(seed, generatorVersion: generatorVersion);
         _combatRng = new Rng(SeedTree.Derive(World.Seed, "combat"));
         _storylets = new StoryletEngine(World.Seed, FullCatalog());
         Player.Pos = World.ShrinePos;
@@ -1525,7 +1532,7 @@ public sealed class Game
     }
 
     public GameMap CurrentMap => Mode == MapMode.Overworld
-        ? Area switch { Area.Road => World.Road, Area.Fells => World.Fells, _ => World.Overworld }
+        ? Area switch { Area.Road => World.Road, Area.Fells => World.Fells, Area.Fens => World.Fens, _ => World.Overworld }
         : CurrentSite!.Map;
 
     private string CurrentMapId => CurrentMap.Id;
@@ -1984,7 +1991,8 @@ public sealed class Game
         // passes two strides to a key: the same clocks (toll, wounds, the
         // raiders' tick) count half the turns for the distance. The far cell
         // must be plain ground with no one standing on it.
-        if (Mode == MapMode.Overworld && Mount is { } steed && steed.Area == Area
+        if (Mode == MapMode.Overworld && Area != Area.Fens
+            && Mount is { } steed && steed.Area == Area
             && steed.Pos.Chebyshev(Player.Pos) <= 2)
         {
             var far = target.Plus(dx, dy);
@@ -2124,6 +2132,26 @@ public sealed class Game
                 Log.Add(Turn, Area == Area.Fells
                     ? "The drovers' track drops off the fells' edge here, and the road shows below, thin as a drawn line. Press > to climb down."
                     : $"A drovers' track climbs off the road's shoulder here, up between scree banks onto the {World.FellRegion.Name}. Old pens at the foot of it, long empty. Press > to climb.", LogTone.Info);
+            else if (t == Terrain.FenMouth)
+                Log.Add(Turn, Area == Area.Fens
+                    ? $"The raised way returns to the east road here. Press > to leave the {World.FenRegion.Name}."
+                    : $"A raised causeway leaves the town-end road for the {World.FenRegion.Name}. Press > to take it.", LogTone.Info);
+            else if (t == Terrain.HamletEntrance)
+                Log.Add(Turn, $"{World.FenHamletName} stands roofed on a broad firm bank. Press > to enter.", LogTone.Info);
+            else if (t == Terrain.SaltworkEntrance)
+                Log.Add(Turn, "Low banks divide three salt pans from the surrounding water. Press > to go onto the works.", LogTone.Info);
+            else if (t == Terrain.FenWildsEntrance)
+                Log.Add(Turn, SiteHere(p)!.Cleared
+                    ? "The adder-bank lies quiet, its reeds moving only with the weather."
+                    : "A reed-bank opens off the causeway, crossed by low winding trails. Press > to hunt it.", LogTone.Danger);
+            else if (t == Terrain.FenWatchEntrance)
+                Log.Add(Turn, SiteHere(p)!.Cleared
+                    ? "The old bank-watch stands relieved."
+                    : "An old bank-watch rises where two causeways meet. Press > to enter.", LogTone.Danger);
+            else if (t == Terrain.FenVaultEntrance)
+                Log.Add(Turn, SiteHere(p)!.Cleared
+                    ? "The drowned counting-house stands open and still."
+                    : "A low stone counting-house stands beyond black water. Press > to enter.", LogTone.Danger);
             else if (t == Terrain.SonghallEntrance)
                 Log.Add(Turn, "The stead's songhall: turf roof, smoke at the roof-hole, and low singing sometimes when the wind sits right. Press > to step in.", LogTone.Info);
             else if (t == Terrain.HarrowEntrance)
@@ -2189,6 +2217,8 @@ public sealed class Game
                 Log.Add(Turn, Player.FishingLine
                     ? "An old fishing reach, the bank worn flat where patient feet stood. Press g to set the hook and line."
                     : "An old fishing reach, the bank worn flat where patient feet stood. It wants a hook and line.", LogTone.Info);
+            else if (t == Terrain.SaltPan && CurrentSite!.Kind == SiteKind.Saltworks)
+                Log.Add(Turn, "A finite pan of grey brine lies ready for the weather's answer. Press g to work it.", LogTone.Info);
             else if (t == Terrain.Hearth && CurrentSite!.Kind == SiteKind.Threshold && Player.Resolution != Resolution.None)
                 Log.Add(Turn, Player.Resolution == Resolution.Kept
                     ? "The Hearth. It leans toward you the way a fire leans toward its keeper. The count is warm to the touch."
@@ -2291,6 +2321,10 @@ public sealed class Game
         (ClimateBand.Fells, WeatherFamily.Wet) => "Wet mist closes over the fells, beading on heath and stone until every step carries water.",
         (ClimateBand.Fells, WeatherFamily.Wind) => "A gale walks the fells unhindered, flattening the heath and taking the heat out of any open fire.",
         (ClimateBand.Fells, WeatherFamily.Cold) => "Killing cold sits on the fells. No lee lasts, and a supperless camp is no camp at all.",
+        (ClimateBand.Fens, WeatherFamily.Wet) => "Driving rain blurs the fen banks and fills every open pan faster than a hand could clear it.",
+        (ClimateBand.Fens, WeatherFamily.Wind) => "A salt wind combs the reeds and dries every raised surface it can reach.",
+        (ClimateBand.Fens, WeatherFamily.Cold) => "Fen frost rims the black water and locks the shallow pans wrong.",
+        (ClimateBand.Fens, _) => "The Salt Fen stands still enough for every bank and raised way to show its true edge.",
         _ => "The fells stand clear from heath to scree, good walking on ground that rarely grants it.",
     };
 
@@ -2309,6 +2343,8 @@ public sealed class Game
         // The drovers' track (D-146): the way up onto the fells, and down again.
         if (Mode == MapMode.Overworld && CurrentMap[Player.Pos] == Terrain.FellMouth)
             return TakeTheTrack();
+        if (Mode == MapMode.Overworld && CurrentMap[Player.Pos] == Terrain.FenMouth)
+            return TakeTheCauseway();
 
         if (Mode == MapMode.Overworld && SiteHere(Player.Pos) is { } site)
         {
@@ -2376,6 +2412,13 @@ public sealed class Game
                 Log.Add(Turn, site.Cleared
                     ? "You go down to the black tarn. The banks keep the marks of your three sittings, and the water keeps its own counsel now."
                     : "You go down to the black tarn. Water fills the bowl of the ground, black under the open sky, with three banks worn flat by hands that knew where to wait.", LogTone.Info);
+            else if (site.Kind == SiteKind.FenHamlet)
+            {
+                MarkFenHamletVisited();
+                Log.Add(Turn, $"You step into {World.FenHamletName}'s one dry lane, under roofs built for weather that comes sideways.", LogTone.Info);
+            }
+            else if (site.Kind == SiteKind.Saltworks)
+                Log.Add(Turn, "You step onto the salt works. Three finite pans lie inside their low banks.", LogTone.Info);
             else
                 Log.Add(Turn, site.Kind switch
                 {
@@ -2385,6 +2428,9 @@ public sealed class Game
                     SiteKind.Hall => "You pass under the fallen gate. Grass in the floor-cracks, sky where the roof was, and from the far end of the hall, the click of claws on stone.",
                     SiteKind.Leaguer => "You come up onto the works. Black water on your right hand the whole way round, a bare holm at its middle, and on the banks ahead, boards standing at their mounds like teeth in an old jaw.",
                     SiteKind.Wilds => "You come up onto the game-trail. Cropped grass, deer-slots pressed in the mud, and the whole glade holding still the way a wood holds still when it has already heard you.",
+                    SiteKind.FenWilds => "You leave the raised way for the reed-bank. Low trails wind between black pools, and something moves across one without remaining in it.",
+                    SiteKind.FenWatch => "You enter the old bank-watch. Water divides its floor, but the kept lanes still point inward.",
+                    SiteKind.FenVault => "You enter the drowned counting-house. Old partitions make narrow lanes toward its deep room.",
                     _ => "You descend into the goblin cave. The dark smells of smoke and old meat.",
                 }, LogTone.Danger);
             if (site.Kind == SiteKind.Hollow && !site.Cleared)
@@ -2500,9 +2546,9 @@ public sealed class Game
             Log.Add(Turn, "No camp is made below ground. The dark is not for sleeping in.");
             return false;
         }
-        if (CurrentMap[Player.Pos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills or Terrain.Heath or Terrain.Waystone))
+        if (CurrentMap[Player.Pos] is not (Terrain.Grass or Terrain.Forest or Terrain.Hills or Terrain.Heath or Terrain.Waystone or Terrain.Reed or Terrain.Causeway))
         {
-            Log.Add(Turn, "Not here. A camp wants plain ground: grass, heath, the wood's edge, or the lee of a hill.");
+            Log.Add(Turn, "Not here. A camp wants firm ground: grass, heath, reed-bank, raised way, the wood's edge, or the lee of a hill.");
             return false;
         }
 
@@ -2676,7 +2722,8 @@ public sealed class Game
         // next world's weave avoids every verse of the long song (D-049).
         World = WorldGen.Generate(SeedTree.Derive(MasterSeed, "cycle", Cycle), tier: Cycle,
             prevStory: prevStory, oaths: oaths, takenNames: Player.WorldsWalked,
-            twist: WorldTwistCatalog.ForCycle(MasterSeed, Cycle));
+            twist: WorldTwistCatalog.ForCycle(MasterSeed, Cycle),
+            generatorVersion: GeneratorVersion);
         _combatRng = new Rng(SeedTree.Derive(World.Seed, "combat"));
         _storylets.OnCrossing(World.Seed, FullCatalog());
         Monsters.Clear();
@@ -3018,6 +3065,10 @@ public sealed class Game
         if (Mode == MapMode.Overworld && Area == Area.Fells
             && World.TarnIronSeams.Contains(Player.Pos))
             return WorkTarnIron();
+
+        if (Mode == MapMode.Site && CurrentSite is { Kind: SiteKind.Saltworks } saltwork
+            && saltwork.SaltPans.Contains(Player.Pos))
+            return WorkSaltPan(saltwork);
 
         if (Mode == MapMode.Site && CurrentSite is { Kind: SiteKind.BlackTarn } tarn
             && tarn.FishingReaches.Contains(Player.Pos))
@@ -3626,11 +3677,12 @@ public sealed class Game
             NpcKind.Waykeeper => BuildWaykeeperTopics(),
             NpcKind.Towner => BuildTownerTopics(npc),
             NpcKind.GraveTally => BuildGraveTallyTopics(npc),
+            NpcKind.Fenfolk => BuildFenTopics(npc),
             _ => BuildTopics(npc),
         });
         CatalogLiveTopics(npc);
         _offers.Clear();
-        if (npc.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald or NpcKind.Peddler or NpcKind.Waykeeper or NpcKind.Towner or NpcKind.GraveTally) _offers.AddRange(BuildOffers(npc));
+        if (npc.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald or NpcKind.Peddler or NpcKind.Waykeeper or NpcKind.Towner or NpcKind.GraveTally or NpcKind.Fenfolk) _offers.AddRange(BuildOffers(npc));
 
         if (npc.Kind == NpcKind.Severed)
         {
@@ -3702,6 +3754,16 @@ public sealed class Game
                 World.Facts.Add("met", npc.Id, World.TownName,
                     $"{npc.Name}, {npc.Role} of {World.TownName}, has spoken with the bearer.");
                 Log.Add(Turn, "\"New face off the west road. Coin spends the same whoever carries it; that is the whole of this town's doctrine.\"");
+            }
+        }
+        else if (npc.Kind == NpcKind.Fenfolk)
+        {
+            Log.Add(Turn, $"{npc.Name}, {npc.Role} of {World.FenHamletName}, gives you the compact's measured greeting.");
+            if (!World.Facts.Exists("met", npc.Id))
+            {
+                World.Facts.Add("met", npc.Id, World.FenHamletName,
+                    $"{npc.Name}, {npc.Role} of {World.FenHamletName}, has spoken with the bearer.");
+                Log.Add(Turn, "\"Dry feet first, business second. The fen keeps that order even when travelers do not.\"");
             }
         }
         else if (npc.Kind == NpcKind.Harrower)
@@ -4552,6 +4614,8 @@ public sealed class Game
                 offers.Add((TradeGood.GraveBargain, site.Id,
                     $"Settle this market ({GraveBargainPrice(site)} essence)"));
         }
+        if (npc.Kind == NpcKind.Fenfolk)
+            offers.AddRange(BuildFenOffers(npc));
         return offers;
     }
 
@@ -6562,7 +6626,7 @@ public sealed class Game
             return;
         }
 
-        if (TalkNpc!.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald or NpcKind.Peddler or NpcKind.Waykeeper or NpcKind.Towner or NpcKind.GraveTally
+        if (TalkNpc!.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald or NpcKind.Peddler or NpcKind.Waykeeper or NpcKind.Towner or NpcKind.GraveTally or NpcKind.Fenfolk
             && key > '0' + _topics.Count && key <= '0' + _topics.Count + _offers.Count)
         {
             var (good, arg, _) = _offers[key - '1' - _topics.Count];
@@ -6678,6 +6742,18 @@ public sealed class Game
                     break;
                 case TradeGood.GraveBargain:
                     TryGraveBargain(arg);
+                    break;
+                case TradeGood.FenRation:
+                    TryFenRation();
+                    break;
+                case TradeGood.FenBed:
+                    TryFenBed();
+                    break;
+                case TradeGood.CompactMeasure:
+                    ResolveFenArc("measure");
+                    break;
+                case TradeGood.CompactRoad:
+                    ResolveFenArc("road");
                     break;
             }
             return;
@@ -8125,6 +8201,7 @@ public sealed class Game
             MonsterKind.Hart => 0,
             MonsterKind.Wolf => 0,
             MonsterKind.GreatWolf => 0,
+            MonsterKind.FenAdder => 0,
             _ => _combatRng.Range(2, 7),
         };
         int essence = target.Kind switch
@@ -8140,6 +8217,7 @@ public sealed class Game
             MonsterKind.Hart => 0,
             MonsterKind.Wolf => 0,
             MonsterKind.GreatWolf => 0,
+            MonsterKind.FenAdder => 0,
             _ => 5,
         };
         // The lean dark (D-051): the dark yields half its essence, rounded
@@ -8154,7 +8232,7 @@ public sealed class Game
         // The moor-wolf is the hunt's second head (D-146): game like the hart,
         // essence-less and purse-less, all hide and meat: the fells pay their
         // way down the same ladder the glade opened.
-        bool game = target.Kind is MonsterKind.Hart or MonsterKind.Wolf or MonsterKind.GreatWolf;
+        bool game = target.Kind is MonsterKind.Hart or MonsterKind.Wolf or MonsterKind.GreatWolf or MonsterKind.FenAdder;
         int hides = 0;
         if (game)
         {
@@ -8181,6 +8259,7 @@ public sealed class Game
             // rations at a fire, the hunting lane feeding the cooking lane. Uncapped
             // like the hide, since the cooking (bounded by the ration cap) is the sink.
             Player.RawMeat++;
+            if (target.Kind == MonsterKind.FenAdder) FenAdderKills++;
         }
         // The great pelt (D-150): the she-wolf's coat, taken once ever and
         // carried like the keepsakes are. Its keep is the fells' cold
@@ -8208,6 +8287,7 @@ public sealed class Game
             MonsterKind.Hart => $"The hart drops at the end of its run. You take the hide{(hides > 1 ? $", {hides} good pieces," : "")} and the raw meat, to cook at a fire. ({Player.Hide} hides, {Player.RawMeat} raw meat)",
             MonsterKind.Wolf => $"The moor-wolf goes down snapping and is still. A thick winter pelt{(hides > 1 ? $", {hides} good pieces," : "")} and the raw meat, dark and lean, for a braver fire than most. ({Player.Hide} hides, {Player.RawMeat} raw meat)",
             MonsterKind.GreatWolf => $"The great she-wolf goes down at last the way a hillside goes, slowly and all at once, and the gill is quiet in a way it has not been in living drovers' memory. {hides} good hides off her frame, and the raw meat besides. ({Player.Hide} hides, {Player.RawMeat} raw meat)",
+            MonsterKind.FenAdder => $"The fen adder goes still among the reeds. You take the hide and the raw meat. ({Player.Hide} hides, {Player.RawMeat} raw meat)",
             _ => $"The {target.Name} falls. You take {coin} coin and {essence} essence.",
         }, LogTone.Reward);
         if (peltTaken)
@@ -10420,7 +10500,11 @@ public sealed class Game
         if (site.Cleared || Monsters.Any(m => m.Alive && m.SiteId == site.Id)) return;
         site.Cleared = true;
 
-        if (site.Kind == SiteKind.GoblinCamp)
+        if (site.Kind is SiteKind.FenWilds or SiteKind.FenWatch or SiteKind.FenVault)
+        {
+            CompleteFenSite(site);
+        }
+        else if (site.Kind == SiteKind.GoblinCamp)
         {
             World.Facts.Add("deed", "camp_cleared", World.SettlementName,
                 $"The goblin cave was emptied. {World.SettlementName}'s stores are safe.");
@@ -10533,7 +10617,7 @@ public sealed class Game
     {
         MonsterKind.Goblin or MonsterKind.Wight or MonsterKind.Severed => 8,
         MonsterKind.Graven => 9,
-        MonsterKind.Hound or MonsterKind.Carl or MonsterKind.Warder or MonsterKind.Thegn => 10,
+        MonsterKind.Hound or MonsterKind.Carl or MonsterKind.Warder or MonsterKind.Thegn or MonsterKind.FenAdder => 10,
         MonsterKind.Boar or MonsterKind.Wolf or MonsterKind.GreatWolf => 12,
         MonsterKind.Hart => HartFleeRange,
         _ => 8,
@@ -10854,6 +10938,7 @@ public sealed class Game
                     // and the she-wolf's weight (D-150) arrives with hers.
                     IntentKind.Pounce => _combatRng.Range(5, 9) + (FellWinterStands ? FellWinter.Fang : 0)
                         + (monster.Kind == MonsterKind.GreatWolf ? 2 : 0),
+                    IntentKind.CoilStrike => _combatRng.Range(5, 9),
                     _ => _combatRng.Range(4, 7),
                 };
                 if (intent.Kind == IntentKind.SeveredSweep)
@@ -10967,6 +11052,7 @@ public sealed class Game
                         IntentKind.GravenFist => $"The graven fist comes down like a falling lintel for {damage}!",
                         IntentKind.ThroatLunge => $"The iron hound hits you full-length, jaws first, for {damage}!",
                         IntentKind.Pounce => $"The {monster.Name} comes off the ground whole, and its weight and its teeth arrive together for {damage}!",
+                        IntentKind.CoilStrike => $"The fen adder uncoils through both marked cells and bites for {damage}!",
                         IntentKind.SeaxStab => $"The seax comes over the board's rim and finds you for {damage}!",
                         IntentKind.MeasuredCut => intent.FeintCell is not null
                             ? $"The mark was the lie. The thegn's point was always coming here, and it opens you for {damage}!"
@@ -11005,6 +11091,7 @@ public sealed class Game
                         IntentKind.HurledStone => "The stone bursts on the floor where you stood, loud as the quarry's last working day.",
                         IntentKind.GravenFist => "The graven fist cracks the floor where you stood.",
                         IntentKind.ThroatLunge => "The hound's lunge carries it through the space you left; it lands badly and comes up snarling.",
+                        IntentKind.CoilStrike => "The fen adder uncoils through the marked lane and finds only reeds.",
                         IntentKind.SeaxStab => "The seax jabs over the rim into air gone empty.",
                         IntentKind.MeasuredCut => intent.FeintCell is not null
                             ? "The thegn's point comes back to where you truly stood, and finds you gone anyway. It inclines its head a fraction."
@@ -11087,6 +11174,7 @@ public sealed class Game
         if (monster.Kind == MonsterKind.Boar) { ActBoar(monster); return; }
         if (monster.Kind == MonsterKind.Hart) { ActHart(monster); return; }
         if (monster.Kind is MonsterKind.Wolf or MonsterKind.GreatWolf) { ActWolf(monster); return; }
+        if (monster.Kind == MonsterKind.FenAdder) { ActFenAdder(monster); return; }
         if (monster.Kind == MonsterKind.Warder) { ActWarder(monster); return; }
         if (monster.Kind == MonsterKind.Thegn) { ActThegn(monster); return; }
         if (monster.Kind == MonsterKind.RuneTongue) { ActRuneTongue(monster); return; }
@@ -11379,7 +11467,13 @@ public sealed class Game
         // The beast is set down on the overworld underfoot (D-138): beside the
         // bearer is beside the bearer, whichever map that is.
         steed.Area = Area;
-        var map = Area switch { Area.Road => World.Road, Area.Fells => World.Fells, _ => World.Overworld };
+        var map = Area switch
+        {
+            Area.Road => World.Road,
+            Area.Fells => World.Fells,
+            Area.Fens => World.Fens,
+            _ => World.Overworld,
+        };
         foreach (var (dx, dy) in Directions.All8)
         {
             var cell = anchor.Plus(dx, dy);
@@ -12587,6 +12681,8 @@ public sealed class Game
         Seed: MasterSeed,
         Cycle: Cycle,
         Tier: World.Tier,
+        GeneratorVersion: GeneratorVersion,
+        SaveVersion: SaveCodec.Version,
         Turn: Turn,
         Running: Running,
         Mode: Mode.ToString(),
@@ -12622,6 +12718,20 @@ public sealed class Game
         WildsX: World.WildsSite?.OverworldPos.X ?? -1,
         WildsY: World.WildsSite?.OverworldPos.Y ?? -1,
         WildsCleared: World.WildsSite?.Cleared ?? false,
+        FenRegion: World.FenRegion.Name,
+        FenHamlet: World.FenHamletName,
+        FenVisits: FenVisits,
+        FenCrossings: FenCrossings,
+        FenPansRemaining: World.SaltworksSite.SaltPans.Count(p => World.SaltworksSite.Map[p] == Terrain.SaltPan),
+        FenPanAttempts: FenPanAttempts,
+        FenPanRefusals: FenPanRefusals,
+        FenPansWorked: FenPansWorked,
+        FenAdderKills: FenAdderKills,
+        FenArcOutcome: FenArcOutcome,
+        FenArcConclusions: FenArcConclusions,
+        FenRestockScheduled: FenRestockScheduled,
+        FenRestocked: FenRestocked,
+        FenRestocks: FenRestocks,
         ArcProgress: string.Join(",", new[]
         {
             Player.SeveredTruthHeard ? "truth" : null,
@@ -12866,6 +12976,8 @@ public sealed class Game
         RoadForecast: ForecastAt(ClimateBand.Road).ToString().ToLowerInvariant(),
         FellWeather: WeatherAt(ClimateBand.Fells).ToString().ToLowerInvariant(),
         FellForecast: ForecastAt(ClimateBand.Fells).ToString().ToLowerInvariant(),
+        FenWeather: WeatherAt(ClimateBand.Fens).ToString().ToLowerInvariant(),
+        FenForecast: ForecastAt(ClimateBand.Fens).ToString().ToLowerInvariant(),
         SeasonBargainOpen: SeasonBargainOpen,
         RoadSky: Sky.ToString().ToLowerInvariant(),
         RemnantExists: Remnant is not null,
@@ -12882,6 +12994,8 @@ public sealed record Snapshot(
     ulong Seed,
     int Cycle,
     int Tier,
+    int GeneratorVersion,
+    int SaveVersion,
     int Turn,
     bool Running,
     string Mode,
@@ -12917,6 +13031,20 @@ public sealed record Snapshot(
     int WildsX,
     int WildsY,
     bool WildsCleared,
+    string FenRegion,
+    string FenHamlet,
+    int FenVisits,
+    int FenCrossings,
+    int FenPansRemaining,
+    int FenPanAttempts,
+    int FenPanRefusals,
+    int FenPansWorked,
+    int FenAdderKills,
+    string FenArcOutcome,
+    int FenArcConclusions,
+    bool FenRestockScheduled,
+    bool FenRestocked,
+    int FenRestocks,
     string ArcProgress,
     string CurrentSite,
     int UnbinderX,
@@ -13135,6 +13263,8 @@ public sealed record Snapshot(
     string RoadForecast,
     string FellWeather,
     string FellForecast,
+    string FenWeather,
+    string FenForecast,
     bool SeasonBargainOpen,
     string RoadSky,
     bool RemnantExists,

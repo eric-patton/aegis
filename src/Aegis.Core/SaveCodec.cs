@@ -352,39 +352,48 @@ namespace Aegis.Core;
 /// intents gained fellow targets and evasions, the grain road added a delayed
 /// cart, beasts warm camps, Toll scales by tier, braces alter parry costs, and
 /// two new oath digits change world rules.
+/// v99 when D-165 added the Salt Fen, pinned the generator version in every
+/// campaign, and journaled fen travel, work, combat, and regional conclusions.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 98;
+    public const int Version = 99;
     private const string Magic = "AEGIS-SAVE";
 
-    public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";
+    public static string EncodeHeader(ulong seed, int generatorVersion = WorldGen.CurrentGeneratorVersion) =>
+        $"{Magic} v{Version} gen:{generatorVersion} seed:{seed}";
 
-    /// <summary>Parses full save-file content into seed + key journal. Throws on malformed or wrong-version content.</summary>
-    public static (ulong Seed, string Keys) Parse(string content)
+    /// <summary>Parses full save-file content into seed, generator, and key journal. Throws on malformed or wrong-version content.</summary>
+    public static (ulong Seed, int GeneratorVersion, string Keys) Parse(string content)
     {
         var lines = content.Split('\n');
         string header = lines[0].TrimEnd('\r');
 
         var parts = header.Split(' ');
-        if (parts.Length != 3 || parts[0] != Magic)
+        if (parts.Length != 4 || parts[0] != Magic)
             throw new FormatException("Not an Aegis save file.");
         if (parts[1] != $"v{Version}")
             throw new FormatException($"Save is {parts[1]}; this build reads v{Version}. No migration exists yet.");
-        if (!parts[2].StartsWith("seed:") || !ulong.TryParse(parts[2]["seed:".Length..], out ulong seed))
+        if (!parts[2].StartsWith("gen:") || !int.TryParse(parts[2]["gen:".Length..], out int generatorVersion)
+            || !WorldGen.SupportedGeneratorVersions.Contains(generatorVersion))
+            throw new FormatException("Save header has no supported generator version.");
+        if (!parts[3].StartsWith("seed:") || !ulong.TryParse(parts[3]["seed:".Length..], out ulong seed))
             throw new FormatException("Save header has no readable seed.");
 
         var keys = new StringBuilder();
         for (int i = 1; i < lines.Length; i++)
             keys.Append(lines[i].TrimEnd('\r'));
 
-        return (seed, keys.ToString());
+        return (seed, generatorVersion, keys.ToString());
     }
 
     /// <summary>Rebuilds a game by replaying the journal. Deterministic: this IS loading.</summary>
     public static Game Replay(ulong seed, string keys)
+        => Replay(seed, WorldGen.CurrentGeneratorVersion, keys);
+
+    public static Game Replay(ulong seed, int generatorVersion, string keys)
     {
-        var game = new Game(seed, firstWake: true);
+        var game = new Game(seed, firstWake: true, generatorVersion);
         foreach (char key in keys)
         {
             if (!game.Running) break;

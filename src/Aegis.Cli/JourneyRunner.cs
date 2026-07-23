@@ -44,14 +44,18 @@ public static class JourneyRunner
         bool rogue = false;
         bool caster = false;
         bool companion = false;
+        bool release = false;
+        bool cyclesSpecified = false;
+        bool maxKeysSpecified = false;
+        int generatorVersion = WorldGen.CurrentGeneratorVersion;
 
         for (int i = 0; i < args.Length; i++)
         {
             switch (args[i])
             {
                 case "--seed": seed = ulong.Parse(args[++i]); break;
-                case "--cycles": cycles = int.Parse(args[++i]); break;
-                case "--max-keys": maxKeys = int.Parse(args[++i]); break;
+                case "--cycles": cycles = int.Parse(args[++i]); cyclesSpecified = true; break;
+                case "--max-keys": maxKeys = int.Parse(args[++i]); maxKeysSpecified = true; break;
                 case "--per-world": perWorldBudget = int.Parse(args[++i]); break;
                 case "--site-keys": siteKeyBudget = int.Parse(args[++i]); break;
                 case "--site-deaths": siteDeathBudget = int.Parse(args[++i]); break;
@@ -61,13 +65,28 @@ public static class JourneyRunner
                 case "--rogue": rogue = true; break;
                 case "--caster": caster = true; break;
                 case "--companion": companion = true; break;
+                case "--generator": generatorVersion = int.Parse(args[++i]); break;
+                case "--release": release = true; break;
                 default:
                     Console.Error.WriteLine($"aegis journey: unexpected argument '{args[i]}'");
                     return 1;
             }
         }
+        if (!WorldGen.SupportedGeneratorVersions.Contains(generatorVersion))
+        {
+            Console.Error.WriteLine($"aegis journey: generator {generatorVersion} is not supported");
+            return 1;
+        }
+        if (release)
+        {
+            if (!cyclesSpecified) cycles = 12;
+            if (!maxKeysSpecified) maxKeys = 1200000;
+            rogue = true;
+            caster = true;
+            companion = true;
+        }
 
-        var game = new Game(seed, firstWake: true);
+        var game = new Game(seed, firstWake: true, generatorVersion);
         int targetCycle = game.Cycle + cycles;
         var keys = new StringBuilder();
         var crossings = new List<Crossing>();
@@ -244,7 +263,7 @@ public static class JourneyRunner
                 if (k > siteKeyBudget) skip.Add(activeSite);
             }
 
-            char? key = JourneyPilot.NextKey(game, skip, wits, rogue, caster, companion);
+            char? key = JourneyPilot.NextKey(game, skip, wits, rogue, caster, companion, release);
             // The door counts as the site (D-146's lesson): a death on the very
             // key that steps in (a pack waiting at the mouth) must land on the
             // site's own death budget, or the give-up machinery never sees a
@@ -550,6 +569,30 @@ public static class JourneyRunner
             }
         }
 
+        var releaseCoverage = new Dictionary<string, bool>(StringComparer.Ordinal)
+        {
+            ["V1-01"] = crossings.Count > 0 && crossings.SelectMany(c => c.Sites).Any(s => s.Cleared),
+            ["V1-02"] = roadsTaken > 0 && fellsTaken > 0
+                && weatherTicks.Any(kv => kv.Key.StartsWith("fens:", StringComparison.Ordinal) && kv.Value > 0),
+            ["V1-03"] = game.StoryletsFired > 0,
+            ["V1-04"] = game.Teller.Readings.Count > 0,
+            ["V1-05"] = marketsWalked > 0
+                && loftsBought + listsEntries + workshopsCommissioned > 0,
+            ["V1-06"] = game.RushesCompleted > 0 && game.QuietBandsCrossed > 0
+                && game.Player.SelfBrews > 0 && game.Player.Skills.Uses(SkillId.Larceny) > 0,
+            ["V1-07"] = game.RuneTongueEncounters > 0
+                && Enum.GetValues<SpellId>().Any(id => game.WorkingEffects(id) > 0),
+            ["V1-08"] = game.GuestArcStarts > 0 && game.GrainDeliveries > 0
+                && game.PhysicalTargetsOnFellows > 0,
+            ["V1-09"] = game.FenVisits > 0
+                && game.FenPansWorked >= WorldGen.FenPansPerWorld
+                && game.FenPanRefusals > 0
+                && game.FenAdderKills > 0
+                && game.FenArcConclusions > 0
+                && game.FenRestocks > 0,
+        };
+        bool releasePassed = !release || game.Cycle >= targetCycle && releaseCoverage.Values.All(v => v);
+
         if (json)
         {
             // The machine-readable report (D-083): the same facts the prose tells,
@@ -561,6 +604,11 @@ public static class JourneyRunner
                 Rogue: rogue,
                 Caster: caster,
                 Companion: companion,
+                Release: release,
+                ReleasePassed: releasePassed,
+                GeneratorVersion: game.GeneratorVersion,
+                SaveVersion: SaveCodec.Version,
+                ReleaseCoverage: releaseCoverage,
                 CycleReached: game.Cycle,
                 Tier: game.World.Tier,
                 CurrentTwist: WorldTwistCatalog.IdOf(game.World.Twist),
@@ -640,6 +688,14 @@ public static class JourneyRunner
                 RoadsTaken: roadsTaken,
                 NightsCamped: nightsCamped,
                 FellsTaken: fellsTaken,
+                FenVisits: game.FenVisits,
+                FenCrossings: game.FenCrossings,
+                FenPanAttempts: game.FenPanAttempts,
+                FenPanRefusals: game.FenPanRefusals,
+                FenPansWorked: game.FenPansWorked,
+                FenAdderKills: game.FenAdderKills,
+                FenArcConclusions: game.FenArcConclusions,
+                FenRestocks: game.FenRestocks,
                 MarketsWalked: marketsWalked,
                 LotsSoldInTown: game.Player.Skills.Uses(SkillId.Commerce),
                 ForgeSittings: forgeSittings,
@@ -772,7 +828,7 @@ public static class JourneyRunner
                     BestiaryAfter: c.After.Select(r => new JourneyReadDto(
                         r.Kind.ToString().ToLowerInvariant(), r.Bank, r.Tier.ToString())).ToList())).ToList());
             Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(report, PilotJsonPretty.Default.JourneyReport));
-            return 0;
+            return releasePassed ? 0 : 2;
         }
 
         Report(seed, cycles, wits, rogue, caster, companion, crossings, stop, game, totalKeys, keys, emitKeys,
@@ -797,7 +853,15 @@ public static class JourneyRunner
             hayingDays, lateFrosts, granaryPreventions,
             bargainsOffered, bargainsBought, bargainsRefused, bargainsExpired,
             game.Teller);
-        return 0;
+        if (release)
+        {
+            Console.WriteLine();
+            Console.WriteLine("RELEASE COVERAGE");
+            foreach (var item in releaseCoverage)
+                Console.WriteLine($"  {item.Key}: {(item.Value ? "pass" : "FAIL")}");
+            Console.WriteLine(releasePassed ? "  release matrix passed." : "  release matrix failed.");
+        }
+        return releasePassed ? 0 : 2;
     }
 
     /// <summary>A beast of the kind answers to the bearer, at the side or in the stable (D-100).</summary>
@@ -1085,6 +1149,8 @@ internal sealed record JourneyCrossingDto(
 
 internal sealed record JourneyReport(
     ulong Seed, int TargetCrossings, bool WitsDemo, bool Rogue, bool Caster, bool Companion,
+    bool Release, bool ReleasePassed, int GeneratorVersion, int SaveVersion,
+    Dictionary<string, bool> ReleaseCoverage,
     int CycleReached, int Tier, string CurrentTwist, int CrossingsMade, string Stop,
     int KeysPressed, int Turns, int Deaths, string Scars,
     int RemnantsReclaimed, int CoinReclaimed, int EssenceReclaimed,
@@ -1110,6 +1176,8 @@ internal sealed record JourneyReport(
     int WordsLearned, int WardsSaid, int ShadesCalled,
     int MulesBought, int CoursersTaken, int CoinBanked,
     int RoadsTaken, int NightsCamped, int FellsTaken,
+    int FenVisits, int FenCrossings, int FenPanAttempts, int FenPanRefusals,
+    int FenPansWorked, int FenAdderKills, int FenArcConclusions, int FenRestocks,
     int MarketsWalked, int LotsSoldInTown,
     int ForgeSittings, int BondsSworn,
     int ListsEntries, int FormalBouts, int FormalYields, int Championships,

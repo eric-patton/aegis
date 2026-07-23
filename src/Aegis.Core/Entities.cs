@@ -578,7 +578,7 @@ public sealed class Player
 /// <summary>How the threshold resolved (D-039): unresolved, the keeping taken up, or laid down.</summary>
 public enum Resolution { None, Kept, Refused }
 
-public enum MonsterKind { Goblin, Wight, Severed, Graven, Hound, Carl, Boar, Warder, Thegn, Hart, Wolf, GreatWolf, RuneTongue }
+public enum MonsterKind { Goblin, Wight, Severed, Graven, Hound, Carl, Boar, Warder, Thegn, Hart, Wolf, GreatWolf, RuneTongue, FenAdder }
 
 public sealed class Monster
 {
@@ -654,6 +654,7 @@ public sealed class Monster
         MonsterKind.Thegn => 8,
         MonsterKind.Severed => 9,
         MonsterKind.RuneTongue => 6,
+        MonsterKind.FenAdder => 4,
         _ => 10,
     };
 
@@ -707,6 +708,7 @@ public sealed class Monster
         MonsterKind.Wolf => "moor-wolf",
         MonsterKind.GreatWolf => "great she-wolf",
         MonsterKind.RuneTongue => "rune-tongue",
+        MonsterKind.FenAdder => "fen adder",
         _ => "creature",
     };
 }
@@ -740,6 +742,7 @@ public enum IntentKind
     CrushingBlow, BarrowBlade, SunderingCut, HurledStone, GravenFist, ThroatLunge,
     SeaxStab, BoarCharge, LoftedStone, RallyCry, GraveChill, MeasuredCut, BoardCheck,
     Pounce, SeveredSweep, FallingWord, BindingWord,
+    CoilStrike,
 }
 
 /// <summary>
@@ -759,7 +762,7 @@ public enum ReadTier { Blur, Read, Keen }
 /// Harrowers keep the order's house up the valley: the two faiths' folk,
 /// each with their own menu for the same reason the Smith has one.
 /// </summary>
-public enum NpcKind { Villager, Unbinder, Severed, Smith, Skald, Keeper, Harrower, Peddler, Waykeeper, Towner, GraveTally }
+public enum NpcKind { Villager, Unbinder, Severed, Smith, Skald, Keeper, Harrower, Peddler, Waykeeper, Towner, GraveTally, Fenfolk }
 
 /// <summary>
 /// A named, placed person (D-031). Static in v1: they stand near their homes and

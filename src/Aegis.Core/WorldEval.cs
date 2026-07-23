@@ -2,7 +2,8 @@ namespace Aegis.Core;
 
 /// <summary>One site as the harness reads it: what stands there, and what it holds.</summary>
 public sealed record SiteMeasure(
-    string Id, string Kind, int Spawns, string Monsters, bool Stone, bool Coffer, int FishingReaches);
+    string Id, string Kind, int Spawns, string Monsters, bool Stone, bool Coffer,
+    int FishingReaches, int SaltPans);
 
 /// <summary>
 /// One generated world reduced to the numbers the expressive-range charts want
@@ -10,12 +11,14 @@ public sealed record SiteMeasure(
 /// composition, the compiled storylets, and the sites with their tenants.
 /// </summary>
 public sealed record WorldMeasure(
-    ulong Seed, int Tier, string WorldName, string SettlementName, string Story,
+    ulong Seed, int Tier, int GeneratorVersion, string WorldName, string SettlementName, string Story,
     string Twist, string TwistVariant, int Waystones,
     int Npcs, int Villagers, int Facts, Dictionary<string, int> FactTypes,
     int StoryStorylets, List<string> StoryletIds,
     List<SiteMeasure> Sites, int Gleanings, int HerbSpots, int TarnIronSeams, bool WildPony,
-    Dictionary<string, int> WeatherFamilies, int BreadBase);
+    Dictionary<string, int> WeatherFamilies, int BreadBase,
+    string FenRegion, string FenHamlet, string FenHash,
+    int FenWalkable, int FenBog, int FenWater);
 
 /// <summary>One tier's slice of the batch: how the generator spreads itself at that depth.</summary>
 public sealed record TierSummary(
@@ -60,7 +63,7 @@ public static class WorldEval
             .Select(s => new SiteMeasure(
                 s.Id, s.Kind.ToString().ToLowerInvariant(), s.Spawns.Count,
                 string.Join(",", s.Spawns.Select(sp => sp.Kind).Distinct().Select(k => k.ToString().ToLowerInvariant())),
-                s.StonePos is not null, s.CofferPos is not null, s.FishingReaches.Count))
+                s.StonePos is not null, s.CofferPos is not null, s.FishingReaches.Count, s.SaltPans.Count))
             .ToList();
 
         string story = w.Facts.OfType("story").FirstOrDefault()?.Subject ?? "none";
@@ -68,6 +71,7 @@ public static class WorldEval
         return new WorldMeasure(
             Seed: w.Seed,
             Tier: w.Tier,
+            GeneratorVersion: w.GeneratorVersion,
             WorldName: w.Name,
             SettlementName: w.SettlementName,
             Story: story,
@@ -90,7 +94,22 @@ public static class WorldEval
             // prices bread at 6 where every other story opens at 4, mirroring
             // RationPrice's base term. Grows into a real spread when per-region
             // prices land (plan 2026-07 B3); the column is here so the chart is.
-            BreadBase: story == CreepingBlightTemplate.Id ? 6 : 4);
+            BreadBase: story == CreepingBlightTemplate.Id ? 6 : 4,
+            FenRegion: w.FenRegion.Name,
+            FenHamlet: w.FenHamletName,
+            FenHash: w.Fens.ContentHash().ToString("x16"),
+            FenWalkable: Count(w.Fens, t => TerrainInfo.Walkable(t)),
+            FenBog: Count(w.Fens, t => t == Terrain.Bog),
+            FenWater: Count(w.Fens, t => t == Terrain.Water));
+    }
+
+    private static int Count(GameMap map, Func<Terrain, bool> predicate)
+    {
+        int count = 0;
+        for (int y = 0; y < map.Height; y++)
+            for (int x = 0; x < map.Width; x++)
+                if (predicate(map[new Pos(x, y)])) count++;
+        return count;
     }
 
     /// <summary>
@@ -270,11 +289,11 @@ public static class WorldEval
         }
 
         var m = Measure(w);
-        Fold($"{m.Seed}|{m.Tier}|{m.WorldName}|{m.SettlementName}|{m.Story}|{m.Twist}|{m.TwistVariant}|{m.Waystones}|{m.Npcs}|{m.Facts}|{m.StoryStorylets}|{m.Gleanings}|{m.HerbSpots}|{m.TarnIronSeams}|{m.WildPony}");
+        Fold($"{m.Seed}|{m.Tier}|{m.GeneratorVersion}|{m.WorldName}|{m.SettlementName}|{m.Story}|{m.Twist}|{m.TwistVariant}|{m.Waystones}|{m.Npcs}|{m.Facts}|{m.StoryStorylets}|{m.Gleanings}|{m.HerbSpots}|{m.TarnIronSeams}|{m.WildPony}|{m.FenRegion}|{m.FenHamlet}|{m.FenHash}|{m.FenWalkable}|{m.FenBog}|{m.FenWater}");
         foreach (var kv in m.FactTypes) Fold($"{kv.Key}={kv.Value}");
         foreach (var kv in m.WeatherFamilies) Fold($"{kv.Key}={kv.Value}");
         foreach (var id in m.StoryletIds) Fold(id);
-        foreach (var s in m.Sites) Fold($"{s.Id}|{s.Kind}|{s.Spawns}|{s.Monsters}|{s.Stone}|{s.Coffer}|{s.FishingReaches}");
+        foreach (var s in m.Sites) Fold($"{s.Id}|{s.Kind}|{s.Spawns}|{s.Monsters}|{s.Stone}|{s.Coffer}|{s.FishingReaches}|{s.SaltPans}");
         foreach (var s in ProseSurfaces(w))
             Fold($"{s.SourceId}|{s.Kind}|{s.FamilyId}|{s.VariantId}|{s.ReusePolicy}|{s.Origin}|{s.RawText}|{s.NormalizedSkeleton}");
         return h.ToString("x16");

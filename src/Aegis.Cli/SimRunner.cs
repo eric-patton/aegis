@@ -16,6 +16,7 @@ public static class SimRunner
         string keys = "";
         string? keysFile = null;
         bool quiet = false;
+        int generatorVersion = WorldGen.CurrentGeneratorVersion;
 
         for (int i = 0; i < args.Length; i++)
         {
@@ -25,10 +26,16 @@ public static class SimRunner
                 case "--keys": keys = args[++i]; break;
                 case "--keys-file": keysFile = args[++i]; break;
                 case "--quiet": quiet = true; break;
+                case "--generator": generatorVersion = int.Parse(args[++i]); break;
                 default:
                     Console.Error.WriteLine($"aegis sim: unexpected argument '{args[i]}'");
                     return 1;
             }
+        }
+        if (!WorldGen.SupportedGeneratorVersions.Contains(generatorVersion))
+        {
+            Console.Error.WriteLine($"aegis sim: generator {generatorVersion} is not supported");
+            return 1;
         }
 
         if (keysFile is not null)
@@ -41,7 +48,7 @@ public static class SimRunner
             keys = File.ReadAllText(keysFile);
         }
 
-        var game = new Game(seed, firstWake: true);
+        var game = new Game(seed, firstWake: true, generatorVersion);
         int applied = 0;
         foreach (char key in keys)
         {

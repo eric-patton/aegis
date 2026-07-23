@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Aegis.Core\Aegis.Core.csproj" />
+    <ProjectReference Include="..\..\src\Aegis.Cli\Aegis.Cli.csproj" />
   </ItemGroup>
 
 </Project>

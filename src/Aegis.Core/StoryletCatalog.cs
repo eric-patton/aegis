@@ -1738,5 +1738,44 @@ public static class StoryletCatalog
             Effect = g => g.World.Facts.Add("book-tale", "black-water", g.World.FellRegion.Name,
                 "The worked black tarn supplied the true ground for one account in the hearth-book of road and fell."),
         },
+
+        // Three cross-system readers retained for the 1.0 audit (D-165).
+        // Each consumes established state without introducing a new subsystem.
+        new Storylet
+        {
+            Id = "the-lane-knows-the-step",
+            Trigger = StoryletTrigger.NearHouse,
+            Priority = 12,
+            Requires = [new FactPattern("shame", "housebroken")],
+            Lines =
+            [
+                ("A latch settles before you reach the next threshold. No accusation follows it. The lane has learned your step, and every house answers with the same small piece of iron.", LogTone.Info),
+                ("\"A fact does not need a speaker to travel, bearer. This one has gone door to door ahead of us.\"", LogTone.Aegis),
+            ],
+        },
+        new Storylet
+        {
+            Id = "the-villager-sees-the-shade",
+            Trigger = StoryletTrigger.Talk,
+            Priority = 12,
+            When = g => g.TalkNpc?.Kind == NpcKind.Villager && g.Shade is { Alive: true },
+            Lines =
+            [
+                ("Their greeting stops one word early. Their eyes hold on the figure at your shoulder, then return to you with careful courtesy and no question they are willing to ask.", LogTone.Info),
+                ("\"They see enough, bearer. Not what I see, but enough that silence has become a choice.\"", LogTone.Aegis),
+            ],
+        },
+        new Storylet
+        {
+            Id = "the-warder-answers-the-shade",
+            Trigger = StoryletTrigger.Talk,
+            Priority = 13,
+            When = g => g.TalkNpc?.Id == "npc_mootwarden" && g.Shade is { Alive: true },
+            Lines =
+            [
+                ("The moot-warden looks past you once, deliberately, and sets a second cup on the board. Nothing is poured into it. Nothing is said about why it stands there.", LogTone.Info),
+                ("\"An office survives by naming what it can prove. That empty cup is the nearest their law can come to naming me.\"", LogTone.Aegis),
+            ],
+        },
     ];
 }

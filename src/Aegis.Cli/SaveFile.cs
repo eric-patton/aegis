@@ -37,8 +37,8 @@ public sealed class SaveFile : IDisposable
 
         if (File.Exists(path))
         {
-            var (seed, keys) = SaveCodec.Parse(ReadContent(path));
-            var game = SaveCodec.Replay(seed, keys);
+            var (seed, generatorVersion, keys) = SaveCodec.Parse(ReadContent(path));
+            var game = SaveCodec.Replay(seed, generatorVersion, keys);
             var appender = new StreamWriter(path, append: true, PilotWire.Utf8NoBom) { AutoFlush = true };
             return new SaveFile(game, path, loaded: true, appender, keysOnLine: keys.Length % KeysPerLine);
         }
@@ -46,7 +46,7 @@ public sealed class SaveFile : IDisposable
         {
             var game = new Game(seedIfNew, firstWake: true);
             var appender = new StreamWriter(path, append: true, PilotWire.Utf8NoBom) { AutoFlush = true };
-            appender.WriteLine(SaveCodec.EncodeHeader(seedIfNew));
+            appender.WriteLine(SaveCodec.EncodeHeader(seedIfNew, game.GeneratorVersion));
             return new SaveFile(game, path, loaded: false, appender, keysOnLine: 0);
         }
     }

@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-23, end of the D-173 session)
+# Aegis handoff (updated 2026-07-23, D-174 release-candidate session)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,29 +8,32 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-173 currently at its head), then the parking lot of open
+  newest-first block (D-174 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-173)". Bump it whenever a decision lands.
-- `design/plan-2026-07.md`: the current build plan. The original sequence and the first
-  eight Path to 1.0 tranches are done; V1-09 is next (see "What is next" below).
+  "(D-001 through D-174)". Bump it whenever a decision lands.
+- `design/plan-2026-07.md`: the current build plan. The original sequence is complete;
+  V1-09 is built and awaits its packaged manual signoff (see "What is next" below).
 - `design/plan-1.0.md`: the canonical nine-card implementation queue. V1-01 through V1-08
-  are Verified; V1-09 is Approved and pending.
+  are Verified; V1-09 is Implemented and awaits its packaged manual signoff.
 - `design/story/`: arc spec and world-story templates. Full story detail lives there.
 - `docs/dev-harness.md`: the pilot/sim/journey harness.
 
 ## Current state
 
-- Latest completed work: D-173, V1-08, companion combat parity, the grain road, bounded
-  companion memories, faction readers, beast warmth and recognition, scar aftermath,
-  the fitted brace, tier-scaled Toll, and the final two launch oaths.
-- Save format: `SaveCodec.Version = 98` (v91 = D-154, v92 = D-166, v93 = D-167,
-  v94 = D-169, v95 = D-170, v96 = D-171, v97 = D-172, v98 = D-173; history
+- Latest completed work: D-174, V1-09's Salt Fen, finite salt work, regional account,
+  launch readers, campaign-scoped generator 1, release journey, roadmap and defect
+  audits, and Windows x64 release packaging machinery. Automated verification is green;
+  the clean package and fresh manual campaign are the remaining gates.
+- Save format: `SaveCodec.Version = 99` (v91 = D-154, v92 = D-166, v93 = D-167,
+  v94 = D-169, v95 = D-170, v96 = D-171, v97 = D-172, v98 = D-173,
+  v99 = D-174; history
   comments in `src/Aegis.Core/SaveCodec.cs`).
-- Tests: 968 green (`dotnet test tests/Aegis.Core.Tests/Aegis.Core.Tests.csproj -c Release
-  --no-build`).
-- The D-173 Release build, full test run, companion diagnostics, sweep, default and
-  companion replays, and worldgen purity gate are green.
+- Generator format: campaign-scoped generator 1, recorded separately in v99 saves.
+- Product version: 1.0.0.
+- Tests: 980 green (`dotnet test Aegis.slnx -c Release --no-restore`).
+- The D-174 Release build, focused and full tests, default and release sweeps, both
+  seed-1 replays, and the 240-world generator-1 purity gate are green.
 
 ## Working conventions (were in user-level config, not visible to a new tool)
 
@@ -85,38 +88,36 @@ against the previous baseline set to see (and justify) drift. Then sim-replay at
 least seed 1's journal and require exact key/cycle/turn match. Then run the
 worldgen purity gate.
 
-**Current baselines are v102**, stored under `artifacts/aegis-sweep/`. The prior comparison
-set is v101. Every v102 twin pair is byte-identical to its mate. Drift is expected and
-justified by nearest-body targeting, automatic fellow evasion, full-lane physical
-resolution, fewer deaths and recovery loops, and bounded pilot-route repairs:
+**Current default baselines are v103**, stored as
+`artifacts/v1-09-default-{seed}-{a,b}.json`. The prior comparison set is v102 under
+`artifacts/aegis-sweep/`. Every v103 twin pair is byte-identical to its mate. Drift is
+expected and justified by the added fourth-country traversal, weather waits, finite
+work, fights, rest, and bounded regional completion:
 
 | seed  | keys  | turns | deaths | drift keys / turns / deaths | outcome                |
 |-------|-------|-------|--------|------------------------------|------------------------|
-| 1     | 26891 | 25825 | 9      | -59 / -60 / 0                | cycle 13, 12 crossings |
-| 7     | 32920 | 25931 | 9      | +55 / +43 / 0                | cycle 13, 12 crossings |
-| 99    | 31218 | 27006 | 8      | -520 / -572 / -2             | cycle 13, 12 crossings |
-| 2024  | 35273 | 33414 | 7      | +172 / +159 / 0              | cycle 13, 12 crossings |
-| 88888 | 33008 | 31845 | 7      | -2869 / -2290 / -1           | cycle 13, 12 crossings |
+| 1     | 35094 | 33981 | 11     | +8203 / +8156 / +2           | cycle 13, 12 crossings |
+| 7     | 40731 | 33690 | 9      | +7811 / +7759 / 0            | cycle 13, 12 crossings |
+| 99    | 40595 | 36386 | 9      | +9377 / +9380 / +1           | cycle 13, 12 crossings |
+| 2024  | 43177 | 41301 | 7      | +7904 / +7887 / 0            | cycle 13, 12 crossings |
+| 88888 | 42171 | 40948 | 10     | +9163 / +9103 / +3           | cycle 13, 12 crossings |
 
-Seed 1 sim replay: 26,891 keys, cycle 13, turn 25,825, nine deaths. The opt-in
-companion seed-6 route completes twelve crossings in 38,588 keys and 33,481 turns. It
-demonstrates every required live companion, faction, beast, scar, Toll, brace, and oath
-route and replays exactly through `sim --keys-file`. Its report records 19 guest starts,
-14 completions, five organic guest deaths, 47 care acts, 19 physical target choices,
-15 evasions, one refused shot, ten grain deliveries, six warm camps, all three beast
-recognitions, 12 pony tamings, 91 ridden steps, both bounded memories, one cured scar,
-312 brace parries, a 40-point capped tier contribution, and both new oaths. The route
-never deliberately kills a guest. All five default JSON journeys and the companion JSON
-journey match their prose metrics. Worldgen: 240 worlds, zero digest mismatches, 89,402
-prose surfaces (12,689 fact details, 20,752 topics, 52,343 storylet lines, 3,138 scene
-lines, 240 rumors, 240 ledger entries), five families at their declared coverage, zero
-hard failures, and the same two expected warnings for legacy fixed surfaces and
-fixed-heavy composition.
+Seed 1 default sim replay: 35,094 keys, cycle 13, turn 33,981, 11 deaths. The five
+release twin pairs are stored as `artifacts/v1-09-release-{seed}-{a,b}.json`; all are
+byte-identical, reach cycle 13 with twelve crossings, and pass all nine matrix rows.
+Release seed 1 sim replay is exact at 41,128 keys, cycle 13, and turn 42,320.
+Worldgen generator 1: 240 worlds, zero digest mismatches, 93,002 prose surfaces
+(14,849 fact details, 20,752 topics, 53,783 storylet lines, 3,138 scene lines,
+240 rumors, 240 ledger entries), five families at their declared coverage, and zero
+hard failures. The fixed-surface warning remains expected.
 
 ## Engine invariants (break these and old saves die)
 
 - Saves are seed + key journal, replayed on load. Any change to worldgen draws or
   to what a key does requires a `SaveCodec.Version` bump with a history comment.
+- Save v99 records campaign-scoped generator 1 in the header. Replay threads the
+  recorded generator through every crossing. Unsupported save or generator versions
+  reject explicitly before generation (D-174).
 - **End-append enums only** (SkillId, SiteKind, Terrain, MonsterKind, TradeGood,
   LessonId, BookId...): inserting mid-enum shifts serialized values.
 - **New worldgen RNG streams draw AFTER all existing draws** (derive a named
@@ -161,6 +162,10 @@ fixed-heavy composition.
   before the existing Will reduction and floor. Scar and mend facts use stable scar ids.
   A current crushed-hand scar suppresses the fitted-brace parry edge until repaired
   (D-173).
+- The Salt Fen is the fourth country. Its independent climate stream is derived after
+  every earlier draw, its mounted travel is one cell, its three pans are finite, and its
+  adder may cross one water cell but must end every turn on walkable ground. Regional
+  completion schedules at most one capped peddler restock per world (D-174).
 - Movement keys h/j/k/l/y/u/b/n, `.` wait, `>` enter, `<` exit, `g` grab,
   `r` rest, `v` read (shrine or owned loft desk), `m` camp, `i` gear, `c` sheet, `e` eat,
   `o` order. Uppercase H/J/K/L/Y/U/B/N rush on local combat maps.
@@ -196,21 +201,24 @@ fixed-heavy composition.
   footprints, evasion, guest arcs and memories, faction and beast state, scars, Toll,
   brace behavior, oaths, presentation, persistence, and replay. Legacy guest, shade,
   charge, pacing, Toll, and weather tests pin the changed shared contracts.
+- D-174's focused acceptance lives in `FenTests` and `ReleaseToolTests`: generator and
+  terrain structure, crossings, weather-gated six-turn work, finite pans, adder movement
+  and intent, equal conclusions, restock, promoted readers, generator and save rejection,
+  release matrix behavior, package inputs, AOT, hashes, smokes, and spoiler-free docs.
 - Story-pinned seeds exist (e.g. master 42/43 cycle-2 stories); when a test breaks
   on a story draw, check whether a deliberate re-pin is recorded in decisions.md
   before "fixing" the world.
 
 ## What is next (queued, in recommended order)
 
-1. **V1-09: next region and 1.0 release closure** (`design/plan-1.0.md`, D-165).
-   Its design is Approved and implementation-ready. Read the complete card before editing
-   and preserve every stated boundary and dependency.
-2. **Verify V1-09 under its card and the HANDOFF discipline**, then record its
-   implementation decision, check off tranche 9, and complete the release and roadmap
-   audits required by the card.
-3. Do not silently widen the final card. If implementation reveals a substantive contract
-   conflict, present options and a recommendation to the user before changing the approved
-   design.
+1. **Create the clean Windows x64 candidate package** with `scripts/release.ps1` from
+   the committed D-174 tree. Record its commit and SHA-256 in
+   `design/release-audit-1.0.0.md`.
+2. **Run the fresh packaged manual campaign** exactly as
+   `design/release-audit-1.0.0.md` specifies. The user must provide the explicit verdict.
+3. If approved, record the manual evidence and verdict, flip V1-09 and tranche 25 to
+   Verified, update the 1.0 counts and changelog, and close the release-candidate status.
+   Any engine fix invalidates the candidate and requires the full sweep again.
 
 ## Handoff hygiene
 

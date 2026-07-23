@@ -77,10 +77,13 @@ public class BarrowTests
         for (int i = 0; i < 60 && WightPositions().All(p => p.Chebyshev(game.Player.Pos) > 2); i++)
         {
             char? key = StepToward(game, barrow.Map, quarry.Pos,
-                p => barrow.Map.Walkable(p) && !game.Monsters.Any(m => m.Alive && m.Pos == p));
+                p => barrow.Map.Walkable(p)
+                    && !game.Monsters.Any(m => m.Alive && m.SiteId == barrow.Id && m.Pos == p));
             game.ApplyKey(key ?? '.'); // a wight in the passage blocks the path: stand and let it come
         }
-        Assert.True(WightPositions().Any(p => p.Chebyshev(game.Player.Pos) <= 2), "never reached a chamber mouth");
+        Assert.True(WightPositions().Any(p => p.Chebyshev(game.Player.Pos) <= 2),
+            $"never reached a chamber mouth: mode {game.Mode}, turn {game.Turn}, hp {game.Player.Hp}, "
+            + $"player {game.Player.Pos}, quarry {quarry.Pos}, wights {string.Join(",", WightPositions())}");
 
         bool anyMove = false;
         for (int i = 0; i < 16 && game.Mode == MapMode.Site; i++)
@@ -94,7 +97,8 @@ public class BarrowTests
             {
                 var options = Directions.All8
                     .Select(d => game.Player.Pos.Plus(d.dx, d.dy))
-                    .Where(p => barrow.Map.Walkable(p) && !game.Monsters.Any(m => m.Alive && m.Pos == p))
+                    .Where(p => barrow.Map.Walkable(p)
+                        && !game.Monsters.Any(m => m.Alive && m.SiteId == barrow.Id && m.Pos == p))
                     .ToList();
                 if (options.Count > 0)
                 {

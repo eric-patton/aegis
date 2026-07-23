@@ -35,7 +35,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 | V1-06 | Character and activity breadth | Verified | D-162, D-171 | Completed |
 | V1-07 | Combat and magic depth | Verified | D-163, D-172 | Completed |
 | V1-08 | Companions, factions, and consequences | Verified | D-164, D-173 | Completed |
-| V1-09 | Next region and 1.0 release closure | Approved | D-165 | Pending |
+| V1-09 | Next region and 1.0 release closure | Implemented | D-165, D-174 | Manual signoff pending |
 
 ## V1-01: High-fells capstone, the black tarn
 
@@ -1300,9 +1300,9 @@ longer than the Windows command-line limit.
 
 ## V1-09: Next region and 1.0 release closure
 
-**Design status:** Approved
+**Design status:** Implemented
 
-**Decisions:** D-165
+**Decisions:** D-165, D-174
 
 **Roadmap association:** Path to 1.0 tranche 9; B4 later regions; A1 peddler restock;
 housebreaker and Calling readers; generator freeze; release audit and packaging
@@ -1312,7 +1312,8 @@ storylet, companion, save, WorldEval, journey, sim, and Native AOT machinery
 
 **Recommended implementation point:** ninth and final card, after V1-08
 
-**Implementation status:** Pending until the implementation queue reaches V1-09
+**Implementation status:** Built and automated gates verified 2026-07-23. The fresh
+packaged manual campaign and explicit user signoff remain before this card becomes Verified.
 
 ### Approved behavior
 

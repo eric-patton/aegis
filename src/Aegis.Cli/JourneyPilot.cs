@@ -74,7 +74,7 @@ public static class JourneyPilot
     /// to the point innate acuity clears D-061's dulling floor, then the usual rotation.
     /// </summary>
     public static char? NextKey(Game g, IReadOnlySet<string> skip, bool wits = false,
-        bool rogue = false, bool caster = false, bool companion = false)
+        bool rogue = false, bool caster = false, bool companion = false, bool release = false)
     {
         var p = g.Player;
 
@@ -141,6 +141,12 @@ public static class JourneyPilot
         if (g.InTalkMenu && g.TalkNpc?.Kind == NpcKind.Peddler)
             return (FenceErrand(g) ? OfferDigit(g, TradeGood.Fence)
                 : SaltBuyErrand(g) ? OfferDigit(g, TradeGood.Salt) : null) ?? 'z';
+        if (g.InTalkMenu && g.TalkNpc?.Kind == NpcKind.Fenfolk)
+            return g.TalkNpc.Id == "npc_compact_keeper"
+                && g.FenArcOutcome.Length == 0
+                && g.World.Facts.Exists("fen-arc", "ready")
+                    ? OfferDigit(g, TradeGood.CompactMeasure) ?? 'z'
+                    : 'z';
         if (g.InAim)
             return companion && g.Guest is { Alive: true } aimingGuest
                 ? CompanionRefusalLine(g, aimingGuest) ?? AimDirection(g) ?? 'z'
@@ -215,6 +221,10 @@ public static class JourneyPilot
                 return TownMove(g, companion);
             if (site.Kind == SiteKind.BlackTarn)
                 return BlackTarnMove(g, site);
+            if (site.Kind == SiteKind.FenHamlet)
+                return FenHamletMove(g, site);
+            if (site.Kind == SiteKind.Saltworks)
+                return SaltworksMove(g, site, release);
             // Still work to do here: clear it. The wilds is hunted, not fought (D-070):
             // game flees, so the generic close-and-bump never catches it; the hunt loosens
             // a shaft at a hart on a clear line, or herds it into a corner. The fells'
@@ -265,6 +275,7 @@ public static class JourneyPilot
         // wolves' combe, camp where the heath allows, pick the high herbs, and
         // climb back down to the road.
         if (g.Area == Area.Fells) return FellMove(g, skip);
+        if (g.Area == Area.Fens) return FenMove(g, skip);
 
         // Out east (D-138) the errands are the road's own: hunt the half-way
         // glade, camp on the kill, pick the verges, and come home. Everything
@@ -693,6 +704,12 @@ public static class JourneyPilot
             if (NavKey(g, road, p.Pos, rem.Pos, blocked) is { } toRem) return toRem;
         }
 
+        if (FenTripWanted(g, skip))
+        {
+            if (p.Pos == g.World.FenMouthPos) return '>';
+            if (NavKey(g, road, p.Pos, g.World.FenMouthPos, blocked) is { } toFen) return toFen;
+        }
+
         var trail = g.World.RoadWildsSite;
         if (g.World.Twist != WorldTwist.HornedLaw && !trail.Cleared && !skip.Contains(trail.Id))
         {
@@ -749,6 +766,88 @@ public static class JourneyPilot
 
         if (p.Pos == g.World.RoadHomePos) return '>';
         return NavKey(g, road, p.Pos, g.World.RoadHomePos, blocked);
+    }
+
+    private static bool FenTripWanted(Game g, IReadOnlySet<string> skip)
+    {
+        if (!g.World.Facts.Exists("fen-arc", "hamlet_seen")) return true;
+        if (g.World.SaltworksSite.SaltPans.Count > 0) return true;
+        if (new[] { g.World.FenWildsSite, g.World.FenWatchSite, g.World.FenVaultSite }
+            .Any(s => !s.Cleared && !skip.Contains(s.Id))) return true;
+        return g.World.Facts.Exists("fen-arc", "ready") && g.FenArcOutcome.Length == 0;
+    }
+
+    private static char? FenMove(Game g, IReadOnlySet<string> skip)
+    {
+        var p = g.Player;
+        var fens = g.World.Fens;
+        var blocked = OverworldBlocked(g);
+
+        if (g.Remnant is { } rem && rem.MapId == fens.Id && rem.Coin + rem.Essence > 0)
+        {
+            if (p.Pos == rem.Pos) return 'g';
+            if (NavKey(g, fens, p.Pos, rem.Pos, blocked) is { } toRem) return toRem;
+        }
+
+        if (!g.World.Facts.Exists("fen-arc", "hamlet_seen"))
+            return EnterFenSite(g, g.World.FenHamletSite, fens, blocked);
+
+        if (g.World.SaltworksSite.SaltPans.Count > 0)
+            return EnterFenSite(g, g.World.SaltworksSite, fens, blocked);
+
+        foreach (var site in new[] { g.World.FenWildsSite, g.World.FenWatchSite, g.World.FenVaultSite })
+            if (!site.Cleared && !skip.Contains(site.Id))
+                return EnterFenSite(g, site, fens, blocked);
+
+        if (g.World.Facts.Exists("fen-arc", "ready") && g.FenArcOutcome.Length == 0)
+            return EnterFenSite(g, g.World.FenHamletSite, fens, blocked);
+
+        if (p.Pos == g.World.FenHomePos) return '>';
+        return NavKey(g, fens, p.Pos, g.World.FenHomePos, blocked);
+    }
+
+    private static char? EnterFenSite(Game g, Site site, GameMap map, HashSet<Pos> blocked)
+    {
+        if (g.Player.Pos == site.OverworldPos) return '>';
+        return NavKey(g, map, g.Player.Pos, site.OverworldPos, blocked);
+    }
+
+    private static char? FenHamletMove(Game g, Site site)
+    {
+        if (g.World.Facts.Exists("fen-arc", "ready") && g.FenArcOutcome.Length == 0)
+        {
+            var keeper = g.NpcsHere.First(n => n.Id == "npc_compact_keeper");
+            if (NavKey(g, site.Map, g.Player.Pos, keeper.Pos, OverworldBlocked(g)) is { } toKeeper)
+                return toKeeper;
+        }
+        if (g.Player.Pos == site.EntryPos) return '<';
+        return NavKey(g, site.Map, g.Player.Pos, site.EntryPos, OverworldBlocked(g))
+            ?? NavKey(g, site.Map, g.Player.Pos, site.EntryPos, Empty);
+    }
+
+    private static char? SaltworksMove(Game g, Site site, bool release)
+    {
+        var pan = site.SaltPans
+            .Where(p => site.Map[p] == Terrain.SaltPan)
+            .OrderBy(p => Chebyshev(g.Player.Pos, p))
+            .ThenBy(p => p.Y).ThenBy(p => p.X)
+            .FirstOrDefault();
+        if (site.SaltPans.Any(p => site.Map[p] == Terrain.SaltPan))
+        {
+            if (g.Player.Pos == pan)
+            {
+                if (release && g.FenPanRefusals == 0
+                    && g.WeatherAt(ClimateBand.Fens) is WeatherFamily.Calm or WeatherFamily.Wind)
+                    return '.';
+                if (g.WeatherAt(ClimateBand.Fens) is WeatherFamily.Wet or WeatherFamily.Cold
+                    && g.FenPanRefusals > 0)
+                    return '.';
+                return 'g';
+            }
+            return NavKey(g, site.Map, g.Player.Pos, pan, Empty);
+        }
+        if (g.Player.Pos == site.EntryPos) return '<';
+        return NavKey(g, site.Map, g.Player.Pos, site.EntryPos, Empty);
     }
 
     /// <summary>

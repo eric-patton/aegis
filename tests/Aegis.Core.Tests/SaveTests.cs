@@ -8,8 +8,9 @@ public class SaveTests
     [Fact]
     public void Header_RoundTrips()
     {
-        var (seed, keys) = SaveCodec.Parse(SaveCodec.EncodeHeader(123456789UL) + "\r\n");
+        var (seed, generatorVersion, keys) = SaveCodec.Parse(SaveCodec.EncodeHeader(123456789UL) + "\r\n");
         Assert.Equal(123456789UL, seed);
+        Assert.Equal(WorldGen.CurrentGeneratorVersion, generatorVersion);
         Assert.Equal("", keys);
     }
 

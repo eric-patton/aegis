@@ -231,6 +231,83 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-174: The white road through the reeds: the Salt Fen and the 1.0 candidate built (2026-07-23)
+
+V1-09 is built under D-165's approved boundary. The Salt Fen is the fourth named
+country, reached in both directions from the grain road and generated on independent,
+end-appended streams. Its bounded map joins raised causeway, firm bank, reed ground,
+bog, and open water around one roofed hamlet and exactly four regional sites. Its
+independent climate hand favors Wet and Wind while retaining the four established
+weather families. Mounted travel remains one cell, ordinary followers, remnants,
+guests, shades, camps, forecasts, roofs, and crossings retain their shared contracts,
+and every generated entrance is reachable.
+
+The fen adder is an end-appended ordinary family with a readable adjacent bite and
+two-cell coil-strike. It may cross one water cell but always ends on walkable ground.
+Its kill feeds Hunting, meat, hide, cooking, and sale without coin, Essence, poison,
+hidden defense, or a special resistance. Three finite salt pans each accept one
+six-turn Calm or Wind working per world, pay one sack of existing Salt and one Survival
+use, and become exhausted ground. Wet or Cold refuses before time, stamina, skill, or
+state moves. The compact's bounded account consumes the hamlet and four-site facts,
+reaches either of two equal-reward conclusions, and schedules one capped two-sack
+peddler restock on the next coarse tick. It never blocks the waygate or either larger
+story layer.
+
+The three promoted readers are live and mechanically inert where required:
+`shame/housebroken` is read once by a lane that knows, a present called shade is noticed
+once by a villager and answered once by a moot-warder, and the completed compact causes
+the delayed peddler delivery. No reader invents knowledge or adds punishment, allegiance,
+reward, or a new scalar. The important-fact and conflict audit confirms every new fact
+has a live consumer, the regional pressure has both authored conclusions plus the
+crossing reset, and every new activity pays at least two D-006 outputs.
+
+Save v98 advances to v99. The header now records generator version 1 separately from
+save and product versions, and replay passes that campaign-scoped version through every
+generated world. Worldgen, sim, journey, snapshots, saves, manifests, and release
+evidence expose the pin. Unknown save or generator versions fail explicitly before
+generation. Product version 1.0.0 remains independent.
+
+`journey --release` composes the mandatory demonstrations for V1-01 through V1-09 into
+a machine-readable nine-row matrix and exits nonzero on any missing row. The default
+route also traverses the fourth country without stalling. Journey and WorldEval expose
+the new region, work, combat, arc, restock, save, and generator measures. The repeatable
+Windows x64 script requires a clean worktree, publishes self-contained Native AOT,
+stages the executable and three spoiler-free documents, writes metadata and SHA-256
+hashes, zips them, extracts cleanly, verifies every listed hash, and runs help, exact
+sim, and worldgen smokes.
+
+Automated verification is complete. Release builds have zero warnings and zero errors;
+all 980 tests pass, including the focused fen, reader, save, generator, and release-tool
+contracts. One older barrow test was corrected to treat only monsters from its active
+site as local blockers, a latent assumption exposed by the added site roster. Default
+and release twins are byte-identical for seeds 1, 7, 99, 2024, and 88888, and every run
+reaches cycle 13 with twelve crossings. Default results are 35,094 keys and turn 33,981
+for seed 1; 40,731 / 33,690 for seed 7; 40,595 / 36,386 for seed 99; 43,177 / 41,301
+for seed 2024; and 42,171 / 40,948 for seed 88888. Drift from v102 is expected and
+bounded by the added fourth-country traversal, its weather waits, finite work, fights,
+rest, and regional completion. Seed 1 replays exactly. Its release route also replays
+exactly at 41,128 keys and turn 42,320. Generator 1 remains pure across 240 worlds with
+zero digest mismatches and zero prose failures across 93,002 surfaces.
+
+Two live pilot and generation defects were found and closed before the candidate.
+Causeway carving could overwrite the return mouth after placing it, so the generator
+now restores that terrain after all causeways are cut. The pilot also mistook its
+character-lifetime salt-work count for a current-world site gate, so it now reads the
+finite pans in the current site. The complete release route proves both repairs across
+twelve worlds.
+
+The roadmap audit classifies every remaining incomplete line as post-1.0 except this
+card and its package gate. The durable defect and release audit is
+`design/release-audit-1.0.0.md`. V1-09 remains Implemented rather than Verified until
+the clean Windows x64 package passes its final script and the user completes and signs
+off the fresh packaged campaign required by D-165.
+
+Options set aside remain D-165's explicit exclusions: a fifth country, a seventh
+world-story template, swimming, boating, tides, poison, an independent compact
+reputation, new salt currencies or recipes, positive Town Fame, installers, updaters,
+telemetry, automatic migration, signing, remote release machinery, and non-Windows
+packages. Deferred post-1.0 work remains classified line by line in the roadmap.
+
 ### D-173: The road kept company: companion consequence depth built (2026-07-23)
 
 V1-08 is built and Verified under D-164's approved boundary. Physical enemy intent now

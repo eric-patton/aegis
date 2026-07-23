@@ -300,7 +300,7 @@ public class WeatherTests
         var a = live.TakeSnapshot();
         var b = replay.TakeSnapshot();
 
-        Assert.Equal(98, SaveCodec.Version);
+        Assert.Equal(99, SaveCodec.Version);
         Assert.Equal(a.Season, b.Season);
         Assert.Equal(a.SeasonPosition, b.SeasonPosition);
         Assert.Equal(a.LowlandWeather, b.LowlandWeather);

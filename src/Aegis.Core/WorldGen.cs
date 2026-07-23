@@ -1,6 +1,6 @@
 namespace Aegis.Core;
 
-public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort, Songhall, Leaguer, Wilds, Harrow, Town, Cairn, Gill, BlackTarn }
+public enum SiteKind { GoblinCamp, Barrow, Hollow, Threshold, Quarry, Hall, Ringfort, Songhall, Leaguer, Wilds, Harrow, Town, Cairn, Gill, BlackTarn, FenHamlet, Saltworks, FenWilds, FenWatch, FenVault }
 
 /// <summary>A monster placed at generation time: kind, cell, and generated stats (D-011).</summary>
 public readonly record struct MonsterSpawn(MonsterKind Kind, Pos Pos, int Hp, string? Epithet = null, bool Chief = false);
@@ -61,6 +61,9 @@ public sealed class Site
     /// for this world; the next generated world restores all three.
     /// </summary>
     public List<Pos> FishingReaches { get; init; } = [];
+
+    /// <summary>The Salt Fen's finite pans. Removing a cell exhausts that pan for this world.</summary>
+    public List<Pos> SaltPans { get; init; } = [];
 }
 
 /// <summary>
@@ -83,6 +86,7 @@ public sealed class World
 {
     public required ulong Seed { get; init; }
     public required int Tier { get; init; }
+    public required int GeneratorVersion { get; init; }
     public required string Name { get; init; }
     public required string SettlementName { get; init; }
     public required FactGraph Facts { get; init; }
@@ -137,6 +141,8 @@ public sealed class World
     /// <summary>The frontier (D-146): the wild fells above the road, no law and no roofs.</summary>
     public Region FellRegion => Regions.First(r => r.Id == "fells");
 
+    public Region FenRegion => Regions.First(r => r.Id == "fens");
+
     /// <summary>
     /// The high fells (D-146, plan 2026-07 B4): the world's third overworld,
     /// a trackless frontier off the road's north shoulder. New ground (heath
@@ -170,6 +176,16 @@ public sealed class World
 
     /// <summary>The black tarn (D-156): the fells' finite fishing water.</summary>
     public Site BlackTarnSite => Sites.First(s => s.Id == "black-tarn");
+
+    public required GameMap Fens { get; init; }
+    public required Pos FenMouthPos { get; init; }
+    public required Pos FenHomePos { get; init; }
+    public required string FenHamletName { get; init; }
+    public Site FenHamletSite => Sites.First(s => s.Kind == SiteKind.FenHamlet);
+    public Site SaltworksSite => Sites.First(s => s.Kind == SiteKind.Saltworks);
+    public Site FenWildsSite => Sites.First(s => s.Kind == SiteKind.FenWilds);
+    public Site FenWatchSite => Sites.First(s => s.Kind == SiteKind.FenWatch);
+    public Site FenVaultSite => Sites.First(s => s.Kind == SiteKind.FenVault);
     public required List<Site> Sites { get; init; }
     public required List<Npc> Npcs { get; init; }
 
@@ -349,8 +365,10 @@ public static class UnbinderGuises
 /// a goblin camp site) and one cave map for the camp. Every step draws from its own
 /// derived seed stream so subsystems never share RNG state.
 /// </summary>
-public static class WorldGen
+public static partial class WorldGen
 {
+    public const int CurrentGeneratorVersion = 1;
+    public static IReadOnlyList<int> SupportedGeneratorVersions => [1];
     public const int OverworldW = 64;
     public const int OverworldH = 36;
     public const int CampW = 30;
@@ -381,8 +399,10 @@ public static class WorldGen
     /// (D-049): the world-name weave rerolls against them so the long song never
     /// repeats a verse. The list is itself journal-derived, so still deterministic.
     /// </summary>
-    public static World Generate(ulong worldSeed, int tier = 1, string? prevStory = null, IReadOnlyList<OathId>? oaths = null, IReadOnlyCollection<string>? takenNames = null, WorldTwist? twist = null)
+    public static World Generate(ulong worldSeed, int tier = 1, string? prevStory = null, IReadOnlyList<OathId>? oaths = null, IReadOnlyCollection<string>? takenNames = null, WorldTwist? twist = null, int generatorVersion = CurrentGeneratorVersion)
     {
+        if (!SupportedGeneratorVersions.Contains(generatorVersion))
+            throw new NotSupportedException($"Generator version {generatorVersion} is not supported.");
         oaths ??= [];
         WorldTwist worldTwist = twist ?? WorldTwistCatalog.ForCycle(worldSeed, tier);
         // The crowded dark (D-047): every den holds one more than the tier asks.
@@ -1560,10 +1580,17 @@ public static class WorldGen
                 MonsterKind.RuneTongue, runePos, 10 + 2 * (tier - 5)));
         }
 
+        // Generator 1's final append (D-165): the Salt Fen is derived only
+        // after every established world draw and the rare caster placement.
+        // It can add new country without moving any pre-1.0 result.
+        var fen = GenerateFens(worldSeed, tier, road, roadHome, townName,
+            regions, sites, npcs, facts);
+
         return new World
         {
             Seed = worldSeed,
             Tier = tier,
+            GeneratorVersion = generatorVersion,
             WildPonyPos = wildPony,
             Name = worldName,
             SettlementName = settlementName,
@@ -1588,6 +1615,10 @@ public static class WorldGen
             FellHomePos = fellHome,
             FellHerbs = fellHerbs,
             TarnIronSeams = tarnIronSeams,
+            Fens = fen.Map,
+            FenMouthPos = fen.RoadMouth,
+            FenHomePos = fen.HomeMouth,
+            FenHamletName = fen.HamletName,
             TownName = townName,
             Regions = regions,
             PeddlerSalt = Peddling.SaltStock(tier),

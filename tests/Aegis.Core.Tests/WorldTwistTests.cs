@@ -79,7 +79,8 @@ public class WorldTwistTests
         var game = GameAt(WorldTwist.GraveMarket);
         var barrow = game.World.BarrowSite!;
         Enter(game, barrow);
-        var wights = game.Monsters.Where(m => m.Alive && m.SiteId == barrow.Id).ToList();
+        var wights = game.Monsters.Where(m => m.Alive && m.SiteId == barrow.Id
+            && m.Kind == MonsterKind.Wight).ToList();
         var before = wights.Select(m => (m.Pos, m.Hp)).ToArray();
         int hp = game.Player.Hp;
 

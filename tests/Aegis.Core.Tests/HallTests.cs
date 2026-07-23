@@ -29,9 +29,9 @@ public class HallTests
                 Assert.True(Reachable(a.Overworld, a.ShrinePos, hall.OverworldPos),
                     $"seed {seed} tier {tier}: hall unreachable");
 
-                Assert.Equal(Math.Min(5 + (tier - 4), 8), hall.Spawns.Count);
-                Assert.All(hall.Spawns, s => Assert.Equal(MonsterKind.Hound, s.Kind));
-                Assert.All(hall.Spawns, s => Assert.Equal(10 + 2 * (tier - 4), s.Hp));
+                var hounds = hall.Spawns.Where(s => s.Kind == MonsterKind.Hound).ToList();
+                Assert.Equal(Math.Min(5 + (tier - 4), 8), hounds.Count);
+                Assert.All(hounds, s => Assert.Equal(10 + 2 * (tier - 4), s.Hp));
 
                 // Porch, room, and both chambers hang together despite the rubble.
                 Assert.True(Reachable(hall.Map, hall.EntryPos, hall.ChestPos),

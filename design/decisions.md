@@ -231,6 +231,76 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-172: A word left standing: combat and magic depth built (2026-07-23)
+
+V1-07 is built and Verified under D-163's approved boundary. Exact opposite-cell
+flanking now runs on both sides of the bearer. A paid player melee blow in the approved
+guest or shade geometry adds two posture pressure, and Blades add one blood. A landed
+committed enemy blow in the matching hostile geometry adds one bearer pressure. Broad
+adjacency, incidental bites, and hidden facing add nothing. The launch movesets now close
+over their existing verbs and this shared geometry.
+
+The three enemy follow-ons are live. A goblin alarm alerts every unaware living goblin
+in its site while authored dormancy remains intact. A warder with a broken board leaves
+the ranged rim, closes to its existing weak melee, and never raises another loft. The
+Severed can declare a one-turn three-cell facing sweep. Its whole footprint is marked
+even at Blur, feet may leave it, and a bearer still in its adjacent arc may parry it.
+Read names the tell and timing; Keen adds its heavy weight and legal parry answer in
+sidebar lines that fit the fixed rail.
+
+All five martial skills append their permanent level-6 questions without reordering an
+older threshold. The ten new answers ride only paid acts: blade cuts and parries, hafted
+heaves and guarded roots, two-cell pressing shoves and cheaper unarmed parries, deeper
+guarded armor and posture recovery after a parry, and pressing or intent-reading shafts.
+Spellcraft appends its level-2 and level-4 questions. The full word, spare syllable,
+answering word, and deep well compose through one successful-working gate, with refunds
+capped at maximum Focus and failed or preparatory acts teaching nothing.
+
+`RuneTongue` end-appends the monster catalog. From tier 5 onward one eligible fighting
+site receives exactly one from the named `rune-tongue` stream derived after every prior
+world draw. It carries ordinary blood and posture, a weak close attack, a visible
+recovery turn, a one-turn falling cross, and a two-turn following binding. The falling
+word ignores armor and parry but not `clamp(Will - 5, 0, 4)` resistance. The binding
+follows movement, respects resource floors, and breaks on blood, posture, death, or lost
+line of sight. Blur gives the fair answer, Read names and times it, and Keen prints the
+effect and resistance arithmetic.
+
+Severing and Mending end-append the working catalog at six and seven. Stone preferences
+retain their first five entries and distribute the additions in complementary tail
+order. The known-word creation stream may grant either new word without changing its
+draw count. Severing spends two Focus on a four-cell line, cancels only the first tagged
+hostile working, deals two posture pressure, and teaches only on success. Mending spends
+three Focus on a one-turn self hold, refuses free at full blood, uses the levin grip if
+wounded, restores the approved Mind and Spellcraft-scaled blood, and never shortens the
+wound clock. Both words, all fourteen new perks, and the hostile caster survive replay,
+death, and crossing under the existing knowledge rules.
+
+The default pilot now dodges falling crosses, answers bindings through interruption or
+line of sight, severs when that is the safest word, and mends only while hurt on safe
+site ground. `journey --caster` uses the approved Mind and Will creation, demonstrates
+all seven workings, and selects the full word and answering word. Prose, JSON, snapshots,
+and sim expose the approved resistance, flank, sweep, warder, hostile-working, and
+per-working diagnostics. Save v96 advances to v97 because the end-appended catalogs,
+world generation, combat resolution, creation word, and pilot journals all change.
+
+The Release build has zero warnings and all 940 tests pass, including 20 focused
+combat-and-magic checks. Seeds 1, 7, 99, 2024, and 88888 each complete two
+byte-identical twelve-world journeys at 26950, 32865, 31738, 35101, and 35877 keys.
+Every default run meets hostile magic and uses both new player workings. Seed 1's
+26950-key journal replays exactly to cycle 13 and turn 25885. The caster seed-1 route
+completes twelve crossings in 27182 keys and 26065 turns, successfully demonstrates all
+seven workings, takes both recommended Spellcraft answers, and also replays exactly.
+All six JSON reports agree with their prose counterparts. The 240-world generation gate
+exits cleanly with zero digest mismatches across 87722 surfaces and the two expected
+legacy prose warnings. Drift from v100 is justified by rune-tongue placement and combat,
+flanking and sweep resolution, the new words, and the pilot's safe answers. The v101
+journeys are the new baseline.
+
+Options set aside and deferrals remain D-163's: no new combat skill, command, gear tier,
+attunement, components, schools, alternate acquisition sources, enemy Focus, random
+miscasts, summons, teleportation, darkness, caster reputation, level-8 combat wave, or
+wider noncombat knack pass. V1-08 is next in the approved queue.
+
 ### D-171: The quick road and the quiet one: activity breadth built (2026-07-23)
 
 V1-06 is built and Verified under D-162's approved boundary. `SkillId` now end-appends

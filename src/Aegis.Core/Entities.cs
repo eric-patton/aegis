@@ -104,10 +104,14 @@ public sealed class Player
 
     /// <summary>The pool's brim, from Will (D-091): the humble baseline of 5 gives 3. The emberwrought carry one more (D-092).</summary>
     public int MaxFocus => 3 + Math.Max(0, Attributes[Attr.Will] - AttributeSet.Baseline)
-        + (Folk == FolkId.Emberwrought ? 1 : 0);
+        + (Folk == FolkId.Emberwrought ? 1 : 0)
+        + (HasPerk(PerkId.DeepWell) ? 1 : 0);
 
     /// <summary>Flat working bonus from Mind above baseline (D-091): the learned mind drives the word harder.</summary>
     public int SpellBonus => Math.Max(0, Attributes[Attr.Mind] - AttributeSet.Baseline);
+
+    /// <summary>What hostile words lose against the bearer: Will above five, capped at four.</summary>
+    public int WillResistance => Math.Clamp(Attributes[Attr.Will] - AttributeSet.Baseline, 0, 4);
 
     /// <summary>Turns the ward-word still holds (D-091): while it runs, blows are turned further.</summary>
     public int WardTurns { get; set; }
@@ -120,11 +124,20 @@ public sealed class Player
     /// </summary>
     public Pos? LevinTarget { get; set; }
 
+    /// <summary>The mending held one breath from spoken, with its Focus already committed.</summary>
+    public bool MendingHeld { get; set; }
+
     /// <summary>The Aegis speaks once at the first word taken up; never again.</summary>
     public bool SpellLineHeard { get; set; }
 
     /// <summary>The Aegis speaks once over the first shade ever called (D-099); never again.</summary>
     public bool CallingLineHeard { get; set; }
+
+    /// <summary>The Aegis marks the first hostile working the bearer faces; never again.</summary>
+    public bool HostileWorkingLineHeard { get; set; }
+
+    /// <summary>The Aegis marks the first hostile working the bearer severs; never again.</summary>
+    public bool SeveringLineHeard { get; set; }
 
     /// <summary>
     /// A heavy blow wound up and not yet loosed (D-058): commitment runs both
@@ -547,7 +560,7 @@ public sealed class Player
 /// <summary>How the threshold resolved (D-039): unresolved, the keeping taken up, or laid down.</summary>
 public enum Resolution { None, Kept, Refused }
 
-public enum MonsterKind { Goblin, Wight, Severed, Graven, Hound, Carl, Boar, Warder, Thegn, Hart, Wolf, GreatWolf }
+public enum MonsterKind { Goblin, Wight, Severed, Graven, Hound, Carl, Boar, Warder, Thegn, Hart, Wolf, GreatWolf, RuneTongue }
 
 public sealed class Monster
 {
@@ -584,12 +597,18 @@ public sealed class Monster
     /// </summary>
     public bool BoardBroken { get; set; }
 
+    /// <summary>Whether the boardless warder's close phase has entered the run diagnostics.</summary>
+    public bool BoardlessClosureCounted { get; set; }
+
     /// <summary>
     /// Standing open (D-053): a carl whose blow is spent holds its board wide,
     /// and a boar that missed its charge stands blown. While it runs, the
     /// monster neither steps nor strikes, and shafts find it.
     /// </summary>
     public int ExposedTurns { get; set; }
+
+    /// <summary>One visible turn after a rune-tongue's working resolves or is broken.</summary>
+    public int RecoveryTurns { get; set; }
 
     /// <summary>
     /// The guard worn down (D-125): the second bar, rocked by pressure that is
@@ -616,6 +635,7 @@ public sealed class Monster
         MonsterKind.Carl => 8,
         MonsterKind.Thegn => 8,
         MonsterKind.Severed => 9,
+        MonsterKind.RuneTongue => 6,
         _ => 10,
     };
 
@@ -668,6 +688,7 @@ public sealed class Monster
         MonsterKind.Hart => "hart",
         MonsterKind.Wolf => "moor-wolf",
         MonsterKind.GreatWolf => "great she-wolf",
+        MonsterKind.RuneTongue => "rune-tongue",
         _ => "creature",
     };
 }
@@ -682,6 +703,12 @@ public sealed class Intent
     public required Pos TargetCell { get; init; }
     public int TurnsUntilResolve { get; set; } = 1;
 
+    /// <summary>Every legal cell of a shaped intent. Empty means TargetCell alone.</summary>
+    public Pos[] Footprint { get; init; } = [];
+
+    /// <summary>The caster's blood when a hostile working began, used by its honest interruption rule.</summary>
+    public int HitPointsAtCommit { get; init; }
+
     /// <summary>
     /// The feint (D-096): where the blow truly falls, when the shown mark is a
     /// lie. Only the sword-thegn's measured cut sets it, and only against a
@@ -690,7 +717,12 @@ public sealed class Intent
     public Pos? FeintCell { get; init; }
 }
 
-public enum IntentKind { CrushingBlow, BarrowBlade, SunderingCut, HurledStone, GravenFist, ThroatLunge, SeaxStab, BoarCharge, LoftedStone, RallyCry, GraveChill, MeasuredCut, BoardCheck, Pounce }
+public enum IntentKind
+{
+    CrushingBlow, BarrowBlade, SunderingCut, HurledStone, GravenFist, ThroatLunge,
+    SeaxStab, BoarCharge, LoftedStone, RallyCry, GraveChill, MeasuredCut, BoardCheck,
+    Pounce, SeveredSweep, FallingWord, BindingWord,
+}
 
 /// <summary>
 /// How clearly the bearer reads a kind's wind-up (D-059): a stranger's is a

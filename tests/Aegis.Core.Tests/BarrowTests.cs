@@ -33,8 +33,9 @@ public class BarrowTests
             Assert.All(barrow.Spawns, s => Assert.Equal(12, s.Hp));
 
             var t5 = WorldGen.Generate(seed, tier: 5);
-            Assert.Equal(5, t5.BarrowSite!.Spawns.Count);
-            Assert.All(t5.BarrowSite.Spawns, s => Assert.Equal(18, s.Hp));
+            var tierFiveWights = t5.BarrowSite!.Spawns.Where(s => s.Kind == MonsterKind.Wight).ToList();
+            Assert.Equal(5, tierFiveWights.Count);
+            Assert.All(tierFiveWights, s => Assert.Equal(18, s.Hp));
         }
     }
 

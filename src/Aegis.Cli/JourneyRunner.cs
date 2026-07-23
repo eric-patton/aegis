@@ -42,6 +42,7 @@ public static class JourneyRunner
         bool json = false;
         bool wits = false; // the perception-build demo (D-084): the eye raised first.
         bool rogue = false;
+        bool caster = false;
 
         for (int i = 0; i < args.Length; i++)
         {
@@ -57,6 +58,7 @@ public static class JourneyRunner
                 case "--json": json = true; break;
                 case "--wits": wits = true; break;
                 case "--rogue": rogue = true; break;
+                case "--caster": caster = true; break;
                 default:
                     Console.Error.WriteLine($"aegis journey: unexpected argument '{args[i]}'");
                     return 1;
@@ -240,7 +242,7 @@ public static class JourneyRunner
                 if (k > siteKeyBudget) skip.Add(activeSite);
             }
 
-            char? key = JourneyPilot.NextKey(game, skip, wits, rogue);
+            char? key = JourneyPilot.NextKey(game, skip, wits, rogue, caster);
             // The door counts as the site (D-146's lesson): a death on the very
             // key that steps in (a pack waiting at the mouth) must land on the
             // site's own death budget, or the give-up machinery never sees a
@@ -555,6 +557,7 @@ public static class JourneyRunner
                 TargetCrossings: cycles,
                 WitsDemo: wits,
                 Rogue: rogue,
+                Caster: caster,
                 CycleReached: game.Cycle,
                 Tier: game.World.Tier,
                 CurrentTwist: WorldTwistCatalog.IdOf(game.World.Twist),
@@ -593,6 +596,21 @@ public static class JourneyRunner
                 PickpocketAttempts: game.PickpocketAttempts,
                 BurglaryAttempts: game.BurglaryAttempts,
                 RestitutionsMade: game.RestitutionsMade,
+                RuneTongueEncounters: game.RuneTongueEncounters,
+                HostileWorkingsBegun: game.HostileWorkingsBegun,
+                HostileWorkingsInterrupted: game.HostileWorkingsInterrupted,
+                HostileWorkingsResisted: game.HostileWorkingsResisted,
+                HostileWorkingsLanded: game.HostileWorkingsLanded,
+                WillResistance: game.Player.WillResistance,
+                PlayerFlanks: game.PlayerFlanks,
+                EnemyFlanks: game.EnemyFlanks,
+                SweepsDodged: game.SweepsDodged,
+                SweepsLanded: game.SweepsLanded,
+                BoardlessWarderClosures: game.BoardlessWarderClosures,
+                WorkingCasts: Enum.GetValues<SpellId>().ToDictionary(
+                    SpellCatalog.IdOf, game.WorkingCasts),
+                WorkingEffects: Enum.GetValues<SpellId>().ToDictionary(
+                    SpellCatalog.IdOf, game.WorkingEffects),
                 ArcReach: ArcReach(game),
                 ResolvedAs: resolvedAs.ToString().ToLowerInvariant(),
                 ResolvedCycle: resolvedCycle,
@@ -715,7 +733,7 @@ public static class JourneyRunner
             return 0;
         }
 
-        Report(seed, cycles, wits, rogue, crossings, stop, game, totalKeys, keys, emitKeys,
+        Report(seed, cycles, wits, rogue, caster, crossings, stop, game, totalKeys, keys, emitKeys,
             remnantsReclaimed, coinReclaimed, essenceReclaimed,
             chestsLooted, chestCoin, gearTaken, knacksTaken,
             resolvedAs, resolvedCycle, laidCycle, mendedCycle, legendFromBurden,
@@ -807,7 +825,7 @@ public static class JourneyRunner
             : $"on the overworld at ({game.Player.Pos.X},{game.Player.Pos.Y})";
 
     private static void Report(
-        ulong seed, int cycles, bool wits, bool rogue, List<Crossing> crossings, string stop,
+        ulong seed, int cycles, bool wits, bool rogue, bool caster, List<Crossing> crossings, string stop,
         Game game, int totalKeys, StringBuilder keys, bool emitKeys,
         int remnantsReclaimed, int coinReclaimed, int essenceReclaimed,
         int chestsLooted, int chestCoin, int gearTaken, int knacksTaken,
@@ -838,7 +856,8 @@ public static class JourneyRunner
         var w = Console.Out;
         w.WriteLine($"AEGIS JOURNEY   seed {seed}   target {cycles} crossing(s)"
                     + (wits ? "   [--wits: the keen-eyed walk (D-084)]" : "")
-                    + (rogue ? "   [--rogue: the crooked trade (D-162)]" : ""));
+                    + (rogue ? "   [--rogue: the crooked trade (D-162)]" : "")
+                    + (caster ? "   [--caster: seven workings (D-163)]" : ""));
         w.WriteLine(new string('=', 62));
 
         if (crossings.Count == 0)
@@ -904,6 +923,13 @@ public static class JourneyRunner
             w.WriteLine($"           rogue circuit: pocket attempts {game.PickpocketAttempts}; lock attempts {game.LockAttempts}; "
                         + $"burglary attempts {game.BurglaryAttempts}; restitutions {game.RestitutionsMade}; "
                         + $"Sleight {game.Player.Skills.Uses(SkillId.Sleight)} use(s), level {game.Player.Skills.Level(SkillId.Sleight)}.");
+        w.WriteLine($"         combat and magic: Will resistance {game.Player.WillResistance}; flanks {game.PlayerFlanks}/{game.EnemyFlanks} bearer/enemy; "
+                    + $"sweeps {game.SweepsDodged} dodged, {game.SweepsLanded} landed; boardless closures {game.BoardlessWarderClosures}.");
+        w.WriteLine($"           rune-tongues {game.RuneTongueEncounters}; hostile words {game.HostileWorkingsBegun} begun, "
+                    + $"{game.HostileWorkingsInterrupted} interrupted, {game.HostileWorkingsResisted} resisted, {game.HostileWorkingsLanded} landed.");
+        string workingSummary = string.Join(", ", Enum.GetValues<SpellId>()
+            .Select(id => $"{SpellCatalog.IdOf(id)} {game.WorkingCasts(id)}/{game.WorkingEffects(id)}"));
+        w.WriteLine($"           workings: {workingSummary} (casts/effects){(caster ? "; caster route" : "")}.");
         w.WriteLine($"         the arc: climbed the reveal ladder to {ArcReach(game)} (D-068).");
         if (resolvedCycle > 0)
             w.WriteLine($"           answered the keeping ({resolvedAs.ToString().ToLowerInvariant()}) at the Hearth in cycle {resolvedCycle}.");
@@ -1001,7 +1027,7 @@ internal sealed record JourneyCrossingDto(
     List<JourneySiteDto> Sites, List<JourneyReadDto> BestiaryBefore, List<JourneyReadDto> BestiaryAfter);
 
 internal sealed record JourneyReport(
-    ulong Seed, int TargetCrossings, bool WitsDemo, bool Rogue, int CycleReached, int Tier, string CurrentTwist, int CrossingsMade, string Stop,
+    ulong Seed, int TargetCrossings, bool WitsDemo, bool Rogue, bool Caster, int CycleReached, int Tier, string CurrentTwist, int CrossingsMade, string Stop,
     int KeysPressed, int Turns, int Deaths, string Scars,
     int RemnantsReclaimed, int CoinReclaimed, int EssenceReclaimed,
     int ChestsLooted, int ChestCoin, int GearTaken,
@@ -1012,6 +1038,11 @@ internal sealed record JourneyReport(
     int RushesCompleted, int QuietBandsCrossed, int SoftTreadDiscoveries,
     int CleanPilfers, int CleanBurglaries, int FencedLots, int FencedGoods,
     int LockAttempts, int PickpocketAttempts, int BurglaryAttempts, int RestitutionsMade,
+    int RuneTongueEncounters, int HostileWorkingsBegun, int HostileWorkingsInterrupted,
+    int HostileWorkingsResisted, int HostileWorkingsLanded, int WillResistance,
+    int PlayerFlanks, int EnemyFlanks, int SweepsDodged, int SweepsLanded,
+    int BoardlessWarderClosures,
+    Dictionary<string, int> WorkingCasts, Dictionary<string, int> WorkingEffects,
     string ArcReach, string ResolvedAs, int ResolvedCycle, int LaidCycle, int MendedCycle,
     int Legend, int LegendFromBurden,
     int HidesTaken, int HidesSold, int CoinFromHides,

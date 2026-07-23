@@ -416,8 +416,14 @@ public sealed class Game
 
     private SpellId? _pendingLineSpell;
 
+    /// <summary>The line-working currently waiting for a direction, exposed for the engine-honest pilot.</summary>
+    public SpellId? PendingLineSpell => _pendingLineSpell;
+
     /// <summary>The bearer's blood when the levin was raised (D-091): a wound taken while it is held threatens the word.</summary>
     private int _hpAtLevinCommit;
+
+    /// <summary>The bearer's blood when the mending was raised: the same grip check as the levin.</summary>
+    private int _hpAtMendingCommit;
 
     /// <summary>
     /// The terms of the crossing (D-047), open only at an open waygate: digits
@@ -573,6 +579,25 @@ public sealed class Game
     public int LastSelfBrewCycle { get; private set; }
     public int LastLiveRushCycle { get; private set; }
     public int LastQuietBandCycle { get; private set; }
+
+    /// <summary>Run-wide combat and magic diagnostics rebuilt by journal replay.</summary>
+    public int RuneTongueEncounters { get; private set; }
+    public int HostileWorkingsBegun { get; private set; }
+    public int HostileWorkingsInterrupted { get; private set; }
+    public int HostileWorkingsResisted { get; private set; }
+    public int HostileWorkingsLanded { get; private set; }
+    public int PlayerFlanks { get; private set; }
+    public int EnemyFlanks { get; private set; }
+    public int SweepsDodged { get; private set; }
+    public int SweepsLanded { get; private set; }
+    public int BoardlessWarderClosures { get; private set; }
+
+    private readonly int[] _workingCasts = new int[SpellCatalog.All.Count];
+    private readonly int[] _workingEffects = new int[SpellCatalog.All.Count];
+    private readonly HashSet<string> _runeSitesEncountered = [];
+
+    public int WorkingCasts(SpellId id) => _workingCasts[(int)id];
+    public int WorkingEffects(SpellId id) => _workingEffects[(int)id];
 
     /// <summary>One Stealth use per foe per generated site, even across a death.</summary>
     private readonly HashSet<Monster> _quietTraining = [];
@@ -910,6 +935,7 @@ public sealed class Game
     public event Action<char>? KeyApplied;
 
     private Rng _combatRng;
+    private bool _inMonsterPhase;
     private readonly StoryletEngine _storylets;
 
     /// <summary>Total storylets fired this character, all worlds (observability).</summary>
@@ -1259,10 +1285,12 @@ public sealed class Game
         switch (id)
         {
             case ThingId.Word:
-                if (!Player.HasSpell(SpellId.Spark)) Player.Spells.Add(SpellId.Spark);
+                var wordRng = new Rng(SeedTree.Derive(World.Seed, "known-word"));
+                var knownWord = SpellCatalog.CreationPool[wordRng.Next(SpellCatalog.CreationPool.Count)];
+                if (!Player.HasSpell(knownWord)) Player.Spells.Add(knownWord);
                 Player.Focus = Player.MaxFocus;
                 Player.SpellLineHeard = true;
-                Log.Add(Turn, "The spark has been yours since before the catching: a word older than any stead, carried quiet. (z speaks what you carry)", LogTone.Info);
+                Log.Add(Turn, $"{Cap(SpellCatalog.Def(knownWord).Name)} has been yours since before the catching: a word older than any stead, carried quiet. (z speaks what you carry)", LogTone.Info);
                 Log.Add(Turn, "\"So that is what you kept warm through the dark. Say it carefully.\"", LogTone.Aegis);
                 break;
             case ThingId.FineArms:
@@ -1543,6 +1571,15 @@ public sealed class Game
         if (Player.LevinTarget is { } levinCell && cmd is not (Command.Gear or Command.Sheet or Command.Help))
         {
             ResolveLevin(levinCell);
+            AdvanceTurn();
+            return;
+        }
+
+        // The mending is a one-turn self wind-up. The next field act says it,
+        // with the same wounded grip rule as the levin.
+        if (Player.MendingHeld && cmd is not (Command.Gear or Command.Sheet or Command.Help))
+        {
+            ResolveMending();
             AdvanceTurn();
             return;
         }
@@ -2519,6 +2556,7 @@ public sealed class Game
         // through an arch, no levin survives it, and the pool arrives at brim.
         Player.HeaveTarget = null;
         Player.LevinTarget = null;
+        Player.MendingHeld = false;
         Player.WardTurns = 0;
         Player.ChilledTurns = 0;
         // The guard crosses whole (D-126): worn is not wounded, and the far
@@ -5705,6 +5743,7 @@ public sealed class Game
         Player.WardTurns = 0;
         Player.HeaveTarget = null;
         Player.LevinTarget = null;
+        Player.MendingHeld = false;
         _parryTarget = null;
     }
 
@@ -7076,7 +7115,7 @@ public sealed class Game
     /// <summary>What iron can meet (D-125): a swung blow. Not a charging mass, a falling stone, a cry, or the cold.</summary>
     private static bool Parryable(IntentKind kind) => kind is IntentKind.CrushingBlow or IntentKind.BarrowBlade
         or IntentKind.SunderingCut or IntentKind.GravenFist or IntentKind.ThroatLunge or IntentKind.SeaxStab
-        or IntentKind.MeasuredCut or IntentKind.BoardCheck;
+        or IntentKind.MeasuredCut or IntentKind.BoardCheck or IntentKind.SeveredSweep;
 
     /// <summary>
     /// The blow a parry could meet (D-125): an adjacent foe whose wind-up's
@@ -7088,7 +7127,8 @@ public sealed class Game
     private Monster? ParryMark() => Mode != MapMode.Site ? null
         : Monsters.FirstOrDefault(m => m.Alive && m.SiteId == CurrentSite!.Id
             && m.Pos.Chebyshev(Player.Pos) == 1
-            && m.Intent is { } i && i.TurnsUntilResolve <= 1 && i.TargetCell == Player.Pos
+            && m.Intent is { } i && i.TurnsUntilResolve <= 1
+            && (i.TargetCell == Player.Pos || i.Footprint.Contains(Player.Pos))
             && i.FeintCell is null && Parryable(i.Kind));
 
     /// <summary>A blow is shown at the bearer's feet that iron could meet (the sidebar's hint).</summary>
@@ -7114,12 +7154,15 @@ public sealed class Game
             Log.Add(Turn, "No blow is shown at your ground; there is nothing for a guard to meet.");
             return false;
         }
-        if (Player.Stamina < GuardBreak.ParryCost)
+        int parryCost = Player.Weapon is null && Player.HasPerk(PerkId.CaughtWrist)
+            ? 1
+            : GuardBreak.ParryCost;
+        if (Player.Stamina < parryCost)
         {
             Log.Add(Turn, "Your arms are too spent to set the guard; this one must be answered by feet.", LogTone.Combat);
             return false;
         }
-        Player.Stamina -= GuardBreak.ParryCost;
+        Player.Stamina -= parryCost;
         _parryTarget = foe;
         Log.Add(Turn, $"You set your guard on the shown line and hold your ground against the {foe.Name}.", LogTone.Combat);
         return true;
@@ -7139,7 +7182,11 @@ public sealed class Game
         monster.PostureDmg = 0;
         monster.GuardBroken = true;
         monster.ExposedTurns = 2;
-        if (monster.Intent is not null) monster.Intent = null;
+        if (monster.Intent is { } held)
+        {
+            if (MagicalIntent(held.Kind)) InterruptHostileWorking(monster, "The broken guard breaks the held word with it.");
+            else monster.Intent = null;
+        }
         Log.Add(Turn, $"The {monster.Name}'s guard is beaten open: it staggers, arms wide, nothing between you and it.", LogTone.Reward);
     }
 
@@ -7163,7 +7210,8 @@ public sealed class Game
     /// </summary>
     private static int BearerPressure(IntentKind kind) => kind switch
     {
-        IntentKind.SunderingCut or IntentKind.GravenFist or IntentKind.ThroatLunge => GuardBreak.BearerHeavy,
+        IntentKind.SunderingCut or IntentKind.SeveredSweep
+            or IntentKind.GravenFist or IntentKind.ThroatLunge => GuardBreak.BearerHeavy,
         IntentKind.CrushingBlow or IntentKind.BarrowBlade or IntentKind.SeaxStab
             or IntentKind.MeasuredCut => GuardBreak.BearerLight,
         _ => 0,
@@ -7183,6 +7231,10 @@ public sealed class Game
     {
         if (pressure <= 0 || Player.StaggerTurns > 0 || Player.Hp <= 0) return;
         pressure += Player.Stance switch { Stance.Pressing => 1, Stance.Guarded => -1, _ => 0 };
+        if (Player.Stance == Stance.Guarded
+            && Player.Weapon?.Family == SkillId.Hafted
+            && Player.HasPerk(PerkId.RootedHaft))
+            pressure--;
         if (Player.HeaveTarget is not null || Player.LevinTarget is not null) pressure += 1;
         if (pressure <= 0) return;
         Player.PostureDmg += pressure;
@@ -7194,7 +7246,33 @@ public sealed class Game
             Player.HeaveTarget = null;
             Log.Add(Turn, "The wound-up blow dies in your own hands.", LogTone.Danger);
         }
+        if (Player.MendingHeld)
+        {
+            Player.MendingHeld = false;
+            Log.Add(Turn, "The mending breaks in your mouth before it can close.", LogTone.Danger);
+        }
         Log.Add(Turn, "Your guard is beaten open: your arms will not answer, and every blow will find you deeper. Your feet still will.", LogTone.Danger);
+    }
+
+    /// <summary>Exact opposite-cell geometry around one foe, with one living fellow on the far side.</summary>
+    private bool PlayerFlanksTarget(Monster target)
+    {
+        int dx = Math.Sign(Player.Pos.X - target.Pos.X);
+        int dy = Math.Sign(Player.Pos.Y - target.Pos.Y);
+        if (Player.Pos != target.Pos.Plus(dx, dy)) return false;
+        Pos opposite = target.Pos.Plus(-dx, -dy);
+        return Fellows.Any(f => f.Alive && f.Pos == opposite);
+    }
+
+    /// <summary>Exact opposite-cell geometry around the bearer, with the striker on one side.</summary>
+    private bool EnemyFlanksBearer(Monster striker)
+    {
+        int dx = Math.Sign(striker.Pos.X - Player.Pos.X);
+        int dy = Math.Sign(striker.Pos.Y - Player.Pos.Y);
+        if (striker.Pos != Player.Pos.Plus(dx, dy)) return false;
+        Pos opposite = Player.Pos.Plus(-dx, -dy);
+        return Monsters.Any(m => m.Alive && m != striker && m.Aware && !m.Dormant
+            && m.SiteId == striker.SiteId && m.Pos == opposite && IsHostile(m));
     }
 
     /// <summary>
@@ -7636,9 +7714,12 @@ public sealed class Game
             + (Player.HasScar(ScarId.CrushedHand) ? 1 : 0);
         int damage;
         SkillId? trained = null;
+        bool flanked = false;
         if (Player.Stamina >= staminaCost)
         {
             Player.Stamina -= staminaCost;
+            flanked = PlayerFlanksTarget(target);
+            if (flanked) PlayerFlanks++;
             // The read moment (D-055): a body in its wind-up is a body already
             // spoken for. The answered cut and the caught arm collect on it.
             damage = _combatRng.Range(2, 5) + Player.MeleeBonus + (weapon?.EffectiveBonus(Player.Attributes) ?? 0)
@@ -7647,7 +7728,10 @@ public sealed class Game
                 + (family == SkillId.Blades && Player.HasPerk(PerkId.AnsweredCut) && target.Intent is not null ? 2 : 0)
                 + (family == SkillId.Hafted && Player.HasPerk(PerkId.TrueArc) ? 1 : 0)
                 + (weapon is null && Player.HasPerk(PerkId.KnuckleAndBone) ? 2 : 0)
-                + (weapon is null && Player.HasPerk(PerkId.CaughtArm) && target.Intent is not null ? 3 : 0);
+                + (weapon is null && Player.HasPerk(PerkId.CaughtArm) && target.Intent is not null ? 3 : 0)
+                + (family == SkillId.Blades && Player.Stance == Stance.Pressing
+                    && Player.HasPerk(PerkId.ForwardEdge) ? 1 : 0)
+                + (family == SkillId.Blades && flanked ? 1 : 0);
             // The footing (D-094): pressing gives the blow 2 more, guarded 2 less, never below 1.
             damage = Math.Max(1, damage + Player.StanceBlow - (Player.ChilledTurns > 0 ? 2 : 0));
             // The riposte (D-125): a paid blow through a broken guard lands deeper.
@@ -7690,7 +7774,8 @@ public sealed class Game
                 }
             }
             // The guard rocked (D-125): only a paid blow carries the pressure.
-            if (trained is not null) RockGuard(target, GuardBreak.BlowPressure);
+            if (trained is not null)
+                RockGuard(target, GuardBreak.BlowPressure + (flanked ? 2 : 0));
             // The checked swing (D-055): a landed hafted blow breaks the wind-up
             // outright. Only a paid swing has the weight; feeble flailing checks
             // nothing.
@@ -7714,15 +7799,23 @@ public sealed class Game
             if (trained == SkillId.Brawling && weapon is null)
             {
                 int sx = Math.Sign(target.Pos.X - Player.Pos.X), sy = Math.Sign(target.Pos.Y - Player.Pos.Y);
-                var back = target.Pos.Plus(sx, sy);
-                if (CurrentMap.Walkable(back)
-                    && !FellowAt(back)
-                    && !Monsters.Any(m => m.Alive && m.SiteId == target.SiteId && m.Pos == back))
+                int strides = Player.Stance == Stance.Pressing && Player.HasPerk(PerkId.CrowdingHands) ? 2 : 1;
+                int carried = 0;
+                for (int stride = 0; stride < strides; stride++)
                 {
+                    var back = target.Pos.Plus(sx, sy);
+                    if (!CurrentMap.Walkable(back)
+                        || FellowAt(back)
+                        || Monsters.Any(m => m.Alive && m.SiteId == target.SiteId && m.Pos == back))
+                        break;
                     target.Pos = back;
-                    Log.Add(Turn, $"The blow carries the {target.Name} a full stride back.", LogTone.Combat);
+                    carried++;
                 }
-                else
+                if (carried > 0)
+                    Log.Add(Turn, carried == 2
+                        ? $"The blow stays on the {target.Name} and carries it two full strides back."
+                        : $"The blow carries the {target.Name} a full stride back.", LogTone.Combat);
+                if (carried == 0)
                 {
                     Log.Add(Turn, $"The {target.Name} is driven against what will not give, and held there a breath.", LogTone.Combat);
                     // The wall-slam (D-125, tracked since D-095): ground that
@@ -7803,6 +7896,9 @@ public sealed class Game
     /// </summary>
     private void HarvestRemains(Monster target)
     {
+        if (target.Intent is { } held && MagicalIntent(held.Kind))
+            InterruptHostileWorking(target, $"The {target.Name}'s death ends the held word.");
+
         if (_formalBout is not null && target.SiteId == "town" && target.FormalName is not null)
         {
             target.Hp = 0;
@@ -8123,6 +8219,8 @@ public sealed class Game
             int damage = _combatRng.Range(2, 5) + Player.MeleeBonus + spear.EffectiveBonus(Player.Attributes)
                 + Player.Skills.Bonus(SkillId.Hafted)
                 + (Player.HasPerk(PerkId.TrueArc) ? 1 : 0);
+            bool flanked = PlayerFlanksTarget(target);
+            if (flanked) PlayerFlanks++;
             damage = Math.Max(1, damage + Player.StanceBlow - (Player.ChilledTurns > 0 ? 2 : 0)); // footing (D-094), grave-cold (D-096)
             damage += RiposteBonus(target); // the open door (D-125) is within the ash's reach
             BreakGraveTruce(target);
@@ -8141,7 +8239,7 @@ public sealed class Game
                     }
                 }
                 // The guard rocked (D-125): a paid point is pressure like a paid edge.
-                RockGuard(target, GuardBreak.BlowPressure);
+                RockGuard(target, GuardBreak.BlowPressure + (flanked ? 2 : 0));
                 // The checked swing (D-055) has the same weight at the ash's
                 // length: a paid landed blow breaks the wind-up outright.
                 if (Player.HasPerk(PerkId.CheckedSwing) && target.Intent is not null)
@@ -8272,10 +8370,13 @@ public sealed class Game
             return;
         }
 
+        bool flanked = PlayerFlanksTarget(target);
+        if (flanked) PlayerFlanks++;
         int damage = _combatRng.Range(6, 12) + 2 * Player.MeleeBonus + 2 * weapon.EffectiveBonus(Player.Attributes)
             + Player.Skills.Bonus(family)
             + (family == SkillId.Blades && Player.HasPerk(PerkId.DrawnCut) ? 1 : 0)
-            + (family == SkillId.Hafted && Player.HasPerk(PerkId.TrueArc) ? 1 : 0);
+            + (family == SkillId.Hafted && Player.HasPerk(PerkId.TrueArc) ? 1 : 0)
+            + (family == SkillId.Blades && flanked ? 1 : 0);
         damage = Math.Max(1, damage + Player.StanceBlow - (Player.ChilledTurns > 0 ? 2 : 0)); // footing (D-094), grave-cold (D-096)
         damage += RiposteBonus(target); // the open door (D-125), hit with everything
         BreakGraveTruce(target);
@@ -8295,7 +8396,10 @@ public sealed class Game
             }
             // The guard rocked hardest by weight (D-125): the heave is the
             // biggest single thing a hand can throw, and the bar knows it.
-            RockGuard(target, GuardBreak.HeavePressure);
+            int pressure = GuardBreak.HeavePressure + (flanked ? 2 : 0)
+                + (family == SkillId.Hafted && Player.Stance == Stance.Pressing
+                    && Player.HasPerk(PerkId.WholeWeight) ? 1 : 0);
+            RockGuard(target, pressure);
             // The checked swing (D-055): a landed paid hafted blow breaks the
             // wind-up outright, at the heave's weight as at the swing's.
             if (family == SkillId.Hafted && Player.HasPerk(PerkId.CheckedSwing) && target.Intent is not null)
@@ -8384,6 +8488,11 @@ public sealed class Game
             Log.Add(Turn, "The words want the old dark they were cut in; under this open sky nothing answers them.");
             return;
         }
+        if (def.Id == SpellId.Mending && Player.Hp >= Player.EffectiveMaxHp)
+        {
+            Log.Add(Turn, "Your blood already stands at its brim. The mending asks neither focus nor time.");
+            return;
+        }
         if (SpendableFocus < def.Focus)
         {
             Log.Add(Turn, Shade is not null
@@ -8408,9 +8517,18 @@ public sealed class Game
                 CastWard();
                 AdvanceTurn();
                 return;
+            case SpellId.Mending:
+                CommitMending();
+                AdvanceTurn();
+                return;
             case SpellId.Calling:
                 CastCalling();
                 AdvanceTurn();
+                return;
+            case SpellId.Severing:
+                _pendingLineSpell = SpellId.Severing;
+                InCastLine = true;
+                Log.Add(Turn, "The severing waits for a hostile word. Choose a line; any other key swallows it.");
                 return;
             default:
                 CastVeilsight();
@@ -8430,7 +8548,8 @@ public sealed class Game
         {
             SoftTread = false;
             if (spell == SpellId.Spark) CastSpark(d.dx, d.dy);
-            else CommitLevin(d.dx, d.dy);
+            else if (spell == SpellId.Levin) CommitLevin(d.dx, d.dy);
+            else CastSevering(d.dx, d.dy);
             AdvanceTurn();
         }
         else
@@ -8447,6 +8566,7 @@ public sealed class Game
     /// </summary>
     private void CastSpark(int dx, int dy)
     {
+        RecordWorkingCast(SpellId.Spark);
         Player.Focus -= SpellCatalog.Def(SpellId.Spark).Focus;
         var map = CurrentMap;
         var pos = Player.Pos;
@@ -8462,7 +8582,9 @@ public sealed class Game
             var target = Monsters.FirstOrDefault(m => m.Alive && m.SiteId == CurrentSite!.Id && m.Pos == pos);
             if (target is null) continue;
 
-            int damage = _combatRng.Range(2, 5) + Player.SpellBonus + Player.Skills.Bonus(SkillId.Spellcraft);
+            bool answered = target.Intent is not null;
+            int damage = _combatRng.Range(2, 5) + Player.SpellBonus + Player.Skills.Bonus(SkillId.Spellcraft)
+                + (Player.HasPerk(PerkId.FullWord) ? 1 : 0);
             BreakGraveTruce(target);
             target.Hp -= damage;
             if (target.Alive)
@@ -8474,7 +8596,7 @@ public sealed class Game
             {
                 HarvestRemains(target);
             }
-            GainSkill(SkillId.Spellcraft);
+            WorkingSucceeded(SpellId.Spark, answered);
             return;
         }
 
@@ -8491,7 +8613,6 @@ public sealed class Game
     /// </summary>
     private void CommitLevin(int dx, int dy)
     {
-        Player.Focus -= SpellCatalog.Def(SpellId.Levin).Focus;
         var map = CurrentMap;
         var cell = Player.Pos;
         for (int step = 0; step < SpellRange; step++)
@@ -8504,10 +8625,11 @@ public sealed class Game
         if (cell == Player.Pos)
         {
             Log.Add(Turn, "Stone crowds the line before the word can mark it. The levin goes unsaid, its focus kept.", LogTone.Combat);
-            Player.Focus += SpellCatalog.Def(SpellId.Levin).Focus;
             return;
         }
 
+        RecordWorkingCast(SpellId.Levin);
+        Player.Focus -= SpellCatalog.Def(SpellId.Levin).Focus;
         Player.LevinTarget = cell;
         _hpAtLevinCommit = Player.Hp;
         Log.Add(Turn, "You raise the levin-word and hold it one breath from spoken. The air over the marked ground goes taut; everything here can feel where it will fall.", LogTone.Combat);
@@ -8544,7 +8666,9 @@ public sealed class Game
             return;
         }
 
-        int damage = _combatRng.Range(7, 12) + 2 * Player.SpellBonus + Player.Skills.Bonus(SkillId.Spellcraft);
+        bool answered = target.Intent is not null;
+        int damage = _combatRng.Range(7, 12) + 2 * Player.SpellBonus + Player.Skills.Bonus(SkillId.Spellcraft)
+            + (Player.HasPerk(PerkId.FullWord) ? 1 : 0);
         BreakGraveTruce(target);
         target.Hp -= damage;
         if (target.Alive)
@@ -8556,7 +8680,7 @@ public sealed class Game
         {
             HarvestRemains(target);
         }
-        GainSkill(SkillId.Spellcraft);
+        WorkingSucceeded(SpellId.Levin, answered);
     }
 
     /// <summary>A struck sleeper wakes (D-040, D-057): the working's blow follows the iron's rule.</summary>
@@ -8578,8 +8702,9 @@ public sealed class Game
     /// </summary>
     private void CastWard()
     {
+        RecordWorkingCast(SpellId.Ward);
         Player.Focus -= SpellCatalog.Def(SpellId.Ward).Focus;
-        Player.WardTurns = WardHeldTurns;
+        Player.WardTurns = WardHeldTurns + (Player.HasPerk(PerkId.FullWord) ? 1 : 0);
         Log.Add(Turn, "You say the ward-word, low. The air about you thickens faintly, like a held breath that is not yours.", LogTone.Info);
     }
 
@@ -8592,6 +8717,7 @@ public sealed class Game
     /// </summary>
     private void CastVeilsight()
     {
+        RecordWorkingCast(SpellId.Veilsight);
         Player.Focus -= SpellCatalog.Def(SpellId.Veilsight).Focus;
         var here = Monsters.Where(m => m.Alive && m.SiteId == CurrentSite!.Id).ToList();
         Log.Add(Turn, "You say the veil-word, and for a heartbeat the dark forgets how to hold its shapes.", LogTone.Info);
@@ -8620,7 +8746,7 @@ public sealed class Game
         if (sharpened)
         {
             Log.Add(Turn, "Their shapes settle into your reading: you will know their blows before they are thrown.", LogTone.Reward);
-            GainSkill(SkillId.Spellcraft);
+            WorkingSucceeded(SpellId.Veilsight);
         }
     }
 
@@ -8633,6 +8759,7 @@ public sealed class Game
     /// </summary>
     private void CastCalling()
     {
+        RecordWorkingCast(SpellId.Calling);
         Shade = new Guest
         {
             Id = "shade",
@@ -8650,7 +8777,7 @@ public sealed class Game
             Player.CallingLineHeard = true;
             Log.Add(Turn, $"\"{AegisVoice.CallingLine}\"", LogTone.Aegis);
         }
-        GainSkill(SkillId.Spellcraft);
+        WorkingSucceeded(SpellId.Calling);
     }
 
     /// <summary>The word released on purpose (D-099): no wound, no sound, the held focus loosened.</summary>
@@ -8669,6 +8796,93 @@ public sealed class Game
     {
         Shade = null;
         Log.Add(Turn, "The shade frays to a smoke the dark takes back, and is gone. The focus it held loosens; nothing here mourns.", LogTone.Combat);
+    }
+
+    private void RecordWorkingCast(SpellId id) => _workingCasts[(int)id]++;
+
+    /// <summary>One working that truly did work: growth, diagnostics, and both refund knacks meet here.</summary>
+    private void WorkingSucceeded(SpellId id, bool answeredIntent = false)
+    {
+        _workingEffects[(int)id]++;
+        GainSkill(SkillId.Spellcraft);
+        int refund = 0;
+        if (id != SpellId.Calling && SpellCatalog.Def(id).Focus > 0
+            && Player.HasPerk(PerkId.SpareSyllable)
+            && Player.Skills.Uses(SkillId.Spellcraft) % 2 == 0)
+            refund++;
+        if (answeredIntent && Player.HasPerk(PerkId.AnsweringWord))
+            refund++;
+        if (refund > 0)
+        {
+            int before = Player.Focus;
+            Player.Focus = Math.Min(Player.MaxFocus, Player.Focus + refund);
+            int restored = Player.Focus - before;
+            if (restored > 0)
+                Log.Add(Turn, restored == 1
+                    ? "The answered shape gives one focus back."
+                    : $"The two answers compose and give {restored} focus back.", LogTone.Reward);
+        }
+    }
+
+    /// <summary>The severing: a spent line that answers only a tagged hostile intent.</summary>
+    private void CastSevering(int dx, int dy)
+    {
+        RecordWorkingCast(SpellId.Severing);
+        Player.Focus -= SpellCatalog.Def(SpellId.Severing).Focus;
+        var pos = Player.Pos;
+        for (int step = 0; step < SpellRange; step++)
+        {
+            pos = pos.Plus(dx, dy);
+            if (!CurrentMap.Walkable(pos)) break;
+            var caster = Monsters.FirstOrDefault(m => m.Alive && m.SiteId == CurrentSite!.Id
+                && m.Pos == pos && m.Intent is { } held && MagicalIntent(held.Kind));
+            if (caster is null) continue;
+
+            InterruptHostileWorking(caster, $"The severing finds the hostile word in the {caster.Name}'s mouth and cuts it clean.");
+            RockGuard(caster, 2);
+            WorkingSucceeded(SpellId.Severing, answeredIntent: true);
+            if (!Player.SeveringLineHeard)
+            {
+                Player.SeveringLineHeard = true;
+                Log.Add(Turn, "\"There. A word against a word, and yours was the one left standing. Remember the shape of that.\"", LogTone.Aegis);
+            }
+            return;
+        }
+        Log.Add(Turn, "The severing runs its short line and finds no hostile word to cut.", LogTone.Combat);
+    }
+
+    private void CommitMending()
+    {
+        RecordWorkingCast(SpellId.Mending);
+        Player.Focus -= SpellCatalog.Def(SpellId.Mending).Focus;
+        Player.MendingHeld = true;
+        _hpAtMendingCommit = Player.Hp;
+        Log.Add(Turn, "You gather the mending and hold it one breath from spoken. The word takes the measure of your blood as it stands.", LogTone.Info);
+    }
+
+    private void ResolveMending()
+    {
+        Player.MendingHeld = false;
+        if (Player.Hp < _hpAtMendingCommit)
+        {
+            double hold = Math.Clamp(
+                0.5 + 0.1 * (Player.Attributes[Attr.Will] - AttributeSet.Baseline)
+                    + 0.05 * Player.Skills.Level(SkillId.Spellcraft), 0.5, 0.95);
+            if (!_combatRng.Chance(hold))
+            {
+                Log.Add(Turn, "The wound breaks the mending's grip. The committed focus is gone, and the word closes nothing.", LogTone.Combat);
+                return;
+            }
+            Log.Add(Turn, "The new wound shakes the mending, but your will holds the shape.", LogTone.Combat);
+        }
+
+        int before = Player.Hp;
+        int restored = 5 + Player.SpellBonus + Player.Skills.Bonus(SkillId.Spellcraft)
+            + (Player.HasPerk(PerkId.FullWord) ? 1 : 0);
+        Player.Hp = Math.Min(Player.EffectiveMaxHp, Player.Hp + restored);
+        int healed = Player.Hp - before;
+        Log.Add(Turn, $"The mending closes and recalls {healed} blood. The wound beneath it keeps its own time.", LogTone.Reward);
+        WorkingSucceeded(SpellId.Mending);
     }
 
     /// <summary>
@@ -8735,10 +8949,12 @@ public sealed class Game
             // The picked moment (D-055): a body mid-motion, winding up or
             // standing open, takes the shaft 2 deeper. At range the moment is
             // yours to pick; the knack is the picking.
+            bool carriedIntent = target.Intent is not null;
             int damage = _combatRng.Range(1, 4) + bow.EffectiveBonus(Player.Attributes)
                 + Player.AimBonus + Player.Skills.Bonus(SkillId.Ranged)
                 + (Player.HasPerk(PerkId.HuntersEye) ? 1 : 0)
-                + (Player.HasPerk(PerkId.PickedMoment) && (target.Intent is not null || target.ExposedTurns > 0) ? 2 : 0);
+                + (Player.HasPerk(PerkId.PickedMoment) && (carriedIntent || target.ExposedTurns > 0) ? 2 : 0)
+                + (Player.Stance == Stance.Pressing && Player.HasPerk(PerkId.ForwardDraw) ? 1 : 0);
             BreakGraveTruce(target);
             target.Hp -= damage;
 
@@ -8754,6 +8970,8 @@ public sealed class Game
                         Log.Add(Turn, "Grit sifts from the figure. The head grinds around, hunting the line the shaft flew.", LogTone.Danger);
                     }
                 }
+                if (carriedIntent && Player.HasPerk(PerkId.WaitingString))
+                    RockGuard(target, 1);
             }
             else
             {
@@ -8847,7 +9065,8 @@ public sealed class Game
         int reduced = Math.Max(1, raw - armor.EffectiveBonus(Player.Attributes) - Player.Skills.Bonus(SkillId.Warding)
             - (telegraphed && Player.HasPerk(PerkId.BracedShoulder) ? 2 : 0)
             - (Player.HasPerk(PerkId.ShieldWall) ? Math.Min(2, Math.Max(0, FoesBeside() - 1)) : 0)
-            - (Player.HasPerk(PerkId.FittedIron) ? 1 : 0));
+            - (Player.HasPerk(PerkId.FittedIron) ? 1 : 0)
+            - (Player.Stance == Stance.Guarded && Player.HasPerk(PerkId.DeepSet) ? 1 : 0));
         // The ward-word (D-091): while the air holds thick, every landing blow
         // is turned further, and only a blow the word actually turned teaches
         // the craft (the Warding skill's own gate, kept to the letter).
@@ -8857,7 +9076,7 @@ public sealed class Game
             if (warded < reduced)
             {
                 Log.Add(Turn, "The thickened air drinks a part of the blow.", LogTone.Combat);
-                GainSkill(SkillId.Spellcraft);
+                WorkingSucceeded(SpellId.Ward);
             }
             reduced = warded;
         }
@@ -10244,6 +10463,7 @@ public sealed class Game
         if (Mode == MapMode.Site)
         {
             CheckAwareness();
+            _inMonsterPhase = true;
             foreach (var monster in Monsters.Where(m => m.Alive && m.SiteId == CurrentSite!.Id))
             {
                 // The death remembers its shape (D-098): the wind-up is caught
@@ -10258,6 +10478,7 @@ public sealed class Game
                     _deathHand = monster;
                 }
             }
+            _inMonsterPhase = false;
         }
 
         if (_formalBout is not null && Player.Hp <= 0)
@@ -10338,6 +10559,23 @@ public sealed class Game
         // door closed. The body next acts whole.
         if (monster.GuardBroken && monster.ExposedTurns == 0) monster.GuardBroken = false;
 
+        // Blood breaks a held hostile word before its clock can move. The
+        // committed blood value keeps every damage route honest without
+        // inserting spell-specific branches into each weapon.
+        if (monster.Intent is { } held && MagicalIntent(held.Kind)
+            && monster.Hp < held.HitPointsAtCommit)
+        {
+            InterruptHostileWorking(monster, "Blood breaks the held word before it can finish.");
+            return;
+        }
+
+        if (monster.RecoveryTurns > 0)
+        {
+            monster.RecoveryTurns--;
+            Log.Add(Turn, $"The {monster.Name} gathers its breath after the broken word.", LogTone.Combat);
+            return;
+        }
+
         // Resolve a telegraphed intent first: it lands on the cell, not the player.
         if (monster.Intent is { } intent)
         {
@@ -10353,7 +10591,9 @@ public sealed class Game
                 // The feint (D-096): the blow falls where it was always going,
                 // which is not always where the mark said.
                 var struckCell = intent.FeintCell ?? intent.TargetCell;
-                bool landed = Player.Pos == struckCell;
+                bool landed = intent.Footprint.Length > 0
+                    ? intent.Footprint.Contains(Player.Pos)
+                    : Player.Pos == struckCell;
                 // The guard set (D-125) meets the blow it was set against. A
                 // feinting striker can never be the set target: the shown mark
                 // the declaration demanded was never on the bearer's cell.
@@ -10365,6 +10605,7 @@ public sealed class Game
                 {
                     IntentKind.BarrowBlade => _combatRng.Range(5, 9),
                     IntentKind.SunderingCut => _combatRng.Range(7, 11),
+                    IntentKind.SeveredSweep => _combatRng.Range(7, 11),
                     IntentKind.HurledStone => _combatRng.Range(4, 8),
                     IntentKind.GravenFist => _combatRng.Range(6, 10),
                     IntentKind.ThroatLunge => _combatRng.Range(6, 10),
@@ -10376,6 +10617,11 @@ public sealed class Game
                         + (monster.Kind == MonsterKind.GreatWolf ? 2 : 0),
                     _ => _combatRng.Range(4, 7),
                 };
+                if (intent.Kind == IntentKind.SeveredSweep)
+                {
+                    if (landed) SweepsLanded++;
+                    else SweepsDodged++;
+                }
                 if (intent.Kind == IntentKind.BoarCharge)
                 {
                     // The charge (D-053) resolves along its lane, not on one cell.
@@ -10401,6 +10647,14 @@ public sealed class Game
                     else
                         Log.Add(Turn, "The grave-cold closes on ground you had the sense to leave: frost stars the stone where you stood.", LogTone.Combat);
                 }
+                else if (intent.Kind == IntentKind.FallingWord)
+                {
+                    ResolveFallingWord(monster, intent);
+                }
+                else if (intent.Kind == IntentKind.BindingWord)
+                {
+                    ResolveBindingWord(monster);
+                }
                 else if (parried)
                 {
                     if (monster.Kind == MonsterKind.Thegn)
@@ -10411,7 +10665,9 @@ public sealed class Game
                         // force, and the crossed iron shoves back a point
                         // into the bearer's arms.
                         Log.Add(Turn, "The blow comes as shown and your guard meets it, but the sword-thegn was drilled for the bind: it rolls off your guard with half its force kept, and the crossed iron shoves back into your arms.", LogTone.Reward);
-                        RockGuard(monster, GuardBreak.DrilledParryPressure);
+                        RockGuard(monster, GuardBreak.DrilledParryPressure
+                            + (Player.Weapon?.Family == SkillId.Blades
+                                && Player.HasPerk(PerkId.ReturningEdge) ? 1 : 0));
                         RockBearer(GuardBreak.BindPressure);
                     }
                     else
@@ -10421,8 +10677,12 @@ public sealed class Game
                         // The turn was spent on the guard, not the kill: that is
                         // the price, and the broken guard's riposte is the pay.
                         Log.Add(Turn, $"The blow comes exactly as shown, and your guard is waiting: you turn it aside whole, and the force of its own swing rocks the {monster.Name}.", LogTone.Reward);
-                        RockGuard(monster, GuardBreak.ParryPressure);
+                        RockGuard(monster, GuardBreak.ParryPressure
+                            + (Player.Weapon?.Family == SkillId.Blades
+                                && Player.HasPerk(PerkId.ReturningEdge) ? 1 : 0));
                     }
+                    if (Player.HasPerk(PerkId.EasyGuard))
+                        Player.PostureDmg = Math.Max(0, Player.PostureDmg - 1);
                     GainSkill(Player.Weapon?.Family ?? SkillId.Brawling);
                 }
                 else if (intent.Kind == IntentKind.BoardCheck)
@@ -10433,7 +10693,9 @@ public sealed class Game
                     if (landed)
                     {
                         Log.Add(Turn, "The whole board takes you edge-on: no iron in it, but the weight shoves your guard wide of its line.", LogTone.Danger);
-                        RockBearer(GuardBreak.CheckPressure);
+                        int flankPressure = EnemyFlanksBearer(monster) ? 1 : 0;
+                        if (flankPressure > 0) EnemyFlanks++;
+                        RockBearer(GuardBreak.CheckPressure + flankPressure);
                     }
                     else
                         Log.Add(Turn, "The board's full weight goes through the place you left, and the carl stamps to keep its feet.", LogTone.Combat);
@@ -10461,6 +10723,7 @@ public sealed class Game
                     {
                         IntentKind.BarrowBlade => $"The wight's barrow blade opens you for {damage}!",
                         IntentKind.SunderingCut => $"The severed one's cut goes through guard, cloth, and certainty for {damage}!",
+                        IntentKind.SeveredSweep => $"The severed one's sweep carries through the marked arc for {damage}!",
                         IntentKind.HurledStone => $"The hurled stone takes you square for {damage}!",
                         IntentKind.GravenFist => $"The graven fist comes down like a falling lintel for {damage}!",
                         IntentKind.ThroatLunge => $"The iron hound hits you full-length, jaws first, for {damage}!",
@@ -10473,7 +10736,9 @@ public sealed class Game
                     }, LogTone.Danger);
                     // The landed committed blow rocks the bearer's own guard
                     // (D-126): force through the guard's line, not the blood.
-                    RockBearer(BearerPressure(intent.Kind));
+                    int flankPressure = EnemyFlanksBearer(monster) ? 1 : 0;
+                    if (flankPressure > 0) EnemyFlanks++;
+                    RockBearer(BearerPressure(intent.Kind) + flankPressure);
                     // The drag (D-096): the hound's lunge that lands does not
                     // let go: jaws lock and haul the bearer a stride toward
                     // whatever of the pack still stands.
@@ -10491,7 +10756,9 @@ public sealed class Game
                         }
                     }
                 }
-                else if (Fellows.FirstOrDefault(f => f.Pos == struckCell) is { } struck)
+                else if (Fellows.FirstOrDefault(f => intent.Footprint.Length > 0
+                    ? intent.Footprint.Contains(f.Pos)
+                    : f.Pos == struckCell) is { } struck)
                 {
                     // The second body (D-097, D-099): a fellow standing on the
                     // marked ground takes the blow meant for it, whole. No
@@ -10514,6 +10781,7 @@ public sealed class Game
                     {
                         IntentKind.BarrowBlade => "The wight's bronze blade shears cold, empty air.",
                         IntentKind.SunderingCut => "The severed one's cut parts the air where you stood, without hurry and without regret.",
+                        IntentKind.SeveredSweep => "The severed one's sweep cuts through the three places it named and finds none of you.",
                         IntentKind.HurledStone => "The stone bursts on the floor where you stood, loud as the quarry's last working day.",
                         IntentKind.GravenFist => "The graven fist cracks the floor where you stood.",
                         IntentKind.ThroatLunge => "The hound's lunge carries it through the space you left; it lands badly and comes up snarling.",
@@ -10541,7 +10809,8 @@ public sealed class Game
                 // moment stands open the hand holds (D-045). A lofted stone
                 // (D-057) falls from the sky's top, not from a hand in reach:
                 // there is nothing to answer over.
-                if (landed && !parried && intent.Kind is not IntentKind.BoarCharge and not IntentKind.LoftedStone && Player.Hp > 0
+                if (landed && !parried && !MagicalIntent(intent.Kind)
+                    && intent.Kind is not IntentKind.BoarCharge and not IntentKind.LoftedStone && Player.Hp > 0
                     && Player.Weapon is { Move: MoveVerb.Answer } blade
                     && monster.Pos.Chebyshev(Player.Pos) == 1)
                 {
@@ -10574,6 +10843,7 @@ public sealed class Game
         if (monster.Kind is MonsterKind.Wolf or MonsterKind.GreatWolf) { ActWolf(monster); return; }
         if (monster.Kind == MonsterKind.Warder) { ActWarder(monster); return; }
         if (monster.Kind == MonsterKind.Thegn) { ActThegn(monster); return; }
+        if (monster.Kind == MonsterKind.RuneTongue) { ActRuneTongue(monster); return; }
 
         // Standing open (D-125): the kinds on the generic path stagger like
         // the schooled ones do. A broken guard holds feet and blows both.
@@ -10664,7 +10934,7 @@ public sealed class Game
             && m.Kind == MonsterKind.Goblin && m.SiteId == crier.SiteId && m.Intent is null).ToList())
         {
             packmate.Aware = true;
-            StepToward(packmate);
+            if (!packmate.Dormant) StepToward(packmate);
         }
     }
 
@@ -10850,6 +11120,122 @@ public sealed class Game
         }
     }
 
+    /// <summary>Hostile intent tags that the severing can answer.</summary>
+    public static bool MagicalIntent(IntentKind kind) =>
+        kind is IntentKind.GraveChill or IntentKind.FallingWord or IntentKind.BindingWord;
+
+    private void InterruptHostileWorking(Monster caster, string line)
+    {
+        if (caster.Intent is not { } intent || !MagicalIntent(intent.Kind)) return;
+        caster.Intent = null;
+        if (caster.Kind == MonsterKind.RuneTongue)
+            caster.RecoveryTurns = _inMonsterPhase ? 1 : 2;
+        HostileWorkingsInterrupted++;
+        Log.Add(Turn, line, LogTone.Reward);
+    }
+
+    private void BeginHostileWorking(Monster caster, IntentKind kind, Pos target, int turns, Pos[] footprint)
+    {
+        caster.Intent = new Intent
+        {
+            Kind = kind,
+            TargetCell = target,
+            TurnsUntilResolve = turns,
+            Footprint = footprint,
+            HitPointsAtCommit = caster.Hp,
+        };
+        HostileWorkingsBegun++;
+        if (!Player.HostileWorkingLineHeard)
+        {
+            Player.HostileWorkingLineHeard = true;
+            Log.Add(Turn, "\"A word thrown against you. Good. Words can be answered, if you keep your feet and your own mouth.\"", LogTone.Aegis);
+        }
+    }
+
+    /// <summary>The rare hostile caster: weak at touch, dangerous only through visible workings.</summary>
+    private void ActRuneTongue(Monster monster)
+    {
+        string encounter = $"{Cycle}:{monster.SiteId}";
+        if (_runeSitesEncountered.Add(encounter)) RuneTongueEncounters++;
+
+        int dist = monster.Pos.Chebyshev(Player.Pos);
+        if (dist == 1)
+        {
+            if (_combatRng.Chance(Player.DodgeChance))
+                Log.Add(Turn, "The rune-tongue's little knife passes under your arm and finds nothing.", LogTone.Combat);
+            else
+            {
+                int damage = Absorb(_combatRng.Range(1, 3));
+                Player.Hp -= damage;
+                Log.Add(Turn, $"The rune-tongue's little knife worries you for {damage}.", LogTone.Combat);
+            }
+            return;
+        }
+
+        bool sight = dist <= 8 && CurrentMap.LineOfSight(monster.Pos, Player.Pos);
+        if (sight)
+        {
+            if (_combatRng.Chance(0.5))
+            {
+                var cross = Directions.Cardinal
+                    .Select(d => Player.Pos.Plus(d.dx, d.dy))
+                    .Prepend(Player.Pos)
+                    .Where(CurrentMap.Walkable)
+                    .ToArray();
+                BeginHostileWorking(monster, IntentKind.FallingWord, Player.Pos, 1, cross);
+                Log.Add(Turn, "The rune-tongue speaks upward. A five-fold cross whitens under your feet and the four roads out!", LogTone.Danger);
+            }
+            else
+            {
+                BeginHostileWorking(monster, IntentKind.BindingWord, Player.Pos, 2, []);
+                Log.Add(Turn, "The rune-tongue catches a following word between its teeth. The line fastens to you, not the ground: wound the speaker or break sight before it closes!", LogTone.Danger);
+            }
+            return;
+        }
+
+        if (dist <= 10) StepBfsToward(monster);
+    }
+
+    private void ResolveFallingWord(Monster caster, Intent intent)
+    {
+        bool landed = intent.Footprint.Contains(Player.Pos);
+        if (landed)
+        {
+            int resistance = Player.WillResistance;
+            int damage = Math.Max(1, _combatRng.Range(7, 11) - resistance);
+            Player.Hp -= damage;
+            HostileWorkingsLanded++;
+            if (resistance > 0) HostileWorkingsResisted++;
+            Log.Add(Turn, $"The falling word strikes through guard and iron for {damage}. Will turns {resistance} from it.", LogTone.Danger);
+        }
+        else
+        {
+            Log.Add(Turn, "The falling word breaks over the cross you left. The force finds only ground.", LogTone.Combat);
+        }
+        caster.RecoveryTurns = 1;
+    }
+
+    private void ResolveBindingWord(Monster caster)
+    {
+        if (!CurrentMap.LineOfSight(caster.Pos, Player.Pos))
+        {
+            HostileWorkingsInterrupted++;
+            caster.RecoveryTurns = 1;
+            Log.Add(Turn, "Stone cuts the following line. The binding closes on nothing.", LogTone.Reward);
+            return;
+        }
+
+        int resistance = Player.WillResistance;
+        int stamina = Math.Min(Player.Stamina, Math.Max(1, 4 - resistance));
+        int focus = Math.Min(Player.Focus, Math.Max(0, 2 - resistance));
+        Player.Stamina -= stamina;
+        Player.Focus -= focus;
+        HostileWorkingsLanded++;
+        if (resistance > 0) HostileWorkingsResisted++;
+        caster.RecoveryTurns = 1;
+        Log.Add(Turn, $"The binding closes and takes {stamina} wind and {focus} focus. Will resistance {resistance} blunts the taking.", LogTone.Danger);
+    }
+
     /// <summary>
     /// The barrow family (D-033): grave-slow (a step only every other turn, so they can
     /// be kited), a cold grasp that stiffens stamina, and a heavier telegraphed blade.
@@ -10903,7 +11289,18 @@ public sealed class Game
 
         if (dist == 1)
         {
-            if (_combatRng.Chance(0.35))
+            if (_combatRng.Chance(0.2))
+            {
+                Pos[] arc = FacingArc(monster.Pos, Player.Pos);
+                monster.Intent = new Intent
+                {
+                    Kind = IntentKind.SeveredSweep,
+                    TargetCell = Player.Pos,
+                    Footprint = arc,
+                };
+                Log.Add(Turn, "The severed one opens its arm toward you, and three places along the near arc whiten with the coming sweep!", LogTone.Danger);
+            }
+            else if (_combatRng.Chance(0.35))
             {
                 monster.Intent = new Intent { Kind = IntentKind.SunderingCut, TargetCell = Player.Pos };
                 Log.Add(Turn, "The severed one draws back its arm, unhurried, certain of you!", LogTone.Danger);
@@ -10923,6 +11320,19 @@ public sealed class Game
         }
 
         if (dist <= 8) StepBfsToward(monster);
+    }
+
+    /// <summary>The three adjacent cells centered on the eight-way facing toward a target.</summary>
+    private Pos[] FacingArc(Pos origin, Pos target)
+    {
+        (int dx, int dy)[] ring =
+            [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)];
+        var facing = (Math.Sign(target.X - origin.X), Math.Sign(target.Y - origin.Y));
+        int center = Array.IndexOf(ring, facing);
+        return new[] { ring[(center + 7) % 8], ring[center], ring[(center + 1) % 8] }
+            .Select(d => origin.Plus(d.dx, d.dy))
+            .Where(CurrentMap.Walkable)
+            .ToArray();
     }
 
     /// <summary>
@@ -11250,7 +11660,9 @@ public sealed class Game
                 Log.Add(Turn, $"The war-boar takes you full on the tusks for {damage}: the lane was its whole argument!", LogTone.Danger);
                 // Sheer mass (D-126): the charge rocks the guard the way the
                 // heave rocks a foe's, by weight alone.
-                RockBearer(GuardBreak.BearerCharge);
+                int flankPressure = EnemyFlanksBearer(monster) ? 1 : 0;
+                if (flankPressure > 0) EnemyFlanks++;
+                RockBearer(GuardBreak.BearerCharge + flankPressure);
                 return;
             }
             if (!map.Walkable(next) || Monsters.Any(m => m.Alive && m != monster && m.SiteId == monster.SiteId && m.Pos == next))
@@ -11291,6 +11703,32 @@ public sealed class Game
 
         if (monster.ExposedTurns > 0) { monster.ExposedTurns--; return; }
         int dist = monster.Pos.Chebyshev(Player.Pos);
+
+        if (monster.BoardBroken)
+        {
+            if (!monster.BoardlessClosureCounted)
+            {
+                monster.BoardlessClosureCounted = true;
+                BoardlessWarderClosures++;
+                Log.Add(Turn, "With the board hanging split, the sling-warder leaves the rim and closes with the seax.", LogTone.Danger);
+            }
+            if (dist == 1)
+            {
+                if (_combatRng.Chance(Player.DodgeChance))
+                    Log.Add(Turn, "The boardless warder's seax passes the place you left.", LogTone.Combat);
+                else
+                {
+                    int damage = Absorb(_combatRng.Range(2, 4));
+                    Player.Hp -= damage;
+                    Log.Add(Turn, $"The boardless warder's seax finds you for {damage}.", LogTone.Combat);
+                }
+            }
+            else if (dist <= 10)
+            {
+                StepBfsToward(monster);
+            }
+            return;
+        }
 
         if (dist <= 2)
         {
@@ -11596,6 +12034,7 @@ public sealed class Game
         // fall is its own interruption, and the shrine is no place to loose either.
         Player.HeaveTarget = null;
         Player.LevinTarget = null;
+        Player.MendingHeld = false;
         Player.WardTurns = 0;
         Player.ChilledTurns = 0;
         // The fall clears the guard with everything else (D-126): the shrine
@@ -11876,6 +12315,27 @@ public sealed class Game
         LastSelfBrewCycle: LastSelfBrewCycle,
         LastLiveRushCycle: LastLiveRushCycle,
         LastQuietBandCycle: LastQuietBandCycle,
+        RuneTongueEncounters: RuneTongueEncounters,
+        HostileWorkingsBegun: HostileWorkingsBegun,
+        HostileWorkingsInterrupted: HostileWorkingsInterrupted,
+        HostileWorkingsResisted: HostileWorkingsResisted,
+        HostileWorkingsLanded: HostileWorkingsLanded,
+        PlayerFlanks: PlayerFlanks,
+        EnemyFlanks: EnemyFlanks,
+        SweepsDodged: SweepsDodged,
+        SweepsLanded: SweepsLanded,
+        BoardlessWarderClosures: BoardlessWarderClosures,
+        WorkingCasts: string.Join(",", Enum.GetValues<SpellId>()
+            .Select(id => $"{SpellCatalog.IdOf(id)}:{WorkingCasts(id)}")),
+        WorkingEffects: string.Join(",", Enum.GetValues<SpellId>()
+            .Select(id => $"{SpellCatalog.IdOf(id)}:{WorkingEffects(id)}")),
+        HostileMagic: Mode == MapMode.Site
+            ? string.Join(",", LiveMonstersHere.Where(m => m.Intent is { } intent && MagicalIntent(intent.Kind))
+                .Select(m => $"{m.Kind.ToString().ToLowerInvariant()}:{m.Intent!.Kind.ToString().ToLowerInvariant()}:{m.Intent.TurnsUntilResolve}"))
+            : "",
+        RuneRecovery: Mode == MapMode.Site
+            ? LiveMonstersHere.Count(m => m.Kind == MonsterKind.RuneTongue && m.RecoveryTurns > 0)
+            : 0,
         Essence: Player.Essence,
         Legend: Player.Legend,
         Standing: Standing,
@@ -11961,6 +12421,7 @@ public sealed class Game
         Wits: Player.Attributes[Attr.Wits],
         Mind: Player.Attributes[Attr.Mind],
         Will: Player.Attributes[Attr.Will],
+        WillResistance: Player.WillResistance,
         Presence: Player.Attributes[Attr.Presence],
         NextRaiseCost: NextRaiseCost,
         InShrineMenu: InShrineMenu,
@@ -11982,6 +12443,7 @@ public sealed class Game
         InCreation: InCreation,
         HeaveLoaded: Player.HeaveTarget is not null,
         LevinLoaded: Player.LevinTarget is not null,
+        MendingLoaded: Player.MendingHeld,
         TalkNpc: TalkNpc?.Name ?? "",
         WoundedTurns: Player.WoundedTurns,
         GuardWorn: Player.PostureDmg,
@@ -12101,6 +12563,20 @@ public sealed record Snapshot(
     int LastSelfBrewCycle,
     int LastLiveRushCycle,
     int LastQuietBandCycle,
+    int RuneTongueEncounters,
+    int HostileWorkingsBegun,
+    int HostileWorkingsInterrupted,
+    int HostileWorkingsResisted,
+    int HostileWorkingsLanded,
+    int PlayerFlanks,
+    int EnemyFlanks,
+    int SweepsDodged,
+    int SweepsLanded,
+    int BoardlessWarderClosures,
+    string WorkingCasts,
+    string WorkingEffects,
+    string HostileMagic,
+    int RuneRecovery,
     int Essence,
     int Legend,
     int Standing,
@@ -12183,6 +12659,7 @@ public sealed record Snapshot(
     int Wits,
     int Mind,
     int Will,
+    int WillResistance,
     int Presence,
     int NextRaiseCost,
     bool InShrineMenu,
@@ -12204,6 +12681,7 @@ public sealed record Snapshot(
     bool InCreation,
     bool HeaveLoaded,
     bool LevinLoaded,
+    bool MendingLoaded,
     string TalkNpc,
     int WoundedTurns,
     int GuardWorn,

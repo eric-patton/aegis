@@ -28,9 +28,9 @@ public class QuarryTests
                 Assert.True(Reachable(a.Overworld, a.ShrinePos, quarry.OverworldPos),
                     $"seed {seed} tier {tier}: quarry unreachable");
 
-                Assert.Equal(Math.Min(3 + (tier - 3), 5), quarry.Spawns.Count);
-                Assert.All(quarry.Spawns, s => Assert.Equal(MonsterKind.Graven, s.Kind));
-                Assert.All(quarry.Spawns, s => Assert.Equal(18 + 2 * (tier - 3), s.Hp));
+                var graven = quarry.Spawns.Where(s => s.Kind == MonsterKind.Graven).ToList();
+                Assert.Equal(Math.Min(3 + (tier - 3), 5), graven.Count);
+                Assert.All(graven, s => Assert.Equal(18 + 2 * (tier - 3), s.Hp));
 
                 // The open pit: chest and every sentinel stand where feet can reach,
                 // despite the pillars (which, by the placement rule, never touch).

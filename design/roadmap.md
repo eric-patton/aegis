@@ -52,8 +52,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   Sleight/Larceny split and deterministic soft tread D-171); **town life opened** (knucklebones D-108;
   carousing + the light-purse read D-123)
 - Story templates: **6** built (Raided Stead plus Blight, Throne, Faiths, Gold Rush, Long Siege)
-- Path to 1.0: **6 of 9 tranches Verified** (V1-01 D-166, V1-02 D-167, V1-03 D-168,
-  V1-04 D-169, V1-05 D-170, V1-06 D-171); V1-07 is next
+- Path to 1.0: **7 of 9 tranches Verified** (V1-01 D-166, V1-02 D-167, V1-03 D-168,
+  V1-04 D-169, V1-05 D-170, V1-06 D-171, V1-07 D-172); V1-08 is next
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
@@ -147,8 +147,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   companions, factions, and consequence depth; then the next full-density region and
   the release audit. Open-ended catalogs remain tracked but do not block 1.0 unless a
   later decision explicitly promotes them into the gate. All nine cards are Approved
-  through D-165. V1-01 through V1-06 are built and Verified under D-166 through D-171,
-  so V1-07 is next in queue order.
+  through D-165. V1-01 through V1-07 are built and Verified under D-166 through D-172,
+  so V1-08 is next in queue order.
 
 ### Path to 1.0 tracker (ordered, adopted D-155/D-157)
 
@@ -164,8 +164,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   (V1-05 design Approved D-161; built and Verified D-170)
 - [x] 6. Character and activity breadth tranche, completing the intended skill roster
   (V1-06 design Approved D-162; built and Verified D-171)
-- [ ] 7. Combat and magic depth tranche
-  (V1-07 design Approved D-163; implementation pending)
+- [x] 7. Combat and magic depth tranche
+  (V1-07 design Approved D-163; built and Verified D-172)
 - [ ] 8. Companions, factions, and consequences depth tranche
   (V1-08 design Approved D-164; implementation pending)
 - [ ] 9. Next full-density region, launch content closure, and the 1.0 release audit
@@ -186,8 +186,8 @@ infinite prerequisite for completion.
 
 - [x] Deterministic engine: hierarchical seed tree, fact graph, worldgen (D-002, D-013, D-018)
 - [x] Layered-map presentation, TUI render layer (Frame/Presenter) (D-001)
-- [x] Save system: seed + input journal, replay-on-load, currently v96
-  (D-012, D-028, D-166, D-167, D-169, D-170, D-171)
+- [x] Save system: seed + input journal, replay-on-load, currently v97
+  (D-012, D-028, D-166, D-167, D-169, D-170, D-171, D-172)
 - [x] NG+ crossing: waygate, coin -> Legend, tier-deepening worldgen (D-011, D-029)
 - [x] The Aegis as diegetic companion voice (D-010, D-019)
 - [x] The full trans-world Aegis story arc: reveal ladder -> the keeping -> the mending -> steady state (D-020, D-026, D-037, D-038, D-039, D-045, D-060)
@@ -206,19 +206,20 @@ infinite prerequisite for completion.
   flat +4 riposte through the open door (D-125)
 - [x] Parry as a distinct verb: 'a' against a blow shown at your own ground, no dice,
   turn-committed; the feint's lying mark can never be met (D-125)
-- [ ] Weapon movesets: family-specific verbs, not just numbers (V1-07 design Approved
-  D-163; implementation pending; vision §4, deferred D-041)
+- [x] Weapon movesets: family-specific verbs plus exact flank geometry complete the
+  launch set (V1-07 design Approved D-163; built and Verified D-172; vision §4,
+  deferred D-041)
 - [x] Stances: measured/pressing/guarded on 'x', flat 2-point trades, turn-cost under
   live steel (D-094)
 - [x] Weapon identity: signature verb per family (blades' answered step, hafted sunder
   riding the heave, brawling shove; the spear's long thrust already stood) (D-095)
 - [x] Enemy second moves: goblin cry, thegn feint (lies below a keen read), hound drag,
   wight grave-chill (D-096)
-- [ ] More second moves and cry-wakes-dormant-bands (V1-07 design Approved D-163;
-  implementation pending; D-096)
-- [ ] Flanking proper, warder rim after the board breaks (V1-07 design Approved D-163;
-  implementation pending; D-095; the brawling wall-slam cost shipped as guard pressure,
-  D-125)
+- [x] More second moves and awareness-aware alarm composition (V1-07 design Approved
+  D-163; built and Verified D-172; D-096)
+- [x] Flanking proper, warder close phase after the board breaks (V1-07 design Approved
+  D-163; built and Verified D-172; D-095; the brawling wall-slam cost shipped as guard
+  pressure, D-125)
 - [x] Monsters that read the player's commitment and stance (the other half of D-004):
   the thegn's heave-counter (D-058); the field's pressure reading the footing and the
   held wind-up, and the thegn knowing the beaten-open guard's door (D-126)
@@ -229,8 +230,8 @@ infinite prerequisite for completion.
   mass aimed at the bearer's guard and not the blood, met cleanest by the parry (D-129)
 - [x] A kind that answers being parried: the drilled thegn's bind, half its force kept
   and a point shoved back through the crossed iron (D-129)
-- [ ] Parry- and stance-riding level-6 knacks (V1-07 design Approved D-163;
-  implementation pending; D-125, D-094)
+- [x] Parry- and stance-riding level-6 knacks (V1-07 design Approved D-163; built and
+  Verified D-172; D-125, D-094)
 - [x] Formal duels / judicial combat set-pieces (V1-05 design Approved D-161;
   built and Verified D-170)
 
@@ -493,12 +494,12 @@ between them as play. Starts after the stead layer's core lands.
   post-1.0 unless later promoted)
 - [ ] Caster social texture: awe, suspicion, faction attention (D-022; excluded from
   V1-07 by D-163, post-1.0 unless later promoted)
-- [ ] Severing and Mending as the sixth and seventh workings (V1-07 design Approved
-  D-163; implementation pending)
-- [ ] The rune-tongue, hostile magical pressure, and deterministic Will resistance
-  (V1-07 design Approved D-163; implementation pending)
-- [ ] Spellcraft level-2 and level-4 knacks (V1-07 design Approved D-163;
-  implementation pending)
+- [x] Severing and Mending as the sixth and seventh workings (V1-07 design Approved
+  D-163; built and Verified D-172)
+- [x] The rune-tongue, hostile magical pressure, and deterministic Will resistance
+  (V1-07 design Approved D-163; built and Verified D-172)
+- [x] Spellcraft level-2 and level-4 knacks (V1-07 design Approved D-163; built and
+  Verified D-172)
 - [x] The pilot learning to read stones and say words (policy increment, D-072/D-082 line) (D-091) (D-103)
 - [x] Character creation hook: a known word as one possible precious starting thing (D-091 -> D-092)
 - [ ] Spell list growth past the seven V1-07 workings / school content design
@@ -779,6 +780,18 @@ kind, and the evaluation harness that hardens every generator change.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-23: **D-172 combat and magic depth is built and Verified.** V1-07 closes
+  launch movesets through exact flanking, an awareness-aware alarm, the boardless
+  warder phase, the Severed sweep, and five level-6 martial questions. The rune-tongue
+  introduces readable hostile workings and Will resistance. Severing and Mending bring
+  the player catalog to seven, and Spellcraft gains its level-2 and level-4 questions.
+  The default pilot answers every new threat and uses both new words; `journey --caster`
+  demonstrates all seven workings and takes the recommended Spellcraft answers. Save
+  v96 advances to v97. Release builds with zero warnings and all 940 tests pass,
+  including 20 focused checks. Five v101 twin pairs are byte-identical, seed 1 replays
+  26950 keys exactly to cycle 13 and turn 25885, the caster journal also replays exactly,
+  all six JSON reports match their prose runs, and the 240-world purity gate has zero
+  digest mismatches across 87722 surfaces. Tranche 7 is checked off. V1-08 is next.
 - 2026-07-23: **D-171 character and activity breadth is built and Verified.** V1-06
   end-appends Alchemy, Athletics, Stealth, and Larceny to close the roster at eighteen.
   Self-brewing now feeds Alchemy, uppercase local directions perform costed live-pressure

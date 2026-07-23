@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-171); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-172); the research behind it lives in `../research/`.
 
 ---
 
@@ -115,12 +115,12 @@ Turn-based on the local tactical maps: a **telegraphed-intent grid**.
 
 Combat depth's first sweep shipped at D-094 through D-096: three stances on one key (flat 2-point trades on the blow given and taken, free on quiet ground, a turn under live steel); a signature verb per melee family (the hafted heave sunders a linden board for good and staggers wind-ups, a paid cut carries the feet off marked ground, bare knuckles shove a stride back, the spear's long thrust standing as its identity); and a second telegraphed move for four known kinds (the goblin's rallying cry, the wight's grave-chill, the thegn's measured cut whose mark lies to any read short of keen: the bestiary's tiers paying differently at last, and the hound-lunge that drags toward the pack). Weapon movesets grew real verbs, not just numbers. The second sweep shipped at D-125: every foe carries a posture bar beside its blood (a guard rocked by paid blows, the wall, the heave's weight, and above all a parried blow; broken at the brim into a two-turn stagger and a riposte through the open door), and parry arrived as its own key, the turn committed to the guard against a blow shown at your own ground, with the feint's lying mark unmeetable by construction so the keen read keeps its crown. The third closed the loop at D-126: the field reads the bearer back. The bearer carries the second bar too (Will's brim at last), rocked only by landed committed blows, with the pressure reading the footing and the held wind-up (a pressing or winding body is leaned on harder, a set guard shrugs); at the brim the arms refuse two turns while the feet keep working, and the thegn alone knows the door the break leaves. Commitment now runs both ways in full: every telegraph, stance, and wind-up on either side of the line is read by the other. The guard war got its coda at D-129: the shield-carl's board-check is the field's first pressure verb aimed at the bearer's guard and not the blood (thrown mass at the charge's tier, no dice, met cleanest by the parry it was built to duel), and the drilled thegn answers being parried with the bind, keeping half its force and shoving a point back through the crossed iron. Still open in this lane: parry- and stance-riding knacks, flanking proper, and more second moves.
 
-D-163 approves the launch closure still pending implementation: exact opposite-cell
-flanking works for bearer and field, the existing family verbs stand as the complete
-launch movesets, the cry composes with unaware bands, a broken warder board changes its
-phase, and the Severed gains a marked three-cell sweep. Five permanent level-6 questions
-let every martial family choose between a stance rider and a parry or counterplay rider
-without changing any earlier knack.
+D-172 builds D-163's launch closure. Exact opposite-cell flanking now works for bearer
+and field, the existing family verbs stand as the complete launch movesets, the cry
+composes with unaware bands without disturbing authored dormancy, a broken warder board
+changes its phase, and the Severed carries a marked three-cell sweep. Five permanent
+level-6 questions let every martial family choose between a stance rider and a parry or
+counterplay rider without changing any earlier knack.
 
 Formal 1v1 duels (judicial combat, arena bouts) may later reuse these verbs as set-pieces.
 
@@ -132,14 +132,14 @@ Rare, feared, revered. Spells are found, never picked from menus: grimoire pages
 
 Magic v1 shipped at D-091 in exactly the found-not-picked shape, with one amendment: casting spends its own small pool (Focus, from Will) rather than the shared stamina, so the caster and martial identities stay distinct. Four workings wait on graven stones, one at the deepest reach of each fighting deep site: the spark, the levin (the caster's own telegraphed wind-up, dodgeable by feet and breakable by a wound the Will fails to hold through), the ward, and the veilsight. Mind drives the weight, Will holds the pool and the grip, and Spellcraft grows only by workings that did work. Words are knowledge: they survive death and cross the waygate whole, and each world's unread stones regrow, so the deep sites carry a prize beyond coin and iron. Still to come from the sketch above: components, attunement objects, the social texture, enemy casters (Will's resist role), and the wider spell list.
 
-The calling made five workings at D-099. D-163 approves the next closure pending
-implementation: the rune-tongue is the first hostile caster, carrying one marked-ground
-word and one following binding, both interruptible and both reduced through a visible
-deterministic resistance from Will. The severing answers hostile words with posture and
-the mending buys renewable but slow blood without treating a wound, bringing the catalog
-to seven. Spellcraft gains level-2 and level-4 questions. Seven digits still hold the
-whole catalog, so attunement, components, schools, alternative teachers, and systemic
-caster reputation remain later growth rather than launch gates.
+The calling made five workings at D-099. D-172 builds D-163's next closure: the
+rune-tongue is the first hostile caster, carrying one marked-ground word and one
+following binding, both interruptible and both reduced through a visible deterministic
+resistance from Will. The severing answers hostile words with posture and the mending
+buys renewable but slow blood without treating a wound, bringing the catalog to seven.
+Spellcraft gains level-2 and level-4 questions. Seven digits still hold the whole
+catalog, so attunement, components, schools, alternative teachers, and systemic caster
+reputation remain later growth rather than launch gates.
 
 ---
 
@@ -269,7 +269,7 @@ And the loop closes on itself: **your finished characters enter the mythology.**
 ## 13. Document Map
 
 - `roadmap.md`: the living feature tracker and roadmap (what is built, partial, left, open)
-- `decisions.md`: the decision audit trail with rationale (165 and counting)
+- `decisions.md`: the decision audit trail with rationale (172 and counting)
 - `storylets.md`: storylet format and fact-graph schema spec (D-030)
 - `story/aegis-arc.md`: the trans-world Aegis arc spec (Canon: The Ledger; D-026)
 - `story/world-story-templates.md`: the world-story template contract, iron rules, and the template pool (six landed through D-130)

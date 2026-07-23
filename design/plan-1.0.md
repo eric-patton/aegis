@@ -33,7 +33,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 | V1-04 | D1 pacing steering | Verified | D-160, D-169 | Completed |
 | V1-05 | Town and economy depth | Verified | D-161, D-170 | Completed |
 | V1-06 | Character and activity breadth | Verified | D-162, D-171 | Completed |
-| V1-07 | Combat and magic depth | Approved | D-163 | Pending |
+| V1-07 | Combat and magic depth | Verified | D-163, D-172 | Completed |
 | V1-08 | Companions, factions, and consequences | Approved | D-164 | Pending |
 | V1-09 | Next region and 1.0 release closure | Approved | D-165 | Pending |
 
@@ -867,14 +867,14 @@ magic depth
 
 ## V1-07: Combat and magic depth
 
-**Design status:** Approved
-**Decisions:** D-163
+**Design status:** Verified
+**Decisions:** D-163, D-172
 **Roadmap association:** Path to 1.0 tranche 7; combat and magic open launch work
 **Dependencies:** V1-06 awareness and final skill roster; weapon families, stances,
 parry, posture, workings, Focus, Spellcraft, Will, bestiary reads, guests, and shades
 **Recommended implementation point:** seventh card, after V1-06 and before companion and
 faction depth
-**Implementation status:** Pending in queue order
+**Implementation status:** Completed and verified 2026-07-23; V1-08 follows under D-164
 
 ### Approved behavior
 
@@ -1052,6 +1052,29 @@ faction depth
   2024, and 88888 through two byte-identical twelve-world journeys each, compare and
   justify drift from v96, replay seed 1 to exact keys/cycle/turn, exercise the caster
   journey, and pass `worldgen --json`.
+
+### Implementation verification
+
+- D-172 completes the card at save v97. The Release build is clean with zero warnings
+  and all 940 tests pass. Twenty focused checks cover stable catalogs and threshold
+  order, both exact flank geometries, all ten martial answers, alarms and dormancy,
+  the boardless warder phase, the sweep's footprint, dodge, parry, and read tiers, legal
+  rune-tongue generation, both hostile words and their interruption and resistance
+  rules, Severing, Mending, all four Spellcraft answers, persistence, presentation,
+  snapshots, and replay.
+- Seeds 1, 7, 99, 2024, and 88888 each completed two byte-identical twelve-world
+  journeys at 26950, 32865, 31738, 35101, and 35877 keys. Every run reached cycle 13,
+  encountered hostile workings, and used Severing and Mending. The new v101 baseline
+  drift from v100 is justified by rune-tongue placement and combat, flank and sweep
+  resolution, the two new words, and the pilot's safe responses.
+- Seed 1's 26950 emitted keys replay exactly to cycle 13 and turn 25885 with nine
+  deaths. The opt-in caster route completes twelve crossings in 27182 keys and 26065
+  turns, successfully demonstrates all seven workings, takes the full word and
+  answering word, and replays exactly. All five default JSON reports and the caster
+  JSON report agree with their prose counterparts.
+- The 240-world generation gate exits cleanly with zero digest mismatches across 87722
+  surfaces, five families at their declared coverage, zero hard failures, and the two
+  expected legacy fixed-surface warnings.
 
 ### Explicit exclusions
 

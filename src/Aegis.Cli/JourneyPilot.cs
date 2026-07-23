@@ -73,14 +73,14 @@ public static class JourneyPilot
     /// <paramref name="wits"/> plays the perception build (D-084): Wits raised first,
     /// to the point innate acuity clears D-061's dulling floor, then the usual rotation.
     /// </summary>
-    public static char? NextKey(Game g, IReadOnlySet<string> skip, bool wits = false, bool rogue = false)
+    public static char? NextKey(Game g, IReadOnlySet<string> skip, bool wits = false, bool rogue = false, bool caster = false)
     {
         var p = g.Player;
 
         // The asking (D-092) is answered with the fate door: one key rolls the
         // whole bearer from the world's own stream, so journeys stay perfectly
         // seed-deterministic and still exercise the creation path every run.
-        if (g.InCreation) return '0';
+        if (g.InCreation) return caster ? CasterCreationKey(g) : '0';
 
         // A scene is answered, never escaped (D-117): the first choice is taken,
         // which keeps the pilot deterministic and walks it through every checked
@@ -141,7 +141,8 @@ public static class JourneyPilot
         if (g.InAim) return AimDirection(g) ?? 'z';
         // The words (D-091, D-099): the open cast menu is driven toward the one
         // working wanted now (release, calling, or ward); anything else closes it.
-        if (g.InCastMenu) return CastMenuDigit(g) ?? 'z';
+        if (g.InCastMenu) return CastMenuDigit(g, caster) ?? 'z';
+        if (g.InCastLine) return CastLineDirection(g) ?? 'z';
         // The pack is a menu we drive on purpose too (D-066): wear the best piece
         // owned, one digit at a time, then close. Chest loot lands here unworn
         // whenever the slot it wants was already filled at the forge.
@@ -150,7 +151,7 @@ public static class JourneyPilot
         // question stands open its digits answer it, so we take the preferred knack
         // and let the next question (if any) be put, then close. A standing question
         // always resolves to a real answer, never a close, so opening it can't loop.
-        if (g.InSheetMenu) return KnackDigit(g) ?? 'z';
+        if (g.InSheetMenu) return KnackDigit(g, caster) ?? 'z';
         // The keeping and the laying are menus we drive on purpose too (D-068). At the
         // Hearth the keeping question is answered for good (and the mercy road opens
         // behind it); face to face with a ward-dropped keeper the laying menu is where
@@ -181,7 +182,7 @@ public static class JourneyPilot
         // The saying (D-091, D-099): open the cast menu when a working is wanted,
         // never while standing on an aimed cell (the saying costs the turn the
         // stone would land on; the dodge outranks the word).
-        if (CastKey(g) is { } word) return word;
+        if (CastKey(g, caster) is { } word) return word;
 
         if (g.Mode == MapMode.Site)
         {
@@ -475,6 +476,21 @@ public static class JourneyPilot
     /// still holding a live body (dormant counts, it is only sleeping). The songhall and
     /// the threshold hold no foes, so they never qualify.
     /// </summary>
+    /// <summary>The opt-in caster's explicit first waking: Mind and Will first, Spellcraft in hand, and a known word.</summary>
+    private static char CasterCreationKey(Game g) => g.CreationStage switch
+    {
+        CreationStage.Folk => '2',
+        CreationStage.Past => '5',
+        CreationStage.ShapeRaise => g.Player.Attributes[Attr.Will] < 6 ? '6' : '5',
+        CreationStage.ShapePay => g.ShapeRaise == Attr.Will ? '2' : '7',
+        CreationStage.Thing => '1',
+        CreationStage.Burden => '0',
+        CreationStage.Vow => '0',
+        CreationStage.Face => '.',
+        CreationStage.Name => '.',
+        _ => '0',
+    };
+
     private static Site? NearestUnclearedSite(Game g, IReadOnlySet<string> skip)
     {
         var here = g.Player.Pos;
@@ -1160,8 +1176,19 @@ public static class JourneyPilot
         // forfeit it, so the sure coin in hand beats one more swing, unless a stone is due
         // on this very cell next turn, which the dodge below must answer first.
         if (g.Remnant is { } rem && g.CurrentMap.Id == rem.MapId && p.Pos == rem.Pos
-            && !foes.Any(m => m.Intent is { } it && it.TargetCell == p.Pos && it.TurnsUntilResolve <= 1))
+            && !foes.Any(m => m.Intent is { } it && Threatens(it, p.Pos) && it.TurnsUntilResolve <= 1))
             return 'g';
+
+        // A following binding is answered by the speaker or the sight line,
+        // never by moving off its first cell. Severing has already had first
+        // refusal above; without it, wound the adjacent caster or step behind
+        // honest stone before the second turn closes.
+        if (foes.FirstOrDefault(m => m.Intent is { Kind: IntentKind.BindingWord }) is { } binder)
+        {
+            if (Chebyshev(p.Pos, binder.Pos) == 1)
+                return KeyFor(Math.Sign(binder.Pos.X - p.Pos.X), Math.Sign(binder.Pos.Y - p.Pos.Y));
+            if (BreakBindingLine(g, binder, foes) is { } breakLine) return breakLine;
+        }
 
         // A sling-warder keeps its distance and cannot be run down on foot (D-057). If we
         // carry a bow, answer it in kind rather than chasing a retreat that never ends;
@@ -1173,7 +1200,7 @@ public static class JourneyPilot
 
         // Am I standing on a cell a wind-up is aimed at? Then the whole of the play
         // is to not be here when it lands.
-        bool aimed = foes.Any(m => m.Intent is { } it && it.TargetCell == p.Pos);
+        bool aimed = foes.Any(m => m.Intent is { } it && Threatens(it, p.Pos));
         if (aimed)
         {
             if (ChooseDodge(g, foes) is { } dodge) return dodge;
@@ -1216,7 +1243,11 @@ public static class JourneyPilot
     {
         var map = g.CurrentMap;
         var cur = g.Player.Pos;
-        var targeted = foes.Where(m => m.Intent is not null).Select(m => m.Intent!.TargetCell).ToHashSet();
+        var targeted = foes.Where(m => m.Intent is not null)
+            .SelectMany(m => m.Intent!.Footprint.Length > 0
+                ? m.Intent.Footprint
+                : [m.Intent.TargetCell])
+            .ToHashSet();
         var occupied = foes.Select(m => m.Pos).ToHashSet();
 
         Pos? best = null;
@@ -1231,6 +1262,18 @@ public static class JourneyPilot
             if (score < bestScore) { bestScore = score; best = n; }
         }
         return best is { } b ? KeyFor(b.X - cur.X, b.Y - cur.Y) : null;
+    }
+
+    private static char? BreakBindingLine(Game g, Monster binder, List<Monster> foes)
+    {
+        var occupied = foes.Select(m => m.Pos).ToHashSet();
+        foreach (var (dx, dy) in Directions.All8)
+        {
+            var next = g.Player.Pos.Plus(dx, dy);
+            if (!g.CurrentMap.Walkable(next) || occupied.Contains(next)) continue;
+            if (!g.CurrentMap.LineOfSight(binder.Pos, next)) return KeyFor(dx, dy);
+        }
+        return null;
     }
 
     // ---- the loosed line (D-050): the bow answers what the fist cannot reach ----
@@ -1266,7 +1309,7 @@ public static class JourneyPilot
         // turns after the whirl (D-057), so a stone due to land on us next turn is
         // stepped out from under first of all.
         bool landsNext = foes.Any(m => m.Intent is { } it
-            && it.TargetCell == p.Pos && it.TurnsUntilResolve <= 1);
+            && Threatens(it, p.Pos) && it.TurnsUntilResolve <= 1);
         if (landsNext) return ChooseDodge(g, foes) ?? LineUpStep(g, foes);
 
         // Hold a shooting line to catch the next wind-up (the board drops the whole time
@@ -1639,9 +1682,13 @@ public static class JourneyPilot
 
     // ---- the words (D-091, D-099): the stones read, the ward said, the shade called ----
 
-    /// <summary>A wind-up stands aimed at the bearer's own cell: the one read that outranks everything spendable.</summary>
+    private static bool Threatens(Intent intent, Pos cell) =>
+        intent.Kind != IntentKind.BindingWord
+        && (intent.Footprint.Length > 0 ? intent.Footprint.Contains(cell) : intent.TargetCell == cell);
+
+    /// <summary>A ground wind-up stands under the bearer: the one read that outranks everything spendable.</summary>
     private static bool Aimed(Game g) =>
-        g.LiveMonstersHere.Any(m => m.Intent is { } it && it.TargetCell == g.Player.Pos);
+        g.LiveMonstersHere.Any(m => m.Intent is { } it && Threatens(it, g.Player.Pos));
 
     /// <summary>
     /// Walk onto a held site's graven stone and set a palm on it (D-091): the word goes
@@ -1695,20 +1742,102 @@ public static class JourneyPilot
             && Chebyshev(p.Pos, m.Pos) <= Game.SpellRange);
     }
 
-    /// <summary>'z' when a working (or a release) is wanted now and no stone is due on this cell; the menu driver picks the digit.</summary>
-    private static char? CastKey(Game g)
-    {
-        if (g.Player.Spells.Count == 0 || Aimed(g)) return null;
-        return ShadeDone(g) || WantShade(g) || WantWard(g) ? 'z' : null;
-    }
+    private static bool WantMending(Game g) =>
+        g.Mode == MapMode.Site
+        && g.Player.HasSpell(SpellId.Mending)
+        && !g.Player.MendingHeld
+        && g.Player.Hp < g.Player.EffectiveMaxHp
+        && g.SpendableFocus >= SpellCatalog.Def(SpellId.Mending).Focus
+        && !Aimed(g);
 
-    /// <summary>The digit for the working wanted in the open cast menu: the release and the calling before the ward, null closes.</summary>
-    private static char? CastMenuDigit(Game g)
+    private static char? MagicalLineDirection(Game g)
     {
-        if (ShadeDone(g) || WantShade(g)) return SpellDigit(g, SpellId.Calling);
-        if (WantWard(g)) return SpellDigit(g, SpellId.Ward);
+        foreach (var (dx, dy) in Directions.All8)
+        {
+            var pos = g.Player.Pos;
+            for (int step = 0; step < Game.SpellRange; step++)
+            {
+                pos = pos.Plus(dx, dy);
+                if (!g.CurrentMap.Walkable(pos)) break;
+                var caster = g.LiveMonstersHere.FirstOrDefault(m => m.Pos == pos
+                    && m.Intent is { } intent && Game.MagicalIntent(intent.Kind));
+                if (caster is not null) return KeyFor(dx, dy);
+            }
+        }
         return null;
     }
+
+    private static char? HostileLineDirection(Game g)
+    {
+        foreach (var (dx, dy) in Directions.All8)
+        {
+            var pos = g.Player.Pos;
+            for (int step = 0; step < Game.SpellRange; step++)
+            {
+                pos = pos.Plus(dx, dy);
+                if (!g.CurrentMap.Walkable(pos)) break;
+                if (g.LiveMonstersHere.Any(m => m.Pos == pos)) return KeyFor(dx, dy);
+            }
+        }
+        return null;
+    }
+
+    private static bool WantSevering(Game g) =>
+        g.Player.HasSpell(SpellId.Severing)
+        && g.SpendableFocus >= SpellCatalog.Def(SpellId.Severing).Focus
+        && MagicalLineDirection(g) is not null;
+
+    private static SpellId? WantedWorking(Game g, bool caster)
+    {
+        if (WantSevering(g)) return SpellId.Severing;
+        if (WantMending(g)) return SpellId.Mending;
+        if (caster)
+        {
+            if (g.Player.HasSpell(SpellId.Spark) && g.WorkingEffects(SpellId.Spark) == 0
+                && g.SpendableFocus >= SpellCatalog.Def(SpellId.Spark).Focus
+                && HostileLineDirection(g) is not null)
+                return SpellId.Spark;
+            if (g.Player.HasSpell(SpellId.Levin) && g.WorkingEffects(SpellId.Levin) == 0
+                && g.SpendableFocus >= SpellCatalog.Def(SpellId.Levin).Focus
+                && HostileLineDirection(g) is not null && !Aimed(g))
+                return SpellId.Levin;
+            if (g.Player.HasSpell(SpellId.Veilsight) && g.WorkingEffects(SpellId.Veilsight) == 0
+                && g.SpendableFocus >= SpellCatalog.Def(SpellId.Veilsight).Focus
+                && g.LiveMonstersHere.Any())
+                return SpellId.Veilsight;
+            if (g.Player.HasSpell(SpellId.Calling) && g.WorkingEffects(SpellId.Calling) == 0
+                && WantShade(g))
+                return SpellId.Calling;
+            if (g.Player.HasSpell(SpellId.Ward) && g.WorkingCasts(SpellId.Ward) == 0
+                && WantWard(g))
+                return SpellId.Ward;
+        }
+        if (ShadeDone(g) || WantShade(g)) return SpellId.Calling;
+        if (WantWard(g)) return SpellId.Ward;
+        return null;
+    }
+
+    /// <summary>'z' when a working or release is wanted now and no ground word is due.</summary>
+    private static char? CastKey(Game g, bool caster)
+    {
+        if (g.Player.Spells.Count == 0) return null;
+        if (WantSevering(g)) return 'z';
+        if (Aimed(g)) return null;
+        return WantedWorking(g, caster) is not null ? 'z' : null;
+    }
+
+    /// <summary>The digit for the working wanted in the open cast menu.</summary>
+    private static char? CastMenuDigit(Game g, bool caster)
+    {
+        return WantedWorking(g, caster) is { } spell ? SpellDigit(g, spell) : null;
+    }
+
+    private static char? CastLineDirection(Game g) => g.PendingLineSpell switch
+    {
+        SpellId.Severing => MagicalLineDirection(g),
+        SpellId.Spark or SpellId.Levin => HostileLineDirection(g),
+        _ => null,
+    };
 
     /// <summary>The cast menu's digit for a carried word: its place in the learn order, which is what the menu lists.</summary>
     private static char? SpellDigit(Game g, SpellId id)
@@ -1728,7 +1857,7 @@ public static class JourneyPilot
     {
         var p = g.Player;
         if (p.Draughts == 0 || p.Hp * 3 >= p.EffectiveMaxHp) return null;
-        if (g.LiveMonstersHere.Any(m => m.Intent is { } it && it.TargetCell == p.Pos)) return null;
+        if (g.LiveMonstersHere.Any(m => m.Intent is { } it && Threatens(it, p.Pos))) return null;
         return 'd';
     }
 
@@ -1752,7 +1881,7 @@ public static class JourneyPilot
         if (!g.LiveMonstersHere.Any()) return 'x';
         if (g.CurrentSite?.Kind == SiteKind.Wilds) return null;
         if (desired == Stance.Guarded && p.Stance == Stance.Pressing
-            && !g.LiveMonstersHere.Any(m => m.Intent is { } it && it.TargetCell == p.Pos))
+            && !g.LiveMonstersHere.Any(m => m.Intent is { } it && Threatens(it, p.Pos)))
             return 'x';
         return null;
     }
@@ -1933,6 +2062,13 @@ public static class JourneyPilot
         PerkId.CaughtArm,      // brawling 4: (moot, bare-handed) the read-moment side.
         PerkId.ShieldWall,     // warding 4:  hold the line when a site swarms.
         PerkId.PickedMoment,   // ranged 4:   +2 into a body mid-move, which is when we loose.
+        PerkId.FullWord,
+        PerkId.AnsweringWord,
+        PerkId.ForwardEdge,
+        PerkId.WholeWeight,
+        PerkId.CrowdingHands,
+        PerkId.DeepSet,
+        PerkId.ForwardDraw,
     ];
 
     /// <summary>
@@ -1942,9 +2078,15 @@ public static class JourneyPilot
     /// <see cref="Preferred"/>, so a standing question always yields a real answer and never
     /// a close, which is what keeps the opener from reopening what it just shut.
     /// </summary>
-    private static char? KnackDigit(Game g)
+    private static char? KnackDigit(Game g, bool caster)
     {
         if (g.PendingKnack is not { } q) return null;
+        if (caster && q.Skill == SkillId.Spellcraft)
+        {
+            PerkId wanted = q.Level == 2 ? PerkId.FullWord : PerkId.AnsweringWord;
+            int chosen = Array.FindIndex(q.Options, option => option.Id == wanted);
+            if (chosen >= 0) return (char)('1' + chosen);
+        }
         for (int i = 0; i < q.Options.Length; i++)
             if (Preferred.Contains(q.Options[i].Id))
                 return (char)('1' + i);

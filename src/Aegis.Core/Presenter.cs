@@ -503,6 +503,7 @@ public static class Presenter
             frame.Write(x0 + 2 + i * 7, y0 + 2, $"{AttributeSet.NameOf(attr)[..3]}{p.Attributes[attr],3}",
                 raised ? Hue.White : Hue.Gray);
         }
+        frame.Write(x0 + 57, y0 + 2, $"Will resist {p.WillResistance}", Hue.Cyan);
 
         for (int i = 0; i < SkillSet.Count; i++)
         {
@@ -631,7 +632,16 @@ public static class Presenter
                 // lane, a warder's nine-cell burst) is drawn for a bearer who has
                 // read the kind before. The aimed cell is always shown, so the
                 // dodge is always there; the shape is what the read reveals.
-                if (game.Player.ReadOf(monster.Kind, game.Cycle) == ReadTier.Blur)
+                if (intent.Kind is IntentKind.FallingWord or IntentKind.SeveredSweep)
+                {
+                    foreach (var cell in intent.Footprint)
+                        PutWorld(cell, '!', Hue.White, Hue.DarkRed);
+                }
+                else if (intent.Kind == IntentKind.BindingWord)
+                {
+                    PutWorld(monster.Pos, '!', Hue.White, Hue.DarkMagenta);
+                }
+                else if (game.Player.ReadOf(monster.Kind, game.Cycle) == ReadTier.Blur)
                 {
                     PutWorld(intent.TargetCell, '!', Hue.White, Hue.DarkRed);
                 }
@@ -735,6 +745,7 @@ public static class Presenter
                 MonsterKind.Thegn => 't',
                 MonsterKind.Wolf => 'f',
                 MonsterKind.GreatWolf => 'F',
+                MonsterKind.RuneTongue => 'r',
                 _ => 'g',
             };
             // The chief told apart on the map (D-113): the roster's leader is a
@@ -759,6 +770,7 @@ public static class Presenter
                 // The moor-wolf in heath-grey (D-146): part of the ground until it moves.
                 MonsterKind.Wolf => Hue.Gray,
                 MonsterKind.GreatWolf => Hue.White,
+                MonsterKind.RuneTongue => Hue.Magenta,
                 _ => Hue.Red,
             };
             PutWorld(monster.Pos, ch, monster.Intent is null ? calm : Hue.White,
@@ -961,26 +973,76 @@ public static class Presenter
             if (game.ParryOpen) Line("Blow shown at your feet: a parries", Hue.Cyan);
             if (game.Player.HeaveTarget is not null) Line("! heave wound up: act to loose", Hue.DarkYellow);
             if (game.Player.LevinTarget is not null) Line("! levin held: act to say it", Hue.DarkYellow);
+            if (game.Player.MendingHeld) Line("! mending held: act to say it", Hue.DarkYellow);
             if (game.Player.WardTurns > 0) Line($"Warded ({game.Player.WardTurns})", Hue.Cyan);
             if (game.CurrentSite is { StonePos: { } stonePos, StoneRead: false } && stonePos == p.Pos)
                 Line("Graven stone: g reads", Hue.Cyan);
             // The read, in words (D-059). A stranger's wind-up reads as danger
             // without a name; a read tell is named; a keen read knows its weight.
-            static string Weight(IntentKind k) => k switch
+            string Weight(IntentKind k) => k switch
             {
                 IntentKind.HurledStone or IntentKind.CrushingBlow => " (light)",
                 IntentKind.RallyCry => " (a call, not a blow)",
                 IntentKind.GraveChill => " (cold, not iron)",
                 IntentKind.MeasuredCut => " (and the mark is honest)",
                 IntentKind.BoardCheck => " (mass, and it comes for your guard)",
+                IntentKind.SeveredSweep => " (heavy; parry legal in the near arc)",
+                IntentKind.FallingWord => $" (7-10 less Will resist {game.Player.WillResistance}; feet answer)",
+                IntentKind.BindingWord => $" (wind 4 and focus 2 less resist {game.Player.WillResistance}; wound or break sight)",
                 _ => " (heavy)",
             };
+            foreach (var monster in game.LiveMonstersHere.Where(m => m.RecoveryTurns > 0))
+                Line($"! {monster.Name} recovering", Hue.DarkCyan);
             foreach (var monster in game.LiveMonstersHere.Where(m => m.Intent is not null))
             {
                 var tier = game.Player.ReadOf(monster.Kind, game.Cycle);
                 if (tier == ReadTier.Blur)
                 {
+                    if (monster.Intent!.Kind == IntentKind.FallingWord)
+                    {
+                        Line("! ground word falling", Hue.DarkRed);
+                        Line("  leave marked cross", Hue.DarkRed);
+                        continue;
+                    }
+                    if (monster.Intent.Kind == IntentKind.BindingWord)
+                    {
+                        Line("! binding follows", Hue.DarkRed);
+                        Line("  wound or break sight", Hue.DarkRed);
+                        continue;
+                    }
                     Line($"! {monster.Name} coils, unread", Hue.DarkRed);
+                    continue;
+                }
+                if (monster.Intent!.Kind == IntentKind.SeveredSweep)
+                {
+                    Line("! severed sweep marked", Hue.Red);
+                    Line("  falls this turn", Hue.Red);
+                    if (tier == ReadTier.Keen)
+                        Line("  heavy; parry legal", Hue.Red);
+                    continue;
+                }
+                if (monster.Intent.Kind == IntentKind.FallingWord)
+                {
+                    Line("! falling word marked", Hue.Red);
+                    Line($"  falls in {Math.Max(1, monster.Intent.TurnsUntilResolve)} turn", Hue.Red);
+                    if (tier == ReadTier.Keen)
+                    {
+                        Line("  cross: center + four", Hue.Red);
+                        Line("  blood 7-10 less", Hue.Red);
+                        Line($"  Will resist {game.Player.WillResistance}", Hue.Red);
+                    }
+                    continue;
+                }
+                if (monster.Intent.Kind == IntentKind.BindingWord)
+                {
+                    Line("! binding word follows", Hue.Red);
+                    Line($"  {Math.Max(1, monster.Intent.TurnsUntilResolve)} turns to answer", Hue.Red);
+                    if (tier == ReadTier.Keen)
+                    {
+                        Line("  wind 4, focus 2", Hue.Red);
+                        Line($"  less Will resist {game.Player.WillResistance}", Hue.Red);
+                        Line("  wound or break sight", Hue.Red);
+                    }
                     continue;
                 }
                 string named = monster.Intent!.Kind switch

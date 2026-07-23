@@ -212,6 +212,7 @@ Builds the world, applies the key script synchronously, prints JSON: seed, keys 
 ```
 aegis journey --seed 42 --cycles 12 --emit-keys
 aegis journey --seed 42 --cycles 12 --json
+aegis journey --seed 42 --cycles 12 --caster --json
 ```
 
 The journey drives ordinary player keys through repeated crossings. `--emit-keys` adds
@@ -231,6 +232,14 @@ and out, room rests, desk sittings, workshops commissioned, and real wear-moving
 sittings. The canonical pilot remains crime-free, so zero judicial results are expected in
 the sweep. Focused tests cover both judicial outcomes instead of manufacturing an offense
 inside the journey policy.
+
+D-163/D-172 add combat-and-magic diagnostics to both forms: Will resistance, exact
+flanks on both sides, sweeps dodged and landed, boardless warder closures, rune-tongue
+encounters, hostile workings begun, interrupted, resisted, and landed, plus casts and
+successful effects for every working. `--caster` selects the deterministic caster route,
+which prioritizes Mind and Will, demonstrates all seven workings, and takes the full word
+and answering word. Its emitted journal replays through `sim` exactly like the default
+route.
 
 ## Worldgen and prose curation
 

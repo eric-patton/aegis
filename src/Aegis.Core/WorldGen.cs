@@ -1527,6 +1527,39 @@ public static class WorldGen
                 $"{WorldTwistCatalog.NameOf(worldTwist)}: {townName}'s book protects every hart on the drove roads and pays for every wolf-hide brought down from the fells. The cart outside the books knows another price for protected leather.");
         }
 
+        // The rune-tongue (D-163): one rare hostile caster from tier 5 onward,
+        // placed only after the ordinary world, story, regions, and twist are
+        // complete. Its named stream cannot move any prior draw.
+        if (tier >= 5)
+        {
+            var runeRng = new Rng(SeedTree.Derive(worldSeed, "rune-tongue"));
+            var eligible = sites
+                .Where(s => s.Spawns.Any(spawn => spawn.Kind is not MonsterKind.Hart)
+                    && s.Kind is not SiteKind.Town)
+                .Select(s => new
+                {
+                    Site = s,
+                    Cells = Enumerable.Range(1, s.Map.Height - 2)
+                        .SelectMany(y => Enumerable.Range(1, s.Map.Width - 2).Select(x => new Pos(x, y)))
+                        .Where(p => s.Map.Walkable(p)
+                            && p != s.EntryPos
+                            && p != s.ChestPos
+                            && p != s.StonePos
+                            && p != s.CofferPos
+                            && !s.Spawns.Any(spawn => spawn.Pos == p)
+                            && !npcs.Any(n => n.SiteId == s.Id && n.Pos == p))
+                        .ToList(),
+                })
+                .Where(candidate => candidate.Cells.Count > 0)
+                .ToList();
+            if (eligible.Count == 0)
+                throw new InvalidOperationException("No legal fighting site can receive the rune-tongue.");
+            var chosen = eligible[runeRng.Next(eligible.Count)];
+            Pos runePos = chosen.Cells[runeRng.Next(chosen.Cells.Count)];
+            chosen.Site.Spawns.Add(new MonsterSpawn(
+                MonsterKind.RuneTongue, runePos, 10 + 2 * (tier - 5)));
+        }
+
         return new World
         {
             Seed = worldSeed,

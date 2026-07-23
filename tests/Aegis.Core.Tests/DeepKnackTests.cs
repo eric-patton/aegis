@@ -16,9 +16,9 @@ public class DeepKnackTests
     public void TheSecondWave_StandsInTheCatalog_OneQuestionPerSkill()
     {
         var wave = PerkCatalog.Choices.Where(c => c.Level == 4).ToList();
-        Assert.Equal(5, wave.Count);
+        Assert.Equal(6, wave.Count);
         Assert.Equal(
-            new[] { SkillId.Blades, SkillId.Hafted, SkillId.Brawling, SkillId.Warding, SkillId.Ranged },
+            new[] { SkillId.Blades, SkillId.Hafted, SkillId.Brawling, SkillId.Warding, SkillId.Ranged, SkillId.Spellcraft },
             wave.Select(c => c.Skill));
         Assert.All(wave, c => Assert.Equal(2, c.Options.Length));
 
@@ -27,10 +27,11 @@ public class DeepKnackTests
         int firstDeep = PerkCatalog.Choices.ToList().FindIndex(c => c.Level == 4);
         Assert.All(PerkCatalog.Choices.Take(firstDeep), c => Assert.Equal(2, c.Level));
 
-        // Thirty perks, thirty distinct stable ids.
+        // Forty-four perks, forty-four distinct stable ids after the level-6
+        // martial wave and the two Spellcraft questions append their answers.
         var ids = Enum.GetValues<PerkId>().Select(PerkCatalog.IdOf).ToList();
-        Assert.Equal(30, ids.Count);
-        Assert.Equal(30, ids.Distinct().Count());
+        Assert.Equal(44, ids.Count);
+        Assert.Equal(44, ids.Distinct().Count());
         Assert.Contains("caught_arm", ids);
         Assert.Contains("waxed_string", ids);
         Assert.Contains("room_on_the_rack", ids);

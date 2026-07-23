@@ -345,10 +345,13 @@ namespace Aegis.Core;
 /// uppercase directions rush, contextual 's' enters soft tread, foes gained
 /// awareness, self-brewing scales, and crime odds, prices, feeds, and knack
 /// digits all gained new replay meaning.
+/// v97 when D-163 closed combat and magic depth: flank geometry, enemy
+/// follow-ons, new martial and Spellcraft knacks, rune-tongue generation,
+/// hostile workings, severing, and mending all change replayed outcomes.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 96;
+    public const int Version = 97;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

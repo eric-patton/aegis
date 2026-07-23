@@ -8,7 +8,7 @@ namespace Aegis.Core;
 /// a wound-up word through a wound). Workings are knowledge, like lessons:
 /// death never takes them and they cross the waygate whole.
 /// </summary>
-public enum SpellId { Spark, Levin, Ward, Veilsight, Calling }
+public enum SpellId { Spark, Levin, Ward, Veilsight, Calling, Severing, Mending }
 
 /// <summary>One working's shape: what it is called, what it asks, and whether it is held a turn before it lands.</summary>
 public sealed record SpellDef(SpellId Id, string Name, string Short, int Focus, bool WindUp, string FoundLine);
@@ -28,6 +28,10 @@ public static class SpellCatalog
             "A quiet word: the dark forgets how to hold its shapes, and what lives on a floor is known for what it is."),
         new(SpellId.Calling, "the calling", "calling", 2, WindUp: false,
             "A held word, not a spent one: something of the quiet dark answers it and walks at your shoulder for as long as you keep it half-said."),
+        new(SpellId.Severing, "the severing", "severing", 2, WindUp: false,
+            "An answering word: it runs a chosen line and cuts the first hostile working it meets without touching blood."),
+        new(SpellId.Mending, "the mending", "mending", 3, WindUp: true,
+            "A close-held word: one breath to gather, then blood recalled toward the shape the body remembers."),
     ];
 
     public static SpellDef Def(SpellId id) => All[(int)id];
@@ -45,11 +49,15 @@ public static class SpellCatalog
         // The barrow leans hardest toward the calling (D-099): the most
         // soul-touched fabric offers the word that gives soul-stuff a while
         // of shape. Everywhere else it waits at the leaning's far end.
-        SiteKind.GoblinCamp => [SpellId.Spark, SpellId.Ward, SpellId.Veilsight, SpellId.Levin, SpellId.Calling],
-        SiteKind.Barrow => [SpellId.Veilsight, SpellId.Calling, SpellId.Ward, SpellId.Levin, SpellId.Spark],
-        SiteKind.Quarry => [SpellId.Levin, SpellId.Spark, SpellId.Ward, SpellId.Veilsight, SpellId.Calling],
-        SiteKind.Hall => [SpellId.Ward, SpellId.Levin, SpellId.Veilsight, SpellId.Spark, SpellId.Calling],
-        SiteKind.Ringfort => [SpellId.Levin, SpellId.Ward, SpellId.Spark, SpellId.Veilsight, SpellId.Calling],
-        _ => [SpellId.Veilsight, SpellId.Levin, SpellId.Ward, SpellId.Spark, SpellId.Calling],
+        SiteKind.GoblinCamp => [SpellId.Spark, SpellId.Ward, SpellId.Veilsight, SpellId.Levin, SpellId.Calling, SpellId.Severing, SpellId.Mending],
+        SiteKind.Barrow => [SpellId.Veilsight, SpellId.Calling, SpellId.Ward, SpellId.Levin, SpellId.Spark, SpellId.Mending, SpellId.Severing],
+        SiteKind.Quarry => [SpellId.Levin, SpellId.Spark, SpellId.Ward, SpellId.Veilsight, SpellId.Calling, SpellId.Severing, SpellId.Mending],
+        SiteKind.Hall => [SpellId.Ward, SpellId.Levin, SpellId.Veilsight, SpellId.Spark, SpellId.Calling, SpellId.Mending, SpellId.Severing],
+        SiteKind.Ringfort => [SpellId.Levin, SpellId.Ward, SpellId.Spark, SpellId.Veilsight, SpellId.Calling, SpellId.Severing, SpellId.Mending],
+        _ => [SpellId.Veilsight, SpellId.Levin, SpellId.Ward, SpellId.Spark, SpellId.Calling, SpellId.Mending, SpellId.Severing],
     };
+
+    /// <summary>The words a bearer may already carry at the first waking.</summary>
+    public static readonly IReadOnlyList<SpellId> CreationPool =
+        [SpellId.Spark, SpellId.Severing, SpellId.Mending];
 }

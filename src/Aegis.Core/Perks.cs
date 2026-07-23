@@ -27,6 +27,13 @@ public enum PerkId
     DeeperHush, QuietHarness,
     RichKist, RoadPrice,
     SoftTouch, PatientWards,
+    ForwardEdge, ReturningEdge,
+    WholeWeight, RootedHaft,
+    CrowdingHands, CaughtWrist,
+    DeepSet, EasyGuard,
+    ForwardDraw, WaitingString,
+    FullWord, SpareSyllable,
+    AnsweringWord, DeepWell,
 }
 
 /// <summary>
@@ -117,6 +124,13 @@ public static class PerkCatalog
             new(PerkId.PatientWards, "the patient wards", "lockpicking gains ten points",
                 "Old iron speaks slowly. You stop hurrying its answer, and more locks give it."),
         ]),
+        new(SkillId.Spellcraft, 2,
+        [
+            new(PerkId.FullWord, "the full word", "blood, mending, and ward deepen by one",
+                "You stop clipping the ending. The whole word stands in your mouth now, and the world hears all of it."),
+            new(PerkId.SpareSyllable, "the spare syllable", "every second successful spent word refunds one focus",
+                "You learn which breath the word did not need. Every second good saying leaves a little of the well untouched."),
+        ]),
         new(SkillId.Blades, 4,
         [
             new(PerkId.AnsweredCut, "the answered cut", "wind-ups take 2 deeper",
@@ -151,6 +165,48 @@ public static class PerkCatalog
                 "A body mid-motion has already spent its next moment. Your shaft arrives in it."),
             new(PerkId.WaxedString, "the waxed string", "the string frays half as fast",
                 "Wax, patience, and a dry palm between draws. The string stops paying for your haste."),
+        ]),
+        new(SkillId.Spellcraft, 4,
+        [
+            new(PerkId.AnsweringWord, "the answering word", "a working that answers an intent refunds one focus",
+                "You hear the hostile shape inside the word and make your own its answer. The meeting gives something back."),
+            new(PerkId.DeepWell, "the deep well", "one more focus, always",
+                "The word reaches down and finds another depth beneath the depth you knew."),
+        ]),
+        new(SkillId.Blades, 6,
+        [
+            new(PerkId.ForwardEdge, "the forward edge", "pressing blade cuts take one more blood",
+                "You give the forward edge your whole step. A pressing cut arrives with the body behind it."),
+            new(PerkId.ReturningEdge, "the returning edge", "blade parries return one more pressure",
+                "The edge does not only meet the blow. It comes home through the meeting and takes the striker's guard with it."),
+        ]),
+        new(SkillId.Hafted, 6,
+        [
+            new(PerkId.WholeWeight, "the whole weight", "pressing hafted heaves add one pressure",
+                "You stop saving a piece of yourself from the heave. The whole weight goes through the haft."),
+            new(PerkId.RootedHaft, "the rooted haft", "guarded haft subtracts one more committed pressure",
+                "The haft finds the ground through your hands. Set behind it, you give less of your guard away."),
+        ]),
+        new(SkillId.Brawling, 6,
+        [
+            new(PerkId.CrowdingHands, "the crowding hands", "a pressing shove carries up to two clear cells",
+                "One stride is no longer the end of the shove. Your hands stay with the body until the ground truly stops it."),
+            new(PerkId.CaughtWrist, "the caught wrist", "an unarmed parry asks one wind",
+                "You meet the wrist before the blow has become its whole arm. Less wind is needed when the catch is early."),
+        ]),
+        new(SkillId.Warding, 6,
+        [
+            new(PerkId.DeepSet, "the deep set", "guarded armor turns one more blood",
+                "You settle the iron into the guarded line until the blow must travel farther to find you."),
+            new(PerkId.EasyGuard, "the easy guard", "a successful parry sheds one bearer pressure",
+                "The guard comes back without being hauled. Each clean meeting leaves your own line easier than it found it."),
+        ]),
+        new(SkillId.Ranged, 6,
+        [
+            new(PerkId.ForwardDraw, "the forward draw", "pressing shafts take one more blood",
+                "The pressing foot goes into the string. The shaft leaves with the step still behind it."),
+            new(PerkId.WaitingString, "the waiting string", "a shaft into an intent adds one pressure",
+                "You hold for the instant the mark commits. The string answers the opening before it can close."),
         ]),
     ];
 
@@ -190,6 +246,20 @@ public static class PerkCatalog
         PerkId.RoadPrice => "road_price",
         PerkId.SoftTouch => "soft_touch",
         PerkId.PatientWards => "patient_wards",
+        PerkId.ForwardEdge => "forward_edge",
+        PerkId.ReturningEdge => "returning_edge",
+        PerkId.WholeWeight => "whole_weight",
+        PerkId.RootedHaft => "rooted_haft",
+        PerkId.CrowdingHands => "crowding_hands",
+        PerkId.CaughtWrist => "caught_wrist",
+        PerkId.DeepSet => "deep_set",
+        PerkId.EasyGuard => "easy_guard",
+        PerkId.ForwardDraw => "forward_draw",
+        PerkId.WaitingString => "waiting_string",
+        PerkId.FullWord => "full_word",
+        PerkId.SpareSyllable => "spare_syllable",
+        PerkId.AnsweringWord => "answering_word",
+        PerkId.DeepWell => "deep_well",
         _ => id.ToString().ToLowerInvariant(),
     };
 }

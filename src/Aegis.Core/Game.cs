@@ -643,16 +643,13 @@ public sealed class Game
 
     /// <summary>Test-only (D-133): a held deck deals nothing, so choreographed tick tests stay about the cadence.</summary>
     private bool _deckHeld;
+    private readonly Queue<bool> _debugDeckCadence = [];
 
     /// <summary>
-    /// The storyteller above the tick (D-145): read-only, it watches every
-    /// tick night and records what it would have done. No RNG, no facts, no
-    /// narration, so replay cannot feel it; the journey report reads its book.
+    /// The storyteller above the tick (D-145, D-160): bounded authority over
+    /// explicitly elastic deck cards, with protected clocks left untouched.
     /// </summary>
     public Storyteller Teller { get; } = new();
-
-    /// <summary>Whether the season dealt a card this tick (D-145): the teller's observed fact.</summary>
-    private bool _deckDealtThisTick;
 
     /// <summary>The futures on the world's calendar (D-132): observers and tests read the timeline here.</summary>
     public IEnumerable<(string Key, int DueTick)> Upcoming => _schedule.Select(f => (f.Key, f.DueTick));
@@ -8572,6 +8569,7 @@ public sealed class Game
         // quiet streak reset with the World bucket; the book itself spans the run.
         Teller.NewWorld(Player.Deaths);
         _steadDeckRng = new Rng(SeedTree.Derive(World.Seed, "stead_deck"));
+        _debugDeckCadence.Clear();
         var rng = new Rng(SeedTree.Derive(World.Seed, "winter"));
         int due = 3 + rng.Next(3);
         _winterDueTick = due;
@@ -8906,6 +8904,7 @@ public sealed class Game
         new SteadEvent
         {
             Key = "far_fields",
+            Pacing = DeckPacingClass.Elastic,
             When = g => g.Season is WorldSeason.Spring or WorldSeason.Summer
                 && !g.World.Facts.Exists("event", "far_fields") && !g.CampCleared && g.Stores < g.StoresMax,
             Draw = g => g.FarFieldsComeGood(),
@@ -8913,6 +8912,7 @@ public sealed class Game
         new SteadEvent
         {
             Key = "drovers",
+            Pacing = DeckPacingClass.Elastic,
             When = g => g.Season == WorldSeason.Autumn
                 && !g.World.Facts.Exists("event", "drovers") && !g.LevyStands && g.Stores >= SteadDeck.DroversKeep,
             Draw = g => g.DroversComeThrough(),
@@ -8920,6 +8920,7 @@ public sealed class Game
         new SteadEvent
         {
             Key = "fords_washout",
+            Pacing = DeckPacingClass.Elastic,
             Weight = 8,
             When = g => g.Season == WorldSeason.Spring && !g.World.Facts.Exists("omen", "fords_washout"),
             Draw = g => g.ForeshadowWashout(),
@@ -8927,6 +8928,7 @@ public sealed class Game
         new SteadEvent
         {
             Key = "wedding",
+            Pacing = DeckPacingClass.Elastic,
             Weight = 8,
             When = g => g.Season == WorldSeason.Summer
                 && !g.World.Facts.Exists("omen", "banns_read") && g.Stores >= SteadDeck.FeastNeeds,
@@ -8935,6 +8937,7 @@ public sealed class Game
         new SteadEvent
         {
             Key = "haying_days",
+            Pacing = DeckPacingClass.Elastic,
             When = g => g.Season == WorldSeason.Summer
                 && g.WeatherAt(ClimateBand.Lowlands) == WeatherFamily.Calm
                 && !g.World.Facts.Exists("event", "haying_days") && g.Stores < g.StoresMax,
@@ -8943,6 +8946,7 @@ public sealed class Game
         new SteadEvent
         {
             Key = "late_frost",
+            Pacing = DeckPacingClass.Elastic,
             When = g => g.Season == WorldSeason.Spring
                 && g.WeatherAt(ClimateBand.Lowlands) == WeatherFamily.Cold
                 && !g.World.Facts.Exists("event", "late_frost")
@@ -8952,6 +8956,7 @@ public sealed class Game
         new SteadEvent
         {
             Key = "season_bargain",
+            Pacing = DeckPacingClass.Elastic,
             When = g => g.Season == WorldSeason.Autumn && g.Stores < g.StoresMax
                 && !g.World.Facts.Exists("event", "season_bargain"),
             Draw = g => g.OpenSeasonBargain(),
@@ -8963,16 +8968,19 @@ public sealed class Game
     /// deal and pick one by weight from the deck's own stream. The tick has
     /// already paid its chance roll; an empty hand deals nothing.
     /// </summary>
-    private void DrawFromTheDeck()
+    private string DrawFromTheDeck(IReadOnlyList<SteadEvent> hand)
     {
-        var hand = TheSeasonDeck.Where(e => e.When(this)).ToList();
-        if (hand.Count == 0) return;
         int roll = _steadDeckRng.Next(hand.Sum(e => e.Weight));
         foreach (var card in hand)
         {
             roll -= card.Weight;
-            if (roll < 0) { _deckDealtThisTick = true; card.Draw(this); return; }
+            if (roll < 0)
+            {
+                card.Draw(this);
+                return card.Key;
+            }
         }
+        throw new InvalidOperationException("The season-deck weight roll found no card.");
     }
 
     /// <summary>
@@ -9346,6 +9354,11 @@ public sealed class Game
         // dark exit: nothing left worth a night's ride.
         if (Turn > _worldStartTurn && (Turn - _worldStartTurn) % SteadRaids.TickTurns == 0)
         {
+            // D-160 fixes the editorial call before any system advances. The
+            // teller sees only carried state here, then waits while protected
+            // clocks write the night they already owned.
+            var pacingCall = Teller.BeginTick();
+
             // The calendar speaks first (D-132): scheduled futures cancel,
             // land, or foreshadow before the cadence acts, and a future that
             // raids (the dens' muster) is that night's raid, not a second one.
@@ -9353,7 +9366,6 @@ public sealed class Game
             // the muster's own snowless dark or the winter's blizzard, and no
             // carts creak in on the night the drifts close the fords.
             _nightSpokenFor = false;
-            _deckDealtThisTick = false;
             int raidsBeforeTick = Raids;
             int coarseTick = (Turn - _worldStartTurn) / SteadRaids.TickTurns;
             AdvanceWeather(coarseTick);
@@ -9378,14 +9390,48 @@ public sealed class Game
             int raidTake = Raids > raidsBeforeTick
                 ? Math.Max(0, storesBeforeCadence - Stores) : 0;
 
-            // The season deals its own news (D-133): at most one card a tick,
-            // none on a night a scheduled future claimed, and none while a
-            // dealt future is still on the calendar (one omen speaks at a
-            // time). The chance rolls first and every tick, so the deck's
-            // stream advances the same way whatever the night held.
-            if (!_deckHeld && _steadDeckRng.Chance(SteadDeck.DrawChance) && !_nightSpokenFor
-                && !_schedule.Any(f => f.Key is "fords_washout" or "wedding"))
-                DrawFromTheDeck();
+            // The season deals its own news (D-133, D-160). Every live tick
+            // consumes the ordinary cadence roll first. Press may promote a
+            // miss, and one successful opportunity may be suppressed in a
+            // continuous Space episode. Neither path selects or carries a
+            // card until a deal actually occurs.
+            bool naturalCadence = _steadDeckRng.Chance(SteadDeck.DrawChance);
+            if (_debugDeckCadence.TryDequeue(out bool debugCadence))
+                naturalCadence = debugCadence;
+
+            string? pacingCard = null;
+            PacingDeckOutcome pacingOutcome;
+            bool protectedDeckNight = _deckHeld || _nightSpokenFor
+                || _schedule.Any(f => f.Key is "fords_washout" or "wedding");
+            if (protectedDeckNight)
+            {
+                pacingOutcome = PacingDeckOutcome.ProtectedNight;
+            }
+            else
+            {
+                var hand = TheSeasonDeck
+                    .Where(e => SteadDeckValidation.IsElastic(e) && e.When(this))
+                    .ToList();
+                if (hand.Count == 0)
+                {
+                    pacingOutcome = PacingDeckOutcome.NoEligibleHand;
+                }
+                else if (!naturalCadence && pacingCall != PacingCall.Press)
+                {
+                    pacingOutcome = PacingDeckOutcome.CadenceMiss;
+                }
+                else if (naturalCadence && Teller.CanSuppress(pacingCall))
+                {
+                    pacingOutcome = PacingDeckOutcome.SpaceSuppressed;
+                }
+                else
+                {
+                    pacingCard = DrawFromTheDeck(hand);
+                    pacingOutcome = naturalCadence
+                        ? PacingDeckOutcome.NaturalDeal
+                        : PacingDeckOutcome.PressForcedDeal;
+                }
+            }
 
             // The mound seethes (D-106): grave-goods in a living pack while
             // the barrow stands unstilled do not go unanswered. On its tick
@@ -9402,10 +9448,11 @@ public sealed class Game
             // two ticks behind, the way the landing's did.
             if (_fellWinterTicks > 0 && --_fellWinterTicks == 0) WolfWinterLifts();
 
-            // The teller writes its line last (D-145): the call it would have
-            // made before the night, then what the night actually held.
-            // Read-only by construction: nothing above reads it back.
-            Teller.Observe(Turn, Player.Deaths, _nightSpokenFor, _deckDealtThisTick,
+            // Durations above are protected from pacing. The teller observes
+            // last, records the completed night, and carries only heat, quiet,
+            // and the bounded Space authority into the next call.
+            Teller.Observe(Turn, pacingCall, Player.Deaths, _nightSpokenFor,
+                naturalCadence, pacingOutcome, pacingCard,
                 Raids - raidsBeforeTick, raidTake);
         }
 
@@ -10893,6 +10940,15 @@ public sealed class Game
     internal void Debug_SetStores(int stores) => Stores = stores;
     internal void Debug_DrawSteadEvent(string key) => TheSeasonDeck.First(e => e.Key == key).Draw(this);
     internal bool Debug_SteadEventEligible(string key) => TheSeasonDeck.First(e => e.Key == key).When(this);
+    internal static IReadOnlyList<string> Debug_ValidateSteadDeck() => SteadDeckValidation.Validate(TheSeasonDeck);
+    internal static IReadOnlyList<(string Key, DeckPacingClass? Pacing)> Debug_SteadDeckPacing() =>
+        TheSeasonDeck.Select(e => (e.Key, e.Pacing)).ToList();
+    internal void Debug_SetPacingCarry(int temperature, int quietTicks, bool spaceSuppressionSpent = false) =>
+        Teller.DebugSetCarry(temperature, quietTicks, spaceSuppressionSpent);
+    internal void Debug_QueueDeckCadence(params bool[] results)
+    {
+        foreach (bool result in results) _debugDeckCadence.Enqueue(result);
+    }
     internal void Debug_HoldTheDeck() => _deckHeld = true;
     internal void Debug_SetMount(Mount? mount) => Mount = mount;
     internal void Debug_GiveBook(BookId id) { if (!Player.Books.Contains(id)) Player.Books.Add(id); }

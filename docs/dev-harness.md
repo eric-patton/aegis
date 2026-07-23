@@ -207,6 +207,24 @@ aegis sim --seed 42 --keys "llll....jjjj" [--quiet]
 
 Builds the world, applies the key script synchronously, prints JSON: seed, keys applied, the full message log (`--quiet` omits it), and the final state snapshot. Deterministic: same seed and keys always produce byte-identical results. Intended for balance sweeps, regression checks, and CI.
 
+## Journey and pacing diagnostics
+
+```
+aegis journey --seed 42 --cycles 12 --emit-keys
+aegis journey --seed 42 --cycles 12 --json
+```
+
+The journey drives ordinary player keys through repeated crossings. `--emit-keys` adds
+the exact replay journal as the final line. The JSON form includes the same run measures
+plus full crossing records.
+
+D-160's pacing diagnostics are deliberately harness-only. The prose report separates
+natural deals, Press-forced deals, Space suppressions, protected and empty Press calls,
+spent Space episodes, quiet and deal-gap bounds, cadence-roll count, and per-card natural
+versus forced arrivals. The JSON adds those aggregates plus one record for every coarse
+tick, including the call fixed before the night, cadence result, protected claim, outcome,
+and dealt card key. Ordinary game presentation exposes none of this editorial machinery.
+
 ## Worldgen and prose curation
 
 `worldgen` batch-generates each requested world twice, compares the complete WorldEval

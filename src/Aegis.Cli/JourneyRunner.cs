@@ -584,6 +584,29 @@ public static class JourneyRunner
                 PacingPressCalls: game.Teller.PressCalls,
                 PacingDealtUnderSpace: game.Teller.DealtUnderSpace,
                 PacingQuietUnderPress: game.Teller.QuietUnderPress,
+                PacingNaturalDeals: game.Teller.NaturalDeals,
+                PacingPressForcedDeals: game.Teller.PressForcedDeals,
+                PacingSpaceSuppressions: game.Teller.SpaceSuppressions,
+                PacingPressBlocked: game.Teller.PressBlockedByProtectedNights,
+                PacingPressEmpty: game.Teller.PressCallsWithNoEligibleHand,
+                PacingSpaceSpentCalls: game.Teller.SpaceCallsAfterAllowanceSpent,
+                PacingLongestQuiet: game.Teller.LongestQuietStretch,
+                PacingMinimumDealGap: game.Teller.MinimumDealGap,
+                PacingMaximumDealGap: game.Teller.MaximumDealGap,
+                PacingCadenceRolls: game.Teller.DeckCadenceRolls,
+                PacingCards: game.Teller.CardCounts.OrderBy(kv => kv.Key)
+                    .Select(kv => new PacingCardDto(kv.Key, kv.Value.Natural, kv.Value.Forced)).ToList(),
+                PacingReadings: game.Teller.Readings.Select(r => new PacingReadingDto(
+                    r.Turn,
+                    r.Call.ToString().ToLowerInvariant(),
+                    r.Heat,
+                    r.Temperature,
+                    r.NightClaimed,
+                    r.DeckDealt,
+                    r.CadenceSucceeded,
+                    r.DeckOutcome.ToString().ToLowerInvariant(),
+                    r.CardKey,
+                    r.SpaceAllowanceSpentAtCall)).ToList(),
                 Keys: emitKeys ? keys.ToString() : null,
                 Crossings: crossings.Select(c => new JourneyCrossingDto(
                     FromCycle: c.FromCycle,
@@ -822,9 +845,14 @@ public static class JourneyRunner
         w.WriteLine($"         the dens: came to hold the bearer as {(maxWrath > 0 ? RaiderWrath.TitleOf(maxWrath) : "no one at all")} at their most fearful "
                     + $"(peak wrath {maxWrath}, reset at every crossing) (D-078).");
         w.WriteLine($"         the raids: the steads suffered {raidsSuffered} raid(s) while camps stood, each thinning the lofts bread is priced by (D-079, D-089).");
-        w.WriteLine($"         the teller's book (read-only): watched {teller.Readings.Count} tick night(s), "
-                    + $"called for air {teller.SpaceCalls} time(s) and for the screw {teller.PressCalls}; "
-                    + $"the season dealt through {teller.DealtUnderSpace} call(s) for air, and {teller.QuietUnderPress} pressed night(s) stayed quiet (D-145).");
+        w.WriteLine($"         the teller's book: watched {teller.Readings.Count} tick night(s), "
+                    + $"called for air {teller.SpaceCalls} time(s) and for the screw {teller.PressCalls} (D-145, D-160).");
+        w.WriteLine($"           deals: {teller.NaturalDeals} natural and {teller.PressForcedDeals} Press-forced; "
+                    + $"Space suppressed {teller.SpaceSuppressions}, with {teller.SpaceCallsAfterAllowanceSpent} later call(s) in spent episodes.");
+        w.WriteLine($"           Press blocks: {teller.PressBlockedByProtectedNights} protected night(s), "
+                    + $"{teller.PressCallsWithNoEligibleHand} empty hand(s); longest quiet {teller.LongestQuietStretch}, "
+                    + $"deal gaps {teller.MinimumDealGap}-{teller.MaximumDealGap} tick(s), {teller.DeckCadenceRolls} cadence roll(s).");
+        w.WriteLine($"           cards: {(teller.CardCounts.Count == 0 ? "none" : string.Join(", ", teller.CardCounts.OrderBy(kv => kv.Key).Select(kv => $"{kv.Key} {kv.Value.Natural}/{kv.Value.Forced}")))} (natural/forced).");
         int sworn = crossings.Count(c => c.Sworn.Count > 0);
         if (sworn > 0)
         {
@@ -851,6 +879,13 @@ public static class JourneyRunner
 internal sealed record JourneyReadDto(string Kind, int Bank, string Read);
 
 internal sealed record JourneySiteDto(string Name, bool Cleared, bool Skipped);
+
+internal sealed record PacingCardDto(string Key, int Natural, int Forced);
+
+internal sealed record PacingReadingDto(
+    int Turn, string Call, int Heat, int Temperature, bool NightClaimed,
+    bool DeckDealt, bool CadenceSucceeded, string Outcome, string? CardKey,
+    bool SpaceAllowanceSpentAtCall);
 
 internal sealed record JourneyCrossingDto(
     int FromCycle, string FromWorld, string FromTwist, int ToCycle, string ToWorld, string ToTwist, int Turn,
@@ -885,5 +920,10 @@ internal sealed record JourneyReport(
     int BargainsOffered, int BargainsBought, int BargainsRefused, int BargainsExpired,
     int PacingNights, int PacingSpaceCalls, int PacingPressCalls,
     int PacingDealtUnderSpace, int PacingQuietUnderPress,
+    int PacingNaturalDeals, int PacingPressForcedDeals, int PacingSpaceSuppressions,
+    int PacingPressBlocked, int PacingPressEmpty, int PacingSpaceSpentCalls,
+    int PacingLongestQuiet, int PacingMinimumDealGap, int PacingMaximumDealGap,
+    int PacingCadenceRolls, List<PacingCardDto> PacingCards,
+    List<PacingReadingDto> PacingReadings,
     string? Keys,
     List<JourneyCrossingDto> Crossings);

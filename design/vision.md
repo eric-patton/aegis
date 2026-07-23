@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-168); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-169); the research behind it lives in `../research/`.
 
 ---
 
@@ -193,7 +193,8 @@ cards land in order, and campaign-pinned generator 1 (D-165).
 2. **Storylets**: every quest beat, scene, and event is an atomic, precondition-gated, handwritten unit. Content scales additively forever, which infinite NG+ requires.
 3. **Role-casting**: pivotal scenes are written against role slots ("an NPC who owes you a debt") and cast from whoever exists in this world.
 4. **NPC memory**: notable NPCs keep structured logs of what passed between you (favors, betrayals, witnessed deaths); dialogue is memory-driven selection over large authored line banks. Never open generation.
-5. **Pacing director**: D-145's measured teller and D-160's bounded authority shape only
+5. **Pacing director**: D-145's measured teller and D-160's bounded authority, built and
+   Verified under D-169, shape only
    explicitly elastic random deck events. Press guarantees an eligible deal after three
    quiet tick nights; Space may suppress one successful opportunity in a hot episode.
    Scheduled futures, faction clocks, weather, durations, and player-triggered content

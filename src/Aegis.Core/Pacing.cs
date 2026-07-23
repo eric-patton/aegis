@@ -1,103 +1,141 @@
 namespace Aegis.Core;
 
-/// <summary>
-/// The storyteller's call for a tick night (D-145, plan 2026-07 D1): what the
-/// pacing layer would have done with the night, had it authority. Steady lets
-/// the night run as the causes wrote it; Space is a call for air after hard
-/// beats (it would have held the season's deck and any other non-causal
-/// pressure); Press is a call for the screw when the run coasts (it would
-/// have hastened an eligible card or storylet beat). Read-only for now: the
-/// call is recorded, never obeyed.
-/// </summary>
+/// <summary>The storyteller's call for one coarse-tick night (D-145, D-160).</summary>
 public enum PacingCall { Steady, Space, Press }
 
 /// <summary>
-/// One night's line in the teller's book (D-145): the call made before the
-/// night, and what the night then actually held. Heat is the night's own
-/// charge; Temperature is the carried charge after cooling. NightClaimed and
-/// DeckDealt are the observed facts the disagreement counters read from.
+/// What pacing may do with a deck card (D-160). Null or an undefined value
+/// fails closed as protected. Every live card must still declare a valid value.
 /// </summary>
-public readonly record struct PacingReading(
-    int Turn, PacingCall Call, int Heat, int Temperature, bool NightClaimed, bool DeckDealt);
+public enum DeckPacingClass { Protected, Elastic }
+
+/// <summary>The deck-side result of one pacing call.</summary>
+public enum PacingDeckOutcome
+{
+    CadenceMiss,
+    NaturalDeal,
+    PressForcedDeal,
+    SpaceSuppressed,
+    ProtectedNight,
+    NoEligibleHand,
+}
+
+/// <summary>Natural and Press-forced arrivals for one elastic card.</summary>
+public readonly record struct PacingCardCount(int Natural, int Forced);
 
 /// <summary>
-/// The storyteller above the coarse tick (D-145, plan 2026-07 D1), read-only
-/// first as the plan demands: it watches every tick night, makes its
-/// editorial call BEFORE the night's events (from carried state, the way an
-/// editor decides before the page is written), then observes what the causes
-/// actually did and records the disagreement. It draws no RNG, writes no
-/// facts, and adds no narration, so its presence cannot move replay, the
-/// deck's stream, or a single baseline key: the whole point of the read-only
-/// season is that the ledger is auditable across the sweep seeds before the
-/// layer is ever allowed to steer. The raids' causal clock and the calendar's
-/// scheduled facts are observations here, never subjects: the parked
-/// authority question (which classes it may one day delay or hasten) stays
-/// parked until this book argues for an answer.
+/// One line in the teller's run-wide diagnostic book. The call and Space
+/// allowance are fixed before the night's systems advance. The remaining
+/// fields record the completed night without exposing pacing in ordinary play.
+/// </summary>
+public readonly record struct PacingReading(
+    int Turn,
+    PacingCall Call,
+    int Heat,
+    int Temperature,
+    bool NightClaimed,
+    bool DeckDealt,
+    bool CadenceSucceeded,
+    PacingDeckOutcome DeckOutcome,
+    string? CardKey,
+    bool SpaceAllowanceSpentAtCall);
+
+/// <summary>
+/// The bounded storyteller above the coarse tick (D-145, D-160). It makes one
+/// call from carried state before the tick advances, may steer only explicitly
+/// elastic cards, draws no RNG, and observes protected systems without moving
+/// them. World-scoped carry resets at a crossing while the diagnostic book and
+/// its run-wide totals remain available to the journey harness.
 /// </summary>
 public sealed class Storyteller
 {
-    /// <summary>Heat per death since the last tick: the hardest beat the run has.</summary>
     public const int DeathHeat = 3;
-
-    /// <summary>Heat for a night a scheduled future claimed whole (winter, washout, muster).</summary>
     public const int ClaimedHeat = 2;
-
-    /// <summary>Cooling per tick: yesterday's drama fades a point a night.</summary>
     public const int Cooling = 1;
-
-    /// <summary>Carried temperature at or above this calls Space: the run needs air.</summary>
     public const int SpaceAt = 4;
-
-    /// <summary>Consecutive heatless ticks at or above this call Press: the run coasts.</summary>
     public const int PressAfter = 3;
 
     private readonly List<PacingReading> _readings = [];
+    private readonly Dictionary<string, PacingCardCount> _cards = [];
     private int _temperature;
     private int _quietTicks;
     private int _lastDeaths;
+    private bool _spaceSuppressionSpent;
+    private PacingCall? _pendingCall;
+    private bool _pendingSpaceSpent;
+    private int _ticksSinceDeal = -1;
 
-    /// <summary>The whole book, oldest first: one reading per tick night watched.</summary>
     public IReadOnlyList<PacingReading> Readings => _readings;
-
-    /// <summary>How often the teller called for air (Space).</summary>
+    public IReadOnlyDictionary<string, PacingCardCount> CardCounts => _cards;
     public int SpaceCalls { get; private set; }
-
-    /// <summary>How often the teller called for the screw (Press).</summary>
     public int PressCalls { get; private set; }
+    public int NaturalDeals { get; private set; }
+    public int PressForcedDeals { get; private set; }
+    public int SpaceSuppressions { get; private set; }
+    public int PressBlockedByProtectedNights { get; private set; }
+    public int PressCallsWithNoEligibleHand { get; private set; }
+    public int SpaceCallsAfterAllowanceSpent { get; private set; }
+    public int LongestQuietStretch { get; private set; }
+    public int MinimumDealGap { get; private set; }
+    public int MaximumDealGap { get; private set; }
+    public int DeckCadenceRolls { get; private set; }
 
-    /// <summary>Nights the season dealt a card straight through a call for air.</summary>
+    /// <summary>Compatibility readings retained from D-145's original audit.</summary>
     public int DealtUnderSpace { get; private set; }
-
-    /// <summary>Pressed nights that stayed quiet anyway: no heat, no card.</summary>
     public int QuietUnderPress { get; private set; }
 
-    /// <summary>
-    /// A new world starts cool (D-145): the carried temperature, the quiet
-    /// streak, and the deaths baseline reset at the crossing with the rest of
-    /// the World bucket, but the book itself spans the run, because the run
-    /// is what the audit reads.
-    /// </summary>
     internal void NewWorld(int deathsNow)
     {
         _temperature = 0;
         _quietTicks = 0;
         _lastDeaths = deathsNow;
+        _spaceSuppressionSpent = false;
+        _pendingCall = null;
+        _pendingSpaceSpent = false;
+        _ticksSinceDeal = -1;
     }
 
-    /// <summary>
-    /// One tick night observed (D-145). The call is made from the carried
-    /// state alone, before this night's heat is admitted: an editorial
-    /// decision precedes the events it would have shaped. A raid heats by its
-    /// take (a bold, unblunted night burns hotter than a plain one), a
-    /// claimed night by the claim, a death hardest of all; then the carry
-    /// cools a point and the night's heat joins it.
-    /// </summary>
-    internal void Observe(int turn, int deathsNow, bool nightClaimed, bool deckDealt,
-        int raidDelta, int raidTake)
+    /// <summary>Fixes this tick's call before weather, schedules, or cadence act.</summary>
+    internal PacingCall BeginTick()
     {
+        if (_pendingCall is not null)
+            throw new InvalidOperationException("The prior pacing call has not been observed.");
+
         var call = _temperature >= SpaceAt ? PacingCall.Space
             : _quietTicks >= PressAfter ? PacingCall.Press
             : PacingCall.Steady;
+        if (call != PacingCall.Space) _spaceSuppressionSpent = false;
+
+        _pendingCall = call;
+        _pendingSpaceSpent = _spaceSuppressionSpent;
+        return call;
+    }
+
+    /// <summary>Whether this Space episode still owns its one suppression.</summary>
+    internal bool CanSuppress(PacingCall call) =>
+        _pendingCall == call && call == PacingCall.Space && !_spaceSuppressionSpent;
+
+    /// <summary>
+    /// Records the completed night and advances carried heat and quiet. The
+    /// cadence result is supplied by the deck, which consumes exactly one roll.
+    /// </summary>
+    internal void Observe(
+        int turn,
+        PacingCall call,
+        int deathsNow,
+        bool nightClaimed,
+        bool cadenceSucceeded,
+        PacingDeckOutcome deckOutcome,
+        string? cardKey,
+        int raidDelta,
+        int raidTake)
+    {
+        if (_pendingCall != call)
+            throw new InvalidOperationException("The observed pacing call does not match the call made for this tick.");
+
+        bool deckDealt = deckOutcome is PacingDeckOutcome.NaturalDeal or PacingDeckOutcome.PressForcedDeal;
+        if (deckDealt != (cardKey is not null))
+            throw new ArgumentException("A dealt card must have a key, and an undealt outcome must not.", nameof(cardKey));
 
         int deaths = Math.Max(0, deathsNow - _lastDeaths);
         _lastDeaths = deathsNow;
@@ -107,19 +145,65 @@ public sealed class Storyteller
             + Math.Max(0, raidTake - 1);
 
         _temperature = Math.Max(0, _temperature - Cooling) + heat;
-        _quietTicks = heat == 0 ? _quietTicks + 1 : 0;
+        _quietTicks = heat == 0 && !deckDealt ? _quietTicks + 1 : 0;
+        LongestQuietStretch = Math.Max(LongestQuietStretch, _quietTicks);
+        DeckCadenceRolls++;
 
         if (call == PacingCall.Space)
         {
             SpaceCalls++;
+            if (_pendingSpaceSpent) SpaceCallsAfterAllowanceSpent++;
             if (deckDealt) DealtUnderSpace++;
         }
         else if (call == PacingCall.Press)
         {
             PressCalls++;
             if (heat == 0 && !deckDealt) QuietUnderPress++;
+            if (deckOutcome == PacingDeckOutcome.ProtectedNight) PressBlockedByProtectedNights++;
+            if (deckOutcome == PacingDeckOutcome.NoEligibleHand) PressCallsWithNoEligibleHand++;
         }
 
-        _readings.Add(new PacingReading(turn, call, heat, _temperature, nightClaimed, deckDealt));
+        if (deckOutcome == PacingDeckOutcome.SpaceSuppressed)
+        {
+            SpaceSuppressions++;
+            _spaceSuppressionSpent = true;
+        }
+
+        if (deckDealt)
+        {
+            if (_ticksSinceDeal >= 0)
+            {
+                int gap = _ticksSinceDeal + 1;
+                MinimumDealGap = MinimumDealGap == 0 ? gap : Math.Min(MinimumDealGap, gap);
+                MaximumDealGap = Math.Max(MaximumDealGap, gap);
+            }
+            _ticksSinceDeal = 0;
+
+            var old = _cards.GetValueOrDefault(cardKey!);
+            if (deckOutcome == PacingDeckOutcome.PressForcedDeal)
+            {
+                PressForcedDeals++;
+                _cards[cardKey!] = old with { Forced = old.Forced + 1 };
+            }
+            else
+            {
+                NaturalDeals++;
+                _cards[cardKey!] = old with { Natural = old.Natural + 1 };
+            }
+        }
+        else if (_ticksSinceDeal >= 0)
+            _ticksSinceDeal++;
+
+        _readings.Add(new PacingReading(turn, call, heat, _temperature, nightClaimed,
+            deckDealt, cadenceSucceeded, deckOutcome, cardKey, _pendingSpaceSpent));
+        _pendingCall = null;
+    }
+
+    internal void DebugSetCarry(int temperature, int quietTicks, bool spaceSuppressionSpent = false)
+    {
+        _temperature = Math.Max(0, temperature);
+        _quietTicks = Math.Max(0, quietTicks);
+        _spaceSuppressionSpent = spaceSuppressionSpent;
+        _pendingCall = null;
     }
 }

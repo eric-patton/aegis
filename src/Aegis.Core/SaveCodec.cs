@@ -334,10 +334,13 @@ namespace Aegis.Core;
 /// weather hands now change walking and camps, season gates change stead-deck
 /// outcomes, the autumn bargain changes a standing larder digit, and '?' gained
 /// a weather read where an older journal's key was ignored.
+/// v94 when D-160 gave the teller its bounded hand above the elastic season
+/// deck: Press may promote a missed deal and Space may suppress one natural
+/// opportunity, changing stores, offers, facts, and later journaled choices.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 93;
+    public const int Version = 94;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed) => $"{Magic} v{Version} seed:{seed}";

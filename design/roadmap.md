@@ -52,7 +52,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   Sleight/Larceny split Approved D-162); **town life opened** (knucklebones D-108;
   carousing + the light-purse read D-123)
 - Story templates: **6** built (Raided Stead plus Blight, Throne, Faiths, Gold Rush, Long Siege)
-- Path to 1.0: **3 of 9 tranches Verified** (V1-01 D-166, V1-02 D-167, V1-03 D-168); V1-04 is next
+- Path to 1.0: **4 of 9 tranches Verified** (V1-01 D-166, V1-02 D-167, V1-03 D-168,
+  V1-04 D-169); V1-05 is next
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
@@ -146,8 +147,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   companions, factions, and consequence depth; then the next full-density region and
   the release audit. Open-ended catalogs remain tracked but do not block 1.0 unless a
   later decision explicitly promotes them into the gate. All nine cards are Approved
-  through D-165. V1-01 through V1-03 are built and Verified under D-166 through D-168,
-  so V1-04 is next in queue order.
+  through D-165. V1-01 through V1-04 are built and Verified under D-166 through D-169,
+  so V1-05 is next in queue order.
 
 ### Path to 1.0 tracker (ordered, adopted D-155/D-157)
 
@@ -157,8 +158,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   (V1-02 design Approved D-158; built and Verified D-167)
 - [x] 3. D3 prose-variety infrastructure and repetition audit
   (V1-03 design Approved D-159; built and Verified D-168)
-- [ ] 4. D1 pacing steering
-  (V1-04 design Approved D-160; implementation pending)
+- [x] 4. D1 pacing steering
+  (V1-04 design Approved D-160; built and Verified D-169)
 - [ ] 5. Town and economy depth tranche
   (V1-05 design Approved D-161; implementation pending)
 - [ ] 6. Character and activity breadth tranche, completing the intended skill roster
@@ -185,7 +186,8 @@ infinite prerequisite for completion.
 
 - [x] Deterministic engine: hierarchical seed tree, fact graph, worldgen (D-002, D-013, D-018)
 - [x] Layered-map presentation, TUI render layer (Frame/Presenter) (D-001)
-- [x] Save system: seed + input journal, replay-on-load, currently v93 (D-012, D-028, D-166, D-167)
+- [x] Save system: seed + input journal, replay-on-load, currently v94
+  (D-012, D-028, D-166, D-167, D-169)
 - [x] NG+ crossing: waygate, coin -> Legend, tier-deepening worldgen (D-011, D-029)
 - [x] The Aegis as diegetic companion voice (D-010, D-019)
 - [x] The full trans-world Aegis story arc: reveal ladder -> the keeping -> the mending -> steady state (D-020, D-026, D-037, D-038, D-039, D-045, D-060)
@@ -687,12 +689,13 @@ between them as play. Starts after the stead layer's core lands.
 The procgen-lessons lane: editorial authority above the tick, worlds that differ in
 kind, and the evaluation harness that hardens every generator change.
 
-- [~] D1: The pacing layer: the read-only teller built D-145, and D-160 approves its
-  bounded steering contract. Only explicitly elastic random-deck cards may move: Press
-  guarantees an eligible deal after three quiet nights, while one successful opportunity
-  may be suppressed per Space episode. Scheduled futures, faction clocks, seasons and
-  weather, durations, player-triggered content, combat, and world state stay protected.
-  Implementation remains pending under V1-04 (D-131, D-145, D-160)
+- [x] D1: The pacing layer: D-145's measured teller gains D-160's bounded authority and
+  ships under D-169. All seven live random-deck cards explicitly declare elasticity.
+  Press guarantees an eligible deal after three quiet nights, while one successful
+  opportunity may be suppressed per Space episode. Scheduled futures, faction clocks,
+  seasons and weather, durations, player-triggered content, combat, and world state stay
+  protected. The full diagnostic book is verified across the five-seed sweep
+  (D-131, D-145, D-160, D-169)
 - [x] D2: The twist library: D-151 settles the contract and D-152 builds it. Tier
   7+ carries exactly one mandatory mixed-valence law, independently drawn from the
   world story through a deterministic no-repeat shuffle bag; the Held Road, Grave
@@ -777,6 +780,17 @@ kind, and the evaluation harness that hardens every generator change.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-22: **D-169 bounded pacing authority is built and Verified.** V1-04 gives the
+  teller authority only over seven explicitly elastic season-deck cards. Press promotes
+  a missed cadence roll when an eligible hand exists; Space suppresses one successful
+  opportunity per continuous episode without selecting or carrying a card. Every tick
+  still consumes one ordinary cadence roll, and every scheduled future, faction clock,
+  weather step, duration, player-triggered consequence, fight, site, and worldgen path
+  remains protected. Journey prose and JSON expose full call, outcome, gap, and per-card
+  diagnostics. Save v93 advances to v94. Release builds cleanly and all 886 tests pass.
+  Five v98 twin pairs are byte-identical, every key journal holds exactly against v97,
+  seed 1 replays 25,260 keys to cycle 13 and turn 24,066, and the 240-world purity gate
+  has zero digest mismatches. Tranche 4 is checked off. V1-05 is next.
 - 2026-07-22: **D-168 prose variety infrastructure is built and Verified.** V1-03 makes
   fact details, storylet lines, scene lines, and ask-about answers enumerable with stable
   source, family, variant, skeleton, reuse, and origin metadata. Five structured fact

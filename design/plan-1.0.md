@@ -30,7 +30,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 | V1-01 | High-fells capstone, the black tarn | Verified | D-156, D-166 | Completed |
 | V1-02 | Weather and seasons v1 | Verified | D-158, D-167 | Completed |
 | V1-03 | D3 prose-variety infrastructure | Verified | D-159, D-168 | Completed |
-| V1-04 | D1 pacing steering | Approved | D-160 | Pending |
+| V1-04 | D1 pacing steering | Verified | D-160, D-169 | Completed |
 | V1-05 | Town and economy depth | Approved | D-161 | Pending |
 | V1-06 | Character and activity breadth | Approved | D-162 | Pending |
 | V1-07 | Combat and magic depth | Approved | D-163 | Pending |
@@ -321,7 +321,7 @@ camping, economy, black tarn
 **Decisions:** D-159, D-168
 **Roadmap association:** Path to 1.0 tranche 3; D3  
 **Dependencies:** Fact graph, storylets, scenes, talk topics, worldgen `--dump`, WorldEval
-**Implementation status:** Completed and verified 2026-07-22; V1-04 is next
+**Implementation status:** Completed and verified 2026-07-22; V1-04 followed under D-169
 
 ### Approved behavior
 
@@ -404,7 +404,7 @@ camping, economy, black tarn
   regenerate with zero digest mismatches; 86,282 surfaces include 20,272 unvisited topic
   records and all five families at their declared coverage; five v97 twelve-crossing twin
   pairs are byte-identical to their mates and to v96; and seed 1 replays 25,260 keys exactly
-  to cycle 13 and turn 24,066. Save v93 holds. V1-04 is next.
+  to cycle 13 and turn 24,066. Save v93 holds. V1-04 followed under D-169.
 
 ### Explicit exclusions
 
@@ -414,12 +414,12 @@ camping, economy, black tarn
 
 ## V1-04: D1 pacing steering
 
-**Design status:** Approved
-**Decisions:** D-145, D-160
+**Design status:** Verified
+**Decisions:** D-145, D-160, D-169
 **Roadmap association:** Path to 1.0 tranche 4; D1; pacing authority question  
 **Dependencies:** Read-only teller, scheduled facts, coarse tick, stead event deck,
 weather and seasons  
-**Implementation status:** Pending in queue order
+**Implementation status:** Completed and verified 2026-07-22
 
 ### Approved behavior
 
@@ -496,6 +496,25 @@ weather and seasons
   all five journey twin pairs remain byte-identical, sim replay is exact, worldgen purity
   passes, and deck, store, offer, fact, and journey drift is justified against the then-
   current baseline.
+
+### Verification record
+
+- Release build: zero warnings and zero errors. Full suite: 886 of 886 tests passed,
+  including 18 focused pacing tests and the surrounding schedule, weather, deck, save,
+  replay, and journey coverage.
+- Five seeds completed twelve crossings twice each. Every v98 twin pair is byte-identical,
+  and every v98 key journal is byte-identical to v97. Cycle, turn, and death outcomes all
+  hold. Seed 1 sim replay matches exactly at 25,260 keys, cycle 13, turn 24,066.
+- The immediate v97 comparison covers the same 752 tick nights. Press calls fall from 199
+  to 55. The v98 book records 139 natural deals, 27 Press-forced deals, 13 Space
+  suppressions, 2 protected Press blocks, 11 empty Press calls, and exactly 752 cadence
+  rolls. Deal gaps span 1-10 ticks and the longest quiet stretch is 6 ticks.
+- Seasonal distribution moves only through the approved elastic deck. Haying days changes
+  from 6 to 9 and Late frost from 10 to 8 across the five runs, while all 28 bargain offers
+  and 21 purchases hold. No pilot policy or key route changes.
+- Worldgen remains pure across 240 worlds with zero digest mismatches. The 86,282 prose
+  surfaces and all generated-world measures remain unchanged. Save v93 advances to v94,
+  and D-169 closes tranche 4.
 
 ### Explicit exclusions
 

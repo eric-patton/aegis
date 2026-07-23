@@ -67,9 +67,43 @@ public sealed class SteadEvent
     /// <summary>Relative draw weight among the tick's eligible cards.</summary>
     public int Weight { get; init; } = 10;
 
+    /// <summary>
+    /// Whether D-160's pacing layer may steer this card. Null and undefined
+    /// values fail closed as protected, while catalog validation rejects them.
+    /// </summary>
+    public DeckPacingClass? Pacing { get; init; }
+
     /// <summary>Whether this tick could deal the card at all.</summary>
     public required Func<Game, bool> When { get; init; }
 
     /// <summary>The dealing: fire now, or foreshadow and schedule (the mandatory narration hook rides both roads).</summary>
     public required Action<Game> Draw { get; init; }
+}
+
+/// <summary>Hard validation and fail-closed reads for season-deck pacing metadata.</summary>
+public static class SteadDeckValidation
+{
+    public static bool IsElastic(SteadEvent card) =>
+        card.Pacing == DeckPacingClass.Elastic && Enum.IsDefined(card.Pacing.Value);
+
+    public static IReadOnlyList<string> Validate(IEnumerable<SteadEvent> cards)
+    {
+        var failures = new List<string>();
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var card in cards)
+        {
+            if (string.IsNullOrWhiteSpace(card.Key))
+                failures.Add("a season-deck card has no key");
+            else if (!keys.Add(card.Key))
+                failures.Add($"season-deck key '{card.Key}' is duplicated");
+
+            if (card.Pacing is null)
+                failures.Add($"season-deck card '{card.Key}' has no pacing classification");
+            else if (!Enum.IsDefined(card.Pacing.Value))
+                failures.Add($"season-deck card '{card.Key}' has invalid pacing classification {(int)card.Pacing.Value}");
+            if (card.Weight <= 0)
+                failures.Add($"season-deck card '{card.Key}' has nonpositive weight {card.Weight}");
+        }
+        return failures;
+    }
 }

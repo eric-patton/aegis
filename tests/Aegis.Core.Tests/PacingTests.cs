@@ -2,36 +2,45 @@ using Aegis.Core;
 
 namespace Aegis.Core.Tests;
 
-/// <summary>
-/// The storyteller's read-only season (D-145, plan 2026-07 D1): a teller
-/// above the coarse tick that watches every tick night, makes its call
-/// before the night from carried state (Space after hard beats, Press when
-/// the run coasts), then records what actually happened. It draws no RNG,
-/// writes no facts, and narrates nothing, so the tests hold the watching,
-/// the calls, the heat arithmetic, the disagreement counters, the crossing's
-/// cool-down, and the book's sameness under the same seed.
-/// </summary>
+/// <summary>The teller's bounded season-deck authority (D-145, D-160).</summary>
 public class PacingTests
 {
     [Fact]
-    public void TheTeller_WatchesEveryTickNight()
+    public void TheLiveDeck_DeclaresEveryCardElastic()
     {
-        var game = new Game(42);
-        game.Debug_ClearCamp();
-        game.Debug_HoldTheDeck();
-        Assert.Empty(game.Teller.Readings);
+        Assert.Empty(Game.Debug_ValidateSteadDeck());
+        var cards = Game.Debug_SteadDeckPacing();
+        Assert.Equal(7, cards.Count);
+        Assert.All(cards, card => Assert.Equal(DeckPacingClass.Elastic, card.Pacing));
+    }
 
+    [Fact]
+    public void MissingOrInvalidPacing_FailsClosedAndFailsValidation()
+    {
+        var missing = Card("missing", null);
+        var invalid = Card("invalid", (DeckPacingClass)99);
+
+        Assert.False(SteadDeckValidation.IsElastic(missing));
+        Assert.False(SteadDeckValidation.IsElastic(invalid));
+        var failures = SteadDeckValidation.Validate([missing, invalid]);
+        Assert.Contains(failures, f => f.Contains("has no pacing classification"));
+        Assert.Contains(failures, f => f.Contains("invalid pacing classification 99"));
+    }
+
+    [Fact]
+    public void TheTeller_WatchesEveryTickAndConsumesOneCadenceRoll()
+    {
+        var game = QuietGame();
         Wait(game, SteadRaids.TickTurns * 2);
+
         Assert.Equal(2, game.Teller.Readings.Count);
+        Assert.Equal(2, game.Teller.DeckCadenceRolls);
         Assert.All(game.Teller.Readings, r => Assert.Equal(PacingCall.Steady, r.Call));
     }
 
     [Fact]
-    public void TheRaid_Heats_ByItsTake()
+    public void Raids_KeepTheirExistingHeatByActualTake()
     {
-        // The camp stands and the dens raid from the first tick: a plain
-        // night heats one, and the emboldened night after takes two and
-        // heats two. Winter is never due before tick 3, so both are clean.
         var game = new Game(42);
         game.Debug_HoldTheDeck();
         Wait(game, SteadRaids.TickTurns * 2);
@@ -42,132 +51,288 @@ public class PacingTests
     }
 
     [Fact]
-    public void TheClaimedNight_Heats()
+    public void DeathHeat_ShapesTheFollowingCall()
     {
-        var game = new Game(42);
-        game.Debug_ClearCamp();
+        var game = QuietGame();
         game.Debug_HoldTheDeck();
-        int due = game.Upcoming.Single().DueTick;
-
-        Wait(game, SteadRaids.TickTurns * due);
-        var winterNight = game.Teller.Readings[due - 1];
-        Assert.True(winterNight.NightClaimed);
-        Assert.Equal(Storyteller.ClaimedHeat, winterNight.Heat);
-    }
-
-    [Fact]
-    public void TheDeaths_CallForAir_BeforeTheNextNight()
-    {
-        var game = new Game(42);
-        game.Debug_ClearCamp();
-        game.Debug_HoldTheDeck();
-
-        // Two deaths between ticks: six heat, hotter than SpaceAt. The call
-        // lands on the NEXT night, because the teller decides before the
-        // page is written, and that quiet night is no cooler a subject.
         for (int i = 0; i < 2; i++)
         {
             game.Debug_HurtPlayer(999);
             game.Debug_ForceDeathCheck();
         }
+
         Wait(game, SteadRaids.TickTurns);
         Assert.Equal(2 * Storyteller.DeathHeat, game.Teller.Readings[^1].Heat);
-
         Wait(game, SteadRaids.TickTurns);
         Assert.Equal(PacingCall.Space, game.Teller.Readings[^1].Call);
-        Assert.True(game.Teller.SpaceCalls >= 1);
     }
 
     [Fact]
-    public void TheQuietRun_CallsForTheScrew()
+    public void Press_PromotesAMissedRollIntoAnEligibleDeal()
     {
-        var game = new Game(42);
-        game.Debug_ClearCamp();
-        game.Debug_HoldTheDeck();
-        int due = game.Upcoming.Single().DueTick;
+        var game = QuietGame();
+        game.Debug_SetPacingCarry(temperature: 0, quietTicks: Storyteller.PressAfter);
+        game.Debug_QueueDeckCadence(false);
 
-        // Let the winter land (its night is heat, which resets the streak),
-        // then coast: three heatless ticks make the fourth night a Press
-        // call, and with the deck held it stays quiet, so the counter that
-        // audits unanswered pressure moves too.
-        Wait(game, SteadRaids.TickTurns * due);
-        Wait(game, SteadRaids.TickTurns * (Storyteller.PressAfter + 1));
-
-        Assert.Equal(PacingCall.Press, game.Teller.Readings[^1].Call);
-        Assert.True(game.Teller.PressCalls >= 1);
-        Assert.True(game.Teller.QuietUnderPress >= 1);
-    }
-
-    [Fact]
-    public void TheDeal_UnderACallForAir_IsCounted()
-    {
-        // The disagreement counters, held at the unit: a hot book calls for
-        // air, and the season deals straight through it.
-        var teller = new Storyteller();
-        teller.NewWorld(0);
-        teller.Observe(turn: 160, deathsNow: 2, nightClaimed: false, deckDealt: false,
-            raidDelta: 0, raidTake: 0);
-        teller.Observe(turn: 320, deathsNow: 2, nightClaimed: false, deckDealt: true,
-            raidDelta: 0, raidTake: 0);
-
-        Assert.Equal(1, teller.SpaceCalls);
-        Assert.Equal(1, teller.DealtUnderSpace);
-        Assert.Equal(0, teller.QuietUnderPress);
-    }
-
-    [Fact]
-    public void ThePressedNight_AnsweredByTheSeason_IsNoComplaint()
-    {
-        var teller = new Storyteller();
-        teller.NewWorld(0);
-        for (int i = 0; i < Storyteller.PressAfter; i++)
-            teller.Observe(160 * (i + 1), 0, false, false, 0, 0);
-        teller.Observe(160 * 4, 0, nightClaimed: false, deckDealt: true, 0, 0);
-
-        Assert.Equal(1, teller.PressCalls);
-        Assert.Equal(0, teller.QuietUnderPress); // the deck answered the press itself
-    }
-
-    [Fact]
-    public void TheCrossing_CoolsTheCarry_ButKeepsTheBook()
-    {
-        var game = new Game(42);
-        game.Debug_ClearCamp();
-        game.Debug_HoldTheDeck();
-        game.Debug_HurtPlayer(999);
-        game.Debug_ForceDeathCheck();
-        game.Debug_HurtPlayer(999);
-        game.Debug_ForceDeathCheck();
         Wait(game, SteadRaids.TickTurns);
+
+        var reading = game.Teller.Readings[^1];
+        Assert.Equal(PacingCall.Press, reading.Call);
+        Assert.False(reading.CadenceSucceeded);
+        Assert.Equal(PacingDeckOutcome.PressForcedDeal, reading.DeckOutcome);
+        Assert.NotNull(reading.CardKey);
+        Assert.Equal(1, game.Teller.PressForcedDeals);
+        Assert.Equal(0, game.Teller.NaturalDeals);
+    }
+
+    [Fact]
+    public void Press_NaturalSuccessRemainsNatural()
+    {
+        var game = QuietGame();
+        game.Debug_SetPacingCarry(0, Storyteller.PressAfter);
+        game.Debug_QueueDeckCadence(true);
+
+        Wait(game, SteadRaids.TickTurns);
+
+        var reading = game.Teller.Readings[^1];
+        Assert.Equal(PacingCall.Press, reading.Call);
+        Assert.Equal(PacingDeckOutcome.NaturalDeal, reading.DeckOutcome);
+        Assert.Equal(1, game.Teller.NaturalDeals);
+        Assert.Equal(0, game.Teller.PressForcedDeals);
+    }
+
+    [Fact]
+    public void AnElasticDeal_ResetsPressureForThreeNewQuietNights()
+    {
+        var teller = new Storyteller();
+        teller.NewWorld(0);
+        teller.DebugSetCarry(0, Storyteller.PressAfter);
+
+        Observe(teller, cadence: false, PacingDeckOutcome.PressForcedDeal, "one");
+        for (int i = 0; i < Storyteller.PressAfter; i++)
+            Assert.Equal(PacingCall.Steady, Observe(teller, false, PacingDeckOutcome.CadenceMiss).Call);
+        Assert.Equal(PacingCall.Press, teller.BeginTick());
+    }
+
+    [Fact]
+    public void Space_SuppressesOneSuccessThenLetsTheEpisodeDealNaturally()
+    {
+        var game = QuietGame();
+        game.Debug_SetPacingCarry(temperature: 6, quietTicks: 0);
+        game.Debug_QueueDeckCadence(true, true);
+
+        Wait(game, SteadRaids.TickTurns);
+        var first = game.Teller.Readings[^1];
+        Assert.Equal(PacingCall.Space, first.Call);
+        Assert.Equal(PacingDeckOutcome.SpaceSuppressed, first.DeckOutcome);
+        Assert.Null(first.CardKey);
+
+        Wait(game, SteadRaids.TickTurns);
+        var second = game.Teller.Readings[^1];
+        Assert.Equal(PacingCall.Space, second.Call);
+        Assert.True(second.SpaceAllowanceSpentAtCall);
+        Assert.Equal(PacingDeckOutcome.NaturalDeal, second.DeckOutcome);
+        Assert.Equal(1, game.Teller.SpaceSuppressions);
+        Assert.Equal(1, game.Teller.SpaceCallsAfterAllowanceSpent);
+    }
+
+    [Fact]
+    public void Space_DoesNotSpendItsSuppressionOnAMissedRoll()
+    {
+        var game = QuietGame();
+        game.Debug_SetPacingCarry(temperature: 6, quietTicks: 0);
+        game.Debug_QueueDeckCadence(false, true);
+
+        Wait(game, SteadRaids.TickTurns);
+        Assert.Equal(PacingDeckOutcome.CadenceMiss, game.Teller.Readings[^1].DeckOutcome);
+        Wait(game, SteadRaids.TickTurns);
+        Assert.Equal(PacingDeckOutcome.SpaceSuppressed, game.Teller.Readings[^1].DeckOutcome);
+        Assert.False(game.Teller.Readings[^1].SpaceAllowanceSpentAtCall);
+    }
+
+    [Fact]
+    public void Press_WithNoEligibleHandCreatesNothing()
+    {
+        var game = QuietGame();
+        game.Debug_SetSeason(WorldSeason.Winter);
+        game.Debug_SetPacingCarry(0, Storyteller.PressAfter);
+        game.Debug_QueueDeckCadence(false);
+
+        Wait(game, SteadRaids.TickTurns);
+
+        Assert.Equal(PacingDeckOutcome.NoEligibleHand, game.Teller.Readings[^1].DeckOutcome);
+        Assert.Equal(1, game.Teller.PressCallsWithNoEligibleHand);
+        Assert.Equal(0, game.Teller.PressForcedDeals);
+    }
+
+    [Fact]
+    public void AClaimedNight_BlocksPressWithoutMovingTheFuture()
+    {
+        var game = QuietGame();
+        int due = game.Upcoming.Single().DueTick;
+        Wait(game, SteadRaids.TickTurns * (due - 1));
+        game.Debug_SetPacingCarry(0, Storyteller.PressAfter);
+        game.Debug_QueueDeckCadence(false);
+
+        Wait(game, SteadRaids.TickTurns);
+
+        var reading = game.Teller.Readings[^1];
+        Assert.Equal(PacingCall.Press, reading.Call);
+        Assert.True(reading.NightClaimed);
+        Assert.Equal(Storyteller.ClaimedHeat, reading.Heat);
+        Assert.Equal(PacingDeckOutcome.ProtectedNight, reading.DeckOutcome);
+        Assert.Equal(1, game.Teller.PressBlockedByProtectedNights);
+        Assert.DoesNotContain(game.Upcoming, future => future.Key == "hard_winter");
+    }
+
+    [Fact]
+    public void AnElasticCardFuture_BecomesProtectedImmediately()
+    {
+        var game = QuietGame();
+        game.Debug_SetSeason(WorldSeason.Spring);
+        game.Debug_SetWeather(ClimateBand.Lowlands, WeatherFamily.Calm);
+        game.Debug_SetPacingCarry(0, Storyteller.PressAfter);
+        game.Debug_QueueDeckCadence(false);
+        Wait(game, SteadRaids.TickTurns);
+
+        Assert.Equal("fords_washout", game.Teller.Readings[^1].CardKey);
+        Assert.Contains(game.Upcoming, future => future.Key == "fords_washout");
+
+        game.Debug_SetPacingCarry(0, Storyteller.PressAfter);
+        game.Debug_QueueDeckCadence(false);
+        Wait(game, SteadRaids.TickTurns);
+
+        Assert.Equal(PacingDeckOutcome.ProtectedNight, game.Teller.Readings[^1].DeckOutcome);
+        Assert.True(game.Teller.Readings[^1].NightClaimed);
+        Assert.DoesNotContain(game.Upcoming, future => future.Key == "fords_washout");
+    }
+
+    [Fact]
+    public void Space_SelectsNoCardAndCarriesNoBacklogAcrossASeasonGate()
+    {
+        var game = QuietGame();
+        game.Debug_SetPacingCarry(6, 0);
+        game.Debug_QueueDeckCadence(true);
+        Wait(game, SteadRaids.TickTurns);
+        Assert.Equal(PacingDeckOutcome.SpaceSuppressed, game.Teller.Readings[^1].DeckOutcome);
+        Assert.Null(game.Teller.Readings[^1].CardKey);
+
+        game.Debug_SetSeason(WorldSeason.Winter);
+        game.Debug_SetPacingCarry(0, Storyteller.PressAfter);
+        game.Debug_QueueDeckCadence(false);
+        Wait(game, SteadRaids.TickTurns);
+
+        Assert.Equal(PacingDeckOutcome.NoEligibleHand, game.Teller.Readings[^1].DeckOutcome);
+        Assert.Empty(game.Teller.CardCounts);
+    }
+
+    [Fact]
+    public void IdenticalState_KeepsWeightedSelectionAndTheWholeBookStable()
+    {
+        var one = QuietGame(99);
+        var two = QuietGame(99);
+        one.Debug_SetPacingCarry(0, Storyteller.PressAfter);
+        two.Debug_SetPacingCarry(0, Storyteller.PressAfter);
+        one.Debug_QueueDeckCadence(false);
+        two.Debug_QueueDeckCadence(false);
+
+        Wait(one, SteadRaids.TickTurns);
+        Wait(two, SteadRaids.TickTurns);
+
+        Assert.Equal(one.Teller.Readings, two.Teller.Readings);
+        Assert.Equal(one.Teller.CardCounts, two.Teller.CardCounts);
+    }
+
+    [Fact]
+    public void JournalReplay_RebuildsSteeringAndDiagnosticsInSaveV94()
+    {
+        const ulong seed = 1234;
+        string keys = "0" + new string('.', SteadRaids.TickTurns * 9);
+        var live = new Game(seed, firstWake: true);
+        foreach (char key in keys) live.ApplyKey(key);
+        var replay = SaveCodec.Replay(seed, keys);
+
+        Assert.Equal(94, SaveCodec.Version);
+        Assert.Equal(live.Stores, replay.Stores);
+        Assert.Equal(live.Upcoming, replay.Upcoming);
+        Assert.Equal(live.Teller.Readings, replay.Teller.Readings);
+        Assert.Equal(live.Teller.CardCounts, replay.Teller.CardCounts);
+    }
+
+    [Fact]
+    public void Crossing_ResetsHeatQuietAndSpaceAuthorityButKeepsTheBook()
+    {
+        var game = QuietGame();
+        game.Debug_SetPacingCarry(6, 0, spaceSuppressionSpent: true);
+        game.Debug_QueueDeckCadence(true);
+        Wait(game, SteadRaids.TickTurns);
+        Assert.Equal(PacingCall.Space, game.Teller.Readings[^1].Call);
         int watched = game.Teller.Readings.Count;
-        Assert.True(game.Teller.Readings[^1].Temperature >= Storyteller.SpaceAt);
 
         game.Debug_SetPlayerPos(game.World.GatePos);
         game.Apply(Command.Enter);
         game.Apply(Command.Enter);
         Assert.Equal(2, game.Cycle);
 
-        // The book spans the run; the carried temperature does not: the new
-        // world's first night is Steady, however hot the old one ended.
-        Assert.Equal(watched, game.Teller.Readings.Count);
         game.Debug_ClearCamp();
-        game.Debug_HoldTheDeck();
         Wait(game, SteadRaids.TickTurns);
         Assert.Equal(watched + 1, game.Teller.Readings.Count);
         Assert.Equal(PacingCall.Steady, game.Teller.Readings[^1].Call);
+        Assert.False(game.Teller.Readings[^1].SpaceAllowanceSpentAtCall);
     }
 
     [Fact]
-    public void TheSameSeed_KeepsTheSameBook()
+    public void HeatAndGapDiagnostics_RecordCompletedNights()
     {
-        var one = new Game(42);
-        var two = new Game(42);
-        for (int i = 0; i < SteadRaids.TickTurns * 4; i++)
-        {
-            one.Apply(Command.Wait);
-            two.Apply(Command.Wait);
-        }
-        Assert.Equal(one.Teller.Readings, two.Teller.Readings);
+        var teller = new Storyteller();
+        teller.NewWorld(0);
+        Observe(teller, true, PacingDeckOutcome.NaturalDeal, "one");
+        Observe(teller, false, PacingDeckOutcome.CadenceMiss);
+        Observe(teller, true, PacingDeckOutcome.NaturalDeal, "one");
+        Observe(teller, false, PacingDeckOutcome.CadenceMiss);
+        Observe(teller, false, PacingDeckOutcome.CadenceMiss);
+        Observe(teller, true, PacingDeckOutcome.NaturalDeal, "two");
+
+        Assert.Equal(2, teller.MinimumDealGap);
+        Assert.Equal(3, teller.MaximumDealGap);
+        Assert.Equal(2, teller.LongestQuietStretch);
+        Assert.Equal(new PacingCardCount(2, 0), teller.CardCounts["one"]);
+        Assert.Equal(new PacingCardCount(1, 0), teller.CardCounts["two"]);
+    }
+
+    private static SteadEvent Card(string key, DeckPacingClass? pacing) => new()
+    {
+        Key = key,
+        Pacing = pacing,
+        When = _ => true,
+        Draw = _ => { },
+    };
+
+    private static Game QuietGame(ulong seed = 42)
+    {
+        var game = new Game(seed);
+        game.Debug_ClearCamp();
+        return game;
+    }
+
+    private static PacingReading Observe(
+        Storyteller teller,
+        bool cadence,
+        PacingDeckOutcome outcome,
+        string? card = null)
+    {
+        var call = teller.BeginTick();
+        teller.Observe(
+            turn: (teller.Readings.Count + 1) * SteadRaids.TickTurns,
+            call,
+            deathsNow: 0,
+            nightClaimed: false,
+            cadenceSucceeded: cadence,
+            deckOutcome: outcome,
+            cardKey: card,
+            raidDelta: 0,
+            raidTake: 0);
+        return teller.Readings[^1];
     }
 
     private static void Wait(Game game, int turns)

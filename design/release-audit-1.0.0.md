@@ -65,6 +65,10 @@ route replays exactly at 35,094 keys, cycle 13, and turn 33,981. Generator 1 reg
    Later worlds skipped their fresh saltworks and could not close the regional account.
    The pilot now reads the current site's finite pan list. The twelve-world release route
    proves all 36 pans and eleven available full conclusions.
+3. The first clean packaging attempt found invalid PowerShell continuation syntax in the
+   strengthened exact sim and worldgen smoke assertions. No publish began and no package
+   was produced. The conditions now use valid operator continuations, and the release-tool
+   test invokes PowerShell's parser over the complete script.
 
 ### Open
 

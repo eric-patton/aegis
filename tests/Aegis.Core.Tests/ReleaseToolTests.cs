@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Aegis.Cli;
 
@@ -51,6 +52,23 @@ public class ReleaseToolTests
         Assert.Contains("& $exe --help", script);
         Assert.Contains("& $exe sim --seed 1", script);
         Assert.Contains("& $exe worldgen --seeds 1", script);
+        Assert.Contains("$sim.final.turn -ne 4", script);
+        Assert.Contains("$worldgen.digestMismatches -ne 0", script);
+
+        var start = new ProcessStartInfo
+        {
+            FileName = "powershell.exe",
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+        };
+        start.ArgumentList.Add("-NoProfile");
+        start.ArgumentList.Add("-Command");
+        string scriptPath = Path.Combine(root, "scripts", "release.ps1").Replace("'", "''");
+        start.ArgumentList.Add($"$errors = @(); [Management.Automation.Language.Parser]::ParseFile('{scriptPath}', [ref]$null, [ref]$errors) | Out-Null; if ($errors.Count) {{ $errors | ForEach-Object {{ $_.Message }}; exit 1 }}");
+        using var parser = Process.Start(start)!;
+        parser.WaitForExit();
+        Assert.True(parser.ExitCode == 0, parser.StandardOutput.ReadToEnd() + parser.StandardError.ReadToEnd());
 
         Assert.True(File.Exists(Path.Combine(root, "README.md")));
         Assert.True(File.Exists(Path.Combine(root, "RELEASE-NOTES-1.0.0.md")));

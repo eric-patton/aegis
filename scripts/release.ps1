@@ -85,14 +85,18 @@ if (-not $helpText.Contains("journey --release")) {
 }
 $sim = ((& $exe sim --seed 1 --keys "0...." --quiet --generator 1) -join "`n") | ConvertFrom-Json
 if ($LASTEXITCODE -ne 0) { throw "Clean-extraction sim smoke failed." }
-if ($sim.keysApplied -ne 5 -or $sim.final.cycle -ne 1 -or $sim.final.turn -ne 4
-    -or $sim.final.saveVersion -ne 99 -or $sim.final.generatorVersion -ne 1) {
+if ($sim.keysApplied -ne 5 -or
+    $sim.final.cycle -ne 1 -or
+    $sim.final.turn -ne 4 -or
+    $sim.final.saveVersion -ne 99 -or
+    $sim.final.generatorVersion -ne 1) {
     throw "Clean-extraction sim smoke did not reproduce the pinned state."
 }
 $worldgen = ((& $exe worldgen --seeds 1 --tiers 1 --json --generator 1) -join "`n") | ConvertFrom-Json
 if ($LASTEXITCODE -ne 0) { throw "Clean-extraction worldgen smoke failed." }
-if ($worldgen.worlds -ne 1 -or $worldgen.digestMismatches -ne 0
-    -or $worldgen.generatorVersion -ne 1) {
+if ($worldgen.worlds -ne 1 -or
+    $worldgen.digestMismatches -ne 0 -or
+    $worldgen.generatorVersion -ne 1) {
     throw "Clean-extraction worldgen smoke did not reproduce generator 1."
 }
 

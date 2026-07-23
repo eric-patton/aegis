@@ -207,6 +207,28 @@ aegis sim --seed 42 --keys "llll....jjjj" [--quiet]
 
 Builds the world, applies the key script synchronously, prints JSON: seed, keys applied, the full message log (`--quiet` omits it), and the final state snapshot. Deterministic: same seed and keys always produce byte-identical results. Intended for balance sweeps, regression checks, and CI.
 
+## Worldgen and prose curation
+
+`worldgen` batch-generates each requested world twice, compares the complete WorldEval
+digest, and returns exit code 2 for generator impurity or a hard prose-catalog failure.
+The default run covers 30 seeds across tiers 1-8.
+
+```
+aegis worldgen
+aegis worldgen --json
+aegis worldgen --dump
+aegis worldgen --dump --json
+```
+
+The ordinary report charts generated-world measures and the family-aware prose audit.
+Its JSON shape includes per-kind surface counts, family coverage, failures, warnings, and
+authored-versus-observed variation. `--dump` is the readable generate-then-curate view,
+grouped by family and source metadata. Combining `--dump --json` emits one compact
+`ProseDumpRecord` per line for scripts. Fixed legacy prose stays visible but is not a hard
+variation failure. Invalid templates, duplicate ids, unmet budgets, unresolved values,
+missing declared variable content, and generator impurity are hard failures. Distribution
+skew, fixed-heavy categories, and cross-family collisions remain advisory warnings.
+
 ## Determinism contract
 
 - All randomness derives from the master seed via the seed tree (`Rng.cs`); subsystems never share streams.

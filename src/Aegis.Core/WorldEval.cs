@@ -1,5 +1,3 @@
-using System.Text.RegularExpressions;
-
 namespace Aegis.Core;
 
 /// <summary>One site as the harness reads it: what stands there, and what it holds.</summary>
@@ -113,28 +111,68 @@ public static class WorldEval
         return counts;
     }
 
-    /// <summary>
-    /// Every prose surface this world generated (fact details and compiled story
-    /// lines), with the generated names struck out, so seeds can be compared
-    /// skeleton to skeleton. This is the generate-then-curate dump the prose
-    /// audit wants (plan 2026-07 D3): every surface the world CAN produce,
-    /// pilot-visited or not, which is exactly what the journey sweep cannot see.
-    /// </summary>
-    public static List<string> Skeletons(World w) =>
-        [.. RawSurfaces(w).Select(s => Normalize(s, w))];
-
-    /// <summary>The same surfaces with their names left in: the curation dump's raw half.</summary>
-    public static List<string> RawSurfaces(World w)
+    /// <summary>Every owned narrative surface this world can produce (D-159).</summary>
+    public static List<ProseSurface> ProseSurfaces(World w)
     {
-        var surfaces = new List<string>();
-        foreach (var f in w.Facts.All)
-            if (f.Detail.Length > 0)
-                surfaces.Add(f.Detail);
-        foreach (var s in w.StoryStorylets)
-            foreach (var (text, _) in s.Lines)
-                surfaces.Add(text);
+        var surfaces = new List<ProseSurface>();
+
+        foreach (var fact in w.Facts.All.Where(f => f.Detail.Length > 0))
+        {
+            if (ProseCatalog.FamilyFor(fact) is not null)
+                surfaces.AddRange(ProseCatalog.RenderAll(w, fact));
+            else
+                surfaces.Add(Fixed(
+                    $"fact.{ProseNormalizer.Slug(fact.Type)}.{ProseNormalizer.Slug(fact.Subject)}.{fact.Id}",
+                    ProseSurfaceKind.FactDetail, fact.Detail, w, "legacy-fact"));
+        }
+
+        // Runtime facts also belong in a generate-then-curate view. Their
+        // sample records carry structured fields, never copied rendered prose.
+        foreach (var fact in ProseCatalog.MissingFamilySamples(w))
+            surfaces.AddRange(ProseCatalog.RenderAll(w, fact));
+
+        var storylets = StoryletCatalog.All.Concat(w.StoryStorylets)
+            .GroupBy(s => s.Id, StringComparer.Ordinal)
+            .Select(g => g.First())
+            .OrderBy(s => s.Id, StringComparer.Ordinal);
+        foreach (var storylet in storylets)
+        {
+            for (int i = 0; i < storylet.Lines.Length; i++)
+                surfaces.Add(Fixed($"storylet.{ProseNormalizer.Slug(storylet.Id)}.line.{i + 1}",
+                    ProseSurfaceKind.Storylet, storylet.Lines[i].Text, w, "legacy-storylet"));
+            if (storylet.Scene is not { } scene) continue;
+            foreach (var node in scene.Nodes)
+                for (int i = 0; i < node.Lines.Length; i++)
+                    surfaces.Add(Fixed(
+                        $"scene.{ProseNormalizer.Slug(scene.Id)}.{ProseNormalizer.Slug(node.Id)}.line.{i + 1}",
+                        ProseSurfaceKind.Scene, node.Lines[i].Text, w, "legacy-scene"));
+        }
+        surfaces.AddRange(Game.AuditTopicCatalog(w.Seed));
         return surfaces;
     }
+
+    private static ProseSurface Fixed(
+        string sourceId,
+        ProseSurfaceKind kind,
+        string raw,
+        World world,
+        string origin) =>
+        new(sourceId, kind, null, "fixed", raw, ProseNormalizer.Normalize(raw, world),
+            ProseReusePolicy.Fixed, origin);
+
+    /// <summary>Runs the family-aware audit across a batch of world inventories.</summary>
+    public static ProseAuditSummary AuditProse(IReadOnlyList<ProseWorldInventory> worlds) =>
+        ProseAudit.Audit(worlds);
+
+    /// <summary>
+    /// Every prose skeleton this world owns, with generated names struck out,
+    /// retained as the compatibility view for the original D-137 ledger.
+    /// </summary>
+    public static List<string> Skeletons(World w) =>
+        [.. ProseSurfaces(w).Select(s => s.NormalizedSkeleton)];
+
+    /// <summary>The same surfaces with their names left in: the curation dump's raw half.</summary>
+    public static List<string> RawSurfaces(World w) => [.. ProseSurfaces(w).Select(s => s.RawText)];
 
     /// <summary>
     /// Strikes this world's generated names out of one surface: people, raiders,
@@ -142,26 +180,7 @@ public static class WorldEval
     /// name that happens to sit inside another (or inside plain prose) never
     /// half-replaces. What survives is the authored skeleton.
     /// </summary>
-    public static string Normalize(string surface, World w)
-    {
-        var names = new List<(string Name, string Token)>
-        {
-            (w.SettlementName, "{settlement}"),
-            (w.Name, "{world}"),
-            // The market town (D-140): a second settlement name per world,
-            // struck like the first so the town's prose skeletons dedupe.
-            (w.TownName, "{town}"),
-        };
-        foreach (var n in w.Npcs)
-            names.Add((n.Name, "{person}"));
-        foreach (var sp in w.Sites.SelectMany(s => s.Spawns))
-            if (sp.Epithet is not null)
-                names.Add((sp.Epithet, "{raider}"));
-
-        foreach (var (name, token) in names.OrderByDescending(n => n.Name.Length))
-            surface = Regex.Replace(surface, $@"\b{Regex.Escape(name)}\b", token);
-        return surface;
-    }
+    public static string Normalize(string surface, World w) => ProseNormalizer.Normalize(surface, w);
 
     /// <summary>Folds one tier's measures into its summary row.</summary>
     public static TierSummary Summarize(int tier, IReadOnlyList<WorldMeasure> measures)
@@ -256,7 +275,8 @@ public static class WorldEval
         foreach (var kv in m.WeatherFamilies) Fold($"{kv.Key}={kv.Value}");
         foreach (var id in m.StoryletIds) Fold(id);
         foreach (var s in m.Sites) Fold($"{s.Id}|{s.Kind}|{s.Spawns}|{s.Monsters}|{s.Stone}|{s.Coffer}|{s.FishingReaches}");
-        foreach (var s in RawSurfaces(w)) Fold(s);
+        foreach (var s in ProseSurfaces(w))
+            Fold($"{s.SourceId}|{s.Kind}|{s.FamilyId}|{s.VariantId}|{s.ReusePolicy}|{s.Origin}|{s.RawText}|{s.NormalizedSkeleton}");
         return h.ToString("x16");
     }
 }

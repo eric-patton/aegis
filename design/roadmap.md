@@ -52,7 +52,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   Sleight/Larceny split Approved D-162); **town life opened** (knucklebones D-108;
   carousing + the light-purse read D-123)
 - Story templates: **6** built (Raided Stead plus Blight, Throne, Faiths, Gold Rush, Long Siege)
-- Path to 1.0: **2 of 9 tranches Verified** (V1-01 D-166, V1-02 D-167); V1-03 is next
+- Path to 1.0: **3 of 9 tranches Verified** (V1-01 D-166, V1-02 D-167, V1-03 D-168); V1-04 is next
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
@@ -146,8 +146,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   companions, factions, and consequence depth; then the next full-density region and
   the release audit. Open-ended catalogs remain tracked but do not block 1.0 unless a
   later decision explicitly promotes them into the gate. All nine cards are Approved
-  through D-165. V1-01 and V1-02 are built and Verified under D-166 and D-167, so
-  V1-03 is next in queue order.
+  through D-165. V1-01 through V1-03 are built and Verified under D-166 through D-168,
+  so V1-04 is next in queue order.
 
 ### Path to 1.0 tracker (ordered, adopted D-155/D-157)
 
@@ -155,8 +155,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   (V1-01 design Approved D-156; built and Verified D-166)
 - [x] 2. Weather and seasons v1 plus the enabled A2 event follow-ons
   (V1-02 design Approved D-158; built and Verified D-167)
-- [ ] 3. D3 prose-variety infrastructure and repetition audit
-  (V1-03 design Approved D-159; implementation pending)
+- [x] 3. D3 prose-variety infrastructure and repetition audit
+  (V1-03 design Approved D-159; built and Verified D-168)
 - [ ] 4. D1 pacing steering
   (V1-04 design Approved D-160; implementation pending)
 - [ ] 5. Town and economy depth tranche
@@ -700,14 +700,15 @@ kind, and the evaluation harness that hardens every generator change.
   to tier 7+ freshness, while new bands remain optional catalog growth. All three
   laws, their readers, pilot policy, snapshots, journey report, and worldgen measures
   are verified across the five-seed sweep (D-131, D-151, D-152)
-- [ ] D3: Prose variety infrastructure (design Approved D-159, implementation pending):
+- [x] D3: Prose variety infrastructure (design Approved D-159, built and Verified D-168):
   enumerable fact details, storylets, scenes, and ask-about topics; fact-keyed authored
   variant bundles composed per surface; stable pure-hash selection outside every gameplay
   RNG; declared Fixed, Rare, Standard, and Frequent budgets; and a metadata-aware
   repetition audit that distinguishes intentional constants from failed variation. It
   shares WorldEval and `aegis worldgen --dump` with D4, adds structured dump output, and
-  hard-gates invalid contracts while keeping distribution findings advisory (D-131,
-  D-137, D-159)
+  hard-gates invalid contracts while keeping distribution findings advisory. The first
+  five-family slice and the unvisited topic catalog are green across 86,282 surfaces
+  (D-131, D-137, D-159, D-168)
 - [x] D4: Worldgen evaluation harness: batch-generate worlds and chart expressive-range
   metrics (template mixes, fact-graph composition, site tenancy, name variety, prose
   skeletons); built D-137 as `aegis worldgen` on a pure WorldEval core, with `--json`
@@ -746,10 +747,11 @@ kind, and the evaluation harness that hardens every generator change.
   every mastered kind holds Keen at every arch where the baseline softens; deaths price the trade)
 - [x] Machine-readable journey report for a sweep / CI (D-083: `journey --json`, one object
   with headline, economy, arc, faction peaks, and full per-crossing bestiary; prose untouched)
-- [x] Worldgen evaluation harness (D-137: `aegis worldgen`, batch generation across seeds
+- [x] Worldgen evaluation harness (D-137/D-168: `aegis worldgen`, batch generation across seeds
   and tiers on a pure WorldEval core; per-tier story mixes, fact and storylet spreads, site
-  tenancy, name variety, the prose-skeleton repetition audit, a double-generate purity gate
-  wired to the exit code, `--json` for CI, and `--dump` as D3's surface feed)
+  tenancy, name variety, the family-aware prose audit, a double-generate purity gate wired
+  to the exit code, `--json` for CI, `--dump` for grouped curation, and `--dump --json` for
+  one structured surface per line)
 - [ ] Release journey and Windows x64 package (V1-09 design Approved D-165;
   implementation pending): a machine-gated twelve-world coverage route, campaign-scoped
   generator 1, repeatable Native AOT packaging, hashes, clean-extraction smoke tests,
@@ -775,6 +777,19 @@ kind, and the evaluation harness that hardens every generator change.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-22: **D-168 prose variety infrastructure is built and Verified.** V1-03 makes
+  fact details, storylet lines, scene lines, and ask-about answers enumerable with stable
+  source, family, variant, skeleton, reuse, and origin metadata. Five structured fact
+  families prove pure per-surface authored selection and the Fixed, Rare, Standard, and
+  Frequent budgets, while legacy wording remains Fixed and visible. WorldEval now audits
+  gated topics without pilot visits, groups the human dump, emits compact JSON-line
+  records, reports per-kind and family measures, hard-fails invalid catalogs or missing
+  variable content, and leaves distribution findings advisory. Save v93 holds. Release
+  builds cleanly and all 877 tests pass. The final 240-world run inventories 86,282
+  surfaces, including 20,272 topics, with zero digest mismatches or hard failures. Five
+  v97 journey twins are byte-identical to their mates and to v96, and seed 1 replays all
+  25,260 keys exactly to cycle 13 and turn 24,066. Tranche 3 is checked off. V1-04 pacing
+  steering is next.
 - 2026-07-22: **D-167 weather and seasons v1 is built and Verified.** V1-02 puts every
   world under one autumn-first calendar, preserves the seed-drawn hard-winter arrival,
   and gives lowlands, road, and high fells independent deterministic three-card hands

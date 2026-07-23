@@ -712,6 +712,10 @@ public sealed class Game
     public IReadOnlyList<(string Label, string Answer)> Topics => _topics;
     private readonly List<(string Label, string Answer)> _topics = [];
 
+    /// <summary>The same live answers with D-159 source and variation metadata.</summary>
+    public IReadOnlyList<ProseSurface> TopicSurfaces => _topicSurfaces;
+    private readonly List<ProseSurface> _topicSurfaces = [];
+
     /// <summary>What the current conversation partner sells (D-036), listed after the topics.</summary>
     public IReadOnlyList<(TradeGood Good, string Arg, string Label)> Offers => _offers;
     private readonly List<(TradeGood Good, string Arg, string Label)> _offers = [];
@@ -3123,6 +3127,7 @@ public sealed class Game
             NpcKind.GraveTally => BuildGraveTallyTopics(npc),
             _ => BuildTopics(npc),
         });
+        CatalogLiveTopics(npc);
         _offers.Clear();
         if (npc.Kind is NpcKind.Villager or NpcKind.Smith or NpcKind.Skald or NpcKind.Peddler or NpcKind.Waykeeper or NpcKind.Towner or NpcKind.GraveTally) _offers.AddRange(BuildOffers(npc));
 
@@ -3248,11 +3253,12 @@ public sealed class Game
             string word = WordWest
                 ? $" There is a thing being said down the road, about your name and {World.TownName}'s book. We judge what we see under our own roofs and no more. But it is being said."
                 : "";
-            topics.Add(("The stead", $"{stead.Detail} \"We hold on. That is the whole craft of it.{road}{word}\""));
+            var context = ProseCatalog.ContextFor(World, stead).With(("road", road), ("word", word));
+            topics.Add(("The stead", ProseCatalog.Render(World, stead, ProseSurfaceKind.Topic, context).RawText));
         }
 
-        if (CampCleared)
-            topics.Add(("The quiet nights", $"\"The raids are ended, and everyone knows whose doing that was. {World.SettlementName} sleeps whole again.\""));
+        if (CampCleared && World.Facts.Find("deed", "camp_cleared") is { } quiet)
+            topics.Add(("The quiet nights", ProseCatalog.Render(World, quiet, ProseSurfaceKind.Topic).RawText));
         else if (World.Facts.OfType("grievance").FirstOrDefault() is { } grievance)
         {
             // The crowded dark felt from inside (D-051): the stead lives in the
@@ -3281,7 +3287,9 @@ public sealed class Game
             string muster = MusterLooms
                 ? " And the hills show more fires this month, not fewer. Mustering over their dead, the wanderers say. When that comes down on us it will not come gentle."
                 : "";
-            topics.Add(("The goblin raids", $"\"{grievance.Detail} We have fed them to keep the peace. It has not bought much peace.{raided}{crowded}{order}{muster}\""));
+            var context = ProseCatalog.ContextFor(World, grievance).With(
+                ("raided", raided), ("crowded", crowded), ("order", order), ("muster", muster));
+            topics.Add(("The goblin raids", ProseCatalog.Render(World, grievance, ProseSurfaceKind.Topic, context).RawText));
         }
 
         // The season's news is NOT on this list (D-139): the topic-budget
@@ -3296,9 +3304,13 @@ public sealed class Game
             topics.Add(("The shrine", $"{shrine.Detail} \"Old past knowing. We keep it swept all the same.\""));
 
         if (World.Facts.Find("site", "waygate") is { } gate)
-            topics.Add(("The black arch", gate.Detail + (CampCleared
+        {
+            string state = CampCleared
                 ? " \"They say it hums now. No one goes near to check.\""
-                : " \"Shut as long as any here remember. Best left so.\"")));
+                : " \"Shut as long as any here remember. Best left so.\"";
+            var context = ProseCatalog.ContextFor(World, gate).With(("camp_state", state));
+            topics.Add(("The black arch", ProseCatalog.Render(World, gate, ProseSurfaceKind.Topic, context).RawText));
+        }
 
         if (World.BarrowSite is { } barrowSite && World.Facts.Find("site", "barrow") is { } barrow)
         {
@@ -3340,6 +3352,192 @@ public sealed class Game
         }
 
         return topics;
+    }
+
+    /// <summary>
+    /// Every answer that exists in a live menu becomes enumerable, including
+    /// legacy fixed answers that do not yet pass through a composed family.
+    /// </summary>
+    private void CatalogLiveTopics(Npc npc)
+    {
+        _topicSurfaces.Clear();
+        foreach (var (label, answer) in _topics)
+            _topicSurfaces.Add(CatalogTopic(npc, label, answer));
+    }
+
+    private ProseSurface CatalogTopic(Npc npc, string label, string answer)
+    {
+        Fact? fact = label switch
+        {
+            "The stead" => World.Facts.Find("settlement", World.SettlementName),
+            "The quiet nights" => World.Facts.Find("deed", "camp_cleared"),
+            "The goblin raids" => World.Facts.Find("grievance", "goblin_camp"),
+            "The black arch" => World.Facts.Find("site", "waygate"),
+            "The season's news" => World.Facts.All.LastOrDefault(f => f.Type == "event" && f.Subject
+                is "hard_winter" or "muster_broken" or "far_fields" or "drovers"
+                or "fords_washout" or "washout_stood" or "wedding" or "wedding_put_off"
+                or "haying_days" or "late_frost" or "late_frost_stood" or "season_bargain_bought")
+                is { Subject: "hard_winter" } winter ? winter : null,
+            _ => null,
+        };
+        if (fact is not null && ProseCatalog.FamilyFor(fact) is { } family
+            && family.Renderings.Any(r => r.Kind == ProseSurfaceKind.Topic))
+        {
+            var selected = ProseCatalog.Render(World, fact, ProseSurfaceKind.Topic);
+            return selected with
+            {
+                RawText = answer,
+                NormalizedSkeleton = ProseNormalizer.Normalize(answer, World),
+                Origin = "runtime-topic",
+            };
+        }
+
+        string npcSource = npc.Kind == NpcKind.Villager ? "villager" : npc.Id;
+        string skeleton = ProseNormalizer.Normalize(answer, World);
+        return new ProseSurface(
+                $"topic.{ProseNormalizer.Slug(npcSource)}.{ProseNormalizer.Slug(label)}.{ProseNormalizer.StableTag(skeleton)}",
+                ProseSurfaceKind.Topic, null, "fixed",
+                answer,
+                skeleton,
+                ProseReusePolicy.Fixed, "legacy-topic");
+    }
+
+    /// <summary>
+    /// Builds every talk-gated legacy answer without visiting it through play.
+    /// The audit owns this disposable Game, so state branches can be exercised
+    /// without changing the generated world being measured.
+    /// </summary>
+    private static readonly object TopicAuditLock = new();
+    private static readonly Dictionary<ulong, ProseSurface[]> TopicAuditCache = [];
+
+    internal static List<ProseSurface> AuditTopicCatalog(ulong seed)
+    {
+        lock (TopicAuditLock)
+            if (TopicAuditCache.TryGetValue(seed, out var cached)) return [.. cached];
+
+        var game = new Game(seed);
+        game.World = WorldGen.Generate(seed, tier: 8, twist: WorldTwist.GraveMarket);
+        var collected = new List<ProseSurface>();
+
+        Npc Person(string id, NpcKind kind, string role = "villager", string siteId = "") => new()
+        {
+            Id = id,
+            Name = "the catalog voice",
+            Role = role,
+            Pos = game.World.ShrinePos,
+            Kind = kind,
+            SiteId = siteId,
+        };
+        void Capture(Npc npc, List<(string Label, string Answer)> topics)
+        {
+            foreach (var (label, answer) in topics)
+            {
+                var surface = game.CatalogTopic(npc, label, answer);
+                if (surface.FamilyId is null) collected.Add(surface);
+            }
+        }
+
+        var villager = Person("npc_villager", NpcKind.Villager);
+        var unbinder = Person("npc_unbinder", NpcKind.Unbinder, "tinker");
+        var severed = Person("npc_severed_calm", NpcKind.Severed, "hermit");
+        var smith = Person("npc_smith", NpcKind.Smith, "smith");
+        var skald = Person("npc_skald", NpcKind.Skald, "skald");
+        var keeper = Person("npc_keeper", NpcKind.Keeper, "shrinekeeper");
+        var elder = Person("npc_harrow_elder", NpcKind.Harrower, "elder");
+        var doorward = Person("npc_harrow_doorward", NpcKind.Harrower, "doorward");
+        var peddler = Person("npc_peddler", NpcKind.Peddler, "peddler");
+        var waykeeper = Person("npc_waykeeper", NpcKind.Waykeeper, "waykeeper");
+        string graveSite = game.World.Sites.First(s => s.Kind == SiteKind.Barrow).Id;
+        var tally = Person("npc_barrow_tally", NpcKind.GraveTally, "grave tally-keeper", graveSite);
+
+        Capture(villager, game.BuildTopics(villager));
+        foreach (string role in UnbinderGuises.Roles)
+        {
+            var guise = WithRole(unbinder, role);
+            Capture(guise, game.BuildUnbinderTopics(guise));
+        }
+        Capture(severed, game.BuildSeveredTopics());
+        Capture(smith, game.BuildSmithTopics());
+        Capture(skald, game.BuildSkaldTopics());
+        Capture(keeper, game.BuildKeeperTopics());
+        Capture(elder, game.BuildHarrowTopics(elder));
+        Capture(doorward, game.BuildHarrowTopics(doorward));
+        Capture(peddler, BuildPeddlerTopics());
+        Capture(waykeeper, game.BuildWaykeeperTopics());
+        Capture(tally, game.BuildGraveTallyTopics(tally));
+
+        foreach (string id in new[] { "npc_provisioner", "npc_hidemonger", "npc_herbmonger",
+                     "npc_mootwarden", "npc_townsmith", "npc_scrivener", "npc_guildmaster" })
+        {
+            var towner = Person(id, NpcKind.Towner, id[4..]);
+            Capture(towner, game.BuildTownerTopics(towner));
+        }
+
+        game.World.Facts.Add("noticed", "unbinder", "", "catalog state");
+        game.Player.UnbinderRevealTier = 2;
+        Capture(unbinder, game.BuildUnbinderTopics(unbinder));
+        game.Player.Resolution = Resolution.Kept;
+        Capture(unbinder, game.BuildUnbinderTopics(unbinder));
+        game.Player.Resolution = Resolution.Refused;
+        Capture(unbinder, game.BuildUnbinderTopics(unbinder));
+        game.Player.SeveredPeaceHeard = true;
+        Capture(severed, game.BuildSeveredTopics());
+
+        game.Player.BooksRead.Add(BookId.Lay);
+        game.Player.Legend = 1;
+        Capture(skald, game.BuildSkaldTopics());
+        game.Player.Legend = int.MaxValue / 4;
+        Capture(skald, game.BuildSkaldTopics());
+
+        foreach (string subject in new[] { "hard_winter", "muster_broken", "far_fields", "drovers",
+                     "fords_washout", "washout_stood", "wedding", "wedding_put_off",
+                     "haying_days", "late_frost", "late_frost_stood", "season_bargain_bought" })
+        {
+            game.World.Facts.Add("event", subject, game.World.SettlementName, "catalog state");
+            Capture(keeper, game.BuildKeeperTopics());
+        }
+
+        game.World.Facts.Add("echo", "deed", game.World.SettlementName, "A road-borne deed entered the songs.");
+        Capture(villager, game.BuildTopics(villager));
+        game.Debug_ClearCamp();
+        Capture(villager, game.BuildTopics(villager));
+
+        game.Debug_RaiseTownBook(1);
+        game.World.Facts.Add("news", "word_east", game.World.TownName, "catalog state");
+        game.World.Facts.Add("guild", "guild_sworn", game.World.TownName, "catalog state");
+        game.Debug_BankLore(20);
+        foreach (string id in new[] { "npc_mootwarden", "npc_scrivener", "npc_guildmaster" })
+        {
+            var towner = Person(id, NpcKind.Towner, id[4..]);
+            Capture(towner, game.BuildTownerTopics(towner));
+        }
+
+        foreach (var weather in Enum.GetValues<WeatherFamily>())
+        {
+            game.Debug_SetWeather(ClimateBand.Road, weather);
+            game.Debug_SetWeather(ClimateBand.Fells, weather);
+            Capture(waykeeper, game.BuildWaykeeperTopics());
+        }
+        game.World.Sites.First(s => s.Id == graveSite).Cleared = true;
+        Capture(tally, game.BuildGraveTallyTopics(tally));
+        game.World.Facts.Add("twist-state", "grave_truce_broken", game.World.Name, "catalog state");
+        game.World.Sites.First(s => s.Id == graveSite).Cleared = false;
+        Capture(tally, game.BuildGraveTallyTopics(tally));
+
+        var result = collected.GroupBy(s => s.SourceId, StringComparer.Ordinal)
+            .Select(g => g.First()).OrderBy(s => s.SourceId, StringComparer.Ordinal).ToArray();
+        lock (TopicAuditLock) TopicAuditCache[seed] = result;
+        return [.. result];
+
+        Npc WithRole(Npc npc, string role) => new()
+        {
+            Id = npc.Id,
+            Name = npc.Name,
+            Role = role,
+            Pos = npc.Pos,
+            Kind = npc.Kind,
+            SiteId = npc.SiteId,
+        };
     }
 
     /// <summary>
@@ -3533,7 +3731,7 @@ public sealed class Game
                 or "haying_days" or "late_frost" or "late_frost_stood" or "season_bargain_bought") is { } news
             ? news.Subject switch
             {
-                "hard_winter" => "\"That winter was a fist. Snow to the sills and the fords iced shut; we fed every mouth from the lofts and burned green wood, and we are still counting what it cost us.\"",
+                "hard_winter" => ProseCatalog.Render(World, news, ProseSurfaceKind.Topic).RawText,
                 "muster_broken" => "\"The hills were all fires one week and dark the next. Whatever gathered up there over its dead broke up before it came down on us, and we sleep the easier for never learning that night.\"",
                 "far_fields" => "\"The far fields came good when nothing else did. One cart under guard, but a cart. We do not ask the season why it relents; we get it in the lofts quick and say nothing.\"",
                 "drovers" => "\"Drovers came through off the high road and paid hill prices for a measure. Coin in the stead's box and dearer bread on every board. The steadholder calls it trade. The ovens have another word.\"",

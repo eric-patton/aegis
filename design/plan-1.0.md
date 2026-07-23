@@ -29,7 +29,7 @@ criteria, and decision associations for the nine 1.0 tranches.
 |------|---------|---------------|-----------|----------------|
 | V1-01 | High-fells capstone, the black tarn | Verified | D-156, D-166 | Completed |
 | V1-02 | Weather and seasons v1 | Verified | D-158, D-167 | Completed |
-| V1-03 | D3 prose-variety infrastructure | Approved | D-159 | Pending |
+| V1-03 | D3 prose-variety infrastructure | Verified | D-159, D-168 | Completed |
 | V1-04 | D1 pacing steering | Approved | D-160 | Pending |
 | V1-05 | Town and economy depth | Approved | D-161 | Pending |
 | V1-06 | Character and activity breadth | Approved | D-162 | Pending |
@@ -123,7 +123,7 @@ goods, D-155 release sequence
 **Roadmap association:** Path to 1.0 tranche 2; weather and seasons; A2 follow-ons  
 **Known dependencies:** Scheduled facts, stead event deck, road sky, wolf-winter, regions,
 camping, economy, black tarn  
-**Implementation status:** Completed and verified 2026-07-22; V1-03 is next
+**Implementation status:** Completed and verified 2026-07-22
 
 ### Approved behavior
 
@@ -317,11 +317,11 @@ camping, economy, black tarn
 
 ## V1-03: D3 prose-variety infrastructure
 
-**Design status:** Approved
-**Decisions:** D-159
+**Design status:** Verified
+**Decisions:** D-159, D-168
 **Roadmap association:** Path to 1.0 tranche 3; D3  
 **Dependencies:** Fact graph, storylets, scenes, talk topics, worldgen `--dump`, WorldEval
-**Implementation status:** Pending in queue order
+**Implementation status:** Completed and verified 2026-07-22; V1-04 is next
 
 ### Approved behavior
 
@@ -383,6 +383,28 @@ camping, economy, black tarn
   required. Five-seed journey twins remain byte-identical, sim replay is exact, worldgen
   purity passes, and any baseline drift is justified as prose-only with gameplay counts
   unchanged.
+
+### Implementation record
+
+- D-168 adds `ProseSurface`, `ProseFamily`, compatible variant bundles, validated
+  `ProseContext`, pure fact-and-surface selection, Fixed/Rare/Standard/Frequent budgets,
+  normalized skeletons, provenance, and hard catalog validation.
+- Five families form the composed slice: one reaches four surface kinds and the other four
+  reach two. Generated, runtime-event, and consequence readers use the composer through
+  their real topic paths. Legacy fact, topic, storylet, and scene prose remains enumerable
+  and Fixed. A disposable topic catalog exercises gated answers without pilot visits or
+  mutation of the measured world.
+- WorldEval now runs the family-aware audit and retains the old skeleton view as a
+  compatibility measure. Human dumps group by family and source. `--dump --json` emits one
+  compact record per line. Ordinary JSON reports per-kind counts, family coverage,
+  failures, warnings, and authored-versus-observed variation. Hard failures return nonzero;
+  distribution findings remain advisory.
+- Verification is complete: clean Release build with zero warnings and errors; 877 tests
+  green, including 15 focused prose tests; both dump formats exit zero and parse; 240 worlds
+  regenerate with zero digest mismatches; 86,282 surfaces include 20,272 unvisited topic
+  records and all five families at their declared coverage; five v97 twelve-crossing twin
+  pairs are byte-identical to their mates and to v96; and seed 1 replays 25,260 keys exactly
+  to cycle 13 and turn 24,066. Save v93 holds. V1-04 is next.
 
 ### Explicit exclusions
 

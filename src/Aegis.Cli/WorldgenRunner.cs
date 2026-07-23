@@ -53,6 +53,7 @@ public static class WorldgenRunner
 
         var measures = new List<WorldMeasure>();
         var skeletons = new List<(ulong Seed, int Tier, List<string> Skeletons)>();
+        var proseWorlds = new List<ProseWorldInventory>();
         int mismatches = 0;
 
         for (int tier = tierLo; tier <= tierHi; tier++)
@@ -70,22 +71,40 @@ public static class WorldgenRunner
                     Console.Error.WriteLine($"aegis worldgen: seed {seed} tier {tier} did not regenerate identically");
                 }
 
+                var prose = WorldEval.ProseSurfaces(world);
+                proseWorlds.Add(new ProseWorldInventory(seed, tier, prose));
+
                 if (dump)
                 {
-                    var m = WorldEval.Measure(world);
-                    Console.WriteLine($"== seed {seed} tier {tier}  \"{m.WorldName}\" / {m.SettlementName}  ({m.Story}, {m.Twist}) ==");
-                    foreach (var surface in WorldEval.RawSurfaces(world))
-                        Console.WriteLine(surface);
-                    Console.WriteLine();
+                    if (json)
+                    {
+                        foreach (var surface in prose)
+                            Console.WriteLine(ProseDump.JsonLine(seed, tier, surface));
+                    }
+                    else
+                    {
+                        var m = WorldEval.Measure(world);
+                        Console.WriteLine($"== seed {seed} tier {tier}  \"{m.WorldName}\" / {m.SettlementName}  ({m.Story}, {m.Twist}) ==");
+                        foreach (string line in ProseDump.HumanLines(prose)) Console.WriteLine(line);
+                        Console.WriteLine();
+                    }
                     continue;
                 }
 
                 measures.Add(WorldEval.Measure(world));
-                skeletons.Add((seed, tier, WorldEval.Skeletons(world)));
+                skeletons.Add((seed, tier, [.. prose.Select(s => s.NormalizedSkeleton)]));
             }
         }
 
-        if (dump) return mismatches == 0 ? 0 : 2;
+        var proseAudit = WorldEval.AuditProse(proseWorlds);
+        if (mismatches > 0)
+            proseAudit.Failures.Add($"generator impurity: {mismatches} world(s) did not regenerate identically");
+        if (dump)
+        {
+            foreach (string failure in proseAudit.Failures)
+                Console.Error.WriteLine($"aegis worldgen: prose failure: {failure}");
+            return proseAudit.Failures.Count == 0 ? 0 : 2;
+        }
 
         var tiers = measures
             .GroupBy(m => m.Tier)
@@ -105,9 +124,10 @@ public static class WorldgenRunner
                 Seeds: seeds, Start: start, TierLo: tierLo, TierHi: tierHi,
                 Worlds: measures.Count, DigestMismatches: mismatches,
                 WeatherCoverage: weatherCoverage,
+                Prose: proseAudit,
                 Tiers: tiers, Skeletons: audit, Measures: measures);
             Console.WriteLine(System.Text.Json.JsonSerializer.Serialize(report, PilotJsonPretty.Default.WorldgenReport));
-            return mismatches == 0 ? 0 : 2;
+            return proseAudit.Failures.Count == 0 ? 0 : 2;
         }
 
         var w = Console.Out;
@@ -137,11 +157,16 @@ public static class WorldgenRunner
             string text = r.Skeleton.Length > 88 ? r.Skeleton[..85] + "..." : r.Skeleton;
             w.WriteLine($"    x{r.Count,-4} ({r.Worlds} worlds)  {text}");
         }
+        w.WriteLine($"  family audit: {proseAudit.FixedSurfaces} fixed, {proseAudit.VariableSurfaces} variable, {proseAudit.Families} families");
+        w.WriteLine($"  per kind: {string.Join(", ", proseAudit.PerKind.Select(kv => $"{kv.Key} {kv.Value}"))}");
+        w.WriteLine($"  family coverage: {string.Join(", ", proseAudit.FamilyCoverage.Select(kv => $"{kv.Key} {kv.Value} kind(s)"))}");
+        foreach (string warning in proseAudit.Warnings) w.WriteLine($"  warning: {warning}");
+        foreach (string failure in proseAudit.Failures) w.WriteLine($"  FAILURE: {failure}");
         w.WriteLine();
-        w.WriteLine(mismatches == 0
-            ? "purity: every world regenerated identically (the generator reads seed and tier alone)."
-            : $"PURITY FAILURE: {mismatches} world(s) did not regenerate identically.");
-        return mismatches == 0 ? 0 : 2;
+        w.WriteLine(proseAudit.Failures.Count == 0
+            ? "purity: every world regenerated identically and every prose hard gate passed."
+            : $"PURITY FAILURE: {proseAudit.Failures.Count} hard failure(s).");
+        return proseAudit.Failures.Count == 0 ? 0 : 2;
     }
 }
 
@@ -149,4 +174,5 @@ public static class WorldgenRunner
 internal sealed record WorldgenReport(
     int Seeds, ulong Start, int TierLo, int TierHi, int Worlds, int DigestMismatches,
     Dictionary<string, int> WeatherCoverage,
+    ProseAuditSummary Prose,
     List<TierSummary> Tiers, SkeletonSummary Skeletons, List<WorldMeasure> Measures);

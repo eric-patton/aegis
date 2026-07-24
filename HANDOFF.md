@@ -282,16 +282,19 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Review and revise `design/godot-ui-mockup-review.md` with the player. Record the
-   approved shell revision under a new decision before implementation.
-2. Implement the approved D-182 Phase 2 remediation, then produce a fresh packaged
+1. Review the four controlled style directions under
+   `artifacts/d182-style-directions-v1/` with the player. Select one direction, or one
+   explicit limited hybrid, before revising individual screens.
+2. Review and revise `design/godot-ui-mockup-review.md` with the player. Record the
+   approved style and shell revision under a new decision before implementation.
+3. Implement the approved D-182 Phase 2 remediation, then produce a fresh packaged
    checkpoint.
-3. Implement D-182 Phase 3: dedicated modern Character, Inventory, and Equipment
+4. Implement D-182 Phase 3: dedicated modern Character, Inventory, and Equipment
    screens with every canonical action and required long, empty, under-met, and
    pending-choice state.
-4. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
+5. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
    review gate.
-5. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
+6. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
    explicit user approval can make V1-09 and V1-10 Verified and close Aegis 1.0.
 
 ## Handoff hygiene

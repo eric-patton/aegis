@@ -3051,8 +3051,11 @@ The review draft and nine generated concepts live in
 `design/godot-ui-mockup-review.md` and `artifacts/d182-ui-mockups-v1/`. Player approval
 is required for the integrated Activity/History model, iron rose removal or optional
 accessibility role, full-window focused information screens, centered event sheet,
-separate text-size and map-zoom controls, and any required second visual pass. These are
-proposals only and do not amend D-182 until approved.
+separate text-size and map-zoom controls, one consistent visual style direction, and any
+required second visual pass. The controlled style comparison lives under
+`artifacts/d182-style-directions-v1/`: Field Instrument, Blackened Brass, Moss and Ash,
+and Winter Signal all use the same neutral world-shell master. These are proposals only
+and do not amend D-182 until approved.
 
 ## Not yet raised (parking lot)
 

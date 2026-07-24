@@ -6,6 +6,8 @@ Related decision: D-182
 
 Mockup set: `artifacts/d182-ui-mockups-v1/`
 
+Style-direction set: `artifacts/d182-style-directions-v1/`
+
 ## Purpose
 
 The D-182 Phase 2 packaged review showed that individual UI repairs are not enough to
@@ -15,6 +17,33 @@ Character, Inventory, Journal, History, Help, and both themes.
 
 The generated images are layout and visual-language references only. Their names,
 numbers, item catalogs, icons, map content, and prose are not canonical game content.
+
+## Style-first correction
+
+The first screen suite mixed several visual languages. That inconsistency is not an
+approved eclectic direction. Screen-specific mockups are paused while the player
+selects one underlying style.
+
+The comparison set holds layout, hierarchy, labels, glyph map, condition rail, Activity
+dock, and control placement constant. Only palette, typography, borders, focus,
+density, and the signature visual device change:
+
+1. `01-field-instrument.png`: cool mineral daylight, precise survey rules, restrained
+   serif prose, and a functional map datum. This is the current recommendation because
+   it supports both readability and Aegis's charted-margin identity without pretending
+   the UI is a physical artifact.
+2. `02-blackened-brass.png`: soot-dark iron, engraved brass, compact instrument keys,
+   and the strongest authored personality. Its risks are border density, lower light
+   accessibility, and a possible antique-device reading.
+3. `03-moss-and-ash.png`: bone, charcoal, moss, clipped corners, and compact field tabs.
+   It is grounded and daylight-friendly, but risks feeling like a retro desktop tool if
+   the green labels and heavy outlines are not reduced.
+4. `04-winter-signal.png`: cloud, slate, fjord blue, and one rare orange waypoint. It is
+   the clearest contemporary direction, but risks reading like a general outdoor
+   navigation product rather than Aegis.
+
+`00-layout-master.png` is the neutral geometry reference. No screen-specific design
+work should resume until one direction, or one explicit and limited hybrid, is approved.
 
 ## Findings from the Phase 2 package
 
@@ -93,9 +122,10 @@ numbers, item catalogs, icons, map content, and prose are not canonical game con
 
 ## Decisions requested before implementation
 
-1. Approve, revise, or reject the integrated Activity dock and expanded History model.
-2. Approve removal of the iron rose, or retain it only as an optional accessibility
+1. Select one visual style direction, or define an explicit limited hybrid.
+2. Approve, revise, or reject the integrated Activity dock and expanded History model.
+3. Approve removal of the iron rose, or retain it only as an optional accessibility
    control.
-3. Approve full-window focused information screens and the centered event sheet.
-4. Approve separate text-size and map-zoom controls.
-5. Select which mockups require another visual pass before the contract is recorded.
+4. Approve full-window focused information screens and the centered event sheet.
+5. Approve separate text-size and map-zoom controls.
+6. Select which mockups require another visual pass before the contract is recorded.

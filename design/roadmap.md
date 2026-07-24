@@ -226,6 +226,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     surface
   - [ ] D-182 Phase 2 review: decide whether to remove the iron rose or retain it only
     as an optional accessibility control
+  - [ ] Select and document one D-182 visual style direction before revising individual
+    screen mockups
   - [ ] Review and approve the visual contract in `design/godot-ui-mockup-review.md`
     before Phase 3 implementation
   - [ ] Modern dedicated character, inventory, and equipment screens, including
@@ -859,8 +861,9 @@ The Godot client architecture is settled under D-182. The active mockup question
 must be settled for 1.0. The remaining parking-lot questions are classified post-1.0
 under D-165 unless a later decision promotes one into a release.
 
-- ◇ D-182 UI review: integrated Activity/History behavior, iron rose removal, focused
-  screen shapes, separate text-size and map-zoom controls, and mockup revisions
+- ◇ D-182 UI review: one consistent visual style direction, integrated Activity/History
+  behavior, iron rose removal, focused screen shapes, separate text-size and map-zoom
+  controls, and mockup revisions
 - ◇ Folk cultures: how worldgen recultures the five folk per world, and whether factions read folk (D-017, D-092)
 - ◇ Spell list growth past the seven V1-07 workings / school-shaped content, if any
   (D-022, D-091, D-163)
@@ -876,6 +879,12 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-24: **The D-182 visual review moves style before screen design.** The first
+  suite mixed unrelated visual languages, so screen-specific work is paused. A neutral
+  world-shell master now anchors four controlled variations: Field Instrument,
+  Blackened Brass, Moss and Ash, and Winter Signal. Layout and content remain fixed so
+  the player can choose palette, typography, borders, density, focus, and signature
+  detail without information architecture changing underneath the comparison.
 - 2026-07-24: **The D-182 Phase 2 player review pauses implementation for a complete
   UI mockup pass.** Newly tracked defects cover creation-edge collisions, partial
   runtime theme refresh, lost creation text focus, a remaining legacy interaction

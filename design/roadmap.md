@@ -898,6 +898,12 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-24: **Character Creation receives four architecture choices on the D-183
+  visual base.** Focused Question, Comparison Workbench, Scrolling Ledger, and Choice
+  Gallery keep one light visual language while changing interaction structure. Focused
+  Question is recommended for its calm focus and responsive path, with a
+  context-sensitive summary drawer borrowed from the workbench for the stages that need
+  it. These are review proposals, not an implementation decision.
 - 2026-07-24: **D-183 locks the world-screen structural base and exposes the remaining
   presentation inventory.** The approved Map as Workspace layout keeps the map dominant,
   uses a floating screen launcher, and fixes a right sidebar around thin Health, Stamina,

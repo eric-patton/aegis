@@ -11,6 +11,9 @@ Style-direction set: `artifacts/d182-style-directions-v1/`
 
 Game-screen architecture set: `artifacts/d182-game-screen-architectures-v1/`
 
+Character-creation architecture set:
+`artifacts/d183-character-creation-architectures-v1/`
+
 ## Purpose
 
 The D-182 Phase 2 packaged review showed that individual UI repairs are not enough to
@@ -95,6 +98,40 @@ approved, and the remaining screens still need review before implementation resu
 - Permanent control text and the default iron rose do not occupy the world shell.
 - Map glyph colors, final surface treatment, exact icons, responsive collapse behavior,
   and final spacing remain to be settled.
+
+## Character-creation architecture review
+
+The first remaining screen family now has a controlled four-image architecture set.
+Every image holds the D-183 light visual language, stage, option count, and content
+scope approximately constant while changing navigation, comparison, progress, and
+information density. Generated descriptions, traits, icons, attribute labels, and
+stage names are illustrative, not canonical.
+
+1. `01-focused-question.png`: one decision fills the screen. A horizontal ten-stage
+   route sits above a two-column choice field, selected detail band, and stable footer.
+   It has the calmest focus and best scaling path. It shows enough choice detail without
+   making creation feel like character administration.
+2. `02-comparison-workbench.png`: option list, selected-choice explanation, and live
+   character summary form three permanent panes. It supports precise mechanical
+   comparison and later shaping stages well, but exposes too much ledger at the moment
+   the player should be making one human-scale choice.
+3. `03-scrolling-ledger.png`: all ten stages share one continuous vertical document.
+   The current stage expands while future stages remain visible below. It makes
+   backtracking and total progress concrete, but feels most like a form and gives future
+   stages unnecessary visual weight. The generated launcher and glyph ornament are
+   rejected as violations of the focused creation contract.
+4. `04-choice-gallery.png`: six tall choice plates make selection feel most like a game
+   screen, with a selected-detail shelf beneath. It has the strongest spatial identity,
+   but long canonical descriptions and supported narrow or 200-percent layouts would
+   force an early fallback from the six-column composition.
+
+The current recommendation is `01-focused-question.png` as the base. It should borrow
+one behavior from the workbench, not its permanent third pane: an optional
+context-sensitive summary drawer for shaping, text entry, and final review. The
+two-column choice field becomes one column at narrow widths or high text scale. Text
+entry replaces the choice field without moving the question, progress route, or footer.
+Final review uses the same canvas as a readable summary, so creation remains one
+coherent screen family.
 
 ## Findings from the Phase 2 package
 
@@ -253,7 +290,7 @@ shape is the same.
 
 1. Settle the exact light-theme surface treatment and canonical map-glyph palette on
    the approved D-183 world geometry.
-2. Approve the Character Creation screen family.
+2. Select or revise one Character Creation architecture from the controlled D-183 set.
 3. Approve Conversation and commerce plus the reusable event and action-sheet grammar.
 4. Approve Character, Pack and equipment, Journal, Help, and Settings.
 5. Approve Campaign entry, pause, save, confirmation, and boundary states.

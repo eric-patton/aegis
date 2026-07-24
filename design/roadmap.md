@@ -57,8 +57,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   Implemented under D-174, but its terminal candidate is superseded by D-175. V1-10 is
   Implemented under D-177, and its clean candidate is built under D-178. The bounded
   D-181 Godot presentation spike is built and verified, and D-182 approves the complete
-  modernization contract. Its five implementation phases, replacement candidate, fresh
-  guided campaign, and explicit signoff remain
+  modernization contract. Phases 1 and 2 are built and verified. Phases 3 through 5,
+  the replacement candidate, a fresh guided campaign, and explicit signoff remain
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
@@ -187,8 +187,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     scrollback, wrapping, contrast, explanations, and reproduced behavior findings
   - [x] Save v100 creation backtracking and complete engine sweep (D-180)
   - [x] Clean v100 Native AOT package and extracted-package smokes (D-180)
-  - [ ] Second packaged-review blockers: scalable text, light theme, full-screen
+  - [x] Second packaged-review blockers: scalable text, light theme, full-screen
     creation, persistent compass mode, complete wrapping, and responsive conversations
+    (D-182 Phases 1 and 2)
   - [x] Godot .NET presentation spike built and verified (D-181)
   - [x] Review the Godot spike and decide the shipping presentation host (D-182)
     - [x] Player review confirms Godot is the preferred modernization direction
@@ -196,20 +197,24 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   - [x] D-182 Phase 1 foundation and creation: persistent screen tree, typed creation
     projection, native text entry, scalable font and theme system, square-cell map,
     resize probes, packaged export, and clean verification (D-182)
-  - [~] Godot UI architecture repair: persistent screens, stable responsive layout,
+  - [x] Godot UI architecture repair: persistent screens, stable responsive layout,
     native text entry, scoped focus, and preserved scroll positions
-    (foundation complete; remaining focus and scroll work belongs to Phase 2)
+    (D-182 Phases 1 and 2)
   - [x] Crisp scalable presentation: physical-pixel layout, discrete UI scale choices,
     vector text at native sizes, and a custom square-cell terminal map renderer
-  - [ ] Modern world shell: colored auto-follow activity feed, expandable full-session
-    history, responsive status, and clean keyboard/mouse ownership
+  - [x] D-182 Phase 2 world, conversation, logs, and movement checkpoint: responsive
+    status rail and drawer, colored auto-follow activity, full-session History,
+    bottom-follow transcript, scoped focus, draggable persistent iron rose, and clean
+    keyboard and pointer ownership (D-182)
+  - [x] Modern world shell: colored auto-follow activity feed, expandable full-session
+    history, responsive status, and clean keyboard/mouse ownership (D-182)
   - [ ] Modern dedicated character, inventory, and equipment screens, including
     keyboard and pointer access to all ten launch gear entries
   - [ ] Journal screen with current-session history plus read-only people, bestiary,
     and active-thread views over knowledge the character has actually earned
-  - [ ] Conversation repair: full transcript color, bottom-follow on open and updates,
-    independently scrolling actions, and focus trapped inside the conversation
-  - [ ] Draggable persistent iron rose with a reset position action
+  - [x] Conversation repair: full transcript color, bottom-follow on open and updates,
+    independently scrolling actions, and focus trapped inside the conversation (D-182)
+  - [x] Draggable persistent iron rose with a reset position action (D-182)
   - [x] World-only diagonal shortcuts: Ctrl+Left/Right for north diagonals and
     Alt+Left/Right for south diagonals
   - [x] Restore all character-creation choice descriptions and verify every stage
@@ -845,6 +850,18 @@ are classified post-1.0 under D-165 unless a later decision promotes one into a 
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-24: **D-182 Phase 2 ships the modern world, conversation, logs, and movement.**
+  The world reflows between a docked condition rail and a compact drawer, the activity
+  ribbon carries the newest colored event, and full-session History follows the tail
+  until the player deliberately scrolls away. Conversation keeps selection by canonical
+  action key, constrains directional focus, and returns its transcript to the newest
+  entry. The iron rose now drags, resets, persists, and clamps across resize, while world
+  input owns arrows and the approved modifier diagonals before GUI navigation. Background
+  visual probes cover responsive layouts, focus, interaction, drag, persistence, and
+  History ownership. Release build is warning-free, all 1,028 tests pass, and a clean
+  extraction reports save v100 and generator 1 before clean exit. No engine behavior,
+  RNG, save, or canonical key meaning changed, so the conditional engine sweep did not
+  trigger.
 - 2026-07-24: **D-182 Phase 1 ships the Godot client foundation and modern creation.**
   The client now keeps persistent screens, reads a typed creation projection, uses
   native text fields, preserves every creation description, renders Atkinson vector

@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-24, D-182 Phase 1 verified)
+# Aegis handoff (updated 2026-07-24, D-182 Phase 2 verified)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -29,18 +29,19 @@ The canonical design truth stays where it always was:
   will use persistent responsive screens, native-pixel discrete UI scales, hinted
   vector text, a custom square-cell map, modern information screens, structured
   colored history, scoped focus, and packaged review gates after phases two and four.
-- Latest completed implementation: D-182 Phase 1, the persistent Godot foundation and
-  modern creation flow, passes. `Main` now coordinates persistent creation, world,
-  conversation, and legacy fallback screens. Host provides a typed creation
-  projection with complete descriptions and review text. The client uses Atkinson
-  Hyperlegible Next and Mono, five integer UI scales from 100-200 percent, persistent
-  dark and light themes, native text fields, and a custom measured square-cell map.
-  Background probes cover text entry, review scrolling, theme and scale persistence,
-  windowed and maximized reflow, and the empty-world shell without stealing focus.
-  Release builds with zero warnings, all 1,011 tests pass, and the Windows x64
-  checkpoint export reports save v100 and generator 1 over pilot before clean exit.
-  Core behavior, RNG, saves, and canonical keys did not move, so the conditional
-  engine sweep did not trigger.
+- Latest completed implementation: D-182 Phases 1 and 2 pass. Phase 1 supplies the
+  persistent Godot foundation and modern creation flow. Phase 2 adds the responsive
+  world rail and drawer, newest-entry activity ribbon, colored full-session History,
+  split or stacked conversation with scoped focus and bottom-follow, draggable
+  persistent iron rose, modifier diagonals, and world-owned input. Host carries pure
+  presentation view models for breakpoints, follow-tail behavior, movement chords, and
+  normalized floating position. Background probes cover text entry, review scrolling,
+  themes, 100-200 percent scaling, responsive world and conversation, focus wrapping,
+  History ownership, drag, resize, and persisted iron rose placement without stealing
+  foreground focus. Release builds with zero warnings, all 1,028 tests pass, and the
+  Windows x64 checkpoint export reports save v100 and generator 1 over pilot before
+  clean exit. Core behavior, RNG, saves, and canonical keys did not move, so the
+  conditional engine sweep did not trigger.
 - Core and Host now multi-target .NET 8 and .NET 10. Godot uses .NET 8 for runtime
   compatibility. Existing clients, tools, and tests remain on .NET 10.
 - D-175 through D-178 remain the implemented SadConsole baseline and clean candidate.
@@ -63,7 +64,7 @@ The canonical design truth stays where it always was:
   comments in `src/Aegis.Core/SaveCodec.cs`).
 - Generator format: campaign-scoped generator 1, recorded separately in v100 saves.
 - Product version: 1.0.0.
-- Tests: 1007 green (`dotnet test Aegis.slnx -c Release --no-build`).
+- Tests: 1,028 green (`dotnet test Aegis.slnx -c Release --no-build`).
 - D-181 Release build is zero-warning. Its 22 focused Host tests and all 1,007 tests
   pass. The exported Godot client reports save v100 and generator 1, accepts pilot and
   background pointer input, and exits cleanly. Two real save loads produced exact
@@ -83,11 +84,16 @@ The canonical design truth stays where it always was:
   `667edc79d3473dbb4fb2d0c930093bd1b5666a25b2ea93fe456d1d864c2b0b5d`.
   A clean extraction reports save v100 and generator 1, then exits through pilot with
   code 0. This checkpoint is for foundation and creation review, not release signoff.
+- D-182 Phase 2 checkpoint: `artifacts/aegis-d182-phase2-win-x64-final.zip`, SHA-256
+  `D100ED3C364AC9246D938C42E27CE5E24CE67763FFBC031AA407395C8BCE5269`.
+  A clean extraction reports save v100 and generator 1, creates its named save, then
+  exits through pilot with code 0. This checkpoint is for world, conversation, logs,
+  movement, and packaged player review, not release signoff.
 - The 2026-07-24 second packaged review found release-blocking font scaling, dark-only
   presentation, creation clutter, lost compass mode, incomplete wrapping, and
   conversation clipping. Automated gates remain green, but the candidate is not
-  approved. D-181 settled the host question, D-182 Phase 1 is verified, and Phase 2 is
-  now the active replacement-client work.
+  approved. D-181 settled the host question, D-182 Phases 1 and 2 are verified, and
+  Phase 3 is now the active replacement-client work.
 
 ## Working conventions (were in user-level config, not visible to a new tool)
 
@@ -267,12 +273,14 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Implement D-182 Phase 2: finish the responsive world shell, structured colored
-   History, bottom-follow conversation, scoped focus, draggable persistent iron rose,
-   and complete world input ownership.
-2. Continue the approved phases and packaged review gates through the replacement
-   candidate.
-3. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
+1. Present the D-182 Phase 2 checkpoint for packaged player review and record any
+   findings immediately.
+2. Implement D-182 Phase 3: dedicated modern Character, Inventory, and Equipment
+   screens with every canonical action and required long, empty, under-met, and
+   pending-choice state.
+3. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
+   review gate.
+4. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
    explicit user approval can make V1-09 and V1-10 Verified and close Aegis 1.0.
 
 ## Handoff hygiene

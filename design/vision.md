@@ -253,7 +253,10 @@ And the loop closes on itself: **your finished characters enter the mythology.**
   screens own modern creation, conversation, character, inventory, equipment, journal,
   settings, and log surfaces. `Aegis.Core` remains I/O-free, and Frame plus Presenter
   remain canonical for terminal clients and deterministic observation. The hard 80% is
-  still the deterministic simulation core, not the host.
+  still the deterministic simulation core, not the host. D-182 Phases 1 and 2 now ship
+  the persistent creation, responsive world, structured History, repaired conversation,
+  world-owned movement, and draggable iron rose foundations. Character, Inventory,
+  Equipment, Journal, and release-candidate assurance remain in Phases 3 through 5.
 - **Save architecture**: versioned seed and campaign-generator contract for regenerable content, append-only key journal for authored/player-mutated state.
 - **RNG**: hierarchical seed tree (master seed hashed with stable subsystem/region/site identifiers); subsystems never share a stream.
 - **Content**: storylets and line banks; format v1 spec'd in `storylets.md` (C# catalog now, designed to map 1:1 onto data files when volume demands).

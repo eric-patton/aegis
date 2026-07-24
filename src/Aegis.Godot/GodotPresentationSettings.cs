@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Aegis.Host;
 using Godot;
 
 namespace Aegis.GodotClient;
@@ -9,6 +10,9 @@ internal sealed class GodotPresentationSettings
 
     public bool LightTheme { get; set; }
     public int ScaleIndex { get; set; }
+    public bool IronRoseOpen { get; set; }
+    public NormalizedFloatingPosition IronRosePosition { get; set; } =
+        NormalizedFloatingPosition.Default;
 
     private GodotPresentationSettings(string path)
     {
@@ -27,6 +31,12 @@ internal sealed class GodotPresentationSettings
                 {
                     LightTheme = data?.LightTheme ?? false,
                     ScaleIndex = Math.Clamp(data?.ScaleIndex ?? 0, 0, 4),
+                    IronRoseOpen = data?.Version >= 1 && data.IronRoseOpen,
+                    IronRosePosition = data?.Version >= 1
+                        ? new NormalizedFloatingPosition(
+                            Math.Clamp(data.IronRoseX, 0, 1),
+                            Math.Clamp(data.IronRoseY, 0, 1))
+                        : NormalizedFloatingPosition.Default,
                 };
             }
         }
@@ -48,7 +58,13 @@ internal sealed class GodotPresentationSettings
             File.WriteAllText(
                 _path,
                 JsonSerializer.Serialize(
-                    new SettingsData(LightTheme, Math.Clamp(ScaleIndex, 0, 4)),
+                    new SettingsData(
+                        1,
+                        LightTheme,
+                        Math.Clamp(ScaleIndex, 0, 4),
+                        IronRoseOpen,
+                        Math.Clamp(IronRosePosition.X, 0, 1),
+                        Math.Clamp(IronRosePosition.Y, 0, 1)),
                     new JsonSerializerOptions { WriteIndented = true }));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -57,5 +73,11 @@ internal sealed class GodotPresentationSettings
         }
     }
 
-    private sealed record SettingsData(bool LightTheme, int ScaleIndex);
+    private sealed record SettingsData(
+        int Version,
+        bool LightTheme,
+        int ScaleIndex,
+        bool IronRoseOpen,
+        float IronRoseX,
+        float IronRoseY);
 }

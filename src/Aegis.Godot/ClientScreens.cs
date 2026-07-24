@@ -274,17 +274,27 @@ internal sealed partial class CreationScreen : MarginContainer
         _choices.GetChildren().OfType<Button>().FirstOrDefault(button => !button.Disabled);
 }
 
-internal sealed partial class WorldScreen : VBoxContainer
+internal sealed partial class WorldScreen : Control
 {
     private readonly ClientFonts _fonts;
     private readonly MapGridControl _map;
-    private readonly Label _status;
+    private readonly Label _dockedTitle;
+    private readonly Label _drawerTitle;
+    private readonly Label _dockedStatus;
+    private readonly Label _drawerStatus;
     private readonly RichTextLabel _activity;
     private readonly Label _hint;
-    private readonly HSplitContainer _split;
+    private readonly HBoxContainer _body;
+    private readonly PanelContainer _dockedRail;
+    private readonly PanelContainer _drawer;
+    private readonly Button _drawerButton;
+    private readonly GridContainer _activityGrid;
     private UiScaleTokens _scale;
     private UiPalette _palette;
     private bool _lightTheme;
+    private bool _drawerOpen;
+
+    public event Action? HistoryRequested;
 
     public WorldScreen(ClientFonts fonts, UiScaleTokens scale, UiPalette palette, bool lightTheme)
     {
@@ -292,17 +302,21 @@ internal sealed partial class WorldScreen : VBoxContainer
         _scale = scale;
         _palette = palette;
         _lightTheme = lightTheme;
-        SizeFlagsVertical = SizeFlags.ExpandFill;
+        ClipContents = true;
 
-        _split = new HSplitContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
-        AddChild(_split);
+        var root = new VBoxContainer();
+        root.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        AddChild(root);
+
+        _body = new HBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
+        root.AddChild(_body);
 
         var mapPanel = new PanelContainer
         {
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
             SizeFlagsVertical = SizeFlags.ExpandFill,
         };
-        _split.AddChild(mapPanel);
+        _body.AddChild(mapPanel);
         var mapMargin = new MarginContainer();
         mapPanel.AddChild(mapMargin);
         _map = new MapGridControl(fonts.Mono, palette, lightTheme)
@@ -312,30 +326,64 @@ internal sealed partial class WorldScreen : VBoxContainer
         };
         mapMargin.AddChild(_map);
 
-        var rail = new VBoxContainer { CustomMinimumSize = new Vector2(320, 0) };
-        _split.AddChild(rail);
-        var statusPanel = new PanelContainer();
-        rail.AddChild(statusPanel);
-        _status = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
-        statusPanel.AddChild(Wrap(_status));
+        _dockedRail = new PanelContainer { CustomMinimumSize = new Vector2(340, 0) };
+        _body.AddChild(_dockedRail);
+        var dockedStack = new VBoxContainer();
+        _dockedTitle = new Label { Text = "CURRENT CONDITION" };
+        dockedStack.AddChild(_dockedTitle);
+        _dockedStatus = StatusLabel();
+        dockedStack.AddChild(_dockedStatus);
+        _dockedRail.AddChild(Wrap(dockedStack));
 
-        var activityPanel = new PanelContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
-        rail.AddChild(activityPanel);
+        var activityPanel = new PanelContainer();
+        root.AddChild(activityPanel);
+        _activityGrid = new GridContainer { Columns = 3 };
+        activityPanel.AddChild(Wrap(_activityGrid));
         _activity = new RichTextLabel
         {
             BbcodeEnabled = true,
-            ScrollFollowing = true,
-            SizeFlagsVertical = SizeFlags.ExpandFill,
+            ScrollActive = false,
+            FitContent = true,
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            CustomMinimumSize = new Vector2(0, 54),
         };
-        activityPanel.AddChild(Wrap(_activity));
+        _activityGrid.AddChild(_activity);
+
+        _drawerButton = new Button { Text = "Conditions" };
+        _drawerButton.Pressed += ToggleDrawer;
+        _activityGrid.AddChild(_drawerButton);
+
+        var history = new Button { Text = "Open history" };
+        history.Pressed += () => HistoryRequested?.Invoke();
+        _activityGrid.AddChild(history);
 
         _hint = new Label
         {
-            Text = "Arrow keys and HJKL move. Open Move for all eight directions.",
+            Text = "Arrows and HJKL move. Ctrl+Left/Right moves northwest/northeast. Alt+Left/Right moves southwest/southeast.",
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
-        AddChild(_hint);
+        root.AddChild(_hint);
+
+        _drawer = new PanelContainer { MouseFilter = MouseFilterEnum.Stop };
+        AddChild(_drawer);
+        var drawerStack = new VBoxContainer();
+        _drawer.AddChild(Wrap(drawerStack));
+        var drawerHeader = new HBoxContainer();
+        drawerStack.AddChild(drawerHeader);
+        _drawerTitle = new Label
+        {
+            Text = "CURRENT CONDITION",
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+        };
+        drawerHeader.AddChild(_drawerTitle);
+        var drawerClose = new Button { Text = "Close" };
+        drawerClose.Pressed += ToggleDrawer;
+        drawerHeader.AddChild(drawerClose);
+        _drawerStatus = StatusLabel();
+        drawerStack.AddChild(_drawerStatus);
+        _drawer.Visible = false;
+
         ApplyVisuals(scale, palette, lightTheme);
     }
 
@@ -344,21 +392,65 @@ internal sealed partial class WorldScreen : VBoxContainer
         _scale = scale;
         _palette = palette;
         _lightTheme = lightTheme;
-        AddThemeConstantOverride("separation", scale.Space2);
-        _split.SplitOffsets = [Math.Max(660, (int)(760 * scale.Scale))];
+        _body.AddThemeConstantOverride("separation", scale.Space2);
+        _activityGrid.AddThemeConstantOverride("h_separation", scale.Space2);
+        _activityGrid.AddThemeConstantOverride("v_separation", scale.Space1);
+        _activity.CustomMinimumSize = new Vector2(0, Math.Max(54, scale.Body * 3));
+        _dockedRail.CustomMinimumSize = new Vector2(Math.Max(340, 340 * scale.Scale), 0);
+        _drawer.AddThemeStyleboxOverride(
+            "panel",
+            UiThemeFactory.BorderBox(palette.Raised, palette.Accent, scale, scale.Space2));
+        UiThemeFactory.Mark(_dockedTitle, "eyebrow", _fonts, scale, palette);
+        UiThemeFactory.Mark(_drawerTitle, "eyebrow", _fonts, scale, palette);
         UiThemeFactory.Mark(_hint, "muted", _fonts, scale, palette);
         if (_map is not null && _map.IsInsideTree())
             _map.QueueRedraw();
     }
 
-    public void UpdateView(Frame frame, ClientInteractionContext context, string status)
+    public void ApplyLayout(float viewportWidth)
     {
-        _status.Text = status;
-        _map.UpdateFrame(frame, _fonts.Mono, _palette, _lightTheme);
-        _activity.Text = LogMarkup(context.Transcript.TakeLast(12), _palette);
+        ResponsiveClientLayout layout = ResponsiveClientLayout.Resolve(
+            (int)MathF.Round(viewportWidth),
+            _scale.Scale);
+        bool docked = layout.WorldRail == WorldRailPresentation.Docked;
+        _dockedRail.Visible = docked;
+        _drawerButton.Visible = !docked;
+        _activityGrid.Columns = 3;
+        _hint.Visible = docked;
+        _drawer.Visible = !docked && _drawerOpen;
+
+        float width = Math.Min(Size.X - _scale.Space4 * 2, Math.Max(360, 420 * _scale.Scale));
+        _drawer.SetAnchor(Side.Left, 1);
+        _drawer.SetAnchor(Side.Top, 0);
+        _drawer.SetAnchor(Side.Right, 1);
+        _drawer.SetAnchor(Side.Bottom, 1);
+        _drawer.OffsetLeft = -width;
+        _drawer.OffsetTop = _scale.Space2;
+        _drawer.OffsetRight = -_scale.Space2;
+        _drawer.OffsetBottom = -_scale.Space2;
     }
 
-    private static MarginContainer Wrap(Control child)
+    public void UpdateView(Frame frame, ClientInteractionContext context, string status)
+    {
+        _dockedStatus.Text = status;
+        _drawerStatus.Text = status;
+        _map.UpdateFrame(frame, _fonts.Mono, _palette, _lightTheme);
+        _activity.Text = LogMarkup(context.Transcript.TakeLast(1), _palette);
+    }
+
+    private void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+        ApplyLayout(Size.X);
+    }
+
+    private static Label StatusLabel() => new()
+    {
+        AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        SizeFlagsVertical = SizeFlags.ExpandFill,
+    };
+
+    internal static MarginContainer Wrap(Control child)
     {
         var margin = new MarginContainer();
         margin.AddThemeConstantOverride("margin_left", 18);
@@ -386,12 +478,23 @@ internal sealed partial class WorldScreen : VBoxContainer
                 builder.Append("\n\n");
             builder.Append("[color=#");
             builder.Append(color.ToHtml(includeAlpha: false));
-            builder.Append(']');
+            builder.Append("][b]");
+            builder.Append(ToneLabel(entry.Tone));
+            builder.Append("[/b]  ");
             builder.Append(EscapeBbCode(entry.Text));
             builder.Append("[/color]");
         }
         return builder.ToString();
     }
+
+    private static string ToneLabel(LogTone tone) => tone switch
+    {
+        LogTone.Combat => "COMBAT",
+        LogTone.Danger => "DANGER",
+        LogTone.Aegis => "AEGIS",
+        LogTone.Reward => "GAIN",
+        _ => "FIELD",
+    };
 
     internal static string EscapeBbCode(string value) =>
         value.Replace("[", "[lb]", StringComparison.Ordinal)
@@ -405,9 +508,12 @@ internal sealed partial class ConversationScreen : MarginContainer
     private readonly VBoxContainer _actions;
     private readonly RichTextLabel _transcript;
     private readonly Button _leave;
-    private readonly HSplitContainer _split;
+    private readonly GridContainer _layout;
+    private readonly PanelContainer _actionPanel;
+    private readonly PanelContainer _transcriptPanel;
     private UiScaleTokens _scale;
     private UiPalette _palette;
+    private char? _selectedKey;
 
     public event Action<char>? KeyRequested;
 
@@ -421,17 +527,34 @@ internal sealed partial class ConversationScreen : MarginContainer
         _title = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
         stack.AddChild(_title);
 
-        _split = new HSplitContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
-        stack.AddChild(_split);
+        _layout = new GridContainer
+        {
+            Columns = 2,
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+        };
+        stack.AddChild(_layout);
+        _actionPanel = new PanelContainer
+        {
+            CustomMinimumSize = new Vector2(390, 0),
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+        };
+        _layout.AddChild(_actionPanel);
         var actionScroll = new ScrollContainer
         {
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
-            CustomMinimumSize = new Vector2(390, 0),
+            SizeFlagsVertical = SizeFlags.ExpandFill,
         };
-        _split.AddChild(actionScroll);
+        _actionPanel.AddChild(WorldScreen.Wrap(actionScroll));
         _actions = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
         actionScroll.AddChild(_actions);
 
+        _transcriptPanel = new PanelContainer
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+        };
+        _layout.AddChild(_transcriptPanel);
         _transcript = new RichTextLabel
         {
             BbcodeEnabled = true,
@@ -439,7 +562,7 @@ internal sealed partial class ConversationScreen : MarginContainer
             SizeFlagsVertical = SizeFlags.ExpandFill,
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
-        _split.AddChild(_transcript);
+        _transcriptPanel.AddChild(WorldScreen.Wrap(_transcript));
 
         _leave = new Button { Text = "Leave  Esc" };
         _leave.Pressed += () => KeyRequested?.Invoke('q');
@@ -455,7 +578,24 @@ internal sealed partial class ConversationScreen : MarginContainer
         AddThemeConstantOverride("margin_right", scale.Space3);
         AddThemeConstantOverride("margin_top", scale.Space3);
         AddThemeConstantOverride("margin_bottom", scale.Space3);
+        _layout.AddThemeConstantOverride("h_separation", scale.Space2);
+        _layout.AddThemeConstantOverride("v_separation", scale.Space2);
         UiThemeFactory.Mark(_title, "heading", _fonts, scale, palette);
+    }
+
+    public void ApplyLayout(float viewportWidth)
+    {
+        ResponsiveClientLayout layout = ResponsiveClientLayout.Resolve(
+            (int)MathF.Round(viewportWidth),
+            _scale.Scale);
+        bool split = layout.Conversation == ConversationPresentation.Split;
+        _layout.Columns = split ? 2 : 1;
+        _actionPanel.CustomMinimumSize = split
+            ? new Vector2(Math.Max(390, 390 * _scale.Scale), 0)
+            : new Vector2(0, Math.Max(190, 190 * _scale.Scale));
+        _transcriptPanel.CustomMinimumSize = split
+            ? Vector2.Zero
+            : new Vector2(0, Math.Max(240, 240 * _scale.Scale));
     }
 
     public void UpdateView(ClientInteractionContext context, bool becameVisible)
@@ -466,8 +606,29 @@ internal sealed partial class ConversationScreen : MarginContainer
         Callable.From(ScrollToBottom).CallDeferred();
     }
 
+    public bool MoveSelection(int delta)
+    {
+        Button[] buttons = _actions.GetChildren()
+            .OfType<Button>()
+            .Where(button => !button.Disabled)
+            .ToArray();
+        if (buttons.Length == 0)
+            return false;
+
+        Control? owner = GetViewport().GuiGetFocusOwner();
+        int index = Array.IndexOf(buttons, owner);
+        if (index < 0 && _selectedKey is { } selected)
+            index = Array.FindIndex(buttons, button => ButtonKey(button) == selected);
+        index = (index + delta + buttons.Length) % buttons.Length;
+        _selectedKey = ButtonKey(buttons[index]);
+        buttons[index].GrabFocus();
+        return true;
+    }
+
     private void RebuildActions(IReadOnlyList<ClientAction> actions, bool focusFirst)
     {
+        if (GetViewport().GuiGetFocusOwner() is Button focused && focused.GetParent() == _actions)
+            _selectedKey = ButtonKey(focused);
         foreach (Node child in _actions.GetChildren())
         {
             _actions.RemoveChild(child);
@@ -487,6 +648,7 @@ internal sealed partial class ConversationScreen : MarginContainer
             };
             char key = action.Key;
             button.Pressed += () => KeyRequested?.Invoke(key);
+            button.SetMeta("canonical_key", key.ToString());
             _actions.AddChild(button);
             buttons.Add(button);
         }
@@ -496,10 +658,22 @@ internal sealed partial class ConversationScreen : MarginContainer
             {
                 buttons[index].FocusNeighborTop = buttons[(index - 1 + buttons.Count) % buttons.Count].GetPath();
                 buttons[index].FocusNeighborBottom = buttons[(index + 1) % buttons.Count].GetPath();
+                buttons[index].FocusNeighborLeft = buttons[index].GetPath();
+                buttons[index].FocusNeighborRight = buttons[index].GetPath();
             }
-            if (focusFirst)
-                buttons.FirstOrDefault(button => !button.Disabled)?.CallDeferred(Control.MethodName.GrabFocus);
+            Button? restore = _selectedKey is { } selected
+                ? buttons.FirstOrDefault(button => ButtonKey(button) == selected && !button.Disabled)
+                : null;
+            if (focusFirst || restore is not null)
+                (restore ?? buttons.FirstOrDefault(button => !button.Disabled))
+                    ?.CallDeferred(Control.MethodName.GrabFocus);
         }
+    }
+
+    private static char? ButtonKey(Button button)
+    {
+        string value = button.GetMeta("canonical_key", "").AsString();
+        return value.Length == 1 ? value[0] : null;
     }
 
     private void ScrollToBottom()

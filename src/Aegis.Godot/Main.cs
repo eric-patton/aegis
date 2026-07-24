@@ -25,6 +25,7 @@ public sealed partial class Main : Control, IFrameSink
     private Label _wordmark = null!;
     private Label _place = null!;
     private Button _moveButton = null!;
+    private Button _historyButton = null!;
     private Button _scaleButton = null!;
     private Button _themeButton = null!;
     private PanelContainer _surfacePanel = null!;
@@ -33,8 +34,10 @@ public sealed partial class Main : Control, IFrameSink
     private WorldScreen _world = null!;
     private ConversationScreen _conversation = null!;
     private LegacyScreen _legacy = null!;
-    private PanelContainer _compass = null!;
+    private HistoryOverlay _history = null!;
+    private IronRoseControl _compass = null!;
     private bool _compassOpen;
+    private bool _historyOpen;
 
     public (int Width, int Height) CurrentSize
     {
@@ -94,10 +97,36 @@ public sealed partial class Main : Control, IFrameSink
 
     public override void _Input(InputEvent @event)
     {
-        if (_session is null
-            || _interaction.Surface != ClientSurface.World
-            || @event is not InputEventKey { Pressed: true, Echo: false } key)
+        if (_session is null || @event is not InputEventKey { Pressed: true, Echo: false } key)
             return;
+
+        if (_historyOpen)
+        {
+            if (key.Keycode == Key.Escape)
+            {
+                CloseHistory();
+                GetViewport().SetInputAsHandled();
+            }
+            return;
+        }
+
+        if (_interaction.Surface == ClientSurface.Conversation
+            && key.Keycode is Key.Up or Key.Down
+            && _conversation.MoveSelection(key.Keycode == Key.Up ? -1 : 1))
+        {
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        if (_interaction.Surface != ClientSurface.World)
+            return;
+
+        if (key.Keycode == Key.Quoteleft)
+        {
+            ToggleCompass();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
 
         char? movement = WorldMovement(key);
         if (movement is null)
@@ -109,6 +138,9 @@ public sealed partial class Main : Control, IFrameSink
     public override void _UnhandledKeyInput(InputEvent @event)
     {
         if (@event is not InputEventKey { Pressed: true, Echo: false } key || _session is null)
+            return;
+
+        if (_historyOpen)
             return;
 
         if (key.Keycode == Key.F6)
@@ -123,13 +155,6 @@ public sealed partial class Main : Control, IFrameSink
             GetViewport().SetInputAsHandled();
             return;
         }
-        if (key.Keycode == Key.Quoteleft && _interaction.Surface == ClientSurface.World)
-        {
-            ToggleCompass();
-            GetViewport().SetInputAsHandled();
-            return;
-        }
-
         if (_interaction.IsCreationText)
         {
             if (key.Keycode == Key.Escape)
@@ -161,6 +186,8 @@ public sealed partial class Main : Control, IFrameSink
         _interaction = interaction;
         bool becameVisible = _visibleSurface != interaction.Surface;
         _visibleSurface = interaction.Surface;
+        if (interaction.Surface != ClientSurface.World && _historyOpen)
+            CloseHistory();
 
         bool isCreation = interaction.IsCreation;
         bool isWorld = interaction.Surface is ClientSurface.World or ClientSurface.DirectionPrompt;
@@ -179,6 +206,8 @@ public sealed partial class Main : Control, IFrameSink
         {
             _place.Text = WorldTitle();
             _world.UpdateView(frame, interaction, StatusText());
+            if (_historyOpen)
+                _history.UpdateEntries(interaction.Transcript);
         }
         else if (isConversation)
         {
@@ -192,7 +221,10 @@ public sealed partial class Main : Control, IFrameSink
         }
 
         _moveButton.Visible = interaction.Surface == ClientSurface.World;
-        _compass.Visible = _compassOpen && interaction.Surface == ClientSurface.World;
+        _historyButton.Visible = interaction.Surface == ClientSurface.World;
+        _compass.Visible = _compassOpen
+            && interaction.Surface == ClientSurface.World
+            && !_historyOpen;
         ScheduleLayoutPass();
     }
 
@@ -209,6 +241,16 @@ public sealed partial class Main : Control, IFrameSink
                     };
                 ToggleCompass();
                 return new PilotResponse { Ok = true };
+            case "history":
+            case "log":
+                if (_interaction.Surface != ClientSurface.World)
+                    return new PilotResponse
+                    {
+                        Ok = false,
+                        Error = "history is available only on the world view",
+                    };
+                ToggleHistory();
+                return new PilotResponse { Ok = true };
             case "theme":
                 ToggleTheme();
                 return new PilotResponse { Ok = true };
@@ -218,8 +260,10 @@ public sealed partial class Main : Control, IFrameSink
             case "stress":
                 return new PilotResponse { Ok = true };
             case "close":
-                _compassOpen = false;
-                _compass.Visible = false;
+                if (_historyOpen)
+                    CloseHistory();
+                else
+                    CloseCompass();
                 return new PilotResponse { Ok = true };
             case "next":
                 MoveFocus(1);
@@ -268,6 +312,9 @@ public sealed partial class Main : Control, IFrameSink
         _moveButton = new Button { Text = "Move  ~" };
         _moveButton.Pressed += ToggleCompass;
         header.AddChild(_moveButton);
+        _historyButton = new Button { Text = "History" };
+        _historyButton.Pressed += ToggleHistory;
+        header.AddChild(_historyButton);
         _scaleButton = new Button();
         _scaleButton.Pressed += CycleScale;
         header.AddChild(_scaleButton);
@@ -288,6 +335,7 @@ public sealed partial class Main : Control, IFrameSink
         _creation.KeyRequested += SendKey;
         AddScreen(_creation);
         _world = new WorldScreen(_fonts, _scale, _palette, _settings?.LightTheme == true);
+        _world.HistoryRequested += ToggleHistory;
         AddScreen(_world);
         _conversation = new ConversationScreen(_fonts, _scale, _palette);
         _conversation.KeyRequested += SendKey;
@@ -295,7 +343,20 @@ public sealed partial class Main : Control, IFrameSink
         _legacy = new LegacyScreen(_fonts.Mono, _scale, _palette, _settings?.LightTheme == true);
         AddScreen(_legacy);
 
-        _compass = BuildCompass();
+        _history = new HistoryOverlay(_fonts, _scale, _palette);
+        _history.CloseRequested += CloseHistory;
+        _history.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        _history.Visible = false;
+        AddChild(_history);
+
+        _compass = new IronRoseControl(_fonts, _scale, _palette);
+        _compass.KeyRequested += SendKey;
+        _compass.CloseRequested += CloseCompass;
+        _compass.PositionCommitted += SaveCompassPosition;
+        _compass.SetNormalizedPosition(
+            _settings?.IronRosePosition ?? NormalizedFloatingPosition.Default);
+        _compassOpen = _settings?.IronRoseOpen == true;
+        _moveButton.Text = _compassOpen ? "Close move  ~" : "Move  ~";
         _compass.Visible = false;
         AddChild(_compass);
 
@@ -308,40 +369,6 @@ public sealed partial class Main : Control, IFrameSink
         screen.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         screen.Visible = false;
         _screenHost.AddChild(screen);
-    }
-
-    private PanelContainer BuildCompass()
-    {
-        var panel = new PanelContainer
-        {
-            CustomMinimumSize = new Vector2(250, 250),
-            MouseFilter = MouseFilterEnum.Stop,
-        };
-        var margin = new MarginContainer();
-        panel.AddChild(margin);
-        var stack = new VBoxContainer();
-        margin.AddChild(stack);
-        var title = new Label
-        {
-            Text = "IRON ROSE",
-            HorizontalAlignment = HorizontalAlignment.Center,
-        };
-        stack.AddChild(title);
-        var grid = new GridContainer { Columns = 3 };
-        stack.AddChild(grid);
-        foreach ((string label, char key) in new[]
-        {
-            ("NW", 'y'), ("N", 'k'), ("NE", 'u'),
-            ("W", 'h'), ("WAIT", '.'), ("E", 'l'),
-            ("SW", 'b'), ("S", 'j'), ("SE", 'n'),
-        })
-        {
-            var button = new Button { Text = label, CustomMinimumSize = new Vector2(62, 48) };
-            char captured = key;
-            button.Pressed += () => SendKey(captured);
-            grid.AddChild(button);
-        }
-        return panel;
     }
 
     private void RefreshVisuals()
@@ -360,13 +387,12 @@ public sealed partial class Main : Control, IFrameSink
         _surfacePanel.AddThemeStyleboxOverride(
             "panel",
             UiThemeFactory.BorderBox(_palette.Panel, _palette.Muted, _scale, 0));
-        _compass.AddThemeStyleboxOverride(
-            "panel",
-            UiThemeFactory.BorderBox(_palette.Raised, _palette.Accent, _scale, _scale.Space2));
         _creation.ApplyVisuals(_scale, _palette);
         _world.ApplyVisuals(_scale, _palette, _settings?.LightTheme == true);
         _conversation.ApplyVisuals(_scale, _palette);
         _legacy.ApplyVisuals(_scale, _palette, _settings?.LightTheme == true);
+        _history.ApplyVisuals(_scale, _palette);
+        _compass.ApplyVisuals(_scale, _palette);
         _scaleButton.Text = $"{_scale.Percent}%  F7";
         _themeButton.Text = _settings?.LightTheme == true ? "Dark iron  F6" : "Light field  F6";
 
@@ -400,37 +426,89 @@ public sealed partial class Main : Control, IFrameSink
         _compassOpen = !_compassOpen;
         _compass.Visible = _compassOpen;
         _moveButton.Text = _compassOpen ? "Close move  ~" : "Move  ~";
+        if (_settings is not null)
+        {
+            _settings.IronRoseOpen = _compassOpen;
+            _settings.Save();
+        }
+        ScheduleLayoutPass();
+    }
+
+    private void CloseCompass()
+    {
+        if (!_compassOpen)
+            return;
+        _compassOpen = false;
+        _compass.Visible = false;
+        _moveButton.Text = "Move  ~";
+        if (_settings is not null)
+        {
+            _settings.IronRoseOpen = false;
+            _settings.Save();
+        }
+    }
+
+    private void ToggleHistory()
+    {
+        if (_interaction.Surface != ClientSurface.World)
+            return;
+        if (_historyOpen)
+        {
+            CloseHistory();
+            return;
+        }
+        _historyOpen = true;
+        _history.Open(_interaction.Transcript);
+        _historyButton.Text = "Close history";
+        _compass.Visible = false;
+        ScheduleLayoutPass();
+    }
+
+    private void CloseHistory()
+    {
+        _historyOpen = false;
+        _history.Visible = false;
+        _historyButton.Text = "History";
+        _compass.Visible = _compassOpen && _interaction.Surface == ClientSurface.World;
         ScheduleLayoutPass();
     }
 
     private void ScheduleLayoutPass()
     {
-        Callable.From(ClampFloatingControls).CallDeferred();
+        Callable.From(PerformLayoutPass).CallDeferred();
     }
 
-    private void ClampFloatingControls()
+    private void PerformLayoutPass()
     {
-        if (!_compassOpen || !_compass.Visible)
-            return;
         Vector2 viewport = GetViewportRect().Size;
-        if (_compass.Position == Vector2.Zero)
-            _compass.Position = new Vector2(_scale.Space4, viewport.Y - _compass.Size.Y - _scale.Space4);
-        _compass.Position = new Vector2(
-            Mathf.Clamp(_compass.Position.X, 0, Math.Max(0, viewport.X - _compass.Size.X)),
-            Mathf.Clamp(_compass.Position.Y, 0, Math.Max(0, viewport.Y - _compass.Size.Y)));
+        _place.Visible = viewport.X >= 1400 && _scale.Scale < 1.5f;
+        _world.ApplyLayout(viewport.X);
+        _conversation.ApplyLayout(viewport.X);
+        if (_compassOpen && _compass.Visible)
+            _compass.ClampToViewport(viewport, _scale.Space2);
+    }
+
+    private void SaveCompassPosition(NormalizedFloatingPosition position)
+    {
+        if (_settings is null)
+            return;
+        _settings.IronRosePosition = position;
+        _settings.Save();
     }
 
     private static char? WorldMovement(InputEventKey key)
     {
-        if (key.CtrlPressed && key.Keycode == Key.Left) return 'y';
-        if (key.CtrlPressed && key.Keycode == Key.Right) return 'u';
-        if (key.AltPressed && key.Keycode == Key.Left) return 'b';
-        if (key.AltPressed && key.Keycode == Key.Right) return 'n';
-        if (key.Keycode == Key.Up) return 'k';
-        if (key.Keycode == Key.Down) return 'j';
-        if (key.Keycode == Key.Left) return 'h';
-        if (key.Keycode == Key.Right) return 'l';
-        return null;
+        WorldDirectionalKey? direction = key.Keycode switch
+        {
+            Key.Up => WorldDirectionalKey.Up,
+            Key.Down => WorldDirectionalKey.Down,
+            Key.Left => WorldDirectionalKey.Left,
+            Key.Right => WorldDirectionalKey.Right,
+            _ => null,
+        };
+        return direction is { } value
+            ? WorldInputChord.Map(value, key.CtrlPressed, key.AltPressed)
+            : null;
     }
 
     private char? MapKey(InputEventKey key)
@@ -451,6 +529,8 @@ public sealed partial class Main : Control, IFrameSink
 
     private void MoveFocus(int delta)
     {
+        if (_conversation.Visible && _conversation.MoveSelection(delta))
+            return;
         Control active = ActiveScreen();
         Button[] buttons = FindEnabledButtons(active).ToArray();
         if (buttons.Length == 0)
@@ -470,7 +550,8 @@ public sealed partial class Main : Control, IFrameSink
     }
 
     private Control ActiveScreen() =>
-        _creation.Visible ? _creation
+        _history.Visible ? _history
+        : _creation.Visible ? _creation
         : _conversation.Visible ? _conversation
         : _legacy.Visible ? _legacy
         : _world;
@@ -521,6 +602,7 @@ public sealed partial class Main : Control, IFrameSink
     {
         _place.Text = "The window could not open";
         _moveButton.Visible = false;
+        _historyButton.Visible = false;
         _scaleButton.Visible = false;
         _themeButton.Visible = false;
         var label = new Label

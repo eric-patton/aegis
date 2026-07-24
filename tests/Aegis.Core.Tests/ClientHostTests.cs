@@ -176,6 +176,86 @@ public class ClientHostTests
         Assert.Equal(rows * expectedCell, layout.Rows * layout.CellSize);
     }
 
+    [Theory]
+    [InlineData(1920, 1.0f, WorldRailPresentation.Docked, ConversationPresentation.Split)]
+    [InlineData(1400, 1.0f, WorldRailPresentation.Docked, ConversationPresentation.Split)]
+    [InlineData(1399, 1.0f, WorldRailPresentation.Drawer, ConversationPresentation.Stacked)]
+    [InlineData(1920, 1.5f, WorldRailPresentation.Drawer, ConversationPresentation.Stacked)]
+    [InlineData(1100, 2.0f, WorldRailPresentation.Drawer, ConversationPresentation.Stacked)]
+    public void ResponsiveClientLayout_CollapsesSecondaryColumnsBeforeTextShrinks(
+        int width,
+        float scale,
+        WorldRailPresentation world,
+        ConversationPresentation conversation)
+    {
+        ResponsiveClientLayout layout = ResponsiveClientLayout.Resolve(width, scale);
+
+        Assert.Equal(world, layout.WorldRail);
+        Assert.Equal(conversation, layout.Conversation);
+    }
+
+    [Theory]
+    [InlineData(WorldDirectionalKey.Up, false, false, 'k')]
+    [InlineData(WorldDirectionalKey.Down, false, false, 'j')]
+    [InlineData(WorldDirectionalKey.Left, false, false, 'h')]
+    [InlineData(WorldDirectionalKey.Right, false, false, 'l')]
+    [InlineData(WorldDirectionalKey.Left, true, false, 'y')]
+    [InlineData(WorldDirectionalKey.Right, true, false, 'u')]
+    [InlineData(WorldDirectionalKey.Left, false, true, 'b')]
+    [InlineData(WorldDirectionalKey.Right, false, true, 'n')]
+    public void WorldInputChord_MapsArrowAndModifierMovement(
+        WorldDirectionalKey key,
+        bool control,
+        bool alt,
+        char expected)
+    {
+        Assert.Equal(expected, WorldInputChord.Map(key, control, alt));
+    }
+
+    [Fact]
+    public void FollowTailState_PausesAndReportsNewEntriesUntilResumed()
+    {
+        var state = new FollowTailState();
+        state.Open(10);
+        state.UserScrolled(value: 20, maximum: 100, page: 30);
+
+        state.EntriesChanged(12);
+
+        Assert.False(state.Following);
+        Assert.True(state.HasNewEntries);
+        Assert.Equal(12, state.EntryCount);
+
+        state.Resume();
+
+        Assert.True(state.Following);
+        Assert.False(state.HasNewEntries);
+    }
+
+    [Theory]
+    [InlineData(0, 0, 750, 500, 0, 0)]
+    [InlineData(375, 250, 750, 500, 0.5f, 0.5f)]
+    [InlineData(900, 900, 750, 500, 1, 1)]
+    public void FloatingPosition_NormalizesAndClamps(
+        float x,
+        float y,
+        float availableWidth,
+        float availableHeight,
+        float expectedX,
+        float expectedY)
+    {
+        NormalizedFloatingPosition normalized = NormalizedFloatingPosition.FromPixels(
+            x,
+            y,
+            availableWidth,
+            availableHeight);
+        (float actualX, float actualY) = normalized.ToPixels(availableWidth, availableHeight);
+
+        Assert.Equal(expectedX, normalized.X, 3);
+        Assert.Equal(expectedY, normalized.Y, 3);
+        Assert.Equal(expectedX * availableWidth, actualX, 3);
+        Assert.Equal(expectedY * availableHeight, actualY, 3);
+    }
+
     [Fact]
     public void Session_KeyBatchIsAppliedBeforeItsResult()
     {

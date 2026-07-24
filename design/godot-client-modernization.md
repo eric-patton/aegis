@@ -1,19 +1,19 @@
 # Aegis Godot client modernization
 
-Status: Approved under D-182, Phase 1 implemented and verified
+Status: Approved under D-182, Phases 1 and 2 implemented and verified
 
 ## Implementation status
 
-Phase 1 is complete. The persistent screen foundation, typed creation projection,
+Phases 1 and 2 are complete. The persistent screen foundation, typed creation projection,
 Atkinson font system, five discrete UI scales, dark and light palettes, custom
 square-cell map control, native creation fields, complete descriptions, resize probes,
-and Windows x64 checkpoint export are built and verified. The warning-free Release
-build and all 1,011 tests pass. The exported client reports save v100 and generator 1
-through the focus-free pilot channel.
+responsive world shell, structured colored History, repaired conversation behavior,
+draggable persistent iron rose, and complete world input ownership are built and
+verified. The warning-free Release build and all 1,028 tests pass. The Windows x64
+checkpoint reports save v100 and generator 1 through the focus-free pilot channel.
 
-Phase 2 is next: finish the world shell, structured colored history, repaired
-conversation behavior, draggable persistent iron rose, and complete world input
-ownership.
+Phase 3 is next: replace the legacy Character, Inventory, and Equipment surfaces with
+dedicated modern screens while preserving every canonical action.
 
 ## Purpose
 
@@ -412,7 +412,10 @@ Checkpoint: packaged creation plus empty-world shell review.
 - Build the draggable persistent iron rose.
 - Add diagonal modifier movement and world input ownership.
 
-Checkpoint: packaged keyboard, pointer, resize, conversation, and combat-log review.
+Checkpoint passed: packaged keyboard, pointer, resize, conversation, and combat-log
+review. The exact review archive is
+`artifacts/aegis-d182-phase2-win-x64-final.zip`, SHA-256
+`D100ED3C364AC9246D938C42E27CE5E24CE67763FFBC031AA407395C8BCE5269`.
 
 ### Phase 3: character and inventory
 

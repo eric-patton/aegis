@@ -302,6 +302,23 @@ No engine behavior, RNG draw, save state, or canonical key meaning changed, so t
 conditional five-seed sweep does not apply. Phase 2 owns the remaining world,
 conversation, structured-log, and draggable-rose work.
 
+Phase 2 implementation also lands under this decision. The world now reflows between a
+docked condition rail and a compact drawer, keeps only the newest colored activity
+entry in view, and opens a full-session History surface that follows the tail until the
+player deliberately scrolls away. Conversation uses persistent split or stacked
+panels, restores selection by canonical action key, traps directional focus, and
+returns its transcript to the newest entry after every interaction. The draggable iron
+rose persists its open state and normalized position, clamps after resize, and provides
+a reset action. Arrow input is owned by the world before GUI navigation, including the
+approved Ctrl and Alt diagonal chords. Forty-three focused Host tests, all 1,028 tests,
+a warning-free Release build, background resize and pointer probes, and a clean
+extracted-package pilot smoke pass. The checkpoint archive is
+`artifacts/aegis-d182-phase2-win-x64-final.zip`, SHA-256
+`D100ED3C364AC9246D938C42E27CE5E24CE67763FFBC031AA407395C8BCE5269`.
+No Core behavior, RNG draw, save state, or canonical key meaning changed, so the
+conditional five-seed sweep again does not apply. Phase 3 owns Character, Inventory,
+and Equipment.
+
 ### D-181: The wider glass: a bounded Godot presentation spike (2026-07-24)
 
 The player approves a bounded Godot 4.7.1 .NET presentation spike after the second

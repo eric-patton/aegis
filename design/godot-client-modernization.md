@@ -1,6 +1,7 @@
 # Aegis Godot client modernization
 
-Status: Approved under D-182, Phases 1 and 2 implemented and verified
+Status: Approved under D-182, Phases 1 and 2 implemented and verified; visual-contract
+revision under player review before Phase 3
 
 ## Implementation status
 
@@ -12,8 +13,12 @@ draggable persistent iron rose, and complete world input ownership are built and
 verified. The warning-free Release build and all 1,028 tests pass. The Windows x64
 checkpoint reports save v100 and generator 1 through the focus-free pilot channel.
 
-Phase 3 is next: replace the legacy Character, Inventory, and Equipment surfaces with
-dedicated modern screens while preserving every canonical action.
+The Phase 2 packaged review found creation spacing and focus defects, incomplete runtime
+theme refresh, a remaining legacy interaction surface, global rather than map-only
+zoom, and shell-level information design questions. Phase 3 implementation is paused
+until the player reviews `design/godot-ui-mockup-review.md`. The approved next build
+will remediate those findings before or with the dedicated Character, Inventory, and
+Equipment surfaces.
 
 ## Purpose
 

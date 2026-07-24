@@ -19,6 +19,7 @@ The canonical design truth stays where it always was:
 - `design/sadconsole-client-migration.md`: the implemented V1-10 contract.
 - `design/godot-presentation-spike.md`: the approved D-181 host-decision proof.
 - `design/godot-client-modernization.md`: the approved D-182 shipping-client contract.
+- `design/godot-ui-mockup-review.md`: the active D-182 visual-contract review draft.
 - `design/story/`: arc spec and world-story templates. Full story detail lives there.
 - `docs/dev-harness.md`: the pilot/sim/journey harness.
 
@@ -42,6 +43,14 @@ The canonical design truth stays where it always was:
   Windows x64 checkpoint export reports save v100 and generator 1 over pilot before
   clean exit. Core behavior, RNG, saves, and canonical keys did not move, so the
   conditional engine sweep did not trigger.
+- The D-182 Phase 2 packaged player review is now active. It found creation-edge
+  collisions, partial runtime theme refresh, lost step-9 text focus, a remaining legacy
+  world interaction surface, global rather than map-only zoom, an underused world
+  footer, missing resource context in priced conversations, permanent control text,
+  and a possible iron rose removal. Nine generated concepts are preserved under
+  `artifacts/d182-ui-mockups-v1/`, and their review contract is
+  `design/godot-ui-mockup-review.md`. These are proposals, not approved design changes.
+  Phase 3 implementation is paused until the player settles that review.
 - Core and Host now multi-target .NET 8 and .NET 10. Godot uses .NET 8 for runtime
   compatibility. Existing clients, tools, and tests remain on .NET 10.
 - D-175 through D-178 remain the implemented SadConsole baseline and clean candidate.
@@ -273,14 +282,16 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Present the D-182 Phase 2 checkpoint for packaged player review and record any
-   findings immediately.
-2. Implement D-182 Phase 3: dedicated modern Character, Inventory, and Equipment
+1. Review and revise `design/godot-ui-mockup-review.md` with the player. Record the
+   approved shell revision under a new decision before implementation.
+2. Implement the approved D-182 Phase 2 remediation, then produce a fresh packaged
+   checkpoint.
+3. Implement D-182 Phase 3: dedicated modern Character, Inventory, and Equipment
    screens with every canonical action and required long, empty, under-met, and
    pending-choice state.
-3. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
+4. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
    review gate.
-4. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
+5. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
    explicit user approval can make V1-09 and V1-10 Verified and close Aegis 1.0.
 
 ## Handoff hygiene

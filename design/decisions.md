@@ -3046,7 +3046,13 @@ Pays D-063's own named deferrals in one stroke, arming the autopilot at the smit
 
 ## Under discussion
 
-No active 1.0 design decision is awaiting player approval.
+The D-182 Phase 2 packaged review has opened a visual-contract revision before Phase 3.
+The review draft and nine generated concepts live in
+`design/godot-ui-mockup-review.md` and `artifacts/d182-ui-mockups-v1/`. Player approval
+is required for the integrated Activity/History model, iron rose removal or optional
+accessibility role, full-window focused information screens, centered event sheet,
+separate text-size and map-zoom controls, and any required second visual pass. These are
+proposals only and do not amend D-182 until approved.
 
 ## Not yet raised (parking lot)
 

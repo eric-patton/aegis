@@ -187,9 +187,10 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     scrollback, wrapping, contrast, explanations, and reproduced behavior findings
   - [x] Save v100 creation backtracking and complete engine sweep (D-180)
   - [x] Clean v100 Native AOT package and extracted-package smokes (D-180)
-  - [x] Second packaged-review blockers: scalable text, light theme, full-screen
+  - [~] Second packaged-review blockers: scalable text, light theme, full-screen
     creation, persistent compass mode, complete wrapping, and responsive conversations
-    (D-182 Phases 1 and 2)
+    (D-182 Phases 1 and 2 implemented; Phase 2 player review found incomplete runtime
+    theme refresh and creation-edge collisions)
   - [x] Godot .NET presentation spike built and verified (D-181)
   - [x] Review the Godot spike and decide the shipping presentation host (D-182)
     - [x] Player review confirms Godot is the preferred modernization direction
@@ -197,17 +198,36 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   - [x] D-182 Phase 1 foundation and creation: persistent screen tree, typed creation
     projection, native text entry, scalable font and theme system, square-cell map,
     resize probes, packaged export, and clean verification (D-182)
-  - [x] Godot UI architecture repair: persistent screens, stable responsive layout,
+  - [~] Godot UI architecture repair: persistent screens, stable responsive layout,
     native text entry, scoped focus, and preserved scroll positions
-    (D-182 Phases 1 and 2)
+    (foundation, focus, and scroll work complete; a world interaction still reaches the
+    legacy surface)
   - [x] Crisp scalable presentation: physical-pixel layout, discrete UI scale choices,
     vector text at native sizes, and a custom square-cell terminal map renderer
   - [x] D-182 Phase 2 world, conversation, logs, and movement checkpoint: responsive
     status rail and drawer, colored auto-follow activity, full-session History,
     bottom-follow transcript, scoped focus, draggable persistent iron rose, and clean
     keyboard and pointer ownership (D-182)
-  - [x] Modern world shell: colored auto-follow activity feed, expandable full-session
-    history, responsive status, and clean keyboard/mouse ownership (D-182)
+  - [~] Modern world shell: colored auto-follow activity feed, expandable full-session
+    history, responsive status, and clean keyboard/mouse ownership
+    (D-182 built; player review requests an integrated scrollable Activity dock,
+    map-only zoom, Help, and removal of permanent control text)
+  - [ ] D-182 Phase 2 review: repair creation padding and step-9 text focus
+  - [ ] D-182 Phase 2 review: make runtime light/dark switching refresh every surface
+  - [ ] D-182 Phase 2 review: replace remaining legacy world interactions with modern
+    semantic event UI
+  - [ ] D-182 Phase 2 review: separate map zoom from text size and bind Ctrl+minus,
+    Ctrl+plus, and Ctrl+0
+  - [ ] D-182 Phase 2 review: make compact Activity and expanded History one scrollable,
+    filtered log model
+  - [ ] D-182 Phase 2 review: keep coin, requirements, and affordability visible beside
+    conversation and purchase actions
+  - [ ] D-182 Phase 2 review: replace permanent world control text with a dedicated Help
+    surface
+  - [ ] D-182 Phase 2 review: decide whether to remove the iron rose or retain it only
+    as an optional accessibility control
+  - [ ] Review and approve the visual contract in `design/godot-ui-mockup-review.md`
+    before Phase 3 implementation
   - [ ] Modern dedicated character, inventory, and equipment screens, including
     keyboard and pointer access to all ten launch gear entries
   - [ ] Journal screen with current-session history plus read-only people, bestiary,
@@ -835,9 +855,12 @@ kind, and the evaluation harness that hardens every generator change.
 
 ## Open design questions (mirror of the `decisions.md` parking lot)
 
-The Godot client contract is settled under D-182. The remaining parking-lot questions
-are classified post-1.0 under D-165 unless a later decision promotes one into a release.
+The Godot client architecture is settled under D-182. The active mockup questions below
+must be settled for 1.0. The remaining parking-lot questions are classified post-1.0
+under D-165 unless a later decision promotes one into a release.
 
+- ◇ D-182 UI review: integrated Activity/History behavior, iron rose removal, focused
+  screen shapes, separate text-size and map-zoom controls, and mockup revisions
 - ◇ Folk cultures: how worldgen recultures the five folk per world, and whether factions read folk (D-017, D-092)
 - ◇ Spell list growth past the seven V1-07 workings / school-shaped content, if any
   (D-022, D-091, D-163)
@@ -853,6 +876,14 @@ are classified post-1.0 under D-165 unless a later decision promotes one into a 
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-24: **The D-182 Phase 2 player review pauses implementation for a complete
+  UI mockup pass.** Newly tracked defects cover creation-edge collisions, partial
+  runtime theme refresh, lost creation text focus, a remaining legacy interaction
+  surface, global rather than map-only zoom, a non-scrollable world footer, missing
+  resource context in priced conversations, permanent control text, and the possible
+  removal of the iron rose. Nine generated concepts now cover creation, world, events,
+  conversation, Character, Inventory, Journal, Help, and full theme parity. They are
+  review proposals, not approved implementation decisions.
 - 2026-07-24: **D-182 Phase 2 ships the modern world, conversation, logs, and movement.**
   The world reflows between a docked condition rail and a compact drawer, the activity
   ribbon carries the newest colored event, and full-session History follows the tail

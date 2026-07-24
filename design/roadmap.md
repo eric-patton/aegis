@@ -790,8 +790,9 @@ kind, and the evaluation harness that hardens every generator change.
 
 ## Open design questions (mirror of the `decisions.md` parking lot)
 
-All questions below are classified post-1.0 under D-165 unless a later decision promotes
-one into a release.
+The earlier parking-lot questions remain classified post-1.0 under D-165 unless a later
+decision promotes one into a release. D-179's guided-playtest remediation questions are
+unclassified and must be settled before final 1.0 signoff.
 
 - ◇ Folk cultures: how worldgen recultures the five folk per world, and whether factions read folk (D-017, D-092)
 - ◇ Spell list growth past the seven V1-07 workings / school-shaped content, if any
@@ -802,6 +803,14 @@ one into a release.
   fen-leaguer (D-164, D-009, D-048, D-054, D-033+)
 - ◇ Story open items: bottle-episode playability, Unbinder guise tells, reveal-tier sharing across characters, template 7+ candidates (aegis-arc.md §11, world-story-templates.md §11)
 - ◇ Named stead folk (plan 2026-07 A5): adopt after A1-A3 are live, and at what depth (D-131)
+- ◇ Guided-playtest remediation and release classification: decide which findings in
+  `design/playtest-remediation-1.0.md` block 1.0, which are important 1.0 repairs, which
+  need reproduction, and which belong after 1.0
+- ◇ SadConsole interaction layer: decide the exact presentation-only `~` compass
+  overlay and visible toggle, clickable eight-direction movement, conventional keyboard
+  focus and confirm/back behavior, and modern interactive character, inventory,
+  equipment, conversation, and menu surfaces while retaining deterministic canonical
+  commands
 
 ---
 
@@ -809,6 +818,11 @@ one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-23: **D-179 makes the guided-playtest remediation backlog durable.** The findings
+  from the rejected terminal candidate, including the proposed eight-direction compass
+  overlay and broader SadConsole interaction layer, are captured in
+  `design/playtest-remediation-1.0.md`. Classification and substantive interface
+  decisions remain with the player before implementation.
 - 2026-07-23: **D-178 builds the clean replacement 1.0 candidate.** Commit
   `379406da87ea08437b017cbe5ad61fbba8b9b9b4` packages the SadConsole player, separate
   tools, SDL2, OpenAL, documents, notices, and manifest. Both AOT publishes, exact warning

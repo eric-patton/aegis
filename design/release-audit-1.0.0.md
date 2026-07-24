@@ -145,6 +145,13 @@ decision.
 
 Status: D-178 SadConsole candidate active. Start from step 1 with the clean extraction.
 
+The first guided terminal-candidate playtest rejected release and identified additional
+usability and behavior findings beyond terminal-owned presentation. Those findings are
+preserved in `design/playtest-remediation-1.0.md`. Before final signoff, the player must
+classify them, approve the required 1.0 repairs, and confirm that every promoted blocker
+is closed. Visible review of the D-178 client may be used to reproduce and classify
+presentation findings, but it does not erase findings that the migration did not touch.
+
 Use only the cleanly extracted package. Do not use a development binary, pilot, debug
 hook, edited journal, or an existing slot.
 

@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-23, D-178 replacement candidate)
+# Aegis handoff (updated 2026-07-23, D-179 playtest remediation gate)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,10 +8,10 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-178 currently at its head), then the parking lot of open
+  newest-first block (D-179 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-178)". Bump it whenever a decision lands.
+  "(D-001 through D-179)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence is complete;
   V1-09 is built, and D-175 supersedes its terminal candidate.
 - `design/plan-1.0.md`: the canonical ten-card implementation queue. V1-01 through V1-08
@@ -26,6 +26,9 @@ The canonical design truth stays where it always was:
   10.10.1 and MonoGame DesktopGL client before 1.0 signoff. D-176 approves the complete
   contract, D-177 implements it without changing the engine, and D-178 builds the clean
   replacement candidate.
+- D-179 records the rejected guided-playtest findings as a release design gate and adds
+  the user-raised eight-direction compass plus modern interactive screens to the
+  under-discussion backlog. It approves tracking, not implementation details.
 - Latest completed product work: D-174 and V1-09. Its engine, content, release journey,
   audits, and automated evidence remain green, but its terminal package is superseded
   and cannot receive final signoff.
@@ -227,9 +230,15 @@ hard failures. The fixed-surface warning remains expected.
 
 ## What is next (queued, in recommended order)
 
-1. Complete visible and physical-keyboard review of the D-178 package without synthetic
-   input.
-2. Restart the fresh packaged manual campaign in
+1. Review and classify `design/playtest-remediation-1.0.md` with the user. The user
+   decides which findings block 1.0, which are important 1.0 repairs, which need
+   reproduction, and which belong after 1.0. This includes the proposed presentation-only
+   eight-direction compass and the broader SadConsole interaction layer.
+2. Use visible and physical-keyboard review of the D-178 package, without synthetic
+   input, to reproduce and refine presentation findings where useful.
+3. Design and implement only the user-approved 1.0 remediation subset. Any engine change
+   receives the complete sweep discipline before it is called done.
+4. Restart the fresh packaged manual campaign in
    `design/release-audit-1.0.0.md`. Only explicit user approval can make V1-09 and V1-10
    Verified and close Aegis 1.0.
 

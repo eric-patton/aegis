@@ -20,8 +20,8 @@ Status: superseded by D-175. This package cannot receive final 1.0 signoff.
 
 ## Active SadConsole candidate identity
 
-Status: D-180 remediation, automated gates, and rebuilt package passed. Fresh guided
-campaign pending.
+Status: D-180 automated gates and package smokes passed. Second packaged review found
+presentation blockers; host direction and a replacement candidate are pending.
 
 - Product version: 1.0.0
 - Save version: 100
@@ -145,7 +145,8 @@ decision.
 
 ## Manual packaged campaign protocol
 
-Status: D-180 candidate active. Start from step 1 with its clean extraction.
+Status: paused after the second packaged review. Do not continue the final campaign
+until the presentation blockers and host decision are resolved.
 
 The first guided terminal-candidate playtest rejected release and identified additional
 usability and behavior findings beyond terminal-owned presentation. Those findings are
@@ -178,11 +179,10 @@ hook, edited journal, or an existing slot.
 
 ## Final signoff
 
-- User verdict: terminal candidate not approved; SadConsole direction and D-180
-  remediation approved
-- Date: 2026-07-23
+- User verdict: D-180 package not approved; presentation host under discussion
+- Date: 2026-07-24
 - Final cycle and turn: pending
 - Defects accepted: none
 - V1-09 status: Implemented, not yet Verified
-- V1-10 status: Implemented through D-180, clean candidate built, user signoff pending
-- Aegis 1.0 status: active D-180 candidate, guided campaign pending
+- V1-10 status: Implemented through D-180, reopened by second packaged-review blockers
+- Aegis 1.0 status: paused for presentation-host decision and replacement candidate

@@ -1,6 +1,6 @@
 # Aegis 1.0 guided-playtest remediation
 
-Status: Implemented and automated gate passed under D-180; packaged campaign pending
+Status: Automated gate passed under D-180; second packaged review found release blockers
 
 Source: first guided 1.0 candidate playtest, 2026-07-23
 
@@ -241,3 +241,21 @@ rectilinear, and information-led.
 - Seed-1 default and release journals replay exactly.
 - Generator 1: 240 worlds, zero digest mismatches, zero hard failures, byte-identical
   report to the prior baseline.
+
+## Second packaged review, 2026-07-24
+
+The automated frame gate did not prove human layout quality. The second packaged review
+found the following active blockers:
+
+- The bitmap font does not scale cleanly enough for the supported presentation.
+- A light theme is required for players who find the dark palette difficult to read.
+- Creation should be a focused full-screen surface rather than a modal over the live map.
+- The iron rose should restore its open mode after a conversation ends.
+- Long scene and action text still truncates or crosses its intended boundary.
+- The fixed conversation split clips action labels and leaves too little responsive room
+  for the transcript.
+
+The player has reopened the presentation-host decision. No further remediation is built
+until the player chooses between another SadConsole pass and a Godot .NET presentation
+migration. Either direction must preserve deterministic canonical commands, v100 save
+meaning, and focus-free pilot verification.

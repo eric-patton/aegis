@@ -2915,8 +2915,12 @@ Pays D-063's own named deferrals in one stroke, arming the autopilot at the smit
 
 ## Under discussion
 
-No 1.0 remediation design question remains open after D-180. Implementation findings
-that would expand the approved behavior return here before they are built.
+- The second packaged review found that the SadConsole cell renderer still scales bitmap
+  glyphs poorly, manually truncates or clips long text, keeps creation over the map, and
+  cannot yet offer a light theme. Should the 1.0 player remain on SadConsole for another
+  remediation pass, or should presentation move to a Godot .NET client while
+  `Aegis.Core`, `Aegis.Host`, saves, deterministic commands, and verification tools
+  remain authoritative? The player decides before implementation.
 
 ## Not yet raised (parking lot)
 

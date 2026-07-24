@@ -55,6 +55,10 @@ The canonical design truth stays where it always was:
   `ea87eeb6c41c567161f3420cc2fc0d7d06ea80bcb8dee92900dd7ceeaf493459`.
   Both Native AOT publishes, warning pinning, clean-extraction tools, pilot, structured
   frame, save creation and reload, shutdown, manifest, and archive hashes pass.
+- The 2026-07-24 second packaged review found release-blocking font scaling, dark-only
+  presentation, creation clutter, lost compass mode, incomplete wrapping, and
+  conversation clipping. Automated gates remain green, but the candidate is not
+  approved. SadConsole remediation versus a Godot .NET client is under discussion.
 
 ## Working conventions (were in user-level config, not visible to a new tool)
 
@@ -234,9 +238,11 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Restart the fresh packaged manual campaign in
-   `design/release-audit-1.0.0.md`. Only explicit user approval can make V1-09 and V1-10
-   Verified and close Aegis 1.0.
+1. Resolve the presentation-host question: another SadConsole remediation pass, or a
+   Godot .NET client that preserves Core, Host, saves, commands, and tools.
+2. Build and verify the approved replacement candidate.
+3. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
+   explicit user approval can make V1-09 and V1-10 Verified and close Aegis 1.0.
 
 ## Handoff hygiene
 

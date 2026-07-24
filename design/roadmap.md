@@ -185,6 +185,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     scrollback, wrapping, contrast, explanations, and reproduced behavior findings
   - [x] Save v100 creation backtracking and complete engine sweep (D-180)
   - [x] Clean v100 Native AOT package and extracted-package smokes (D-180)
+  - [ ] Second packaged-review blockers: scalable text, light theme, full-screen
+    creation, persistent compass mode, complete wrapping, and responsive conversations
+  - [ ] Decide SadConsole remediation or a Godot .NET presentation migration
   - [ ] Fresh packaged guided campaign and explicit player verdict
 
 The detailed tranche contents and design statuses live in `design/plan-1.0.md`; the
@@ -799,10 +802,12 @@ kind, and the evaluation harness that hardens every generator change.
 
 ## Open design questions (mirror of the `decisions.md` parking lot)
 
-The earlier parking-lot questions remain classified post-1.0 under D-165 unless a later
-decision promotes one into a release. D-180 settles the guided-playtest remediation
-questions and moves them into the V1-10 implementation checklist.
+The active 1.0 question is the presentation host after the second packaged review. The
+earlier parking-lot questions remain classified post-1.0 under D-165 unless a later
+decision promotes one into a release.
 
+- ◇ Active 1.0 host decision: another SadConsole remediation pass, or a Godot .NET
+  presentation migration that preserves Core, Host, saves, commands, and tools
 - ◇ Folk cultures: how worldgen recultures the five folk per world, and whether factions read folk (D-017, D-092)
 - ◇ Spell list growth past the seven V1-07 workings / school-shaped content, if any
   (D-022, D-091, D-163)
@@ -818,6 +823,12 @@ questions and moves them into the V1-10 implementation checklist.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-24: **The second packaged review reopens V1-10.** The player confirms that
+  bitmap glyph scaling is poor, creation remains distractingly over the live map, the
+  iron rose loses its open mode across conversation, long lines still fail to wrap, and
+  the fixed conversation split clips required text. A light theme is also required for
+  accessibility. These are active release blockers. The presentation-host question,
+  SadConsole remediation or Godot .NET migration, returns to the player before code.
 - 2026-07-23: **The D-180 clean v100 candidate passes.** Both Windows x64 Native AOT
   publishes, the pinned seven-warning client set, zero-warning tools publish,
   clean-extraction sim, worldgen, pilot, frame, creation, save, reload, shutdown, and

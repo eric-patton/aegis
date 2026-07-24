@@ -72,7 +72,7 @@ public class ClientHostTests
     }
 
     [Fact]
-    public void PhysicalAndPilotInput_RetainQueueOrderAndBatchAtomicity()
+    public async Task PhysicalAndPilotInput_RetainQueueOrderAndBatchAtomicity()
     {
         var game = new Game(176);
         var session = new GameSession(game, null);
@@ -86,7 +86,8 @@ public class ClientHostTests
         Assert.True(session.Writer.TryWrite(new HostMessage.Key('.')));
         session.Drain();
 
-        Assert.Equal(3, completion.Task.Result.State!.Turn);
+        PilotResponse response = await completion.Task;
+        Assert.Equal(3, response.State!.Turn);
         Assert.Equal(4, game.Turn);
     }
 

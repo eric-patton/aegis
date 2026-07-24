@@ -29,6 +29,7 @@ if (options.Headless)
     using var server = new PilotServer(options.Session, session.Writer);
     server.Start();
     await session.RunAsync();
+    await Task.Delay(250);
     server.Stop();
     return 0;
 }

@@ -12,6 +12,7 @@ public sealed class AegisScreen : ScreenSurface, IFrameSink
     private readonly PilotServer? _pilot;
     private readonly PresentationSettings _presentation;
     private bool _showClientHelp;
+    private TimeSpan _shutdownGrace;
 
     public AegisScreen(
         ClientOptions options,
@@ -43,7 +44,11 @@ public sealed class AegisScreen : ScreenSurface, IFrameSink
     {
         _session.Drain();
         if (!_session.Running)
-            SadConsole.GameHost.Instance.Stop();
+        {
+            _shutdownGrace += delta;
+            if (_shutdownGrace >= TimeSpan.FromMilliseconds(250))
+                SadConsole.GameHost.Instance.Stop();
+        }
         base.Update(delta);
     }
 

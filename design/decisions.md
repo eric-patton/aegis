@@ -3060,8 +3060,10 @@ The architecture comparison under `artifacts/d182-game-screen-architectures-v1/`
 one light theme and information scope constant while comparing Map as Workspace, Split
 Command Deck, Atlas Frame, and Chronicle Stage. A fifth player-directed refinement adds a
 fixed condition, Activity, and currency sidebar to Map as Workspace while keeping its
-floating launcher and a map-only context footer. These are proposals only and do not
-amend D-182 until approved.
+floating launcher and a map-only context footer. Its sixth image refines that sidebar
+with thinner icon-led resource bars, green Stamina, blue Focus, and category-colored
+Activity prose instead of repeated row tags. These are proposals only and do not amend
+D-182 until approved.
 
 ## Not yet raised (parking lot)
 

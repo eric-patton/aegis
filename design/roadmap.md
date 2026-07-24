@@ -879,6 +879,11 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-24: **The Map as Workspace sidebar sheds repeated labels.** Its second
+  player-directed refinement uses thinner icon-led Health, Stamina, and Focus bars,
+  assigns green to Stamina and blue to Focus, and removes category tags from Activity
+  rows. Field, Combat, and Words now color complete messages and their matching filters.
+  The concept remains under review, with no implementation authorized.
 - 2026-07-24: **Map as Workspace gains a player-shaped sidebar refinement.** The new
   unapproved concept keeps the floating screen launcher and map-dominant canvas, adds a
   fixed right sidebar with proportional Health, Stamina, and Focus bars, a filtered

@@ -68,6 +68,12 @@ the bottom. A floating map launcher opens Character, Pack, Journal, and Help. A 
 map-width-only footer carries location, cycle, season, weather, and map zoom. Focus is the
 canonical transient magic resource. Essence is the canonical attribute-raising currency.
 
+Second refinement `06-map-workspace-sidebar-icons.png` makes the three transient-resource
+bars thinner and icon-led, with no resource names inside them. Health remains clay red,
+Stamina becomes field green, and Focus becomes blue. Activity rows drop their repeated
+category labels. Field, Combat, and Words instead color the complete message text, and
+their filter labels use those same green, clay-red, and brass colors.
+
 Chronicle Stage was the recommendation before this refinement. The new Map as Workspace
 sidebar hybrid is now the active concept under review because it preserves more map height
 while still making the complete live log persistent. No screen-specific design work should

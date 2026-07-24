@@ -55,7 +55,9 @@ The canonical design truth stays where it always was:
   `artifacts/d182-game-screen-architectures-v1/` now compares four genuinely different
   world-screen architectures. Its fifth image is a player-directed Map as Workspace
   refinement with a fixed condition, Activity, and currency sidebar plus a map-only
-  context footer. Phase 3 implementation is paused until the player settles that review.
+  context footer. Its sixth image makes resource bars thinner and icon-led, sets Stamina
+  green and Focus blue, and moves Activity category color from row tags to message text.
+  Phase 3 implementation is paused until the player settles that review.
 - Core and Host now multi-target .NET 8 and .NET 10. Godot uses .NET 8 for runtime
   compatibility. Existing clients, tools, and tests remain on .NET 10.
 - D-175 through D-178 remain the implemented SadConsole baseline and clean candidate.
@@ -288,7 +290,7 @@ the D-178 baseline.
 ## What is next (queued, in recommended order)
 
 1. Review the four controlled light-theme game-screen architectures under
-   `artifacts/d182-game-screen-architectures-v1/` with the player, especially the fifth
+   `artifacts/d182-game-screen-architectures-v1/` with the player, especially the sixth
    player-directed Map as Workspace sidebar refinement. Select one architecture, or one
    explicit limited hybrid, before revising individual screens.
 2. Review and revise `design/godot-ui-mockup-review.md` with the player. Record the

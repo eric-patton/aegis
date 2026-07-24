@@ -152,9 +152,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   release audit; then the SadConsole client and release recovery. Open-ended catalogs
   remain tracked but do not block 1.0 unless a later decision explicitly promotes them
   into the gate. V1-01 through V1-08 are built and Verified under D-166 through D-173.
-  V1-09 and V1-10 are Implemented. D-180 closes the guided-review remediation and its
-  complete automated engine gate. The rebuilt package, fresh guided campaign, and
-  explicit signoff are the active release gate.
+  V1-09 and V1-10 are Implemented. D-180 closes the guided-review remediation, its
+  complete automated engine gate, and the rebuilt package. The fresh guided campaign
+  and explicit signoff are the active release gate.
 
 ### Path to 1.0 tracker (ordered, adopted D-155/D-157)
 
@@ -184,6 +184,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     character, inventory, equipment, conversations, field guide, creation wizard,
     scrollback, wrapping, contrast, explanations, and reproduced behavior findings
   - [x] Save v100 creation backtracking and complete engine sweep (D-180)
+  - [x] Clean v100 Native AOT package and extracted-package smokes (D-180)
   - [ ] Fresh packaged guided campaign and explicit player verdict
 
 The detailed tranche contents and design statuses live in `design/plan-1.0.md`; the
@@ -772,8 +773,8 @@ kind, and the evaluation harness that hardens every generator change.
   Implemented): the owned client, serialized host queue, current-user pilot, structured
   frame, semantic action model, focus-free local UI commands, Release and Native AOT
   smokes, settings, guide, resizing, and package route are built. D-180's visible
-  development review and full engine gate pass; the rebuilt package and final guided
-  campaign remain
+  development review, full engine gate, rebuilt package, and extracted-package smokes
+  pass; the final guided campaign remains
 - [x] Journey-bot autopilot: clears sites, arms, raises, reclaims, loots, answers the sheet, walks the arc, swears oaths, hunts, sells hides, cooks meat, forages and sells herbs (D-062..D-075)
 - [x] Pilot footing and steeping policy: stance held to the blood's line (free presses on
   quiet ground, one bought downshift mid-fight), vials steeped before the sale and drunk
@@ -817,6 +818,12 @@ questions and moves them into the V1-10 implementation checklist.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-23: **The D-180 clean v100 candidate passes.** Both Windows x64 Native AOT
+  publishes, the pinned seven-warning client set, zero-warning tools publish,
+  clean-extraction sim, worldgen, pilot, frame, creation, save, reload, shutdown, and
+  every inner and outer hash pass. The package records source commit
+  `4fa8ed54ee1997bec0fb415a4c1412d4ecef548c`; archive SHA-256 is
+  `ea87eeb6c41c567161f3420cc2fc0d7d06ea80bcb8dee92900dd7ceeaf493459`.
 - 2026-07-23: **D-180 builds and sweep-verifies the guided-playtest remediation.** The
   presentation-only iron rose, semantic keyboard and mouse action layer, modern
   information screens, creation review and complete checkpoint backtracking, v100 save,

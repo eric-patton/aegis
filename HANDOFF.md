@@ -50,6 +50,11 @@ The canonical design truth stays where it always was:
 - D-180 adds semantic presentation actions, focus-free local UI pilot commands, the
   interactive guide, log, sheet, pack, conversations, creation review and backtracking,
   Windows DPI ownership, and the reproduced ranged-pursuit repair.
+- D-180 candidate: source commit `4fa8ed54ee1997bec0fb415a4c1412d4ecef548c`,
+  archive `artifacts/aegis-1.0.0-win-x64.zip`, SHA-256
+  `ea87eeb6c41c567161f3420cc2fc0d7d06ea80bcb8dee92900dd7ceeaf493459`.
+  Both Native AOT publishes, warning pinning, clean-extraction tools, pilot, structured
+  frame, save creation and reload, shutdown, manifest, and archive hashes pass.
 
 ## Working conventions (were in user-level config, not visible to a new tool)
 
@@ -229,9 +234,7 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Build and verify the clean D-180 replacement package, including Native AOT,
-   clean-extraction, focus-free pilot, save, reload, manifest, and hash evidence.
-2. Restart the fresh packaged manual campaign in
+1. Restart the fresh packaged manual campaign in
    `design/release-audit-1.0.0.md`. Only explicit user approval can make V1-09 and V1-10
    Verified and close Aegis 1.0.
 

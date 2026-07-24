@@ -1566,8 +1566,8 @@ Windows x64 release package
 **Dependencies:** V1-09 implemented under D-174; existing D-027 pilot and sim contract;
 D-175 compatibility and focus-free control spike
 
-**Implementation status:** Complete through the D-180 guided-review remediation and
-full automated engine gate; rebuilt package, fresh campaign, and user signoff pending
+**Implementation status:** Complete through the D-180 guided-review remediation, full
+automated engine gate, and rebuilt package; fresh campaign and user signoff pending
 
 ### Player-facing outcome
 

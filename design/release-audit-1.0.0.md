@@ -20,7 +20,7 @@ Status: superseded by D-175. This package cannot receive final 1.0 signoff.
 
 ## Active SadConsole candidate identity
 
-Status: D-180 remediation and automated gates passed. Rebuilt package and fresh guided
+Status: D-180 remediation, automated gates, and rebuilt package passed. Fresh guided
 campaign pending.
 
 - Product version: 1.0.0
@@ -28,8 +28,9 @@ campaign pending.
 - Generator version: 1
 - Runtime identifier: win-x64
 - Package: `artifacts/aegis-1.0.0-win-x64.zip`
-- Commit: pending rebuilt D-180 package
-- Package SHA-256: pending rebuilt D-180 package
+- Commit: `4fa8ed54ee1997bec0fb415a4c1412d4ecef548c`
+- Package SHA-256:
+  `ea87eeb6c41c567161f3420cc2fc0d7d06ea80bcb8dee92900dd7ceeaf493459`
 - Client: SadConsole 10.10.1 with MonoGame DesktopGL 3.8.4.1
 - Payload: `aegis.exe`, `aegis-tools.exe`, `SDL2.dll`, `openal.dll`, README,
   release notes, third-party notices, and `SHA256SUMS.txt`
@@ -144,7 +145,7 @@ decision.
 
 ## Manual packaged campaign protocol
 
-Status: D-180 rebuild pending. Start from step 1 with its clean extraction.
+Status: D-180 candidate active. Start from step 1 with its clean extraction.
 
 The first guided terminal-candidate playtest rejected release and identified additional
 usability and behavior findings beyond terminal-owned presentation. Those findings are
@@ -183,6 +184,5 @@ hook, edited journal, or an existing slot.
 - Final cycle and turn: pending
 - Defects accepted: none
 - V1-09 status: Implemented, not yet Verified
-- V1-10 status: Implemented through D-180, rebuilt package and user signoff pending
-- Aegis 1.0 status: D-180 automated gate green, rebuilt package and guided campaign
-  pending
+- V1-10 status: Implemented through D-180, clean candidate built, user signoff pending
+- Aegis 1.0 status: active D-180 candidate, guided campaign pending

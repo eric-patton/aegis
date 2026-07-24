@@ -1,8 +1,9 @@
 # Aegis Godot UI mockup review
 
-Status: Review draft, not approved, no implementation authorized
+Status: World-screen architecture approved under D-183; remaining screens under review,
+no implementation authorized
 
-Related decision: D-182
+Related decisions: D-182, D-183
 
 Mockup set: `artifacts/d182-ui-mockups-v1/`
 
@@ -74,10 +75,26 @@ Stamina becomes field green, and Focus becomes blue. Activity rows drop their re
 category labels. Field, Combat, and Words instead color the complete message text, and
 their filter labels use those same green, clay-red, and brass colors.
 
-Chronicle Stage was the recommendation before this refinement. The new Map as Workspace
-sidebar hybrid is now the active concept under review because it preserves more map height
-while still making the complete live log persistent. No screen-specific design work should
-resume until the player approves it, revises it, or selects another architecture.
+Chronicle Stage was the recommendation before this refinement. The player approved
+`06-map-workspace-sidebar-icons.png` under D-183 as the structural world-screen base
+because it preserves more map height while making the complete live log persistent.
+The approval covers layout and information hierarchy. The reference map colors are not
+approved, and the remaining screens still need review before implementation resumes.
+
+## Approved world-screen base
+
+- The map is the dominant workspace.
+- A floating upper-left launcher opens Character, Pack, Journal, and Help.
+- A fixed right sidebar keeps Health, Stamina, and Focus at the top, Activity in the
+  middle, and Coin plus Essence at the bottom.
+- Resource bars are thin and icon-led. Values remain visible inside them.
+- Activity is scrollable, filtered, and bottom-following. Category color belongs to the
+  complete message and matching filter, not a repeated row tag.
+- The map-only footer owns place, cycle, season, weather, and map zoom.
+- Text size and map zoom remain separate.
+- Permanent control text and the default iron rose do not occupy the world shell.
+- Map glyph colors, final surface treatment, exact icons, responsive collapse behavior,
+  and final spacing remain to be settled.
 
 ## Findings from the Phase 2 package
 
@@ -133,6 +150,84 @@ resume until the player approves it, revises it, or selects another architecture
 8. `08-help.png`: searchable controls and accessibility reference.
 9. `09-theme-parity.png`: identical world geometry in complete light and dark themes.
 
+## Remaining screen and view inventory
+
+These are the remaining design families to settle before Phase 3 implementation. One
+approved family may cover several mechanically distinct states when the interaction
+shape is the same.
+
+### Full-window destinations
+
+1. **Campaign entry**: title treatment, Continue, New campaign, campaign slots, load,
+   safe deletion, version visibility, and quit. This is newly tracked production UI;
+   the current checkpoint still relies on launch arguments.
+2. **Character creation**: all ten stages, text entry, backtracking, final review,
+   keyboard and pointer parity, long descriptions, and narrow or high-scale layouts.
+3. **Character**: identity and condition, seven attributes and their effects, all
+   eighteen skills and progress, knacks, lessons, burdens, scars, standing, and pending
+   progression choices.
+4. **Pack and equipment**: equipped slots, carried gear, resources, requirements,
+   durability, comparison, sorting, all ten launch gear entries, and empty or
+   under-met states.
+5. **Journal**: History, People, Bestiary, and Threads as one destination, including
+   filters, learned-only disclosure, honest empty states, new-entry behavior, and long
+   histories.
+6. **Help**: searchable controls, map legend, category legend, accessibility guidance,
+   and contextual links from other screens.
+7. **Settings and accessibility**: light and dark theme, text size, map zoom, window
+   mode, input reference, optional movement assistance, reset actions, and immediate
+   live preview.
+
+### Focused task surfaces
+
+8. **Conversation and commerce**: topics, offers, transcript, coin and other relevant
+   resources, requirements, affordability, item or service detail, confirmations, and
+   the split-to-stacked responsive state.
+9. **World event and prose interaction**: a focused modern sheet over the approved
+   world shell for authored scenes, choices, visible checks, long wrapping, and
+   keyboard or pointer selection.
+10. **Rest and character shaping**: rest results, attribute raising, costs, current and
+    projected values, disabled reasons, and confirmation.
+11. **Progression choice**: pending knack or comparable permanent choice, side-by-side
+    consequences, irreversible-choice confirmation, and return to the originating
+    screen.
+12. **Action and target selection**: casting, aiming, thrusts, heaves, and other
+    direction prompts, with the map still readable and cancellation unambiguous.
+13. **Trade, craft, service, and activity menus**: buying, selling, repair, reading,
+    crafting, games, and other current submenu families through one reusable
+    item/action-sheet grammar rather than legacy terminal panels.
+14. **World transition and terms**: the crossing flow, selectable terms, summary,
+    confirmation, and responsive long-content behavior.
+15. **Fall and recovery**: consequence summary, current Toll and recoverable resources,
+    the return-to-play action, and later reclaim status without exposing unavailable
+    information.
+
+### System and boundary states
+
+16. **Pause and confirmations**: resume, settings, help, save state, return to title,
+    quit, destructive confirmations, and controller or keyboard focus return.
+17. **Loading, save, empty, and error states**: campaign load progress, unsupported or
+    damaged save messaging, no learned entries, no carried items, unavailable actions,
+    and recoverable presentation-settings failures.
+18. **Responsive and theme parity matrix**: the approved world base and every screen
+    family at supported window sizes, fullscreen, 100-200 percent text scale, map zoom
+    levels, light and dark themes, keyboard, and pointer input.
+
+## Recommended review order
+
+1. Character creation, because it is the first complete player journey and already has
+   known defects.
+2. Conversation and commerce, plus the reusable event sheet, because these retire the
+   remaining legacy world interactions.
+3. Character, then Pack and equipment, because they are Phase 3's core destinations.
+4. Journal, including History, People, Bestiary, and Threads.
+5. Help and Settings, which settle discoverability, theme, scale, zoom, and any optional
+   movement assistance.
+6. Campaign entry, pause, save, confirmation, and error states.
+7. Rest, progression, targeting, activity, transition, and recovery variants, built
+   from the approved destination and task-surface grammar.
+8. Final responsive and theme-parity sheet across every approved family.
+
 ## First-pass critique
 
 - The creation concept is the strongest layout proposal. Its exact step labels are
@@ -156,10 +251,10 @@ resume until the player approves it, revises it, or selects another architecture
 
 ## Decisions requested before implementation
 
-1. Select one game-screen architecture, or define an explicit limited hybrid.
-2. Approve, revise, or reject the integrated Activity dock and expanded History model.
-3. Approve removal of the iron rose, or retain it only as an optional accessibility
-   control.
-4. Approve full-window focused information screens and the centered event sheet.
-5. Approve separate text-size and map-zoom controls.
-6. Select which mockups require another visual pass before the contract is recorded.
+1. Settle the exact light-theme surface treatment and canonical map-glyph palette on
+   the approved D-183 world geometry.
+2. Approve the Character Creation screen family.
+3. Approve Conversation and commerce plus the reusable event and action-sheet grammar.
+4. Approve Character, Pack and equipment, Journal, Help, and Settings.
+5. Approve Campaign entry, pause, save, confirmation, and boundary states.
+6. Approve the focused task-surface variants and the complete responsive/theme matrix.

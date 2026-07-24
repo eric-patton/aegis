@@ -56,9 +56,10 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   V1-04 D-169, V1-05 D-170, V1-06 D-171, V1-07 D-172, V1-08 D-173); V1-09 is
   Implemented under D-174, but its terminal candidate is superseded by D-175. V1-10 is
   Implemented under D-177, and its clean candidate is built under D-178. The bounded
-  D-181 Godot presentation spike is built and verified, and D-182 approves the complete
-  modernization contract. Phases 1 and 2 are built and verified. Phases 3 through 5,
-  the replacement candidate, a fresh guided campaign, and explicit signoff remain
+  D-181 Godot presentation spike is built and verified, D-182 approves the complete
+  modernization contract, and D-183 locks the world-screen layout base. Phases 1 and 2
+  are built and verified. The remaining screen review, Phases 3 through 5, the
+  replacement candidate, a fresh guided campaign, and explicit signoff remain
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
@@ -210,8 +211,13 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     keyboard and pointer ownership (D-182)
   - [~] Modern world shell: colored auto-follow activity feed, expandable full-session
     history, responsive status, and clean keyboard/mouse ownership
-    (D-182 built; player review requests an integrated scrollable Activity dock,
-    map-only zoom, Help, and removal of permanent control text)
+    (D-182 built; D-183 approves the replacement Map as Workspace geometry with an
+    integrated Activity sidebar, map-only footer, floating launcher, and no permanent
+    control legend)
+  - [ ] Implement the D-183 world-screen structural base: map-dominant workspace, fixed
+    right sidebar, thin icon-led condition bars, filtered Activity, bottom currencies,
+    floating launcher, and map-only context footer
+  - [ ] Define the canonical light and dark map-glyph palette on the D-183 geometry
   - [ ] D-182 Phase 2 review: repair creation padding and step-9 text focus
   - [ ] D-182 Phase 2 review: make runtime light/dark switching refresh every surface
   - [ ] D-182 Phase 2 review: replace remaining legacy world interactions with modern
@@ -224,16 +230,29 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     conversation and purchase actions
   - [ ] D-182 Phase 2 review: replace permanent world control text with a dedicated Help
     surface
-  - [ ] D-182 Phase 2 review: decide whether to remove the iron rose or retain it only
-    as an optional accessibility control
-  - [ ] Select and document one D-182 visual style direction before revising individual
-    screen mockups
-  - [ ] Review and approve the visual contract in `design/godot-ui-mockup-review.md`
-    before Phase 3 implementation
+  - [ ] Remove the iron rose from the default D-183 world shell; any later form is an
+    optional accessibility control
+  - [x] Select and document the D-183 world-screen architecture before revising
+    individual screen mockups
+  - [~] Review and approve the visual contract in `design/godot-ui-mockup-review.md`
+    before Phase 3 implementation (world-screen structure approved D-183; all other
+    screen families remain)
+  - [ ] Design player-facing campaign entry: title, Continue, New campaign, campaign
+    slots, load, safe deletion, version, and quit
+  - [ ] Design full-window Character Creation across all stages, review, long content,
+    and supported responsive states
+  - [ ] Design Conversation and commerce plus the reusable world-event and action-sheet
+    grammar that replaces every remaining legacy surface
   - [ ] Modern dedicated character, inventory, and equipment screens, including
     keyboard and pointer access to all ten launch gear entries
   - [ ] Journal screen with current-session history plus read-only people, bestiary,
     and active-thread views over knowledge the character has actually earned
+  - [ ] Design Help plus Settings and accessibility, including live theme and text-size
+    preview, map-only zoom, and any optional movement assistance
+  - [ ] Design rest and attribute raising, progression choices, target selection,
+    trade/craft/service/activity menus, world transition, and fall/recovery variants
+  - [ ] Design pause, confirmation, loading, save, empty, and error states
+  - [ ] Approve the full responsive and light/dark theme parity matrix for every screen
   - [x] Conversation repair: full transcript color, bottom-follow on open and updates,
     independently scrolling actions, and focus trapped inside the conversation (D-182)
   - [x] Draggable persistent iron rose with a reset position action (D-182)
@@ -879,6 +898,13 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-24: **D-183 locks the world-screen structural base and exposes the remaining
+  presentation inventory.** The approved Map as Workspace layout keeps the map dominant,
+  uses a floating screen launcher, and fixes a right sidebar around thin Health, Stamina,
+  and Focus bars, filtered Activity, Coin, and Essence. Its map-only footer carries
+  context and zoom. Map-glyph colors remain explicitly unapproved. The review now tracks
+  every remaining full-window destination, focused task surface, campaign-entry and
+  system state, plus the final responsive and theme-parity matrix before Phase 3 resumes.
 - 2026-07-24: **The Map as Workspace sidebar sheds repeated labels.** Its second
   player-directed refinement uses thinner icon-led Health, Stamina, and Focus bars,
   assigns green to Stamina and blue to Focus, and removes category tags from Activity

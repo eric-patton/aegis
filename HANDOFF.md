@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-24, D-182 Phase 2 verified)
+# Aegis handoff (updated 2026-07-24, D-183 world-screen base approved)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,10 +8,10 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-182 currently at its head), then the parking lot of open
+  newest-first block (D-183 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-182)". Bump it whenever a decision lands.
+  "(D-001 through D-183)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence is complete;
   V1-09 is built, and D-175 supersedes its terminal candidate.
 - `design/plan-1.0.md`: the canonical ten-card implementation queue. V1-01 through V1-08
@@ -19,7 +19,7 @@ The canonical design truth stays where it always was:
 - `design/sadconsole-client-migration.md`: the implemented V1-10 contract.
 - `design/godot-presentation-spike.md`: the approved D-181 host-decision proof.
 - `design/godot-client-modernization.md`: the approved D-182 shipping-client contract.
-- `design/godot-ui-mockup-review.md`: the active D-182 visual-contract review draft.
+- `design/godot-ui-mockup-review.md`: the active D-182/D-183 visual-contract review.
 - `design/story/`: arc spec and world-story templates. Full story detail lives there.
 - `docs/dev-harness.md`: the pilot/sim/journey harness.
 
@@ -30,6 +30,11 @@ The canonical design truth stays where it always was:
   will use persistent responsive screens, native-pixel discrete UI scales, hinted
   vector text, a custom square-cell map, modern information screens, structured
   colored history, scoped focus, and packaged review gates after phases two and four.
+- Latest visual decision: D-183 approves `06-map-workspace-sidebar-icons.png` as the
+  world-screen structural base. The map remains dominant, with a floating launcher,
+  fixed right condition and Activity sidebar, bottom currencies, and a map-only context
+  footer. This locks layout and information hierarchy, not the reference map colors.
+  The default world shell no longer carries the iron rose or a permanent control legend.
 - Latest completed implementation: D-182 Phases 1 and 2 pass. Phase 1 supplies the
   persistent Godot foundation and modern creation flow. Phase 2 adds the responsive
   world rail and drawer, newest-entry activity ribbon, colored full-session History,
@@ -57,7 +62,10 @@ The canonical design truth stays where it always was:
   refinement with a fixed condition, Activity, and currency sidebar plus a map-only
   context footer. Its sixth image makes resource bars thinner and icon-led, sets Stamina
   green and Focus blue, and moves Activity category color from row tags to message text.
-  Phase 3 implementation is paused until the player settles that review.
+  D-183 approves the sixth image as the structural base. Phase 3 implementation remains
+  paused while Character Creation, Conversation and event sheets, Character, Pack,
+  Journal, Help, Settings, campaign entry, system states, and task-surface variants are
+  reviewed in the order recorded by `design/godot-ui-mockup-review.md`.
 - Core and Host now multi-target .NET 8 and .NET 10. Godot uses .NET 8 for runtime
   compatibility. Existing clients, tools, and tests remain on .NET 10.
 - D-175 through D-178 remain the implemented SadConsole baseline and clean candidate.

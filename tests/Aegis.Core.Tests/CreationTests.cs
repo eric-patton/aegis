@@ -28,6 +28,7 @@ public class CreationTests
         foreach (char k in extras) g.ApplyKey(k);
         foreach (char k in name) g.ApplyKey(k);
         g.ApplyKey('.');
+        g.ApplyKey('.');
     }
 
     /// <summary>Crosses the game's current world through the waygate, clearing the camp first.</summary>
@@ -149,6 +150,7 @@ public class CreationTests
         foreach (char k in "gorma") game.ApplyKey(k);
         game.ApplyKey('-');
         game.ApplyKey('.');
+        game.ApplyKey('.');
         Assert.False(game.InCreation);
         Assert.Equal("Gorm", game.Player.Name);
     }
@@ -166,8 +168,10 @@ public class CreationTests
     {
         var one = Wake();
         one.ApplyKey('0');
+        one.ApplyKey('.');
         var two = Wake();
         two.ApplyKey('0');
+        two.ApplyKey('.');
 
         Assert.False(one.InCreation);
         Assert.NotNull(one.Player.Folk);
@@ -214,6 +218,7 @@ public class CreationTests
         game.ApplyKey('0'); // no vow
         game.ApplyKey('.'); // no face
         game.ApplyKey('.'); // fated name
+        game.ApplyKey('.'); // review confirmed
 
         Assert.False(game.InCreation);
         Assert.Equal(BurdenId.OldWound, game.Player.Burden);
@@ -287,6 +292,44 @@ public class CreationTests
         // keeps waiting, and within a few crossings it is always found.
         for (int i = 0; i < 4 && !game.Player.Keepsake; i++) Cross(game);
         Assert.True(game.Player.Keepsake);
+    }
+
+    [Fact]
+    public void Back_RestoresTheCompletePreviousCreationCheckpoint()
+    {
+        var game = Wake();
+        game.ApplyKey('1');
+        game.ApplyKey('7');
+        Assert.Equal(1, game.Shame);
+        Assert.Equal(1, game.Player.Skills.Level(SkillId.Larceny));
+        Assert.True(game.World.Facts.Exists("past", "oathbreaker"));
+
+        game.ApplyKey('[');
+
+        Assert.Equal(CreationStage.Past, game.CreationStage);
+        Assert.Null(game.Player.Past);
+        Assert.Equal(0, game.Shame);
+        Assert.Equal(0, game.Player.Skills.Uses(SkillId.Larceny));
+        Assert.False(game.World.Facts.Exists("past", "oathbreaker"));
+
+        game.ApplyKey('1');
+        game.ApplyKey('0');
+        game.ApplyKey('4');
+        game.ApplyKey('0');
+        game.ApplyKey('0');
+        game.ApplyKey('.');
+        foreach (char key in "Edda") game.ApplyKey(key);
+        game.ApplyKey('.');
+        Assert.Equal(CreationStage.Review, game.CreationStage);
+        game.ApplyKey('[');
+        Assert.Equal(CreationStage.Name, game.CreationStage);
+        Assert.Equal("Edda", game.NameEntry);
+        game.ApplyKey('.');
+        game.ApplyKey('.');
+
+        Assert.False(game.InCreation);
+        Assert.Equal(PastId.Soldier, game.Player.Past);
+        Assert.Equal("Edda", game.Player.Name);
     }
 
     /// <summary>Walks the bearer beside the skald and bumps them to talk.</summary>

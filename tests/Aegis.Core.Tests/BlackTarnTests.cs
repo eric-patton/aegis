@@ -133,7 +133,7 @@ public class BlackTarnTests
         Assert.Contains(lines, line => line.Contains("The black tarn"));
         Assert.Contains(lines, line => line.Contains("Fishing reaches: 3"));
         Assert.Equal(FellFishing.ReachesPerWorld,
-            lines.Take(32).Sum(line => line.Take(95).Count(ch => ch == 'f')));
+            lines.Take(32).Sum(line => line.Take(87).Count(ch => ch == 'f')));
 
         foreach (var reach in tarn.FishingReaches.ToList())
         {

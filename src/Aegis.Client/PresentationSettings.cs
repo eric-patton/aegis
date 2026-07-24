@@ -8,6 +8,7 @@ public sealed class PresentationSettings
 {
     public int FontScale { get; set; } = 1;
     public bool HelpSeen { get; set; }
+    public bool GuideSeen { get; set; }
 
     [JsonIgnore]
     public string Path { get; private set; } = DefaultPath;

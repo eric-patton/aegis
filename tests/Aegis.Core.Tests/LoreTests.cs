@@ -243,18 +243,18 @@ public class LoreTests
         // wake at Lore 1; the rest start below the marks.
         // Keys: folk, past, shaping done, thing, no burden, no vow, no face, name sealed.
         var ward = new Game(42, firstWake: true);
-        foreach (char k in "150400..") ward.ApplyKey(k);
+        foreach (char k in "150400...") ward.ApplyKey(k);
         Assert.False(ward.InCreation);
         Assert.Equal(PastId.ScribesWard, ward.Player.Past);
         Assert.Equal(1, ward.Player.Skills.Level(SkillId.Lore));
 
         var healer = new Game(42, firstWake: true);
-        foreach (char k in "130400..") healer.ApplyKey(k);
+        foreach (char k in "130400...") healer.ApplyKey(k);
         Assert.Equal(PastId.HedgeHealer, healer.Player.Past);
         Assert.Equal(1, healer.Player.Skills.Level(SkillId.Lore));
 
         var soldier = new Game(42, firstWake: true);
-        foreach (char k in "110400..") soldier.ApplyKey(k);
+        foreach (char k in "110400...") soldier.ApplyKey(k);
         Assert.Equal(PastId.Soldier, soldier.Player.Past);
         Assert.Equal(0, soldier.Player.Skills.Level(SkillId.Lore));
     }

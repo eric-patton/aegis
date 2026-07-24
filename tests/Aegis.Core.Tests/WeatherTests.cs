@@ -290,17 +290,17 @@ public class WeatherTests
     }
 
     [Fact]
-    public void WeatherState_RebuildsExactlyFromTheJournal_InSaveV96()
+    public void WeatherState_RebuildsExactlyFromTheJournal_InSaveV100()
     {
         const ulong seed = 1234;
-        string keys = "0" + new string('.', SteadRaids.TickTurns * 7);
+        string keys = "0." + new string('.', SteadRaids.TickTurns * 7);
         var live = new Game(seed, firstWake: true);
         foreach (char key in keys) live.ApplyKey(key);
         var replay = SaveCodec.Replay(seed, keys);
         var a = live.TakeSnapshot();
         var b = replay.TakeSnapshot();
 
-        Assert.Equal(99, SaveCodec.Version);
+        Assert.Equal(100, SaveCodec.Version);
         Assert.Equal(a.Season, b.Season);
         Assert.Equal(a.SeasonPosition, b.SeasonPosition);
         Assert.Equal(a.LowlandWeather, b.LowlandWeather);

@@ -1,6 +1,6 @@
 # Aegis 1.0.0 release audit
 
-This is the durable audit for V1-09 under D-165 and D-174, amended by D-175 through D-178. Automated
+This is the durable audit for V1-09 under D-165 and D-174, amended by D-175 through D-180. Automated
 evidence may be regenerated. The manual section is a human gate and cannot be inferred
 from automated tools.
 
@@ -20,17 +20,16 @@ Status: superseded by D-175. This package cannot receive final 1.0 signoff.
 
 ## Active SadConsole candidate identity
 
-Status: automated gates passed under D-178. Visible review and fresh guided campaign
-pending.
+Status: D-180 remediation and automated gates passed. Rebuilt package and fresh guided
+campaign pending.
 
 - Product version: 1.0.0
-- Save version: 99
+- Save version: 100
 - Generator version: 1
 - Runtime identifier: win-x64
 - Package: `artifacts/aegis-1.0.0-win-x64.zip`
-- Commit: `379406da87ea08437b017cbe5ad61fbba8b9b9b4`
-- Package SHA-256:
-  `a1c3526de55ebb327ef180d1944238dc8d31e8ef0351c3e429af9d0d0ef5ec4c`
+- Commit: pending rebuilt D-180 package
+- Package SHA-256: pending rebuilt D-180 package
 - Client: SadConsole 10.10.1 with MonoGame DesktopGL 3.8.4.1
 - Payload: `aegis.exe`, `aegis-tools.exe`, `SDL2.dll`, `openal.dll`, README,
   release notes, third-party notices, and `SHA256SUMS.txt`
@@ -40,12 +39,13 @@ pending.
 ## SadConsole automated recovery gate
 
 - [x] Release build: zero warnings and zero errors
-- [x] Complete test suite: 999 passed, zero failed, zero skipped
+- [x] Complete test suite: 1,007 passed, zero failed, zero skipped
 - [x] Focused client, host, input, pilot, save, frame, settings, and package tests
-- [x] Five default twin pairs byte-identical to their mates and D-174
-- [x] Five release twin pairs byte-identical to their mates and D-174
-- [x] Both seed-1 replays byte-identical to D-174
-- [x] Generator 1 worldgen report byte-identical to D-174
+- [x] Five default twin pairs byte-identical to their mates
+- [x] Five release twin pairs byte-identical to their mates
+- [x] Both seed-1 replays exact
+- [x] Generator 1 worldgen report byte-identical to the prior baseline
+- [x] D-180 drift against D-178 justified by the reproduced ranged-pursuit repair
 - [x] Client and tools Windows x64 Native AOT publishes
 - [x] Exact seven-entry approved third-party AOT warning set
 - [x] Tools AOT publish with zero warnings
@@ -115,8 +115,9 @@ route replays exactly at 35,094 keys, cycle 13, and turn 33,981. Generator 1 reg
    and theme behavior from the user's terminal environment, so the intended presentation
    is not controlled by Aegis. The user did not approve the terminal candidate and
    approved the SadConsole replacement direction under D-175. D-177 replaced that client
-   with an owned window, and D-178 built the active candidate. Visible review and the
-   fresh manual campaign remain before the replacement is accepted for release.
+   with an owned window, D-178 built the first SadConsole candidate, and D-180 closes
+   its guided-review remediation. The rebuilt package and fresh manual campaign remain
+   before the replacement is accepted for release.
 
 ## Roadmap classification
 
@@ -143,7 +144,7 @@ decision.
 
 ## Manual packaged campaign protocol
 
-Status: D-178 SadConsole candidate active. Start from step 1 with the clean extraction.
+Status: D-180 rebuild pending. Start from step 1 with its clean extraction.
 
 The first guided terminal-candidate playtest rejected release and identified additional
 usability and behavior findings beyond terminal-owned presentation. Those findings are
@@ -176,10 +177,12 @@ hook, edited journal, or an existing slot.
 
 ## Final signoff
 
-- User verdict: terminal candidate not approved; SadConsole replacement approved
+- User verdict: terminal candidate not approved; SadConsole direction and D-180
+  remediation approved
 - Date: 2026-07-23
 - Final cycle and turn: pending
-- Defects accepted: none; the presentation defect requires replacement
+- Defects accepted: none
 - V1-09 status: Implemented, not yet Verified
-- V1-10 status: Implemented under D-177, candidate built D-178, user signoff pending
-- Aegis 1.0 status: active D-178 candidate, visible review and guided campaign pending
+- V1-10 status: Implemented through D-180, rebuilt package and user signoff pending
+- Aegis 1.0 status: D-180 automated gate green, rebuilt package and guided campaign
+  pending

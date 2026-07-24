@@ -142,6 +142,37 @@ public class FrontierTests
     }
 
     [Fact]
+    public void ARangeProvokedWolf_ClosesInsteadOfHoldingForever()
+    {
+        var game = new Game(42);
+        ClimbFells(game);
+        game.Debug_SetPlayerPos(game.World.FellWildsSite.OverworldPos);
+        game.ApplyKey('>');
+
+        var wolves = game.Monsters.Where(m => m.Alive && m.Kind == MonsterKind.Wolf).ToList();
+        Assert.True(wolves.Count >= 2);
+        var target = wolves[0];
+        var p = game.Player.Pos;
+        target.Pos = p.Plus(3, 0);
+        target.Hp = 99;
+        target.Aware = true;
+        foreach (var far in wolves.Skip(1))
+        {
+            far.Pos = new Pos(1, 1);
+            far.Aware = false;
+        }
+        game.Player.Bow = GearCatalog.Create("hunting_bow");
+        int before = target.Pos.Chebyshev(p);
+
+        game.ApplyKey('f');
+        game.ApplyKey('l');
+
+        Assert.True(target.ProvokedAtRange);
+        Assert.True(target.Pos.Chebyshev(p) < before,
+            "the ranged wound left the wolf waiting for unaware packmates");
+    }
+
+    [Fact]
     public void ThePounce_LandsOnTheKeptCell_AndMissesTheLeftOne()
     {
         var game = new Game(42);

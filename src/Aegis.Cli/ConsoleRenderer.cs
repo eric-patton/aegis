@@ -36,7 +36,7 @@ public sealed class ConsoleRenderer : IFrameSink, IDisposable
         }
     }
 
-    public void Draw(Frame frame)
+    public void Draw(Frame frame, ClientInteractionContext interaction)
     {
         _sb.Clear();
         bool full = _last is null || _last.Width != frame.Width || _last.Height != frame.Height;

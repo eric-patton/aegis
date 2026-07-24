@@ -244,15 +244,15 @@ public class PacingTests
     }
 
     [Fact]
-    public void JournalReplay_RebuildsSteeringAndDiagnosticsInSaveV96()
+    public void JournalReplay_RebuildsSteeringAndDiagnosticsInSaveV100()
     {
         const ulong seed = 1234;
-        string keys = "0" + new string('.', SteadRaids.TickTurns * 9);
+        string keys = "0." + new string('.', SteadRaids.TickTurns * 9);
         var live = new Game(seed, firstWake: true);
         foreach (char key in keys) live.ApplyKey(key);
         var replay = SaveCodec.Replay(seed, keys);
 
-        Assert.Equal(99, SaveCodec.Version);
+        Assert.Equal(100, SaveCodec.Version);
         Assert.Equal(live.Stores, replay.Stores);
         Assert.Equal(live.Upcoming, replay.Upcoming);
         Assert.Equal(live.Teller.Readings, replay.Teller.Readings);

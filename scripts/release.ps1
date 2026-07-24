@@ -108,7 +108,7 @@ $manifest = @(
     "product=Aegis",
     "productVersion=1.0.0",
     "commit=$commit",
-    "saveVersion=99",
+    "saveVersion=100",
     "generatorVersion=1",
     "runtimeIdentifier=$Runtime",
     "client=SadConsole 10.10.1",
@@ -134,12 +134,12 @@ if ($LASTEXITCODE -ne 0) { throw "Clean-extraction tools help smoke failed." }
 if (-not $helpText.Contains("journey --release")) {
     throw "Clean-extraction tools help smoke did not expose the release route."
 }
-$sim = ((& $tools sim --seed 1 --keys "0...." --quiet --generator 1) -join "`n") | ConvertFrom-Json
+$sim = ((& $tools sim --seed 1 --keys "0....." --quiet --generator 1) -join "`n") | ConvertFrom-Json
 if ($LASTEXITCODE -ne 0) { throw "Clean-extraction sim smoke failed." }
-if ($sim.keysApplied -ne 5 -or
+if ($sim.keysApplied -ne 6 -or
     $sim.final.cycle -ne 1 -or
     $sim.final.turn -ne 4 -or
-    $sim.final.saveVersion -ne 99 -or
+    $sim.final.saveVersion -ne 100 -or
     $sim.final.generatorVersion -ne 1) {
     throw "Clean-extraction sim smoke did not reproduce the pinned state."
 }
@@ -186,7 +186,7 @@ function Start-PilotClient {
 $smokeSaveDirectory = Join-Path $extractDir "smoke-saves"
 $first = Start-PilotClient -Session "package_create" -SaveDirectory $smokeSaveDirectory
 try {
-    & $tools pilot keys "150400.." --session "package_create" | Out-Null
+    & $tools pilot keys "150400..." --session "package_create" | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "Clean-extraction client input smoke failed." }
     $created = ((& $tools pilot state --session "package_create") -join "`n") | ConvertFrom-Json
     $frame = ((& $tools pilot frame --session "package_create") -join "`n") | ConvertFrom-Json

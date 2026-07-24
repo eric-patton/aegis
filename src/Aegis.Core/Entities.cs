@@ -610,6 +610,12 @@ public sealed class Monster
     public bool Aware { get; set; } = true;
 
     /// <summary>
+    /// A ranged wound has broken any patient distance tactic. The flag carries
+    /// no random draw and is rebuilt exactly from the journal on replay.
+    /// </summary>
+    public bool ProvokedAtRange { get; set; }
+
+    /// <summary>
     /// The board sundered (D-095): a hafted heave splits the linden for good,
     /// and what is left on that arm turns neither point nor shaft again.
     /// </summary>

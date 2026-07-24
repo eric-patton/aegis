@@ -152,8 +152,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   release audit; then the SadConsole client and release recovery. Open-ended catalogs
   remain tracked but do not block 1.0 unless a later decision explicitly promotes them
   into the gate. V1-01 through V1-08 are built and Verified under D-166 through D-173.
-  V1-09 and V1-10 are Implemented, and D-178 builds the replacement package. Visible
-  review, the fresh guided campaign, and explicit signoff are the active release gate.
+  V1-09 and V1-10 are Implemented. D-180 closes the guided-review remediation and its
+  complete automated engine gate. The rebuilt package, fresh guided campaign, and
+  explicit signoff are the active release gate.
 
 ### Path to 1.0 tracker (ordered, adopted D-155/D-157)
 
@@ -179,6 +180,11 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - [~] 10. SadConsole client migration and replacement 1.0 candidate
   (V1-10 direction Approved D-175; complete migration contract Approved D-176;
   Implemented D-177; replacement candidate built D-178; explicit user signoff pending)
+  - [x] D-180 guided-playtest remediation: iron rose compass, interactive menus,
+    character, inventory, equipment, conversations, field guide, creation wizard,
+    scrollback, wrapping, contrast, explanations, and reproduced behavior findings
+  - [x] Save v100 creation backtracking and complete engine sweep (D-180)
+  - [ ] Fresh packaged guided campaign and explicit player verdict
 
 The detailed tranche contents and design statuses live in `design/plan-1.0.md`; the
 1.0-ready gate also remains in `design/plan-2026-07.md`. A tranche flips
@@ -198,8 +204,9 @@ infinite prerequisite for completion.
   SadConsole shipping client, owned font and palette, resizing, and focus-free control
   are Implemented under D-175 through D-177, with the clean package built D-178; visible
   packaged signoff remains
-- [x] Save system: seed + input journal, replay-on-load, currently v99 with campaign-scoped
-  generator 1 (D-012, D-028, D-166, D-167, D-169, D-170, D-171, D-172, D-173, D-174)
+- [x] Save system: seed + input journal, replay-on-load, currently v100 with
+  campaign-scoped generator 1 (D-012, D-028, D-166, D-167, D-169, D-170, D-171,
+  D-172, D-173, D-174, D-180)
 - [x] NG+ crossing: waygate, coin -> Legend, tier-deepening worldgen (D-011, D-029)
 - [x] The Aegis as diegetic companion voice (D-010, D-019)
 - [x] The full trans-world Aegis story arc: reveal ladder -> the keeping -> the mending -> steady state (D-020, D-026, D-037, D-038, D-039, D-045, D-060)
@@ -761,11 +768,12 @@ kind, and the evaluation harness that hardens every generator change.
 ### Tooling & verification, built
 
 - [x] Dev harness: headless pilot pipe, `sim` scripted JSON runs (D-027)
-- [~] SadConsole player and focus-free shared pilot (D-175 through D-178, V1-10
+- [~] SadConsole player and focus-free shared pilot (D-175 through D-180, V1-10
   Implemented): the owned client, serialized host queue, current-user pilot, structured
-  frame, Release and Native AOT smokes, settings, help, resizing, and package route are
-  built, and D-178's clean package passes its smokes; visible packaged and final
-  physical-keyboard verification remain
+  frame, semantic action model, focus-free local UI commands, Release and Native AOT
+  smokes, settings, guide, resizing, and package route are built. D-180's visible
+  development review and full engine gate pass; the rebuilt package and final guided
+  campaign remain
 - [x] Journey-bot autopilot: clears sites, arms, raises, reclaims, loots, answers the sheet, walks the arc, swears oaths, hunts, sells hides, cooks meat, forages and sells herbs (D-062..D-075)
 - [x] Pilot footing and steeping policy: stance held to the blood's line (free presses on
   quiet ground, one bought downshift mid-fight), vials steeped before the sale and drunk
@@ -791,8 +799,8 @@ kind, and the evaluation harness that hardens every generator change.
 ## Open design questions (mirror of the `decisions.md` parking lot)
 
 The earlier parking-lot questions remain classified post-1.0 under D-165 unless a later
-decision promotes one into a release. D-179's guided-playtest remediation questions are
-unclassified and must be settled before final 1.0 signoff.
+decision promotes one into a release. D-180 settles the guided-playtest remediation
+questions and moves them into the V1-10 implementation checklist.
 
 - ◇ Folk cultures: how worldgen recultures the five folk per world, and whether factions read folk (D-017, D-092)
 - ◇ Spell list growth past the seven V1-07 workings / school-shaped content, if any
@@ -803,21 +811,22 @@ unclassified and must be settled before final 1.0 signoff.
   fen-leaguer (D-164, D-009, D-048, D-054, D-033+)
 - ◇ Story open items: bottle-episode playability, Unbinder guise tells, reveal-tier sharing across characters, template 7+ candidates (aegis-arc.md §11, world-story-templates.md §11)
 - ◇ Named stead folk (plan 2026-07 A5): adopt after A1-A3 are live, and at what depth (D-131)
-- ◇ Guided-playtest remediation and release classification: decide which findings in
-  `design/playtest-remediation-1.0.md` block 1.0, which are important 1.0 repairs, which
-  need reproduction, and which belong after 1.0
-- ◇ SadConsole interaction layer: decide the exact presentation-only `~` compass
-  overlay and visible toggle, clickable eight-direction movement, conventional keyboard
-  focus and confirm/back behavior, and modern interactive character, inventory,
-  equipment, conversation, and menu surfaces while retaining deterministic canonical
-  commands
-
 ---
 
 ## Changelog / newly tracked
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-23: **D-180 builds and sweep-verifies the guided-playtest remediation.** The
+  presentation-only iron rose, semantic keyboard and mouse action layer, modern
+  information screens, creation review and complete checkpoint backtracking, v100 save,
+  conventional text keys, contextual field guide, wrapping, scrollback, labeled
+  condition and possessions, Windows DPI ownership, response variation, and reproduced
+  ranged-pursuit repair are built. Release build and 1,007 tests pass. Five default and
+  five release twin pairs are byte-identical, both seed-1 journals replay exactly, and
+  the 240-world generator-1 report matches the prior baseline. Ornamental animation,
+  floating numbers, controller and touch support, click-to-path movement, and a separate
+  tutorial location remain post-1.0.
 - 2026-07-23: **D-179 makes the guided-playtest remediation backlog durable.** The findings
   from the rejected terminal candidate, including the proposed eight-direction compass
   overlay and broader SadConsole interaction layer, are captured in

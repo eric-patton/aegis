@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-179); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-180); the research behind it lives in `../research/`.
 
 ---
 
@@ -50,7 +50,7 @@ At world creation, a causal-grammar history generator (the Caves of Qud model) p
 
 Hierarchical seeds (master seed hashed per subsystem/region/site) keep every world
 reproducible; saves are seed plus journal. D-174 builds D-165's generator 1 freeze per
-campaign in the v99 save header. A supported old campaign keeps its recorded generator through later
+campaign in the v100 save header. A supported old campaign keeps its recorded generator through later
 crossings, while new campaigns use the newest supported one; a future build retains the
 old entry point or rejects it explicitly, never silently redealing an old journal.
 
@@ -188,7 +188,7 @@ When you fall:
 Saves are part of the design: autosave fires at the instant of death, before the penalty
 screen, carrying all consequence state. Manual saves exist for life reasons; an optional
 Ironman toggle enforces the stakes architecturally. Product, save-format, and generator
-versions are separate. The release candidate is product 1.0.0, save v99, and
+versions are separate. The release candidate is product 1.0.0, save v100, and
 campaign-pinned generator 1 (D-165, D-174).
 
 ---

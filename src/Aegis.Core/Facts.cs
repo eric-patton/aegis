@@ -27,4 +27,13 @@ public sealed class FactGraph
         => _facts.FirstOrDefault(f => f.Type == type && f.Subject == subject);
 
     public bool Exists(string type, string subject) => Find(type, subject) is not null;
+
+    internal void Truncate(int count)
+    {
+        if (count < 0 || count > _facts.Count)
+            throw new ArgumentOutOfRangeException(nameof(count));
+        if (count < _facts.Count)
+            _facts.RemoveRange(count, _facts.Count - count);
+        _nextId = _facts.Count == 0 ? 1 : _facts[^1].Id + 1;
+    }
 }

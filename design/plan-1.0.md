@@ -36,7 +36,7 @@ criteria, and decision associations for the ten 1.0 tranches.
 | V1-07 | Combat and magic depth | Verified | D-163, D-172 | Completed |
 | V1-08 | Companions, factions, and consequences | Verified | D-164, D-173 | Completed |
 | V1-09 | Next region and 1.0 release closure | Implemented | D-165, D-174 | Original candidate superseded |
-| V1-10 | SadConsole client and release recovery | Implemented | D-175 through D-178 | Visible review and signoff pending |
+| V1-10 | SadConsole client and release recovery | Implemented | D-175 through D-180 | Fresh packaged campaign and signoff pending |
 
 ## V1-01: High-fells capstone, the black tarn
 
@@ -1558,7 +1558,7 @@ this card becomes Verified.
 
 **Design status:** Implemented
 
-**Decisions:** D-175 through D-178
+**Decisions:** D-175 through D-180
 
 **Roadmap association:** Path to 1.0 tranche 10; presentation; tooling and verification;
 Windows x64 release package
@@ -1566,8 +1566,8 @@ Windows x64 release package
 **Dependencies:** V1-09 implemented under D-174; existing D-027 pilot and sim contract;
 D-175 compatibility and focus-free control spike
 
-**Implementation status:** Complete; clean replacement package built D-178; visible
-review and user signoff pending
+**Implementation status:** Complete through the D-180 guided-review remediation and
+full automated engine gate; rebuilt package, fresh campaign, and user signoff pending
 
 ### Player-facing outcome
 
@@ -1579,6 +1579,8 @@ review and user signoff pending
 - Existing canonical keyboard commands remain valid. Arrow keys remain physical aliases.
 - The complete required frame stays visible through supported resizing.
 - A fresh save can be created, played, closed, and reloaded through the new client.
+- D-180 adds the iron rose, interactive and wrapped information surfaces, scrollback,
+  contextual guidance, creation review and backtracking, and an owned Windows DPI mode.
 
 ### Architecture and automation
 
@@ -1596,6 +1598,9 @@ review and user signoff pending
   operating-system input injection, UI Automation, or screen automation.
 - Preserve `ping`, `screen`, `state`, `keys`, and `quit`. Add `frame`, returning the
   120 by 40 glyph and resolved RGB cell grid for focus-free visual inspection.
+- D-180 adds semantic action observations and `ui` pilot actions for focus-free local
+  presentation control. Its separately approved creation backtracking advances the save
+  format to v100. Generator 1 remains unchanged.
 
 ### Release recovery
 
@@ -1629,6 +1634,19 @@ review and user signoff pending
   purity. With no engine change, every D-174 engine result must remain byte-identical.
 - Publish and verify the clean SadConsole package, then complete a fresh packaged
   campaign. V1-09 and V1-10 become Verified only after explicit user approval.
+
+### D-180 remediation evidence
+
+- The reproduced approach and companion reports require no engine collision change.
+  The iron rose and field guide make the existing diagonal and position-trade paths
+  explicit.
+- The reproduced ranged pursuit stall receives the bounded engine repair approved by
+  D-180. Caught-response variation is deterministic and does not consume an RNG stream.
+- The Release build and all 1,007 tests pass. Five default and five release twin pairs
+  are byte-identical, both seed-1 journals replay exactly, and the 240-world generator-1
+  report is unchanged.
+- The D-178 exclusions remain the migration baseline. D-180 is the separately approved
+  usability and behavior delta that supersedes the no-engine-change and save-v99 clauses.
 
 ### Explicit exclusions
 

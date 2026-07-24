@@ -3,8 +3,8 @@ namespace Aegis.Core;
 /// <summary>
 /// Renders game state into a <see cref="Frame"/>. Pure function of state; owns the
 /// layout (header, map viewport, sidebar, message log). The map viewport flexes to
-/// absorb any size beyond the 80x24 baseline; the sidebar keeps a fixed width on the
-/// right and the log a fixed line count at the bottom. Below the baseline, layout is
+/// absorb any size beyond the 80x24 baseline; the sidebar grows at the 120-column
+/// client size and the log keeps a fixed line count at the bottom. Below the baseline, layout is
 /// computed at 80x24 and the frame simply crops.
 /// </summary>
 public static class Presenter
@@ -13,22 +13,25 @@ public static class Presenter
     public const int DefaultHeight = 24;
 
     private const int SidebarWidth = 23;
+    private const int WideSidebarWidth = 31;
     private const int LogLines = 5;
 
     /// <summary>Computed per-render region geometry.</summary>
-    private readonly record struct Layout(int MapX, int MapY, int MapW, int MapH, int SideX, int LogY)
+    private readonly record struct Layout(int MapX, int MapY, int MapW, int MapH, int SideX, int SideW, int LogY)
     {
         public static Layout For(int width, int height)
         {
             int w = Math.Max(width, DefaultWidth);
             int h = Math.Max(height, DefaultHeight);
             int logY = h - LogLines;
+            int sidebarWidth = w >= 110 ? WideSidebarWidth : SidebarWidth;
             return new Layout(
                 MapX: 0,
                 MapY: 1,
-                MapW: w - SidebarWidth - 2,
+                MapW: w - sidebarWidth - 2,
                 MapH: logY - 2,
-                SideX: w - SidebarWidth,
+                SideX: w - sidebarWidth,
+                SideW: sidebarWidth,
                 LogY: logY);
         }
     }
@@ -100,7 +103,7 @@ public static class Presenter
     private static void DrawCreation(Frame frame, Game game, Layout layout)
     {
         var p = game.Player;
-        const int boxW = 70;
+        int boxW = Math.Min(104, Math.Max(70, frame.Width - 8));
         string title;
         var rows = new List<(string Text, Hue Hue)>();
         string hint;
@@ -138,8 +141,15 @@ public static class Presenter
                 for (int i = 0; i < AttributeSet.Count; i++)
                 {
                     var attr = (Attr)i;
-                    rows.Add(($"{i + 1}) {AttributeSet.NameOf(attr),-9} {p.Attributes[attr]}",
-                        attr == game.ShapeRaise ? Hue.Cyan : Hue.White));
+                    bool unavailable = game.CreationStage switch
+                    {
+                        CreationStage.ShapeRaise => p.Attributes[attr] >= CreationCatalog.ShapeCeiling,
+                        CreationStage.ShapePay => attr == game.ShapeRaise
+                            || p.Attributes[attr] <= CreationCatalog.ShapeFloor,
+                        _ => false,
+                    };
+                    rows.Add(($"{i + 1}) {AttributeSet.NameOf(attr),-9} {p.Attributes[attr]}  {AttributeSet.DescriptionOf(attr)}",
+                        unavailable ? Hue.DarkGray : attr == game.ShapeRaise ? Hue.Cyan : Hue.White));
                 }
                 hint = game.CreationStage == CreationStage.ShapeRaise
                     ? "1-7 rise; 0 stands as you are"
@@ -185,24 +195,56 @@ public static class Presenter
                 break;
 
             case CreationStage.Face:
-                title = "\"Is there a face you carry, from before the catching?\"";
+                title = "Optional: name someone your character remembers.";
                 rows.Add(($"> {game.NameEntry}_", Hue.White));
-                hint = "letters name them; - takes one back; . seals it; empty carries no one";
+                hint = "Type a name, Backspace erases, Enter continues, Escape goes back";
+                break;
+
+            case CreationStage.Name:
+                title = "What is your character called?";
+                rows.Add(($"> {game.NameEntry}_", Hue.White));
+                hint = "Type a name, Backspace erases, Enter reviews, Escape goes back";
                 break;
 
             default:
-                title = "\"Last: what are you called?\"";
-                rows.Add(($"> {game.NameEntry}_", Hue.White));
-                hint = "letters shape it; - takes one back; . seals it; empty takes the folk's own";
+                title = "Review your character before beginning.";
+                string folk = p.Folk is { } folkId ? CreationCatalog.FolkOf(folkId).Name : "not chosen";
+                string past = p.Past is { } pastId ? CreationCatalog.PastOf(pastId).Name : "not chosen";
+                string things = p.Things.Count > 0
+                    ? string.Join(", ", p.Things.Select(id => CreationCatalog.ThingOf(id).Name))
+                    : "none";
+                string burden = p.Burden is { } burdenId ? CreationCatalog.BurdenOf(burdenId).Name : "none";
+                string vow = p.Vow is { } vowId ? CreationCatalog.VowOf(vowId).Name : "none";
+                rows.Add(($"Name: {(game.NameEntry.Trim().Length > 0 ? game.NameEntry.Trim() : "generated at confirmation")}", Hue.White));
+                rows.Add(($"Folk: {folk}   Past: {past}", Hue.White));
+                rows.Add(($"Attributes: {string.Join("   ", Enumerable.Range(0, AttributeSet.Count).Select(i => $"{AttributeSet.NameOf((Attr)i)} {p.Attributes[(Attr)i]}"))}", Hue.Gray));
+                rows.Add(($"Precious things: {things}", Hue.White));
+                rows.Add(($"Burden: {burden}   Vow: {vow}", Hue.Gray));
+                rows.Add(($"Remembered person: {(p.RememberedFace.Length > 0 ? p.RememberedFace : "none")}", Hue.Gray));
+                hint = "Enter begins, Escape returns to the name";
                 break;
         }
 
-        int boxH = 6 + rows.Count;
+        rows = WrapRows(rows, boxW - 4);
+        int boxH = 7 + rows.Count;
         int x0 = Math.Max(0, layout.MapX + (layout.MapW - boxW) / 2);
         int y0 = Math.Max(0, layout.MapY + (layout.MapH - boxH) / 2);
         DrawBox(frame, x0, y0, boxW, boxH);
-        frame.Write(x0 + 2, y0 + 1, "The asking", Hue.Cyan);
-        frame.Write(x0 + 2, y0 + 2, title, Hue.Gray);
+        int step = game.CreationStage switch
+        {
+            CreationStage.Folk => 1,
+            CreationStage.Past => 2,
+            CreationStage.ShapeRaise or CreationStage.ShapePay => 3,
+            CreationStage.Thing when !game.PickingSecondThing => 4,
+            CreationStage.Burden => 5,
+            CreationStage.Thing => 6,
+            CreationStage.Vow => 7,
+            CreationStage.Face => 8,
+            CreationStage.Name => 9,
+            _ => 10,
+        };
+        frame.Write(x0 + 2, y0 + 1, $"Character creation  |  Step {step} of 10", Hue.Cyan);
+        frame.Write(x0 + 2, y0 + 2, title, Hue.White);
         for (int i = 0; i < rows.Count; i++)
             frame.Write(x0 + 2, y0 + 4 + i, rows[i].Text, rows[i].Hue);
         frame.Write(x0 + 2, y0 + boxH - 2, hint, Hue.DarkGray);
@@ -437,6 +479,12 @@ public static class Presenter
     /// </summary>
     private static void DrawGearMenu(Frame frame, Game game, Layout layout)
     {
+        if (frame.Width >= 110 && frame.Height >= 36)
+        {
+            DrawWideGearMenu(frame, game);
+            return;
+        }
+
         var items = game.Player.AllGear.ToList();
         const int boxW = 46;
         int boxH = 5 + items.Count;
@@ -477,6 +525,12 @@ public static class Presenter
     /// </summary>
     private static void DrawSheet(Frame frame, Game game, Layout layout)
     {
+        if (frame.Width >= 110 && frame.Height >= 36)
+        {
+            DrawWideSheet(frame, game);
+            return;
+        }
+
         var p = game.Player;
         var choice = game.PendingKnack;
         const int boxW = 78;
@@ -557,6 +611,174 @@ public static class Presenter
         {
             frame.Write(x0 + 2, y0 + boxH - 1, " any key closes ", Hue.DarkGray);
         }
+    }
+
+    private static void DrawWideGearMenu(Frame frame, Game game)
+    {
+        var p = game.Player;
+        var items = p.AllGear.ToList();
+        const int x0 = 5;
+        const int y0 = 3;
+        const int boxW = 110;
+        const int boxH = 34;
+        const int split = 64;
+
+        DrawBox(frame, x0, y0, boxW, boxH);
+        frame.Write(x0 + 3, y0 + 1, "Inventory and equipment", Hue.Cyan);
+        frame.Write(x0 + 3, y0 + 3, "Equipment", Hue.White);
+        frame.Write(x0 + 3, y0 + 4, "Choose an item to equip it. Equipped slots are labeled.", Hue.DarkGray);
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            GearItem item = items[i];
+            bool equipped = item == p.Weapon || item == p.Armor || item == p.Bow;
+            bool under = !item.MeetsReq(p.Attributes);
+            int remaining = Math.Max(0, item.MaxWear - item.Wear);
+            string slot = item.Slot switch
+            {
+                GearSlot.Weapon => "Weapon",
+                GearSlot.Ranged => "Ranged",
+                _ => "Armor",
+            };
+            string benefit = item.Slot switch
+            {
+                GearSlot.Weapon => $"+{item.EffectiveBonus(p.Attributes)} melee",
+                GearSlot.Ranged => $"+{item.EffectiveBonus(p.Attributes)} ranged",
+                _ => $"+{item.EffectiveBonus(p.Attributes)} protection",
+            };
+            frame.Write(x0 + 3, y0 + 6 + i * 3,
+                $"{i + 1}) {item.Name}  [{(equipped ? $"Equipped: {slot}" : "Carried")}]",
+                item.Worn || under ? Hue.Red : equipped ? Hue.White : Hue.Gray);
+            frame.Write(x0 + 6, y0 + 7 + i * 3,
+                $"{benefit}; requires {AttributeSet.NameOf(item.ReqAttr)} {item.Req}"
+                + (under ? " (requirement not met)" : ""),
+                under ? Hue.Red : Hue.Gray);
+            frame.Write(x0 + 6, y0 + 8 + i * 3,
+                item.Worn
+                    ? $"Condition: worn out, 0 of {item.MaxWear} uses remaining"
+                    : $"Condition: {remaining} of {item.MaxWear} uses remaining",
+                item.Worn ? Hue.Red : Hue.DarkGray);
+        }
+
+        for (int y = y0 + 3; y < y0 + boxH - 2; y++)
+            frame.Put(split, y, '|', Hue.DarkCyan);
+
+        int right = split + 3;
+        int row = y0 + 3;
+        void Line(string text, Hue hue = Hue.Gray)
+        {
+            if (row < y0 + boxH - 2)
+                frame.Write(right, row++, text, hue);
+        }
+
+        Line("Carried supplies", Hue.White);
+        Line($"Rations {p.Rations}  (e eats one to recover)");
+        Line($"Draughts {p.Draughts}  (d drinks one to recover)");
+        Line($"Raw meat {p.RawMeat}   Tarn trout {p.TarnTrout}");
+        Line($"Herbs {p.Herb}");
+        row++;
+        Line("Trade goods", Hue.White);
+        Line($"Hides {p.Hide}   Salt {p.Salt}   Trinkets {p.Trinket}");
+        Line($"Tarn-iron {p.TarnIron}   Iron blooms {p.IronBloom}");
+        Line($"Coin {p.Coin}   Essence {p.Essence}");
+        row++;
+        Line("Permanent possessions", Hue.White);
+        foreach (ThingId thing in p.Things)
+            Line($"- {CreationCatalog.ThingOf(thing).Name}");
+        if (p.Books.Count > 0)
+            Line($"- Books: {string.Join(", ", p.Books.Select(id => BookCatalog.Def(id).Title))}");
+        if (p.FishingLine) Line("- Hook and line");
+        if (p.WolfPelt) Line("- Great pelt");
+        if (p.Keepsake) Line("- Keepsake");
+        if (p.Things.Count == 0 && p.Books.Count == 0 && !p.FishingLine && !p.WolfPelt && !p.Keepsake)
+            Line("None yet", Hue.DarkGray);
+
+        frame.Write(x0 + 3, y0 + boxH - 2,
+            items.Count > 0
+                ? $"1-{items.Count} equips; arrows and Enter also choose; Escape closes"
+                : "No equipment carried; Escape closes",
+            Hue.DarkGray);
+    }
+
+    private static void DrawWideSheet(Frame frame, Game game)
+    {
+        var p = game.Player;
+        var choice = game.PendingKnack;
+        const int x0 = 4;
+        const int y0 = 3;
+        const int boxW = 112;
+        const int boxH = 34;
+        const int skillX = 60;
+        const int skillColumn = 29;
+
+        DrawBox(frame, x0, y0, boxW, boxH);
+        string who = p.Name.Length > 0 ? p.Name : "The bearer";
+        frame.Write(x0 + 3, y0 + 1, $"Character  |  {who}", Hue.Cyan);
+        frame.Write(x0 + 3, y0 + 3, "Attributes", Hue.White);
+        frame.Write(x0 + 3, y0 + 4, "Every point changes the listed part of play.", Hue.DarkGray);
+
+        for (int i = 0; i < AttributeSet.Count; i++)
+        {
+            Attr attr = (Attr)i;
+            frame.Write(x0 + 3, y0 + 6 + i * 2,
+                $"{AttributeSet.NameOf(attr),-9} {p.Attributes[attr],2}",
+                p.Attributes[attr] > AttributeSet.Baseline ? Hue.White : Hue.Gray);
+            frame.Write(x0 + 16, y0 + 6 + i * 2,
+                AttributeSet.DescriptionOf(attr), Hue.DarkGray);
+        }
+
+        frame.Write(skillX, y0 + 3, "Skills", Hue.White);
+        frame.Write(skillX, y0 + 4, "Uses count toward the next level.", Hue.DarkGray);
+        int skillRows = SkillSet.Count / 2;
+        for (int i = 0; i < SkillSet.Count; i++)
+        {
+            SkillId skill = (SkillId)i;
+            int level = p.Skills.Level(skill);
+            int column = i / skillRows;
+            int row = i % skillRows;
+            int next = SkillSet.UsesForLevel(level + 1);
+            frame.Write(skillX + column * skillColumn, y0 + 6 + row * 2,
+                $"{SkillSet.NameOf(skill),-12} L{level}",
+                level > 0 ? Hue.White : Hue.Gray);
+            frame.Write(skillX + column * skillColumn, y0 + 7 + row * 2,
+                $"{p.Skills.Uses(skill),3} of {next,-3} uses",
+                Hue.DarkGray);
+        }
+
+        int lower = y0 + 21;
+        frame.Write(x0 + 3, lower, "Current condition", Hue.White);
+        frame.Write(x0 + 3, lower + 2,
+            $"Health {p.Hp}/{p.EffectiveMaxHp}   Stamina {p.Stamina}/{p.MaxStamina}   Focus {p.Focus}/{p.MaxFocus}",
+            Hue.Gray);
+        frame.Write(x0 + 3, lower + 3,
+            $"Stance {p.Stance}   Guard pressure {p.PostureDmg}/{p.MaxPosture}   Legend {p.Legend}",
+            Hue.Gray);
+        string burden = p.Burden is { } burdenId ? CreationCatalog.BurdenOf(burdenId).Name : "none";
+        string scars = p.Scars.Count > 0 ? string.Join(", ", p.Scars.Select(DeathsToll.NameOf)) : "none";
+        string brace = p.FittedBrace
+            ? p.HasScar(ScarId.CrushedHand) ? "   fitted brace (suppressed)" : "   fitted brace"
+            : "";
+        frame.Write(x0 + 3, lower + 4, $"Burden {burden}   Scars {scars}{brace}",
+            p.Scars.Count > 0 ? Hue.DarkYellow : Hue.Gray);
+        frame.Write(x0 + 3, lower + 5,
+            $"Taught: {(p.Lessons.Count > 0 ? string.Join(", ", p.Lessons.Select(id => LessonCatalog.Def(id).Short)) : "none")}",
+            Hue.Gray);
+
+        if (choice is not null)
+        {
+            frame.Write(x0 + 3, lower + 7,
+                $"{SkillSet.NameOf(choice.Skill)} has opened a new knack. Choose one:", Hue.Cyan);
+            for (int i = 0; i < choice.Options.Length; i++)
+            {
+                string line = $"{i + 1}) {choice.Options[i].Name}: {choice.Options[i].Blurb}";
+                if (line.Length > boxW - 6) line = line[..(boxW - 6)];
+                frame.Write(x0 + 3, lower + 8 + i, line, Hue.White);
+            }
+        }
+
+        frame.Write(x0 + 3, y0 + boxH - 2,
+            choice is null ? "Escape or c closes" : "Arrows choose, Enter confirms, Escape closes",
+            Hue.DarkGray);
     }
 
     private static void DrawBox(Frame frame, int x0, int y0, int boxW, int boxH)
@@ -881,7 +1103,7 @@ public static class Presenter
             else if (game.World.Twist == WorldTwist.GraveMarket)
                 Line(game.GraveTruceStands ? "The shared truce stands" : "Both books are shut", Hue.DarkCyan);
         }
-        Line(new string('-', 22), Hue.DarkGray);
+        Line(new string('-', layout.SideW - 1), Hue.DarkGray);
         Line($"{game.Season}: {WeatherCalendar.Name(game.LocalClimate, game.CurrentWeather)} > {WeatherCalendar.Name(game.LocalClimate, game.LocalForecast)}",
             game.CurrentWeather == WeatherFamily.Calm ? Hue.DarkGreen : Hue.DarkCyan);
         Line($"HP  {Bar(p.Hp, p.EffectiveMaxHp, 10)} {p.Hp}/{p.EffectiveMaxHp}", p.Hp * 3 <= p.EffectiveMaxHp ? Hue.Red : Hue.Gray);
@@ -1170,14 +1392,53 @@ public static class Presenter
         return new string('=', filled) + new string(' ', slots - filled);
     }
 
+    private static List<(string Text, Hue Hue)> WrapRows(
+        IEnumerable<(string Text, Hue Hue)> rows,
+        int width)
+    {
+        var wrapped = new List<(string Text, Hue Hue)>();
+        foreach (var (text, hue) in rows)
+        {
+            foreach (string line in WrapText(text, width))
+                wrapped.Add((line, hue));
+        }
+        return wrapped;
+    }
+
+    private static IEnumerable<string> WrapText(string text, int width)
+    {
+        if (text.Length == 0)
+        {
+            yield return "";
+            yield break;
+        }
+
+        string remaining = text;
+        while (remaining.Length > width)
+        {
+            int split = remaining.LastIndexOf(' ', width);
+            if (split <= 0) split = width;
+            yield return remaining[..split].TrimEnd();
+            remaining = remaining[split..].TrimStart();
+        }
+        yield return remaining;
+    }
+
     private static void DrawLog(Frame frame, Game game, Layout layout)
     {
         int logY = layout.LogY;
         frame.Write(0, logY - 1, new string('-', frame.Width), Hue.DarkGray);
-        int y = logY;
-        foreach (var entry in game.Log.Recent(LogLines))
+        var visualLines = new List<(string Text, LogTone Tone)>();
+        foreach (var entry in game.Log.Entries)
         {
-            var fg = entry.Tone switch
+            foreach (string line in WrapText(entry.Text, frame.Width))
+                visualLines.Add((line, entry.Tone));
+        }
+
+        int y = logY;
+        foreach (var (text, tone) in visualLines.TakeLast(LogLines))
+        {
+            var fg = tone switch
             {
                 LogTone.Aegis => Hue.Cyan,
                 LogTone.Danger => Hue.Red,
@@ -1185,7 +1446,6 @@ public static class Presenter
                 LogTone.Combat => Hue.Gray,
                 _ => Hue.Gray,
             };
-            string text = entry.Text.Length > frame.Width ? entry.Text[..frame.Width] : entry.Text;
             frame.Write(0, y++, text, fg);
         }
     }

@@ -354,10 +354,14 @@ namespace Aegis.Core;
 /// two new oath digits change world rules.
 /// v99 when D-165 added the Salt Fen, pinned the generator version in every
 /// campaign, and journaled fen travel, work, combat, and regional conclusions.
+/// v100 when D-180 made creation reversible and reviewable: '[' now restores a
+/// complete prior creation checkpoint, and the old final name seal now opens a
+/// review whose second seal begins play. A v99 journal would otherwise stop at
+/// review or give a formerly ignored '[' live meaning.
 /// </summary>
 public static class SaveCodec
 {
-    public const int Version = 99;
+    public const int Version = 100;
     private const string Magic = "AEGIS-SAVE";
 
     public static string EncodeHeader(ulong seed, int generatorVersion = WorldGen.CurrentGeneratorVersion) =>

@@ -135,6 +135,7 @@ public class CrossingTests
             var journal = new List<char>();
             game.KeyApplied += journal.Add;
             game.ApplyKey('0');
+            game.ApplyKey('.');
 
             if (!TryPlayToCrossing(game, maxKeys: 5000)) continue;
 

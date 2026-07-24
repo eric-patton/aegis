@@ -27,7 +27,7 @@ public class ReleaseToolTests
         Assert.True(root.GetProperty("release").GetBoolean());
         Assert.False(root.GetProperty("releasePassed").GetBoolean());
         Assert.Equal(1, root.GetProperty("generatorVersion").GetInt32());
-        Assert.Equal(99, root.GetProperty("saveVersion").GetInt32());
+        Assert.Equal(100, root.GetProperty("saveVersion").GetInt32());
         var matrix = root.GetProperty("releaseCoverage");
         Assert.Equal(9, matrix.EnumerateObject().Count());
         for (int i = 1; i <= 9; i++)
@@ -52,7 +52,7 @@ public class ReleaseToolTests
         Assert.Contains("openal.dll", script);
         Assert.Contains("aot-warning-baseline.txt", script);
         Assert.Contains("Compare-Object", script);
-        Assert.Contains("saveVersion=99", script);
+        Assert.Contains("saveVersion=100", script);
         Assert.Contains("generatorVersion=1", script);
         Assert.Contains("Get-FileHash", script);
         Assert.Contains("$zipPath.sha256", script);

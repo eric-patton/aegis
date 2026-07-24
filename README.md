@@ -41,7 +41,7 @@ Named saves live under `%LOCALAPPDATA%\Aegis\saves` by default. Every accepted k
 flushed to the journal immediately. Running without `--save` creates a temporary unsaved
 session. Use `aegis-tools.exe saves` to list slots.
 
-Save version 99 pins world generator version 1. Older save versions are intentionally
+Save version 100 pins world generator version 1. Older save versions are intentionally
 rejected because Aegis does not silently migrate or reinterpret an old campaign.
 
 ## Verification tools

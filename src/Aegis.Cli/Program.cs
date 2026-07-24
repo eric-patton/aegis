@@ -4,7 +4,7 @@ using Aegis.Host;
 // aegis-tools                    legacy terminal comparison player
 // aegis-tools --pilot            legacy player with the control channel open
 // aegis-tools --headless --pilot no console; driven entirely via the pilot
-// aegis-tools pilot <cmd>        client: screen | keys "<keys>" | state | frame | quit | ping
+// aegis-tools pilot <cmd>        client: screen | keys "<keys>" | state | frame | ui | quit | ping
 // aegis sim --seed N --keys ".." headless scripted run, JSON result on stdout
 // aegis journey --seed N --cycles K   autopilot: climb the ladder, report the crossings
 // aegis worldgen --seeds N --tiers A-B   batch-generate worlds, chart the expressive range (D-137)
@@ -46,7 +46,7 @@ for (int i = 0; i < args.Length; i++)
             Console.WriteLine("""
                 aegis-tools [--seed N] [--save slot] [--pilot] [--headless] [--session name]
                 aegis-tools saves [--save-dir dir]
-                aegis-tools pilot <screen|keys "<keys>"|state|frame|quit|ping> [--session name]
+                aegis-tools pilot <screen|keys "<keys>"|state|frame|ui <action>|quit|ping> [--session name]
                 aegis-tools sim --seed N (--keys "<keys>" | --keys-file path) [--quiet] [--generator N]
                 aegis-tools journey --seed N --cycles K [--emit-keys] [--rogue] [--caster] [--companion] [--generator N]
                 aegis-tools journey --release [--seed N] [--json]

@@ -6,7 +6,8 @@ namespace Aegis.Host;
 public interface IFrameSink
 {
     (int Width, int Height) CurrentSize { get; }
-    void Draw(Frame frame);
+    void Draw(Frame frame, ClientInteractionContext interaction);
+    PilotResponse? HandlePresentation(PilotRequest request) => null;
 }
 
 public sealed class GameSession
@@ -92,13 +93,18 @@ public sealed class GameSession
     {
         if (_renderer is null) return;
         var (width, height) = _renderer.CurrentSize;
-        _renderer.Draw(Presenter.Render(_game, width, height));
+        Frame frame = Presenter.Render(_game, width, height);
+        _renderer.Draw(frame, ClientInteractionContext.From(_game, frame));
     }
 
     private PilotResponse HandlePilot(PilotRequest request)
     {
         try
         {
+            if (request.Cmd == "ui")
+                return _renderer?.HandlePresentation(request)
+                    ?? new PilotResponse { Ok = false, Error = "this client has no presentation controls" };
+
             switch (request.Cmd)
             {
                 case "ping":

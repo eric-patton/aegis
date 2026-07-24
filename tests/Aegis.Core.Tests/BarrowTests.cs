@@ -192,6 +192,7 @@ public class BarrowTests
             var journal = new List<char>();
             game.KeyApplied += journal.Add;
             game.ApplyKey('0');
+            game.ApplyKey('.');
 
             for (int i = 0; i < 4000 && game.Running; i++)
             {

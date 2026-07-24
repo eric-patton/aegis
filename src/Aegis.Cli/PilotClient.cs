@@ -15,6 +15,7 @@ public static class PilotClient
         string session = "default";
         string? sub = null;
         string? keys = null;
+        string? action = null;
 
         for (int i = 0; i < args.Length; i++)
         {
@@ -26,19 +27,21 @@ public static class PilotClient
                 default:
                     if (sub is null) sub = args[i];
                     else if (sub == "keys" && keys is null) keys = args[i];
+                    else if (sub == "ui" && action is null) action = args[i];
                     else return Fail($"unexpected argument '{args[i]}'");
                     break;
             }
         }
 
         if (sub is null)
-            return Fail("usage: aegis-tools pilot <screen|keys <keys>|state|frame|quit|ping> [--session name]");
+            return Fail("usage: aegis-tools pilot <screen|keys <keys>|state|frame|ui <action>|quit|ping> [--session name]");
 
         var request = sub switch
         {
             "screen" => new PilotRequest { Cmd = "screen" },
             "state" => new PilotRequest { Cmd = "state" },
             "frame" => new PilotRequest { Cmd = "frame" },
+            "ui" when action is not null => new PilotRequest { Cmd = "ui", Action = action },
             "quit" => new PilotRequest { Cmd = "quit" },
             "ping" => new PilotRequest { Cmd = "ping" },
             "keys" when keys is not null => new PilotRequest { Cmd = "keys", Keys = keys },
@@ -46,7 +49,12 @@ public static class PilotClient
             _ => null,
         };
         if (request is null)
-            return Fail(sub == "keys" ? "usage: aegis pilot keys \"<keys>\"" : $"unknown pilot command '{sub}'");
+            return Fail(sub switch
+            {
+                "keys" => "usage: aegis pilot keys \"<keys>\"",
+                "ui" => "usage: aegis pilot ui <dismiss-help|guide|compass|log|close|next|previous|activate>",
+                _ => $"unknown pilot command '{sub}'",
+            });
 
         PilotResponse? response;
         try
@@ -80,7 +88,7 @@ public static class PilotClient
                               $"{(s.RemnantExists ? $" remnant@{s.RemnantMap}({s.RemnantX},{s.RemnantY})" : "")}");
         }
 
-        if (request.Cmd is "ping" or "quit")
+        if (request.Cmd is "ping" or "quit" or "ui")
             Console.WriteLine("ok");
 
         return 0;

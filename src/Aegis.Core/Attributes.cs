@@ -30,4 +30,16 @@ public sealed class AttributeSet
         Attr.Presence => "Presence",
         _ => "?",
     };
+
+    public static string DescriptionOf(Attr attr) => attr switch
+    {
+        Attr.Might => "Melee force and heavy-gear handling.",
+        Attr.Grace => "Ranged accuracy and direct-attack evasion.",
+        Attr.Vigor => "Maximum health, stamina, and armor handling.",
+        Attr.Wits => "How quickly unfamiliar enemy tells become readable.",
+        Attr.Mind => "The force carried by offensive workings.",
+        Attr.Will => "Focus, resistance to hostile workings, and guard strength.",
+        Attr.Presence => "Influence in social and story choices.",
+        _ => "",
+    };
 }

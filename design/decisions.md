@@ -231,6 +231,40 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-180: The iron rose: the hand, the glass, and the first clear road (2026-07-23)
+
+The player approves D-179's complete bounded 1.0 remediation package. The first guided
+candidate's inaccessible, clipped, ambiguous, and obstructive findings are release
+blockers. The SadConsole client now owes a modern interaction layer without a second
+gameplay language: number shortcuts remain, menus gain visible focus, arrow navigation,
+Enter, Escape, mouse selection, disabled states, and scroll, while every game-changing
+selection emits the same canonical character the deterministic engine already knows.
+
+The signature is the iron rose, a presentation-only compass toggled by `~` or a visible
+Move control. Its eight points emit `h/j/k/l/y/u/b/n`; its center emits `.`. Opening,
+closing, focusing, hovering, and scrolling cost no turn, draw no RNG, and enter no
+journal. Character, inventory, equipment, conversation, creation, and field-guide
+surfaces share one restrained visual grammar around it. The owned IBM 8x16 font and
+palette stay. The rose is the one expressive object; the rest is quiet, rectilinear,
+wrapped, labeled, and written from the player's side of the screen.
+
+Creation becomes a real wizard with progress, Back, conventional Backspace and Enter,
+plain attribute consequences, and a final review. Physical Backspace and Enter translate
+to the existing printable erase and confirm characters, but moving back between
+creation stages is a new journaled engine action. The engine therefore advances from
+save v99 to v100 and restores complete creation checkpoints rather than attempting
+piecemeal reversal. The review save's blocked entrance, ranged pursuit stall, and
+companion obstruction are reproduced before behavior changes. The current friendly-body
+trade remains the starting law; any repair after reproduction is deterministic and
+explicit.
+
+Contextual teaching plus a permanent field guide is the 1.0 onboarding answer. A separate
+authored tutorial location, floating numbers, ornamental combat animation, controller
+support, touch support, and click-to-path movement remain post-1.0. The complete locked
+classification, screens, palette, interaction contract, and verification boundary live
+in `design/playtest-remediation-1.0.md`. Every engine change receives the complete
+HANDOFF sweep before this tranche is called done.
+
 ### D-179: The hand learns the glass: guided-playtest remediation is a release design gate (2026-07-23)
 
 The first guided 1.0 candidate playtest rejected release with usability and behavior
@@ -2881,13 +2915,8 @@ Pays D-063's own named deferrals in one stroke, arming the autopilot at the smit
 
 ## Under discussion
 
-- Guided-playtest remediation and release classification: decide which findings in
-  `design/playtest-remediation-1.0.md` block 1.0, which are important 1.0 repairs, which
-  need reproduction, and which belong after 1.0
-- SadConsole interaction layer: decide the exact presentation-only `~` compass overlay
-  and visible toggle, clickable eight-direction movement, conventional keyboard focus
-  and confirm/back behavior, and modern interactive character, inventory, equipment,
-  conversation, and menu surfaces while retaining deterministic canonical commands
+No 1.0 remediation design question remains open after D-180. Implementation findings
+that would expand the approved behavior return here before they are built.
 
 ## Not yet raised (parking lot)
 

@@ -10,6 +10,7 @@
     <PublishAot>true</PublishAot>
     <AssemblyName>aegis</AssemblyName>
     <Version>1.0.0</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
 
   <ItemGroup>

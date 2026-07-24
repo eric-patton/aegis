@@ -165,6 +165,7 @@ public class ScenesTests
         var journal = new List<char>();
         game.KeyApplied += journal.Add;
         game.ApplyKey('0');
+        game.ApplyKey('.');
 
         // Walk (journaled) rather than teleport: replays must not need debug
         // hooks. The settlement's houses ring the ground just north of the shrine.

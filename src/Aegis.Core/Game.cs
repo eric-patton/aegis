@@ -1236,14 +1236,65 @@ public sealed partial class Game
     /// <summary>Whether the open Thing question is the burden's bought second (D-093).</summary>
     public bool PickingSecondThing { get; private set; }
 
+    private readonly Stack<CreationCheckpoint> _creationCheckpoints = new();
+
+    private sealed record GearCheckpoint(string Id, int Wear, bool TarnTempered);
+
+    private sealed record PlayerCreationCheckpoint(
+        FolkId? Folk,
+        PastId? Past,
+        int[] Attributes,
+        bool Keepsake,
+        ThingId[] Things,
+        BurdenId? Burden,
+        VowId? Vow,
+        string RememberedFace,
+        int Coin,
+        int Rations,
+        int Herb,
+        SpellId[] Spells,
+        int Focus,
+        bool SpellLineHeard,
+        GearCheckpoint? Weapon,
+        GearCheckpoint? Armor,
+        GearCheckpoint? Bow,
+        GearCheckpoint[] Pack,
+        bool GearLineHeard,
+        int[] SkillUses,
+        LessonId[] Lessons,
+        bool LessonLineHeard);
+
+    private sealed record CreationCheckpoint(
+        CreationStage Stage,
+        string NameEntry,
+        int ShapingsLeft,
+        Attr? ShapeRaise,
+        bool PickingSecondThing,
+        PlayerCreationCheckpoint Player,
+        int LogCount,
+        int FactCount,
+        Dictionary<FactionId, int> Infamy);
+
     private void HandleCreationKey(char key)
     {
+        if (key == '[')
+        {
+            RestorePreviousCreationCheckpoint();
+            return;
+        }
+
         switch (CreationStage)
         {
             case CreationStage.Folk:
-                if (key == '0') { RollBearer(); return; }
+                if (key == '0')
+                {
+                    SaveCreationCheckpoint();
+                    RollBearer();
+                    return;
+                }
                 if (key >= '1' && key <= '0' + CreationCatalog.Folk.Count)
                 {
+                    SaveCreationCheckpoint();
                     ApplyFolk((FolkId)(key - '1'));
                     CreationStage = CreationStage.Past;
                 }
@@ -1252,6 +1303,7 @@ public sealed partial class Game
             case CreationStage.Past:
                 if (key >= '1' && key <= '0' + CreationCatalog.Pasts.Count)
                 {
+                    SaveCreationCheckpoint();
                     ApplyPast((PastId)(key - '1'));
                     ShapingsLeft = Player.Folk == FolkId.Steadfolk ? 3 : 2;
                     CreationStage = CreationStage.ShapeRaise;
@@ -1259,7 +1311,12 @@ public sealed partial class Game
                 return;
 
             case CreationStage.ShapeRaise:
-                if (key == '0') { CreationStage = CreationStage.Thing; return; }
+                if (key == '0')
+                {
+                    SaveCreationCheckpoint();
+                    CreationStage = CreationStage.Thing;
+                    return;
+                }
                 if (key >= '1' && key <= '7')
                 {
                     var attr = (Attr)(key - '1');
@@ -1268,6 +1325,7 @@ public sealed partial class Game
                         Log.Add(Turn, $"{AttributeSet.NameOf(attr)} already stands as high as a starting body holds.");
                         return;
                     }
+                    SaveCreationCheckpoint();
                     ShapeRaise = attr;
                     CreationStage = CreationStage.ShapePay;
                 }
@@ -1283,6 +1341,7 @@ public sealed partial class Game
                         Log.Add(Turn, $"{AttributeSet.NameOf(pay)} has no more to give.");
                         return;
                     }
+                    SaveCreationCheckpoint();
                     Player.Attributes[ShapeRaise!.Value] += 1;
                     Player.Attributes[pay] -= 1;
                     Log.Add(Turn, $"\"{AttributeSet.NameOf(ShapeRaise.Value)} over {AttributeSet.NameOf(pay)}. The years agree.\"", LogTone.Aegis);
@@ -1295,16 +1354,29 @@ public sealed partial class Game
             case CreationStage.Thing:
                 if (key >= '1' && key <= '0' + CreationCatalog.Things.Count)
                 {
-                    if (!ApplyThing((ThingId)(key - '1'))) return;
+                    var thing = (ThingId)(key - '1');
+                    if (Player.Things.Contains(thing))
+                    {
+                        ApplyThing(thing);
+                        return;
+                    }
+                    SaveCreationCheckpoint();
+                    if (!ApplyThing(thing)) return;
                     CreationStage = PickingSecondThing ? CreationStage.Vow : CreationStage.Burden;
                     PickingSecondThing = false;
                 }
                 return;
 
             case CreationStage.Burden:
-                if (key == '0') { CreationStage = CreationStage.Vow; return; }
+                if (key == '0')
+                {
+                    SaveCreationCheckpoint();
+                    CreationStage = CreationStage.Vow;
+                    return;
+                }
                 if (key >= '1' && key <= '0' + CreationCatalog.Burdens.Count)
                 {
+                    SaveCreationCheckpoint();
                     ApplyBurden((BurdenId)(key - '1'));
                     PickingSecondThing = true;
                     CreationStage = CreationStage.Thing;
@@ -1312,9 +1384,15 @@ public sealed partial class Game
                 return;
 
             case CreationStage.Vow:
-                if (key == '0') { CreationStage = CreationStage.Face; return; }
+                if (key == '0')
+                {
+                    SaveCreationCheckpoint();
+                    CreationStage = CreationStage.Face;
+                    return;
+                }
                 if (key >= '1' && key <= '0' + CreationCatalog.Vows.Count)
                 {
+                    SaveCreationCheckpoint();
                     ApplyVow((VowId)(key - '1'));
                     CreationStage = CreationStage.Face;
                 }
@@ -1323,6 +1401,7 @@ public sealed partial class Game
             case CreationStage.Face:
                 if (key == '.')
                 {
+                    SaveCreationCheckpoint();
                     Player.RememberedFace = NameEntry.Trim();
                     NameEntry = "";
                     CreationStage = CreationStage.Name;
@@ -1336,12 +1415,124 @@ public sealed partial class Game
             case CreationStage.Name:
                 // The seal is '.', the erase '-': both plain printable keys, so
                 // the journal's line format never meets a control character.
-                if (key == '.') { FinishCreation(NameEntry.Trim()); return; }
+                if (key == '.')
+                {
+                    SaveCreationCheckpoint();
+                    CreationStage = CreationStage.Review;
+                    return;
+                }
                 if (key == '-' && NameEntry.Length > 0) { NameEntry = NameEntry[..^1]; return; }
                 if ((char.IsAsciiLetter(key) || key == ' ') && NameEntry.Length < 14)
                     NameEntry += NameEntry.Length == 0 ? char.ToUpperInvariant(key) : key;
                 return;
+
+            case CreationStage.Review:
+                if (key == '.') FinishCreation(NameEntry.Trim());
+                return;
         }
+    }
+
+    private void SaveCreationCheckpoint()
+    {
+        _creationCheckpoints.Push(new CreationCheckpoint(
+            CreationStage,
+            NameEntry,
+            ShapingsLeft,
+            ShapeRaise,
+            PickingSecondThing,
+            CaptureCreationPlayer(),
+            Log.Entries.Count,
+            World.Facts.All.Count,
+            new Dictionary<FactionId, int>(_factionInfamy)));
+    }
+
+    private void RestorePreviousCreationCheckpoint()
+    {
+        if (_creationCheckpoints.Count == 0)
+        {
+            Log.Add(Turn, "This is the first question. There is nothing earlier to change.");
+            return;
+        }
+
+        CreationCheckpoint checkpoint = _creationCheckpoints.Pop();
+        CreationStage = checkpoint.Stage;
+        NameEntry = checkpoint.NameEntry;
+        ShapingsLeft = checkpoint.ShapingsLeft;
+        ShapeRaise = checkpoint.ShapeRaise;
+        PickingSecondThing = checkpoint.PickingSecondThing;
+        RestoreCreationPlayer(checkpoint.Player);
+        Log.Truncate(checkpoint.LogCount);
+        World.Facts.Truncate(checkpoint.FactCount);
+        _factionInfamy.Clear();
+        foreach (var (faction, value) in checkpoint.Infamy)
+            _factionInfamy[faction] = value;
+    }
+
+    private PlayerCreationCheckpoint CaptureCreationPlayer() => new(
+        Player.Folk,
+        Player.Past,
+        Enumerable.Range(0, AttributeSet.Count).Select(i => Player.Attributes[(Attr)i]).ToArray(),
+        Player.Keepsake,
+        [.. Player.Things],
+        Player.Burden,
+        Player.Vow,
+        Player.RememberedFace,
+        Player.Coin,
+        Player.Rations,
+        Player.Herb,
+        [.. Player.Spells],
+        Player.Focus,
+        Player.SpellLineHeard,
+        CaptureGear(Player.Weapon),
+        CaptureGear(Player.Armor),
+        CaptureGear(Player.Bow),
+        [.. Player.Pack.Select(item => CaptureGear(item)!)],
+        Player.GearLineHeard,
+        Player.Skills.CaptureUses(),
+        [.. Player.Lessons],
+        Player.LessonLineHeard);
+
+    private void RestoreCreationPlayer(PlayerCreationCheckpoint checkpoint)
+    {
+        Player.Folk = checkpoint.Folk;
+        Player.Past = checkpoint.Past;
+        for (int i = 0; i < AttributeSet.Count; i++)
+            Player.Attributes[(Attr)i] = checkpoint.Attributes[i];
+        Player.Keepsake = checkpoint.Keepsake;
+        Player.Things.Clear();
+        Player.Things.AddRange(checkpoint.Things);
+        Player.Burden = checkpoint.Burden;
+        Player.Vow = checkpoint.Vow;
+        Player.RememberedFace = checkpoint.RememberedFace;
+        Player.Coin = checkpoint.Coin;
+        Player.Rations = checkpoint.Rations;
+        Player.Herb = checkpoint.Herb;
+        Player.Spells.Clear();
+        Player.Spells.AddRange(checkpoint.Spells);
+        Player.Focus = checkpoint.Focus;
+        Player.SpellLineHeard = checkpoint.SpellLineHeard;
+        Player.Weapon = RestoreGear(checkpoint.Weapon);
+        Player.Armor = RestoreGear(checkpoint.Armor);
+        Player.Bow = RestoreGear(checkpoint.Bow);
+        Player.Pack.Clear();
+        Player.Pack.AddRange(checkpoint.Pack.Select(item => RestoreGear(item)!));
+        Player.GearLineHeard = checkpoint.GearLineHeard;
+        Player.Skills.RestoreUses(checkpoint.SkillUses);
+        Player.Lessons.Clear();
+        Player.Lessons.AddRange(checkpoint.Lessons);
+        Player.LessonLineHeard = checkpoint.LessonLineHeard;
+    }
+
+    private static GearCheckpoint? CaptureGear(GearItem? item) =>
+        item is null ? null : new GearCheckpoint(item.Id, item.Wear, item.TarnTempered);
+
+    private static GearItem? RestoreGear(GearCheckpoint? checkpoint)
+    {
+        if (checkpoint is null) return null;
+        GearItem item = GearCatalog.Create(checkpoint.Id);
+        item.Wear = checkpoint.Wear;
+        item.TarnTempered = checkpoint.TarnTempered;
+        return item;
     }
 
     private void ApplyFolk(FolkId id)
@@ -1499,7 +1690,8 @@ public sealed partial class Game
         if (vow > 0) ApplyVow((VowId)(vow - 1));
         if (rng.Next(3) == 0 || Player.Vow == VowId.Finding)
             Player.RememberedFace = NameGen.Person(ref rng);
-        FinishCreation(NameGen.Person(ref rng));
+        NameEntry = NameGen.Person(ref rng);
+        CreationStage = CreationStage.Review;
     }
 
     private void FinishCreation(string name)
@@ -3467,7 +3659,7 @@ public sealed partial class Game
         else
         {
             World.CaughtLifts.Add(mark.Id);
-            Log.Add(Turn, $"Your fingers find the purse, and {mark.Name}'s hand finds your wrist. \"So that is what you are.\" It will be round the well by morning.", LogTone.Danger);
+            Log.Add(Turn, CaughtLiftLine(mark), LogTone.Danger);
             if (inTown)
             {
                 // The wall's justice is the moot's, not the well's (D-142):
@@ -3486,6 +3678,17 @@ public sealed partial class Game
             }
         }
         return true;
+    }
+
+    private string CaughtLiftLine(Npc mark)
+    {
+        int variant = (int)(SeedTree.Derive(World.Seed, $"caught-lift:{mark.Id}") % 3);
+        return variant switch
+        {
+            0 => $"Your fingers find the purse, and {mark.Name}'s hand finds your wrist. \"So that is what you are.\" It will be round the well by morning.",
+            1 => $"The purse shifts under your fingers. {mark.Name} catches your wrist before you can turn away. \"Keep your weather talk. The well will hear the truer thing.\"",
+            _ => $"Your hand comes back empty because {mark.Name} has your wrist. \"A light touch, poorly spent. Let us see how lightly the stead takes it.\"",
+        };
     }
 
     /// <summary>
@@ -9256,6 +9459,8 @@ public sealed partial class Game
             // standing open, takes the shaft 2 deeper. At range the moment is
             // yours to pick; the knack is the picking.
             bool carriedIntent = target.Intent is not null;
+            target.Aware = true;
+            target.ProvokedAtRange = true;
             int damage = _combatRng.Range(1, 4) + bow.EffectiveBonus(Player.Attributes)
                 + Player.AimBonus + Player.Skills.Bonus(SkillId.Ranged)
                 + (Player.HasPerk(PerkId.HuntersEye) ? 1 : 0)
@@ -11980,6 +12185,7 @@ public sealed partial class Game
             && m.SiteId == monster.SiteId && m.Pos.Chebyshev(Player.Pos) == 1);
         bool lastOfPack = !Monsters.Any(m => m.Alive && m != monster && packKind(m)
             && m.SiteId == monster.SiteId);
+        bool closesAlone = lastOfPack || monster.ProvokedAtRange;
 
         if (dist == 1)
         {
@@ -12002,7 +12208,7 @@ public sealed partial class Game
             return;
         }
 
-        if (monster.Intent is null && dist == 2 && (packNear >= 1 || lastOfPack)
+        if (monster.Intent is null && dist == 2 && (packNear >= 1 || closesAlone)
             && atTheThroat < 2 && _combatRng.Chance(0.5))
         {
             monster.Intent = new Intent { Kind = IntentKind.Pounce, TargetCell = Player.Pos };
@@ -12014,7 +12220,7 @@ public sealed partial class Game
 
         // The pack works in shifts (the wolves' own mercy, and the fight's
         // fairness): with two already at the throat, the rest hold the ring.
-        if (dist <= 12 && (packNear >= 1 || lastOfPack || dist > 3)
+        if (dist <= 12 && (packNear >= 1 || closesAlone || dist > 3)
             && (atTheThroat < 2 || dist > 3))
             StepBfsToward(monster);
         // A lone wolf at the ring's edge holds, circling, and waits for the pack.

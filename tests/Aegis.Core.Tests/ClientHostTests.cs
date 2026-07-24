@@ -37,6 +37,67 @@ public class ClientHostTests
     }
 
     [Fact]
+    public void SadConsoleInput_UsesConventionalCreationKeysWithoutControlCharacters()
+    {
+        Assert.Equal('-', SadConsoleInputMapper.Map(Keys.Back, '\b', ClientSurface.CreationText));
+        Assert.Equal('.', SadConsoleInputMapper.Map(Keys.Enter, '\r', ClientSurface.CreationText));
+        Assert.Equal('.', SadConsoleInputMapper.Map(Keys.Enter, '\r', ClientSurface.CreationReview));
+        Assert.Equal('[', SadConsoleInputMapper.Map(Keys.Escape, '\0', ClientSurface.CreationChoice));
+    }
+
+    [Fact]
+    public void InteractionContext_DescribesWorldCreationMenusAndConversation()
+    {
+        var world = new Game(176);
+        ClientInteractionContext worldContext = ClientInteractionContext.From(
+            world,
+            Presenter.Render(world, 120, 40));
+        Assert.Equal(ClientSurface.World, worldContext.Surface);
+        Assert.Empty(worldContext.Actions);
+        Assert.True(worldContext.SupportsCompass);
+
+        var creation = new Game(176, firstWake: true);
+        creation.ApplyKey('1');
+        creation.ApplyKey('1');
+        creation.ApplyKey('1');
+        ClientInteractionContext creationContext = ClientInteractionContext.From(
+            creation,
+            Presenter.Render(creation, 120, 40));
+        Assert.Equal(ClientSurface.CreationChoice, creationContext.Surface);
+        Assert.Contains(creationContext.Actions, a => a.Key == '1' && !a.Enabled);
+        Assert.Contains(creationContext.Actions, a => a.Key == '2' && a.Enabled);
+
+        var talk = new Game(176);
+        Npc npc = talk.World.Npcs.First();
+        Pos beside = Directions.All8
+            .Select(d => npc.Pos.Plus(d.dx, d.dy))
+            .First(p => talk.CurrentMap.Walkable(p)
+                && !talk.World.Npcs.Any(other => other.Pos == p));
+        talk.Debug_SetPlayerPos(beside);
+        (int dx, int dy) = (npc.Pos.X - beside.X, npc.Pos.Y - beside.Y);
+        char key = (dx, dy) switch
+        {
+            (0, -1) => 'k',
+            (0, 1) => 'j',
+            (-1, 0) => 'h',
+            (1, 0) => 'l',
+            (-1, -1) => 'y',
+            (1, -1) => 'u',
+            (-1, 1) => 'b',
+            (1, 1) => 'n',
+            _ => throw new InvalidOperationException("NPC was not adjacent"),
+        };
+        talk.ApplyKey(key);
+        ClientInteractionContext talkContext = ClientInteractionContext.From(
+            talk,
+            Presenter.Render(talk, 120, 40));
+        Assert.Equal(ClientSurface.Conversation, talkContext.Surface);
+        Assert.NotEmpty(talkContext.Actions);
+        Assert.NotEmpty(talkContext.Transcript);
+        Assert.Contains(npc.Name, talkContext.Title);
+    }
+
+    [Fact]
     public void Session_FrameObservationIsFixedAndUsesResolvedColors()
     {
         var game = new Game(176);
@@ -69,6 +130,22 @@ public class ClientHostTests
         Assert.True(response.Ok);
         Assert.Equal(3, response.State!.Turn);
         Assert.Equal(40, response.Screen!.Length);
+    }
+
+    [Fact]
+    public void Session_RoutesPresentationControlsWithoutChangingEngineState()
+    {
+        var game = new Game(176);
+        var sink = new PresentationSink();
+        var session = new GameSession(game, sink);
+
+        PilotResponse response = Dispatch(
+            session,
+            new PilotRequest { Cmd = "ui", Action = "guide" });
+
+        Assert.True(response.Ok);
+        Assert.Equal("guide", sink.LastAction);
+        Assert.Equal(0, game.Turn);
     }
 
     [Fact]
@@ -130,7 +207,7 @@ public class ClientHostTests
         {
             using (var save = SaveFile.Open(path, 176))
             {
-                foreach (char key in "150400..")
+                foreach (char key in "150400...")
                     save.Game.ApplyKey(key);
                 Assert.False(save.Game.InCreation);
             }
@@ -184,11 +261,13 @@ public class ClientHostTests
             var settings = PresentationSettings.Load(path);
             settings.FontScale = 2;
             settings.HelpSeen = true;
+            settings.GuideSeen = true;
             settings.Save();
 
             PresentationSettings loaded = PresentationSettings.Load(path);
             Assert.Equal(2, loaded.FontScale);
             Assert.True(loaded.HelpSeen);
+            Assert.True(loaded.GuideSeen);
 
             File.WriteAllText(path, """{"fontScale":99,"helpSeen":false}""");
             Assert.Equal(2, PresentationSettings.Load(path).FontScale);
@@ -278,5 +357,21 @@ public class ClientHostTests
         }
 
         throw new TimeoutException("Pilot server did not start.");
+    }
+
+    private sealed class PresentationSink : IFrameSink
+    {
+        public (int Width, int Height) CurrentSize => (120, 40);
+        public string LastAction { get; private set; } = "";
+
+        public void Draw(Frame frame, ClientInteractionContext interaction)
+        {
+        }
+
+        public PilotResponse? HandlePresentation(PilotRequest request)
+        {
+            LastAction = request.Action ?? "";
+            return new PilotResponse { Ok = true };
+        }
     }
 }

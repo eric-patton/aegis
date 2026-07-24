@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-23, D-179 playtest remediation gate)
+# Aegis handoff (updated 2026-07-23, D-180 implemented and sweep-verified)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,10 +8,10 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-179 currently at its head), then the parking lot of open
+  newest-first block (D-180 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-179)". Bump it whenever a decision lands.
+  "(D-001 through D-180)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence is complete;
   V1-09 is built, and D-175 supersedes its terminal candidate.
 - `design/plan-1.0.md`: the canonical ten-card implementation queue. V1-01 through V1-08
@@ -26,9 +26,11 @@ The canonical design truth stays where it always was:
   10.10.1 and MonoGame DesktopGL client before 1.0 signoff. D-176 approves the complete
   contract, D-177 implements it without changing the engine, and D-178 builds the clean
   replacement candidate.
-- D-179 records the rejected guided-playtest findings as a release design gate and adds
-  the user-raised eight-direction compass plus modern interactive screens to the
-  under-discussion backlog. It approves tracking, not implementation details.
+- D-180 implements the bounded guided-playtest remediation package: the presentation-only
+  iron rose compass, canonical keyboard and mouse parity, modern interactive screens,
+  creation backtracking at save v100, contextual teaching, readability repairs, and
+  reproduction-led behavior repair. The full automated gate is green. A clean package
+  and fresh guided campaign are the remaining release steps.
 - Latest completed product work: D-174 and V1-09. Its engine, content, release journey,
   audits, and automated evidence remain green, but its terminal package is superseded
   and cannot receive final signoff.
@@ -36,23 +38,18 @@ The canonical design truth stays where it always was:
   real Aegis frame with an owned palette and font, keeps the whole 120 by 40 frame under
   `Fit` resizing, launches under Native AOT with explicit assembly roots, and accepts
   canonical named-pipe keys without changing the foreground window. See `RESULTS.md`.
-- Save format: `SaveCodec.Version = 99` (v91 = D-154, v92 = D-166, v93 = D-167,
+- Save format: `SaveCodec.Version = 100` (v91 = D-154, v92 = D-166, v93 = D-167,
   v94 = D-169, v95 = D-170, v96 = D-171, v97 = D-172, v98 = D-173,
-  v99 = D-174; history
+  v99 = D-174, v100 = D-180; history
   comments in `src/Aegis.Core/SaveCodec.cs`).
-- Generator format: campaign-scoped generator 1, recorded separately in v99 saves.
+- Generator format: campaign-scoped generator 1, recorded separately in v100 saves.
 - Product version: 1.0.0.
-- Tests: 999 green (`dotnet test Aegis.slnx -c Release --no-restore`).
-- The D-174 Release build, focused and full tests, default and release sweeps, both
+- Tests: 1007 green (`dotnet test Aegis.slnx -c Release --no-build`).
+- The D-180 Release build, focused and full tests, default and release sweeps, both
   seed-1 replays, and the 240-world generator-1 purity gate are green.
-- D-177 adds `Aegis.Host`, the SadConsole `Aegis.Client`, `aegis-tools.exe`, structured
-  frame observations, current-user pilot hardening, presentation settings, release
-  packaging, and focused coverage. `Aegis.Core` remains unchanged.
-- D-178 candidate: commit `379406da87ea08437b017cbe5ad61fbba8b9b9b4`, archive
-  `artifacts/aegis-1.0.0-win-x64.zip`, SHA-256
-  `a1c3526de55ebb327ef180d1944238dc8d31e8ef0351c3e429af9d0d0ef5ec4c`.
-  Both AOT publishes, warning pinning, clean-extraction tools, pilot, structured frame,
-  save creation and reload, shutdown, manifest, and archive hashes pass.
+- D-180 adds semantic presentation actions, focus-free local UI pilot commands, the
+  interactive guide, log, sheet, pack, conversations, creation review and backtracking,
+  Windows DPI ownership, and the reproduced ranged-pursuit repair.
 
 ## Working conventions (were in user-level config, not visible to a new tool)
 
@@ -107,34 +104,32 @@ against the previous baseline set to see (and justify) drift. Then sim-replay at
 least seed 1's journal and require exact key/cycle/turn match. Then run the
 worldgen purity gate.
 
-**Current default baselines are v103**, stored as
-`artifacts/v1-09-default-{seed}-{a,b}.json`. The prior comparison set is v102 under
-`artifacts/aegis-sweep/`. Every v103 twin pair is byte-identical to its mate. Drift is
-expected and justified by the added fourth-country traversal, weather waits, finite
-work, fights, rest, and bounded regional completion:
+**Current default baselines are D-180**, stored as
+`artifacts/v1-10-d180-default-{seed}-{a,b}.json`. The prior comparison set is
+`artifacts/v1-10-default-{seed}-a.json`. Every D-180 twin pair is byte-identical to
+its mate. Drift is expected and justified by the ranged wolf pursuit repair:
 
 | seed  | keys  | turns | deaths | drift keys / turns / deaths | outcome                |
 |-------|-------|-------|--------|------------------------------|------------------------|
-| 1     | 35094 | 33981 | 11     | +8203 / +8156 / +2           | cycle 13, 12 crossings |
-| 7     | 40731 | 33690 | 9      | +7811 / +7759 / 0            | cycle 13, 12 crossings |
-| 99    | 40595 | 36386 | 9      | +9377 / +9380 / +1           | cycle 13, 12 crossings |
-| 2024  | 43177 | 41301 | 7      | +7904 / +7887 / 0            | cycle 13, 12 crossings |
-| 88888 | 42171 | 40948 | 10     | +9163 / +9103 / +3           | cycle 13, 12 crossings |
+| 1     | 34828 | 33702 | 10     | -266 / -279 / -1             | cycle 13, 12 crossings |
+| 7     | 40865 | 33841 | 8      | +134 / +151 / -1             | cycle 13, 12 crossings |
+| 99    | 40604 | 36373 | 10     | +9 / -13 / +1                | cycle 13, 12 crossings |
+| 2024  | 43059 | 41185 | 6      | -118 / -116 / -1             | cycle 13, 12 crossings |
+| 88888 | 41801 | 40566 | 10     | -370 / -382 / 0              | cycle 13, 12 crossings |
 
-Seed 1 default sim replay: 35,094 keys, cycle 13, turn 33,981, 11 deaths. The five
-release twin pairs are stored as `artifacts/v1-09-release-{seed}-{a,b}.json`; all are
-byte-identical, reach cycle 13 with twelve crossings, and pass all nine matrix rows.
-Release seed 1 sim replay is exact at 41,128 keys, cycle 13, and turn 42,320.
-Worldgen generator 1: 240 worlds, zero digest mismatches, 93,002 prose surfaces
-(14,849 fact details, 20,752 topics, 53,783 storylet lines, 3,138 scene lines,
-240 rumors, 240 ledger entries), five families at their declared coverage, and zero
-hard failures. The fixed-surface warning remains expected.
+Seed 1 default sim replay is exact at 34,828 keys, cycle 13, turn 33,702, and 10
+deaths. The five release twin pairs are stored as
+`artifacts/v1-10-d180-release-{seed}-{a,b}.json`; all are byte-identical, reach cycle
+13 with twelve crossings, and pass all nine matrix rows. Release seed 1 sim replay is
+exact at 40,898 keys, cycle 13, turn 42,137, and 19 deaths. Worldgen generator 1:
+240 worlds, zero digest mismatches, zero hard failures, and a SHA-256 exactly matching
+the D-178 baseline.
 
 ## Engine invariants (break these and old saves die)
 
 - Saves are seed + key journal, replayed on load. Any change to worldgen draws or
   to what a key does requires a `SaveCodec.Version` bump with a history comment.
-- Save v99 records campaign-scoped generator 1 in the header. Replay threads the
+- Save v100 records campaign-scoped generator 1 in the header. Replay threads the
   recorded generator through every crossing. Unsupported save or generator versions
   reject explicitly before generation (D-174).
 - **End-append enums only** (SkillId, SiteKind, Terrain, MonsterKind, TradeGood,
@@ -189,6 +184,9 @@ hard failures. The fixed-surface warning remains expected.
   `r` rest, `v` read (shrine or owned loft desk), `m` camp, `i` gear, `c` sheet, `e` eat,
   `o` order. Uppercase H/J/K/L/Y/U/B/N rush on local combat maps.
 - Pilot streams must be BOM-less UTF-8 (a BOM deadlocks the pipe).
+- Presentation-only pilot actions use `aegis-tools pilot ui <action>` with
+  `dismiss-help`, `guide`, `compass`, `log`, `close`, `next`, `previous`, or
+  `activate`. These commands do not reach `Game.ApplyKey`, the journal, turns, or RNG.
 - The character sheet (`Presenter.DrawSheet`) holds all 18 skills in two stable
   enum-ordered columns of nine.
 
@@ -196,7 +194,8 @@ hard failures. The fixed-surface warning remains expected.
 
 - Creation key sequence: folk digit, past digit (`'1'` Soldier, `'3'` HedgeHealer,
   `'5'` ScribesWard), `'0'` shaping done, thing digit, `"00."` extras, `'.'` seals
-  the name. E.g. `"150400.."` makes a ScribesWard (lettered, Lore 1).
+  the name, then `'.'` confirms the final review. E.g. `"150400..."` makes a
+  ScribesWard (lettered, Lore 1).
 - Offer digit in a talk menu: `(char)('1' + game.Topics.Count + offerIndex)`.
 - Shared internal helpers: `NpcTests.BumpNpc`, `NewsTests.BumpTowner/OfferKey`,
   `FrontierTests.ClimbFells`, `TownDepthTests`' enter-town pattern.
@@ -230,15 +229,9 @@ hard failures. The fixed-surface warning remains expected.
 
 ## What is next (queued, in recommended order)
 
-1. Review and classify `design/playtest-remediation-1.0.md` with the user. The user
-   decides which findings block 1.0, which are important 1.0 repairs, which need
-   reproduction, and which belong after 1.0. This includes the proposed presentation-only
-   eight-direction compass and the broader SadConsole interaction layer.
-2. Use visible and physical-keyboard review of the D-178 package, without synthetic
-   input, to reproduce and refine presentation findings where useful.
-3. Design and implement only the user-approved 1.0 remediation subset. Any engine change
-   receives the complete sweep discipline before it is called done.
-4. Restart the fresh packaged manual campaign in
+1. Build and verify the clean D-180 replacement package, including Native AOT,
+   clean-extraction, focus-free pilot, save, reload, manifest, and hash evidence.
+2. Restart the fresh packaged manual campaign in
    `design/release-audit-1.0.0.md`. Only explicit user approval can make V1-09 and V1-10
    Verified and close Aegis 1.0.
 

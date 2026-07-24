@@ -112,4 +112,4 @@ public static class CreationCatalog
 }
 
 /// <summary>The creation scene's stages, in asking order (D-092; Burden/Vow/Face are D-093).</summary>
-public enum CreationStage { Folk, Past, ShapeRaise, ShapePay, Thing, Burden, Vow, Face, Name }
+public enum CreationStage { Folk, Past, ShapeRaise, ShapePay, Thing, Burden, Vow, Face, Name, Review }

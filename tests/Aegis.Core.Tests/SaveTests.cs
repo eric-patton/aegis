@@ -33,6 +33,7 @@ public class SaveTests
         var live = new Game(seed, firstWake: true);
         live.KeyApplied += k => journal.Append(k);
         live.ApplyKey('0');
+        live.ApplyKey('.');
         foreach (char key in played) live.ApplyKey(key);
 
         var replayed = SaveCodec.Replay(seed, journal.ToString());
@@ -62,6 +63,7 @@ public class SaveTests
         var live = new Game(seed, firstWake: true);
         live.KeyApplied += k => journal.Append(k);
         live.ApplyKey('0');
+        live.ApplyKey('.');
         foreach (char key in script.ToString()) live.ApplyKey(key);
 
         Assert.True(live.Player.Deaths >= 1, "script did not produce a death; combat balance changed?");

@@ -15,4 +15,12 @@ public sealed class MessageLog
 
     public IEnumerable<LogEntry> Recent(int count)
         => _entries.Skip(Math.Max(0, _entries.Count - count));
+
+    internal void Truncate(int count)
+    {
+        if (count < 0 || count > _entries.Count)
+            throw new ArgumentOutOfRangeException(nameof(count));
+        if (count < _entries.Count)
+            _entries.RemoveRange(count, _entries.Count - count);
+    }
 }

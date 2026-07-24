@@ -140,6 +140,7 @@ public class StoryletTests
         var journal = new List<char>();
         game.KeyApplied += journal.Add;
         game.ApplyKey('0');
+        game.ApplyKey('.');
 
         // Meet the villager, rest, wander a while: a mix of gated and ambient firings.
         game.ApplyKey('k');

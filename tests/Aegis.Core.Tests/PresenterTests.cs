@@ -55,7 +55,7 @@ public class PresenterTests
         {
             int n = 0;
             for (int y = 1; y < 32; y++)
-                foreach (char ch in lines[y].PadRight(120)[..95])
+                foreach (char ch in lines[y].PadRight(120)[..87])
                     if (ch == c) n++;
             return n;
         }
@@ -87,13 +87,49 @@ public class PresenterTests
             var lines = Presenter.Render(game, width, height).ToTextLines();
             // Count terrain glyphs in the map band (rows 1 to height-8, left of the sidebar).
             int count = 0;
+            int mapRight = width >= 110 ? width - 33 : width - 25;
             for (int y = 1; y < height - 7; y++)
-                foreach (char c in lines[y].PadRight(width)[..(width - 25)])
+                foreach (char c in lines[y].PadRight(width)[..mapRight])
                     if (c is '.' or '&' or '^' or '~' or '#' or '+' or '>')
                         count++;
             return count;
         }
 
         Assert.True(MapCells(120, 40) > MapCells(80, 24));
+    }
+
+    [Fact]
+    public void WideCharacterAndEquipmentViews_ExplainTheirNumbers()
+    {
+        var game = new Game(42);
+        game.Player.Weapon = GearCatalog.Create("grave_iron");
+        game.ApplyKey('i');
+        string equipment = string.Join('\n', Presenter.Render(game, 120, 40).ToTextLines());
+        Assert.Contains("Inventory and equipment", equipment);
+        Assert.Contains("Equipped", equipment);
+        Assert.Contains("uses remaining", equipment);
+        Assert.Contains("e eats one to recover", equipment);
+
+        game.ApplyKey('q');
+        game.ApplyKey('c');
+        string character = string.Join('\n', Presenter.Render(game, 120, 40).ToTextLines());
+        Assert.Contains("Attributes", character);
+        Assert.Contains("Skills", character);
+        Assert.Contains("Persuasion", character);
+        Assert.Contains("Uses count toward the next level", character);
+        Assert.Contains(AttributeSet.DescriptionOf(Attr.Might), character);
+    }
+
+    [Fact]
+    public void LongLogEntries_WrapOntoVisibleLines()
+    {
+        var game = new Game(42);
+        game.Log.Add(game.Turn,
+            "A deliberately long interaction line carries enough ordinary words to cross the old single-line boundary and prove that the complete thought remains visible after wrapping.");
+
+        string[] lines = Presenter.Render(game, 120, 40).ToTextLines();
+
+        Assert.Contains(lines, line => line.Contains("deliberately long interaction"));
+        Assert.Contains(lines, line => line.Contains("complete thought remains visible"));
     }
 }

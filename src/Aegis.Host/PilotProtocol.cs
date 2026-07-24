@@ -8,6 +8,7 @@ public sealed class PilotRequest
 {
     public string Cmd { get; set; } = "";
     public string? Keys { get; set; }
+    public string? Action { get; set; }
 }
 
 public sealed class PilotResponse

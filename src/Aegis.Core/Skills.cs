@@ -48,6 +48,16 @@ public sealed class SkillSet
 
     public void AddUse(SkillId id) => _uses[(int)id]++;
 
+    internal int[] CaptureUses() => [.. _uses];
+
+    internal void RestoreUses(IReadOnlyList<int> uses)
+    {
+        if (uses.Count != Count)
+            throw new ArgumentException($"A skill checkpoint must contain {Count} use counts.", nameof(uses));
+        for (int i = 0; i < Count; i++)
+            _uses[i] = uses[i];
+    }
+
     /// <summary>
     /// Total uses a level asks for: 8, 20, 36, 56, 80... each level costing
     /// four more uses than the last (diminishing, never zero, returns).
@@ -88,6 +98,29 @@ public sealed class SkillSet
         SkillId.Stealth => "Stealth",
         SkillId.Larceny => "Larceny",
         _ => id.ToString(),
+    };
+
+    public static string DescriptionOf(SkillId id) => id switch
+    {
+        SkillId.Blades => "Edged weapon accuracy and force.",
+        SkillId.Hafted => "Axes, mauls, and spears.",
+        SkillId.Brawling => "Unarmed attacks and close control.",
+        SkillId.Warding => "Protection learned while armor turns blows.",
+        SkillId.Ranged => "Accuracy and force with bows.",
+        SkillId.Hunting => "Taking useful meat and hides from game.",
+        SkillId.Cooking => "Turning raw food into better provisions.",
+        SkillId.Survival => "Foraging, fieldwork, and harsh-country knowledge.",
+        SkillId.Spellcraft => "Control and force when a working succeeds.",
+        SkillId.Sleight => "Pockets and locks worked by a light hand.",
+        SkillId.Smithing => "Repairing and improving worked gear.",
+        SkillId.Commerce => "Profit earned by carrying goods between markets.",
+        SkillId.Persuasion => "Pleading and bargaining through formal disputes.",
+        SkillId.Lore => "Reading books and learning from written knowledge.",
+        SkillId.Alchemy => "Preparing draughts from gathered materials.",
+        SkillId.Athletics => "Committed movement under immediate pressure.",
+        SkillId.Stealth => "Crossing watched ground without being noticed.",
+        SkillId.Larceny => "Burglary, pilfering, and fencing stolen goods.",
+        _ => "",
     };
 }
 

@@ -1,6 +1,6 @@
 # Aegis 1.0 guided-playtest remediation
 
-Status: Draft backlog, classification and design approval pending
+Status: Implemented and automated gate passed under D-180; packaged campaign pending
 
 Source: first guided 1.0 candidate playtest, 2026-07-23
 
@@ -8,10 +8,48 @@ This document preserves the usability and behavior findings from the rejected te
 candidate so they are not lost during the SadConsole replacement. The replacement fixes
 terminal-owned presentation, but it does not by itself close the findings below.
 
-No item in this document is approved for implementation merely because it is listed.
-The player decides substantive behavior and interface changes after reviewing options.
-The next design pass must classify each item as a 1.0 release blocker, an important 1.0
-repair, a post-1.0 enhancement, or a finding that first needs reproduction.
+The player approved the complete bounded remediation package on 2026-07-23. D-180
+classifies the findings, locks the interaction design, authorizes implementation, and
+records the verified result.
+
+## Release classification
+
+### 1.0 release blockers
+
+- Clipped, unwrapped, low-contrast, or otherwise unreadable required information.
+- Character creation without conventional name editing, a safe back path, clear
+  progress, understandable prompts, attribute explanations, and a final review.
+- Conversations whose responses cannot be wrapped, revisited, or scrolled.
+- Missing explanations for map symbols, equipment condition and requirements,
+  non-equipment possessions, food and drink, crafting, combat, parrying, and other
+  required shipped systems.
+- Friendly bodies that can trap or repeatedly obstruct the player without a clear
+  deterministic way through.
+
+### Required 1.0 interaction work
+
+- The presentation-only iron rose compass, toggled by `~` or a visible Move control,
+  with all eight directions and a center Wait control.
+- Visible keyboard focus, arrow navigation, Enter confirmation, Escape back, mouse
+  selection, disabled states, and scrolling across interactive menus.
+- Redesigned character, inventory, equipment, conversation, field-guide, and creation
+  surfaces.
+
+### Reproduction before behavior changes
+
+- The reported blocked-building approach in the named review save.
+- The reported ranged-enemy pursuit stall.
+- The reported companion obstruction, since the current engine already supports a
+  friendly-body position trade and the remaining failure may be follow behavior or
+  presentation rather than collision.
+
+### Post-1.0
+
+- Floating damage numbers and ornamental combat animation.
+- Controller and touch support.
+- Click-to-path world movement.
+- A separate authored tutorial location. The approved 1.0 answer is contextual teaching
+  plus a permanently available field guide.
 
 ## Navigation and direct interaction
 
@@ -32,6 +70,28 @@ repair, a post-1.0 enhancement, or a finding that first needs reproduction.
   and decide how the player passes, swaps with, directs, or otherwise avoids being
   trapped by a friendly body.
 
+### Locked interaction contract
+
+- The compass is a compact iron rose laid over the map, not a generic gamepad pad.
+- Opening or closing it, moving focus, hovering, and scrolling are local presentation
+  state. They do not advance time, consume RNG, or enter the save journal.
+- The eight direction controls emit the existing `h/j/k/l/y/u/b/n` characters. The
+  center emits the existing `.` wait character.
+- A visible Move control and `~` toggle the compass. Mouse and keyboard have equal
+  access to every required action.
+- Number shortcuts remain live. Arrow keys move focus inside menus, Enter activates the
+  focused action, and Escape returns through the current interface where safe.
+- Backspace and Enter in creation text fields translate to the existing `-` erase and
+  `.` confirm characters. They do not create control characters in the journal.
+- Creation backtracking is a new journaled engine action and advances the save format to
+  v100. It restores the previous complete creation checkpoint, including provisional
+  attributes, belongings, knowledge, facts, ledgers, and log state.
+- The creation wizard exposes progress and a final review. Choices stay provisional
+  until the final confirmation.
+- Entering a friendly follower's cell trades positions when legal. If the reproduced
+  obstruction occurs after that trade, the repair may add one stable legal sidestep.
+  Failure remains explicit rather than silent.
+
 ## Modern interactive screens
 
 - Replace text-only menu interaction with an intentional SadConsole interaction layer
@@ -48,6 +108,25 @@ repair, a post-1.0 enhancement, or a finding that first needs reproduction.
   possible. If a proposed interface needs a new journaled command or changes what an
   existing key means, stop for a separate engine decision, save-version ruling, and the
   complete verification sweep.
+
+### Locked screen structure
+
+- Character: overview, seven attributes with plain-language effects, all eighteen skills
+  with progress explained, and current conditions.
+- Inventory: carried supplies, trade goods, permanent possessions, and non-equipment
+  finds in named sections.
+- Equipment: equipped slots and carried gear, requirements, mechanical benefit, and
+  condition written as a labeled remaining value rather than an unexplained fraction.
+- Conversations: selectable topics and actions beside a wrapped, scrollable transcript.
+- Field guide: contextual first-time guidance plus a permanent reference for movement,
+  interaction, the map, equipment, food and drink, crafting, melee, ranged play, magic,
+  telegraphs, and parrying.
+- Creation: a responsive wizard with progress, plain explanations, Back, conventional
+  text editing, and a final review.
+
+The presentation model may carry semantic action regions, transcript entries, and
+screen context beside the canonical cells. Those observations are read-only. Gameplay
+actions still resolve through `Game.ApplyKey`.
 
 ## Character creation and onboarding
 
@@ -103,5 +182,62 @@ The recommended 1.0 remediation is a bounded usability tranche:
 5. Defer ornamental animation and deeper interface expansion unless visible testing
    shows they are required for legibility.
 
-This recommendation remains unapproved until the player reviews the classification and
-the interaction design.
+The player approved this boundary as D-180 on 2026-07-23.
+
+## Implementation result
+
+- The semantic interaction layer exposes visible actions, disabled states, focus,
+  mouse hit regions, conversation transcript entries, and focus-free local UI pilot
+  actions without creating a second gameplay command language.
+- The iron rose provides all eight directions and wait. The toolbar opens Move, Pack,
+  You, Guide, and Log surfaces.
+- The responsive creation wizard supports conventional editing, complete checkpoint
+  backtracking, a final review, and v100 journal replay.
+- The guide, first-time help, log, conversations, sheet, pack, and equipment views wrap
+  and label the shipped information required by this contract.
+- Exact reproduction found the approach and companion reports to be interaction
+  discovery problems, not collision failures. Existing diagonal movement and friendly
+  position trading remain the engine rules and are now taught visibly.
+- Exact reproduction confirmed the ranged pursuit stall. A ranged-wounded wolf now
+  closes independently. Caught-response variation uses a derived deterministic choice
+  without moving an RNG stream.
+- Windows DPI ownership prevents operating-system scaling from leaving unused black
+  space around the logical frame.
+
+## Visual system
+
+The owned IBM 8x16 font remains the sole face. Hierarchy comes from disciplined
+sentence-case labels, spacing, dividers, and the owned palette:
+
+- Clear iron: `#0C1016`
+- Raised panel: `#161D27`
+- Reading white: `#E8EDF3`
+- Aegis cyan: `#60D3E7`
+- Worked brass: `#F4C660`
+- Danger red: `#F47076`
+
+The iron rose is the one deliberately expressive element. Other surfaces remain quiet,
+rectilinear, and information-led.
+
+## Verification boundary
+
+- Presentation-only focus, hover, scroll, and compass visibility must leave snapshots,
+  journals, turns, and RNG unchanged.
+- Every mouse action that changes the game must prove the same canonical key path as its
+  keyboard equivalent.
+- Save v100 must reject v99 explicitly unless a migration is separately approved.
+- The engine implementation receives the complete HANDOFF sweep: Release build and full
+  tests, five twin journeys, drift comparison, seed-1 replay, and worldgen purity.
+- Development visual review confirms palette, wrapping, wide layout, DPI behavior,
+  guide, sheet, pack, and iron-rose placement. The fresh clean-package campaign remains
+  the human gate for first-time legibility and physical interaction.
+
+## Verification evidence
+
+- Release build: zero warnings and zero errors.
+- Complete tests: 1,007 passed, zero failed, zero skipped.
+- Default and release journeys: five byte-identical twin pairs each, all at cycle 13
+  with twelve crossings.
+- Seed-1 default and release journals replay exactly.
+- Generator 1: 240 worlds, zero digest mismatches, zero hard failures, byte-identical
+  report to the prior baseline.

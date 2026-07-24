@@ -81,7 +81,10 @@ public static class JourneyPilot
         // The asking (D-092) is answered with the fate door: one key rolls the
         // whole bearer from the world's own stream, so journeys stay perfectly
         // seed-deterministic and still exercise the creation path every run.
-        if (g.InCreation) return caster ? CasterCreationKey(g) : '0';
+        if (g.InCreation)
+            return caster
+                ? CasterCreationKey(g)
+                : g.CreationStage == CreationStage.Review ? '.' : '0';
 
         // A scene is answered, never escaped (D-117): the first choice is taken,
         // which keeps the pilot deterministic and walks it through every checked
@@ -594,6 +597,7 @@ public static class JourneyPilot
         CreationStage.Vow => '0',
         CreationStage.Face => '.',
         CreationStage.Name => '.',
+        CreationStage.Review => '.',
         _ => '0',
     };
 

@@ -146,9 +146,9 @@ only physical aliases:
   it resolves to an existing canonical character. Mouse input must not create a
   second command language for 1.0.
 
-If implementation changes the meaning of any journaled character, save v99 is
-invalid and the change must stop for a new decision, save-version bump, and full
-engine sweep. The intended migration does not change key meaning.
+The D-177 migration did not change key meaning. D-180 separately approves creation
+backtracking, its v100 save bump, and the complete engine sweep. Generator 1 remains
+unchanged.
 
 ## Focus-free pilot contract
 
@@ -164,6 +164,8 @@ Required commands:
   state.
 - `frame`: return the canonical 120 by 40 cell grid with glyph and resolved RGB
   colors for focus-free visual inspection.
+- `ui`: apply a named local presentation action such as guide, compass, log, close,
+  next, previous, or activate without touching the engine journal.
 - `quit`: request an orderly client shutdown.
 
 Security and concurrency:
@@ -285,8 +287,7 @@ known IL2104 and IL3053 warnings. The migration must:
 - Pilot `screen`, `state`, and `frame` observe the resulting state without
   focusing the client.
 - Physical and pilot input share one serialized command queue.
-- Save v99 replay remains exact, or a separately approved version bump and full
-  sweep replaces this criterion.
+- Save v100 replay remains exact after D-180's separately approved bump and full sweep.
 - Native AOT launches, renders, accepts physical and pilot input, reloads a
   save, and exits cleanly.
 - Clean package hashes and third-party notices cover every shipped file.

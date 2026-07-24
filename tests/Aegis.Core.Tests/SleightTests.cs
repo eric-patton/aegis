@@ -59,9 +59,30 @@ public class SleightTests
         Assert.Equal(0, game.Player.Skills.Uses(SkillId.Sleight)); // only work that worked counts
         Assert.True(game.World.Facts.Exists("shame", "confronted"));
         var log = game.Log.Recent(6).Select(e => e.Text).ToList();
-        Assert.Contains(log, t => t.Contains("finds your wrist"));
+        Assert.Contains(log, t => t.Contains("wrist"));
         Assert.Contains(log, t => t.Contains("made right in that hand"));
         Assert.Contains(log, t => t.Contains("watched in this stead"));
+    }
+
+    [Fact]
+    public void CaughtHands_HaveStableVariedResponsesWithoutAnotherRandomDraw()
+    {
+        var responses = new HashSet<string>();
+        for (ulong seed = 1; seed <= 40; seed++)
+        {
+            var game = new Game(seed);
+            var mark = FirstVillager(game);
+            game.Debug_SetPlayerPos(mark.Pos.Plus(1, 0));
+            game.Apply(Command.Lift);
+            if (!game.World.CaughtLifts.Contains(mark.Id)) continue;
+
+            string response = game.Log.Entries.Last(e => e.Text.Contains("wrist")).Text;
+            if (response.Contains("weather talk")) responses.Add("weather");
+            else if (response.Contains("light touch")) responses.Add("light");
+            else responses.Add("counted");
+        }
+
+        Assert.True(responses.Count >= 2, "caught lifts repeated only one authored response");
     }
 
     [Fact]

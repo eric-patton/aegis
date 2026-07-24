@@ -119,6 +119,7 @@ public class NpcTests
         var journal = new List<char>();
         game.KeyApplied += journal.Add;
         game.ApplyKey('0');
+        game.ApplyKey('.');
 
         // Walk (journaled) rather than teleport: replays must not need debug hooks.
         var npc = game.World.Npcs[0];

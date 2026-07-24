@@ -898,6 +898,12 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-24: **The Focused Question proposal gains an explained-selection band.**
+  The player-directed hybrid keeps concise canonical effects in the choice cards and
+  uses the bottom detail band to explain what each selected attribute change, tradeoff,
+  and benefit does before Continue. It is preserved as
+  `05-focused-question-explained-selection.png` for visual approval before a Character
+  Creation decision is recorded.
 - 2026-07-24: **Character Creation receives four architecture choices on the D-183
   visual base.** Focused Question, Comparison Workbench, Scrolling Ledger, and Choice
   Gallery keep one light visual language while changing interaction structure. Focused

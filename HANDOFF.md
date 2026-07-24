@@ -70,8 +70,12 @@ The canonical design truth stays where it always was:
   architectures are preserved under
   `artifacts/d183-character-creation-architectures-v1/`: Focused Question, Comparison
   Workbench, Scrolling Ledger, and Choice Gallery. `01-focused-question.png` is the
-  recommendation, with a context-sensitive summary drawer borrowed from the workbench
-  only for stages that need it. None is approved yet.
+  structural recommendation, with a context-sensitive summary drawer borrowed from the
+  workbench only for stages that need it. The player-directed
+  `05-focused-question-explained-selection.png` refinement keeps that structure and
+  turns the bottom selected-detail band into a plain-language explanation of the
+  selected mechanics instead of repeating the card summary. It is the current
+  recommendation, but no Character Creation architecture is approved yet.
 - Core and Host now multi-target .NET 8 and .NET 10. Godot uses .NET 8 for runtime
   compatibility. Existing clients, tools, and tests remain on .NET 10.
 - D-175 through D-178 remain the implemented SadConsole baseline and clean candidate.

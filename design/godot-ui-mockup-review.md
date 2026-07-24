@@ -124,14 +124,23 @@ stage names are illustrative, not canonical.
    screen, with a selected-detail shelf beneath. It has the strongest spatial identity,
    but long canonical descriptions and supported narrow or 200-percent layouts would
    force an early fallback from the six-column composition.
+5. `05-focused-question-explained-selection.png`: the player-directed hybrid keeps
+   Focused Question's calm architecture and concise mechanics in each choice card, then
+   turns the selected-detail band into a teaching surface. Each selected consequence is
+   named once and explained in plain language before Continue. The reference uses
+   canonical folk effects instead of illustrative statistics or starting items.
 
-The current recommendation is `01-focused-question.png` as the base. It should borrow
-one behavior from the workbench, not its permanent third pane: an optional
+The current recommendation is the hybrid represented by
+`05-focused-question-explained-selection.png`: use `01-focused-question.png` as the
+structural base, but let its bottom selected-detail band explain what each mechanical
+consequence does instead of repeating the terse card summary. It should borrow one
+additional behavior from the workbench, not its permanent third pane: an optional
 context-sensitive summary drawer for shaping, text entry, and final review. The
 two-column choice field becomes one column at narrow widths or high text scale. Text
 entry replaces the choice field without moving the question, progress route, or footer.
 Final review uses the same canvas as a readable summary, so creation remains one
-coherent screen family.
+coherent screen family. This hybrid is still a review proposal pending explicit visual
+approval.
 
 ## Findings from the Phase 2 package
 

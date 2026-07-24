@@ -13,6 +13,10 @@ The Windows x64 Aegis package includes or statically links the following compone
 - OpenAL Soft 1.24.3 (`openal.dll`), GNU Lesser General Public License version 2 or
   later. Aegis uses the library without modification through dynamic linking.
 - Azeret Mono, SIL Open Font License 1.1, copyright 2019 The Azeret Project Authors.
+- Atkinson Hyperlegible Next, SIL Open Font License 1.1, copyright 2020-2024
+  The Atkinson Hyperlegible Next Project Authors.
+- Atkinson Hyperlegible Mono, SIL Open Font License 1.1, copyright 2020-2024
+  The Atkinson Hyperlegible Mono Project Authors.
 - Literata, SIL Open Font License 1.1, copyright 2017 The Literata Project Authors.
 
 The MIT License text below applies to .NET, Godot Engine, SadConsole, and Newtonsoft.Json
@@ -52,5 +56,6 @@ later. You may replace `openal.dll` with a compatible version. The complete lice
 corresponding source are available from the OpenAL Soft project. Aegis does not modify
 the library.
 
-Azeret Mono and Literata are distributed under the SIL Open Font License 1.1. The
-complete license texts are included with the Godot client resources.
+Azeret Mono, Atkinson Hyperlegible Next, Atkinson Hyperlegible Mono, and Literata are
+distributed under the SIL Open Font License 1.1. The complete license texts are
+included with the Godot client resources.

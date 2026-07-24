@@ -23,6 +23,23 @@ public sealed record ClientAction(
     int Width,
     bool Enabled = true);
 
+public sealed record CreationChoice(
+    char Key,
+    string Name,
+    string Description,
+    string Detail,
+    bool Enabled = true,
+    string DisabledReason = "");
+
+public sealed record CreationPresentation(
+    CreationStage Stage,
+    int Step,
+    int TotalSteps,
+    string Prompt,
+    string Entry,
+    CreationChoice[] Choices,
+    string[] ReviewLines);
+
 public sealed record ClientInteractionContext(
     ClientSurface Surface,
     string Title,
@@ -33,6 +50,7 @@ public sealed record ClientInteractionContext(
     public string Detail { get; init; } = "";
     public int? ProgressStep { get; init; }
     public int? ProgressTotal { get; init; }
+    public CreationPresentation? Creation { get; init; }
 
     public bool SupportsCompass => Surface == ClientSurface.World;
     public bool SupportsActionFocus => Actions.Length > 0;
@@ -49,6 +67,15 @@ public sealed record ClientInteractionContext(
         {
             ClientSurface.World or ClientSurface.DirectionPrompt => [],
             ClientSurface.Conversation => ConversationActions(game),
+            ClientSurface.CreationChoice => CreationChoices(game)
+                .Select(choice => new ClientAction(
+                    choice.Key,
+                    choice.Name,
+                    0,
+                    0,
+                    0,
+                    choice.Enabled))
+                .ToArray(),
             _ => ScanActions(frame),
         };
         string title = surface switch
@@ -68,12 +95,34 @@ public sealed record ClientInteractionContext(
             {
                 Prompt = CreationPrompt(game),
                 Detail = CreationDetail(game),
-                ProgressStep = (int)game.CreationStage + 1,
-                ProgressTotal = Enum.GetValues<CreationStage>().Length,
+                ProgressStep = CreationStep(game),
+                ProgressTotal = 10,
+                Creation = new CreationPresentation(
+                    game.CreationStage,
+                    CreationStep(game),
+                    10,
+                    CreationPrompt(game),
+                    game.NameEntry,
+                    CreationChoices(game),
+                    CreationReview(game)),
             };
         }
         return context;
     }
+
+    private static int CreationStep(Game game) => game.CreationStage switch
+    {
+        CreationStage.Folk => 1,
+        CreationStage.Past => 2,
+        CreationStage.ShapeRaise or CreationStage.ShapePay => 3,
+        CreationStage.Thing when !game.PickingSecondThing => 4,
+        CreationStage.Burden => 5,
+        CreationStage.Thing => 6,
+        CreationStage.Vow => 7,
+        CreationStage.Face => 8,
+        CreationStage.Name => 9,
+        _ => 10,
+    };
 
     private static string CreationPrompt(Game game) => game.CreationStage switch
     {
@@ -105,6 +154,134 @@ public sealed record ClientInteractionContext(
             }.Where(value => value.Length > 0)),
         _ => "",
     };
+
+    private static CreationChoice[] CreationChoices(Game game)
+    {
+        var player = game.Player;
+        return game.CreationStage switch
+        {
+            CreationStage.Folk =>
+            [
+                .. CreationCatalog.Folk.Select((def, index) => new CreationChoice(
+                    (char)('1' + index),
+                    def.Name,
+                    def.Blurb,
+                    def.Trait)),
+                new CreationChoice(
+                    '0',
+                    "Leave it to fate",
+                    "The shrine decides the whole of you at once.",
+                    "All creation choices are rolled together."),
+            ],
+            CreationStage.Past =>
+            [
+                .. CreationCatalog.Pasts.Select((def, index) => new CreationChoice(
+                    (char)('1' + index),
+                    def.Name,
+                    def.Blurb,
+                    SkillSet.NameOf(def.Skill))),
+            ],
+            CreationStage.ShapeRaise or CreationStage.ShapePay =>
+            [
+                .. Enumerable.Range(0, AttributeSet.Count).Select(index =>
+                {
+                    var attribute = (Attr)index;
+                    bool enabled = game.CreationStage == CreationStage.ShapeRaise
+                        ? player.Attributes[attribute] < CreationCatalog.ShapeCeiling
+                        : attribute != game.ShapeRaise
+                            && player.Attributes[attribute] > CreationCatalog.ShapeFloor;
+                    string reason = enabled
+                        ? ""
+                        : game.CreationStage == CreationStage.ShapeRaise
+                            ? "Already at the creation ceiling."
+                            : attribute == game.ShapeRaise
+                                ? "The raised attribute cannot also pay."
+                                : "Already at the creation floor.";
+                    return new CreationChoice(
+                        (char)('1' + index),
+                        AttributeSet.NameOf(attribute),
+                        AttributeSet.DescriptionOf(attribute),
+                        $"Current value {player.Attributes[attribute]}",
+                        enabled,
+                        reason);
+                }),
+                .. game.CreationStage == CreationStage.ShapeRaise
+                    ? new[]
+                    {
+                        new CreationChoice(
+                            '0',
+                            "Stand as you are",
+                            "Finish shaping without spending the remaining choices.",
+                            ""),
+                    }
+                    : [],
+            ],
+            CreationStage.Thing =>
+            [
+                .. CreationCatalog.Things.Select((def, index) =>
+                {
+                    bool held = player.Things.Contains(def.Id);
+                    return new CreationChoice(
+                        (char)('1' + index),
+                        def.Name,
+                        def.Blurb,
+                        held ? "Already carried" : "",
+                        !held,
+                        held ? "Already chosen." : "");
+                }),
+            ],
+            CreationStage.Burden =>
+            [
+                .. CreationCatalog.Burdens.Select((def, index) => new CreationChoice(
+                    (char)('1' + index),
+                    def.Name,
+                    def.Blurb,
+                    def.Price)),
+                new CreationChoice(
+                    '0',
+                    "Carry nothing more",
+                    "Continue without a burden or a second precious thing.",
+                    ""),
+            ],
+            CreationStage.Vow =>
+            [
+                .. CreationCatalog.Vows.Select((def, index) => new CreationChoice(
+                    (char)('1' + index),
+                    def.Name,
+                    def.Blurb,
+                    "")),
+                new CreationChoice(
+                    '0',
+                    "No vow but the road",
+                    "Continue without swearing a private aim.",
+                    ""),
+            ],
+            _ => [],
+        };
+    }
+
+    private static string[] CreationReview(Game game)
+    {
+        if (game.CreationStage != CreationStage.Review)
+            return [];
+
+        Player player = game.Player;
+        string things = player.Things.Count > 0
+            ? string.Join(", ", player.Things.Select(id => CreationCatalog.ThingOf(id).Name))
+            : "None";
+        return
+        [
+            $"Name: {(game.NameEntry.Trim().Length > 0 ? game.NameEntry.Trim() : "Generated at confirmation")}",
+            $"Folk: {(player.Folk is { } folk ? CreationCatalog.FolkOf(folk).Name : "Not chosen")}",
+            $"Past: {(player.Past is { } past ? CreationCatalog.PastOf(past).Name : "Not chosen")}",
+            $"Attributes: {string.Join("  ", Enumerable.Range(0, AttributeSet.Count).Select(index =>
+                $"{AttributeSet.NameOf((Attr)index)} {player.Attributes[(Attr)index]}"))}",
+            $"Precious things: {things}",
+            $"Burden: {(player.Burden is { } burden ? CreationCatalog.BurdenOf(burden).Name : "None")}",
+            $"Vow: {(player.Vow is { } vow ? CreationCatalog.VowOf(vow).Name : "None")}",
+            $"Remembered person: {(player.RememberedFace.Length > 0 ? player.RememberedFace : "None")}",
+        ];
+    }
 
     private static ClientSurface SurfaceOf(Game game)
     {

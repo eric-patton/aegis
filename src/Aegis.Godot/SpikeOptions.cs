@@ -10,6 +10,7 @@ internal sealed class SpikeOptions
     public string? SaveSlot { get; private set; }
     public string SaveDirectory { get; private set; } = SaveFile.DefaultDirectory;
     public string Theme { get; private set; } = "dark";
+    public bool ThemeSpecified { get; private set; }
 
     public static SpikeOptions Parse(string[] args)
     {
@@ -38,6 +39,7 @@ internal sealed class SpikeOptions
                     break;
                 case "--theme":
                     result.Theme = Next(args, ref i, "--theme").ToLowerInvariant();
+                    result.ThemeSpecified = true;
                     if (result.Theme is not ("dark" or "light"))
                         throw new ArgumentException("--theme must be dark or light.");
                     break;

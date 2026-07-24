@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-24, D-181 Godot spike complete)
+# Aegis handoff (updated 2026-07-24, D-182 Phase 1 verified)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,28 +8,39 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-181 currently at its head), then the parking lot of open
+  newest-first block (D-182 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-181)". Bump it whenever a decision lands.
+  "(D-001 through D-182)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence is complete;
   V1-09 is built, and D-175 supersedes its terminal candidate.
 - `design/plan-1.0.md`: the canonical ten-card implementation queue. V1-01 through V1-08
   are Verified; V1-09 and V1-10 are Implemented.
 - `design/sadconsole-client-migration.md`: the implemented V1-10 contract.
 - `design/godot-presentation-spike.md`: the approved D-181 host-decision proof.
+- `design/godot-client-modernization.md`: the approved D-182 shipping-client contract.
 - `design/story/`: arc spec and world-story templates. Full story detail lives there.
 - `docs/dev-harness.md`: the pilot/sim/journey harness.
 
 ## Current state
 
-- Latest completed work: the bounded D-181 Godot 4.7.1 .NET presentation spike passes.
-  `src/Aegis.Godot` provides semantic creation, world, and conversation surfaces,
-  designed dark and light themes, bundled vector fonts, responsive wrapping and
-  scrolling, persistent compass state, background pointer input, focus-free pilot
-  control, exact v100 save reload parity, and a clean Windows x64 export. It preserves
-  Core, Host, generator 1, canonical commands, deterministic tools, Frame, and
-  Presenter. It does not approve a complete migration.
+- Latest approved direction: D-182 selects a complete Godot 4.7.1 .NET modernization
+  under the five-phase contract in `design/godot-client-modernization.md`. The client
+  will use persistent responsive screens, native-pixel discrete UI scales, hinted
+  vector text, a custom square-cell map, modern information screens, structured
+  colored history, scoped focus, and packaged review gates after phases two and four.
+- Latest completed implementation: D-182 Phase 1, the persistent Godot foundation and
+  modern creation flow, passes. `Main` now coordinates persistent creation, world,
+  conversation, and legacy fallback screens. Host provides a typed creation
+  projection with complete descriptions and review text. The client uses Atkinson
+  Hyperlegible Next and Mono, five integer UI scales from 100-200 percent, persistent
+  dark and light themes, native text fields, and a custom measured square-cell map.
+  Background probes cover text entry, review scrolling, theme and scale persistence,
+  windowed and maximized reflow, and the empty-world shell without stealing focus.
+  Release builds with zero warnings, all 1,011 tests pass, and the Windows x64
+  checkpoint export reports save v100 and generator 1 over pilot before clean exit.
+  Core behavior, RNG, saves, and canonical keys did not move, so the conditional
+  engine sweep did not trigger.
 - Core and Host now multi-target .NET 8 and .NET 10. Godot uses .NET 8 for runtime
   compatibility. Existing clients, tools, and tests remain on .NET 10.
 - D-175 through D-178 remain the implemented SadConsole baseline and clean candidate.
@@ -68,10 +79,15 @@ The canonical design truth stays where it always was:
   `ea87eeb6c41c567161f3420cc2fc0d7d06ea80bcb8dee92900dd7ceeaf493459`.
   Both Native AOT publishes, warning pinning, clean-extraction tools, pilot, structured
   frame, save creation and reload, shutdown, manifest, and archive hashes pass.
+- D-182 Phase 1 checkpoint: `artifacts/aegis-d182-phase1-win-x64.zip`, SHA-256
+  `667edc79d3473dbb4fb2d0c930093bd1b5666a25b2ea93fe456d1d864c2b0b5d`.
+  A clean extraction reports save v100 and generator 1, then exits through pilot with
+  code 0. This checkpoint is for foundation and creation review, not release signoff.
 - The 2026-07-24 second packaged review found release-blocking font scaling, dark-only
   presentation, creation clutter, lost compass mode, incomplete wrapping, and
   conversation clipping. Automated gates remain green, but the candidate is not
-  approved. The D-181 spike is complete, and the player host verdict is the active gate.
+  approved. D-181 settled the host question, D-182 Phase 1 is verified, and Phase 2 is
+  now the active replacement-client work.
 
 ## Working conventions (were in user-level config, not visible to a new tool)
 
@@ -251,9 +267,10 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Review the completed D-181 Godot presentation spike and record the player's host
-   verdict.
-2. Build and verify the approved replacement
+1. Implement D-182 Phase 2: finish the responsive world shell, structured colored
+   History, bottom-follow conversation, scoped focus, draggable persistent iron rose,
+   and complete world input ownership.
+2. Continue the approved phases and packaged review gates through the replacement
    candidate.
 3. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
    explicit user approval can make V1-09 and V1-10 Verified and close Aegis 1.0.

@@ -231,6 +231,77 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-182: The charted margin: the complete Godot client contract (2026-07-24)
+
+The player approves the complete Godot client modernization contract after reviewing
+the D-181 spike and its second packaged feedback. Godot 4.7.1 .NET becomes the shipping
+presentation direction. The map remains terminal-like, while creation, world chrome,
+conversation, Character, Inventory, Equipment, Journal, settings, logs, and transient
+menus become persistent, responsive modern UI. The visual system is the field ledger:
+dark iron and light field themes, Atkinson Hyperlegible Next for interface text,
+Atkinson Hyperlegible Mono for the map and compact data, Literata for long prose, and
+the charted margin as the one expressive focus and navigation mark.
+
+The architecture stops rebuilding the complete scene after every key. A small
+coordinator creates persistent screens once and updates typed semantic projections in
+place. The root renders at native pixels. Discrete 100, 125, 150, 175, and 200 percent
+UI scales regenerate integer font and spacing tokens, while hinted vector fonts retain
+Godot's oversampling. A custom map control draws every Frame cell inside a measured
+square, with integer origins and a centered baseline, so no glyph can be clipped by
+prose line-height rules. Fullscreen, maximize, restore, resize, and scale changes
+trigger deferred reflow and viewport clamping rather than moving a modal by stale
+coordinates.
+
+Creation receives complete catalog descriptions, native LineEdit fields, preserved
+focus, Back and Continue actions, and a full-window flow. World input is gated before
+GUI focus only while the world is active. Arrow keys therefore remain movement after
+pointer use, Ctrl+Left/Right map to the two north diagonals, and Alt+Left/Right map to
+the two south diagonals. Conversation owns an explicit focus loop and an independently
+scrolling transcript that opens and updates at the newest entry. The world activity
+view and combat remain at the newest colored message. Full History pauses follow only
+when the player deliberately scrolls up and exposes a New entries return control.
+
+The iron rose remains presentation-only, gains a drag handle, normalized local
+position, viewport clamping, and reset. Dedicated Character and Inventory surfaces
+replace terminal modals. Journal contains History, People, Bestiary, and Threads, and
+may expose only knowledge already earned. The tenth launch gear entry moves to the
+ordinary `0` key instead of the inaccessible `:` path. That canonical key correction,
+plus a bounded discovery ledger only if existing facts cannot honestly support People
+and Threads, will bump save v100 to v101 and receive the complete engine sweep.
+
+Local reference projects informed mechanisms, not appearance. `tarpg` demonstrates
+square atlas cells and explicit zoom, while `mud/godot` demonstrates persistent tabs,
+structured filtered history, pause-follow behavior, draggable panels, and
+viewport-aware reflow. Aegis combines the proven invariants with its own semantic
+shell, accessibility floor, field-ledger identity, and packaged review gates. Current
+Godot guidance supports native-pixel UI, vector-font oversampling, containers,
+explicit focus neighbors, early gated input, and custom controls. Microsoft game
+accessibility guidance supports readable default type, scaling through 200 percent,
+predictable focus, equivalent keyboard and pointer paths, and one-axis reflow.
+
+Implementation is five phased checkpoints in
+`design/godot-client-modernization.md`: foundation and creation; world, conversation,
+logs, and movement; Character and Inventory; journal knowledge; then the replacement
+release candidate. Packaged player reviews follow phases two and four. The final
+candidate still requires the full automated gate, clean export and extraction smokes,
+a fresh guided campaign, and explicit player signoff. D-175 through D-180 remain
+historical implementation evidence, but SadConsole is no longer the shipping
+direction.
+
+Phase 1 implementation lands under this decision. `Main` is now a coordinator over
+persistent creation, world, conversation, and legacy fallback screens. Host exposes a
+typed creation projection with the complete catalog and review text. Atkinson
+Hyperlegible Next and Mono render through integer 100-200 percent scale tokens, both
+approved palettes persist locally, and a custom map control measures one integer
+square per Frame cell. Creation uses native text fields and keeps its node alive while
+each letter is journaled. Background probes verify typing, review scrolling, theme and
+scale persistence, windowed and maximized reflow, and the empty-world shell without
+foreground focus. Release builds with zero warnings, all 1,011 tests pass, and the
+Windows x64 export reports save v100 and generator 1 over pilot before a clean exit.
+No engine behavior, RNG draw, save state, or canonical key meaning changed, so the
+conditional five-seed sweep does not apply. Phase 2 owns the remaining world,
+conversation, structured-log, and draggable-rose work.
+
 ### D-181: The wider glass: a bounded Godot presentation spike (2026-07-24)
 
 The player approves a bounded Godot 4.7.1 .NET presentation spike after the second
@@ -2958,12 +3029,7 @@ Pays D-063's own named deferrals in one stroke, arming the autopilot at the smit
 
 ## Under discussion
 
-- The passing D-181 spike proves that Godot can address the second packaged review's
-  presentation blockers while `Aegis.Core`, `Aegis.Host`, saves, deterministic
-  commands, and verification tools remain authoritative. Should 1.0 now complete the
-  Godot client migration, return to a bounded SadConsole remediation pass, or run a
-  narrower second spike for one unresolved risk? The player decides before the
-  replacement candidate is implemented.
+No active 1.0 design decision is awaiting player approval.
 
 ## Not yet raised (parking lot)
 

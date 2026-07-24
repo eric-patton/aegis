@@ -20,8 +20,8 @@ window/size/viewport_height=800
 window/size/window_width_override=1280
 window/size/window_height_override=800
 window/size/resizable=true
-window/stretch/mode="canvas_items"
-window/stretch/aspect="expand"
+window/stretch/mode="disabled"
+window/dpi/allow_hidpi=true
 
 [rendering]
 
@@ -29,3 +29,11 @@ renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 textures/default_filters/use_nearest_mipmap_filter=false
 environment/defaults/default_clear_color=Color(0.0627, 0.0863, 0.102, 1)
+
+[gui]
+
+theme/default_font_hinting=1
+theme/default_font_subpixel_positioning=1
+theme/default_font_multichannel_signed_distance_field=false
+theme/default_font_size=20
+fonts/dynamic_fonts/use_oversampling=true

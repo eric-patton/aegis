@@ -56,9 +56,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   V1-04 D-169, V1-05 D-170, V1-06 D-171, V1-07 D-172, V1-08 D-173); V1-09 is
   Implemented under D-174, but its terminal candidate is superseded by D-175. V1-10 is
   Implemented under D-177, and its clean candidate is built under D-178. The bounded
-  D-181 Godot presentation spike is built and verified after the second packaged review;
-  the player host verdict, replacement candidate, fresh guided campaign, and explicit
-  signoff remain
+  D-181 Godot presentation spike is built and verified, and D-182 approves the complete
+  modernization contract. Its five implementation phases, replacement candidate, fresh
+  guided campaign, and explicit signoff remain
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
@@ -155,8 +155,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   remain tracked but do not block 1.0 unless a later decision explicitly promotes them
   into the gate. V1-01 through V1-08 are built and Verified under D-166 through D-173.
   V1-09 and V1-10 are Implemented. D-180 closes the first guided-review remediation,
-  its complete automated engine gate, and the rebuilt package. D-181 approves the
-  bounded Godot presentation spike that now gates the final host decision.
+  its complete automated engine gate, and the rebuilt package. D-181 proves Godot, and
+  D-182 selects it as the shipping host under the five-phase modernization contract.
 
 ### Path to 1.0 tracker (ordered, adopted D-155/D-157)
 
@@ -190,7 +190,29 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   - [ ] Second packaged-review blockers: scalable text, light theme, full-screen
     creation, persistent compass mode, complete wrapping, and responsive conversations
   - [x] Godot .NET presentation spike built and verified (D-181)
-  - [ ] Review the Godot spike and decide the shipping presentation host
+  - [x] Review the Godot spike and decide the shipping presentation host (D-182)
+    - [x] Player review confirms Godot is the preferred modernization direction
+    - [x] Complete Godot client design and implementation contract approved (D-182)
+  - [x] D-182 Phase 1 foundation and creation: persistent screen tree, typed creation
+    projection, native text entry, scalable font and theme system, square-cell map,
+    resize probes, packaged export, and clean verification (D-182)
+  - [~] Godot UI architecture repair: persistent screens, stable responsive layout,
+    native text entry, scoped focus, and preserved scroll positions
+    (foundation complete; remaining focus and scroll work belongs to Phase 2)
+  - [x] Crisp scalable presentation: physical-pixel layout, discrete UI scale choices,
+    vector text at native sizes, and a custom square-cell terminal map renderer
+  - [ ] Modern world shell: colored auto-follow activity feed, expandable full-session
+    history, responsive status, and clean keyboard/mouse ownership
+  - [ ] Modern dedicated character, inventory, and equipment screens, including
+    keyboard and pointer access to all ten launch gear entries
+  - [ ] Journal screen with current-session history plus read-only people, bestiary,
+    and active-thread views over knowledge the character has actually earned
+  - [ ] Conversation repair: full transcript color, bottom-follow on open and updates,
+    independently scrolling actions, and focus trapped inside the conversation
+  - [ ] Draggable persistent iron rose with a reset position action
+  - [x] World-only diagonal shortcuts: Ctrl+Left/Right for north diagonals and
+    Alt+Left/Right for south diagonals
+  - [x] Restore all character-creation choice descriptions and verify every stage
   - [ ] Fresh packaged guided campaign and explicit player verdict
 
 The detailed tranche contents and design statuses live in `design/plan-1.0.md`; the
@@ -805,12 +827,9 @@ kind, and the evaluation harness that hardens every generator change.
 
 ## Open design questions (mirror of the `decisions.md` parking lot)
 
-The active 1.0 question is the presentation host after the approved D-181 spike. The
-earlier parking-lot questions remain classified post-1.0 under D-165 unless a later
-decision promotes one into a release.
+The Godot client contract is settled under D-182. The remaining parking-lot questions
+are classified post-1.0 under D-165 unless a later decision promotes one into a release.
 
-- ◇ Active 1.0 host verdict after D-181: complete the Godot .NET migration, return to a
-  SadConsole remediation pass, or run a narrower second spike
 - ◇ Folk cultures: how worldgen recultures the five folk per world, and whether factions read folk (D-017, D-092)
 - ◇ Spell list growth past the seven V1-07 workings / school-shaped content, if any
   (D-022, D-091, D-163)
@@ -826,6 +845,32 @@ decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-24: **D-182 Phase 1 ships the Godot client foundation and modern creation.**
+  The client now keeps persistent screens, reads a typed creation projection, uses
+  native text fields, preserves every creation description, renders Atkinson vector
+  text at five integer UI scales, offers complete dark and light themes, and draws the
+  terminal map in measured square cells. Background visual probes cover creation
+  typing, review scrolling, 100-200 percent scaling, theme persistence, windowed and
+  maximized reflow, and the empty-world shell without taking foreground focus. Release
+  build is warning-free, all 1,011 tests pass, and the Windows x64 checkpoint export
+  opens its pilot channel at save v100 and generator 1. No engine behavior, RNG, save,
+  or canonical key meaning changed, so the conditional engine sweep did not trigger.
+- 2026-07-24: **D-182 approves the complete Godot client modernization.** Godot is the
+  shipping direction under a persistent screen architecture, native-pixel integer
+  scaling, hinted vector fonts, custom square-cell map, field-ledger visual system,
+  modern information screens, structured colored history, scoped focus, draggable
+  iron rose, diagonal shortcuts, and five phased review and verification gates. Local
+  `tarpg` and `mud/godot` projects informed square-cell, reflow, tab, log, and drag
+  mechanisms without becoming visual templates.
+- 2026-07-24: **The player review chooses a full Godot UI modernization direction and
+  exposes the spike's remaining release blockers.** Newly tracked work covers crisp
+  scaling, a square-cell map renderer, fullscreen layout invalidation, persistent
+  screen nodes, native creation text fields, restored creation descriptions,
+  bottom-following colored logs and conversation transcripts, scoped focus, modern
+  character and inventory screens, a full-session history plus people, bestiary, and
+  active-thread journal views, a draggable iron rose, diagonal modifier shortcuts, and
+  world input that cannot be captured by header controls. D-182 now approves the
+  complete design and implementation contract.
 - 2026-07-24: **The D-181 Godot presentation spike passes.** Godot 4.7.1 .NET now
   presents semantic full-window creation, responsive world and conversation surfaces,
   designed dark and light themes, bundled vector fonts, complete wrapping and

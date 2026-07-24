@@ -65,8 +65,13 @@ public class ClientHostTests
             Presenter.Render(creation, 120, 40));
         Assert.Equal(ClientSurface.CreationChoice, creationContext.Surface);
         Assert.Equal("What paid for the rise in Might?", creationContext.Prompt);
-        Assert.Equal(4, creationContext.ProgressStep);
+        Assert.Equal(3, creationContext.ProgressStep);
         Assert.Equal(10, creationContext.ProgressTotal);
+        Assert.NotNull(creationContext.Creation);
+        Assert.Equal(CreationStage.ShapePay, creationContext.Creation.Stage);
+        Assert.All(
+            creationContext.Creation.Choices,
+            choice => Assert.False(string.IsNullOrWhiteSpace(choice.Description)));
         Assert.Contains(creationContext.Actions, a => a.Key == '1' && !a.Enabled);
         Assert.Contains(creationContext.Actions, a => a.Key == '2' && a.Enabled);
 
@@ -123,6 +128,52 @@ public class ClientHostTests
         Assert.Equal(first.Ch, observed.Glyph);
         Assert.Equal(AegisPalette.Resolve(first.Fg).Packed, observed.Foreground);
         Assert.Equal(AegisPalette.Resolve(first.Bg).Packed, observed.Background);
+    }
+
+    [Fact]
+    public void CreationProjection_PreservesEveryCatalogDescriptionAndReviewField()
+    {
+        var game = new Game(176, firstWake: true);
+        ClientInteractionContext folk = ClientInteractionContext.From(
+            game,
+            Presenter.Render(game, 120, 40));
+        Assert.Equal(
+            CreationCatalog.Folk.Select(def => def.Blurb),
+            folk.Creation!.Choices.Take(CreationCatalog.Folk.Count).Select(choice => choice.Description));
+        Assert.Equal(
+            CreationCatalog.Folk.Select(def => def.Trait),
+            folk.Creation.Choices.Take(CreationCatalog.Folk.Count).Select(choice => choice.Detail));
+
+        foreach (char key in "150400..")
+            game.ApplyKey(key);
+        ClientInteractionContext review = ClientInteractionContext.From(
+            game,
+            Presenter.Render(game, 120, 40));
+        Assert.Equal(ClientSurface.CreationReview, review.Surface);
+        Assert.Equal(8, review.Creation!.ReviewLines.Length);
+        Assert.Contains(review.Creation.ReviewLines, line => line.StartsWith("Attributes:"));
+        Assert.Contains(review.Creation.ReviewLines, line => line.StartsWith("Precious things:"));
+    }
+
+    [Theory]
+    [InlineData(870, 330, 87, 33, 10, 0, 0)]
+    [InlineData(1000, 500, 80, 25, 12, 20, 100)]
+    [InlineData(10, 10, 20, 20, 1, -5, -5)]
+    public void SquareCellLayout_UsesOneIntegerSizeAndCentersTheGrid(
+        int width,
+        int height,
+        int columns,
+        int rows,
+        int expectedCell,
+        int expectedX,
+        int expectedY)
+    {
+        SquareCellLayout layout = SquareCellLayout.Fit(width, height, columns, rows);
+        Assert.Equal(expectedCell, layout.CellSize);
+        Assert.Equal(expectedX, layout.OriginX);
+        Assert.Equal(expectedY, layout.OriginY);
+        Assert.Equal(columns * expectedCell, layout.Columns * layout.CellSize);
+        Assert.Equal(rows * expectedCell, layout.Rows * layout.CellSize);
     }
 
     [Fact]

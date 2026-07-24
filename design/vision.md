@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-181); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-182); the research behind it lives in `../research/`.
 
 ---
 
@@ -248,20 +248,22 @@ And the loop closes on itself: **your finished characters enter the mythology.**
 
 ## 11. Technology
 
-- **C# / .NET**, Windows x64 Native AOT. The player uses SadConsole and MonoGame with
-  an Aegis-owned tiled font, exact RGB palette, and fixed logical frame. `Aegis.Core`
-  remains I/O-free, and Frame plus Presenter remain the canonical render model. The hard
-  80% is still the deterministic simulation core, not the host.
+- **C# / .NET**, with Godot 4.7.1 .NET as the Windows x64 player host. The map remains
+  terminal-like through a custom square-cell Frame renderer, while persistent semantic
+  screens own modern creation, conversation, character, inventory, equipment, journal,
+  settings, and log surfaces. `Aegis.Core` remains I/O-free, and Frame plus Presenter
+  remain canonical for terminal clients and deterministic observation. The hard 80% is
+  still the deterministic simulation core, not the host.
 - **Save architecture**: versioned seed and campaign-generator contract for regenerable content, append-only key journal for authored/player-mutated state.
 - **RNG**: hierarchical seed tree (master seed hashed with stable subsystem/region/site identifiers); subsystems never share a stream.
 - **Content**: storylets and line banks; format v1 spec'd in `storylets.md` (C# catalog now, designed to map 1:1 onto data files when volume demands).
-- **1.0 release**: Windows x64, self-contained Native AOT zip containing the player and
-  its fixed SDL2 and OpenAL dependencies, spoiler-free README,
+- **1.0 release**: Windows x64 Godot .NET zip containing the player and its required
+  runtime files, spoiler-free README,
   release notes, required notices, SHA-256 manifest, clean-extraction smokes, zero known
   blocker or major defects, and a fresh signed-off manual packaged campaign. Installers,
   telemetry, networking, automatic migration, code signing, and non-Windows packages are
-  outside the launch contract. D-175 supersedes the terminal candidate and adds V1-10,
-  the SadConsole migration and replacement packaged signoff gate.
+  outside the launch contract. D-182 supersedes the SadConsole candidate with the
+  complete Godot modernization and replacement packaged signoff gate.
 
 ## 12. Open Items
 

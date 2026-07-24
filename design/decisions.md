@@ -3058,8 +3058,10 @@ and Winter Signal all use the same neutral world-shell master. Player review cor
 classified them as theme and surface-treatment variations rather than different designs.
 The architecture comparison under `artifacts/d182-game-screen-architectures-v1/` holds
 one light theme and information scope constant while comparing Map as Workspace, Split
-Command Deck, Atlas Frame, and Chronicle Stage. These are proposals only and do not amend
-D-182 until approved.
+Command Deck, Atlas Frame, and Chronicle Stage. A fifth player-directed refinement adds a
+fixed condition, Activity, and currency sidebar to Map as Workspace while keeping its
+floating launcher and a map-only context footer. These are proposals only and do not
+amend D-182 until approved.
 
 ## Not yet raised (parking lot)
 

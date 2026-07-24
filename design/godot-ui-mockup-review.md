@@ -61,11 +61,17 @@ layout, hierarchy, navigation model, log prominence, and use of persistent space
    preserves horizontal map width, and most directly answers the packaged-review request
    for useful live history. Its cost is reduced vertical map height.
 
-The current recommendation is Chronicle Stage as the strongest base architecture. Its
-horizontal split can be player-resizable or temporarily collapsed later without changing
-the core model. Atlas Frame is the strongest alternate if a more distinctive identity
-outweighs long-form Activity readability. No screen-specific design work should resume
-until the player selects one architecture, or one explicit and limited hybrid.
+Player-directed refinement `05-map-workspace-sidebar.png` combines Map as Workspace with
+a fixed right sidebar. The sidebar puts proportional Health, Stamina, and Focus bars at
+the top, a filtered bottom-following Activity log in the middle, and Coin plus Essence at
+the bottom. A floating map launcher opens Character, Pack, Journal, and Help. A separate
+map-width-only footer carries location, cycle, season, weather, and map zoom. Focus is the
+canonical transient magic resource. Essence is the canonical attribute-raising currency.
+
+Chronicle Stage was the recommendation before this refinement. The new Map as Workspace
+sidebar hybrid is now the active concept under review because it preserves more map height
+while still making the complete live log persistent. No screen-specific design work should
+resume until the player approves it, revises it, or selects another architecture.
 
 ## Findings from the Phase 2 package
 

@@ -879,6 +879,12 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-24: **Map as Workspace gains a player-shaped sidebar refinement.** The new
+  unapproved concept keeps the floating screen launcher and map-dominant canvas, adds a
+  fixed right sidebar with proportional Health, Stamina, and Focus bars, a filtered
+  bottom-following Activity log, and bottom Coin and Essence readings, then limits the
+  location, season, weather, and map-zoom footer to the map region. It is now the active
+  world-screen concept under review.
 - 2026-07-24: **The D-182 visual review separates architecture from theme.** The
   fixed-shell style set proved to be a surface-treatment comparison, not four different
   designs. A second controlled light-theme set now compares four different world-screen

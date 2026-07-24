@@ -2,7 +2,9 @@
 
 The Windows x64 Aegis package includes or statically links the following components:
 
-- .NET 10 Native AOT runtime libraries, MIT License, .NET Foundation and contributors.
+- .NET 8 and .NET 10 runtime libraries, MIT License, .NET Foundation and contributors.
+- Godot Engine 4.7.1, MIT License, copyright 2007-present Juan Linietsky,
+  Ariel Manzur, and Godot contributors.
 - SadConsole 10.10.1, MIT License, copyright 2026 Steve De George JR (Thraka).
 - MonoGame Framework DesktopGL 3.8.4.1, Microsoft Public License.
 - Newtonsoft.Json 13.0.4, MIT License, copyright 2007 James Newton-King.
@@ -10,9 +12,11 @@ The Windows x64 Aegis package includes or statically links the following compone
   copyright 1997-2025 Sam Lantinga.
 - OpenAL Soft 1.24.3 (`openal.dll`), GNU Lesser General Public License version 2 or
   later. Aegis uses the library without modification through dynamic linking.
+- Azeret Mono, SIL Open Font License 1.1, copyright 2019 The Azeret Project Authors.
+- Literata, SIL Open Font License 1.1, copyright 2017 The Literata Project Authors.
 
-The MIT License text below applies to .NET, SadConsole, and Newtonsoft.Json with their
-respective copyright notices above.
+The MIT License text below applies to .NET, Godot Engine, SadConsole, and Newtonsoft.Json
+with their respective copyright notices above.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this
 software and associated documentation files (the "Software"), to deal in the Software
@@ -47,3 +51,6 @@ OpenAL Soft is distributed under the GNU Lesser General Public License version 2
 later. You may replace `openal.dll` with a compatible version. The complete license and
 corresponding source are available from the OpenAL Soft project. Aegis does not modify
 the library.
+
+Azeret Mono and Literata are distributed under the SIL Open Font License 1.1. The
+complete license texts are included with the Godot client resources.

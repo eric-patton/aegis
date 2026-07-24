@@ -1,0 +1,14 @@
+<Project Sdk="Godot.NET.Sdk/4.7.1">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Aegis.GodotClient</RootNamespace>
+    <AssemblyName>Aegis.Godot</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Aegis.Core\Aegis.Core.csproj" />
+    <ProjectReference Include="..\Aegis.Host\Aegis.Host.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,6 +1,6 @@
 # Aegis 1.0.0 release audit
 
-This is the durable audit for V1-09 under D-165 and D-174, amended by D-175 through D-180. Automated
+This is the durable audit for V1-09 under D-165 and D-174, amended by D-175 through D-181. Automated
 evidence may be regenerated. The manual section is a human gate and cannot be inferred
 from automated tools.
 
@@ -21,7 +21,8 @@ Status: superseded by D-175. This package cannot receive final 1.0 signoff.
 ## Active SadConsole candidate identity
 
 Status: D-180 automated gates and package smokes passed. Second packaged review found
-presentation blockers; host direction and a replacement candidate are pending.
+presentation blockers. D-181 approves a bounded Godot presentation spike before the
+shipping-host verdict and replacement candidate.
 
 - Product version: 1.0.0
 - Save version: 100
@@ -36,6 +37,26 @@ presentation blockers; host direction and a replacement candidate are pending.
   release notes, third-party notices, and `SHA256SUMS.txt`
 - Verification environment: Windows x64, .NET SDK 10.0.300
 - Manual seed and slot: pending user run
+
+## Godot presentation spike
+
+Status: D-181 bounded spike built and verified. Player host verdict pending.
+
+- Godot: 4.7.1 .NET
+- Godot target: .NET 8
+- Existing client, tools, and test target: .NET 10
+- Save version: 100
+- Generator version: 1
+- Release build: zero warnings and zero errors
+- Focused Host tests: 22 passed
+- Complete tests: 1,007 passed, zero failed, zero skipped
+- Real save reload snapshot SHA-256:
+  `92834354423CFB9AA20560CA62BEF2D8E69A3A623D3B2D63EB06349A5D55C34B`
+- Windows x64 export: pilot startup, state, presentation action, pointer action, and
+  clean shutdown passed
+- Engine sweep: not triggered, because no engine behavior, world generation, RNG,
+  canonical command, save format, or replay boundary changed
+- Human gate: review visible spike and choose the shipping presentation host
 
 ## SadConsole automated recovery gate
 
@@ -184,5 +205,6 @@ hook, edited journal, or an existing slot.
 - Final cycle and turn: pending
 - Defects accepted: none
 - V1-09 status: Implemented, not yet Verified
-- V1-10 status: Implemented through D-180, reopened by second packaged-review blockers
-- Aegis 1.0 status: paused for presentation-host decision and replacement candidate
+- V1-10 status: Implemented through the D-181 spike, replacement client pending
+- Aegis 1.0 status: paused for player spike review, presentation-host verdict, and
+  replacement candidate

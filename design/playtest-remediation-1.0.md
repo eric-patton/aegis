@@ -255,7 +255,25 @@ found the following active blockers:
 - The fixed conversation split clips action labels and leaves too little responsive room
   for the transcript.
 
-The player has reopened the presentation-host decision. No further remediation is built
-until the player chooses between another SadConsole pass and a Godot .NET presentation
-migration. Either direction must preserve deterministic canonical commands, v100 save
-meaning, and focus-free pilot verification.
+The player approved the bounded D-181 Godot .NET presentation spike. Its complete
+contract is in `design/godot-presentation-spike.md`. No complete migration is approved
+until the player reviews the spike and records the shipping-host verdict. The spike
+must preserve deterministic canonical commands, v100 save meaning, and focus-free
+pilot verification.
+
+## Godot spike result, 2026-07-24
+
+The D-181 spike is implemented and passes its bounded gate:
+
+- semantic full-window creation, responsive world and conversation surfaces;
+- designed dark and light themes with bundled vector fonts;
+- wrapped and independently scrolling long-form controls;
+- persistent iron rose state across temporary interactions;
+- background pointer input and focus-free pilot control;
+- exact v100 save reload snapshot parity;
+- clean embedded Windows x64 export;
+- zero-warning Release build, 22 focused Host tests, and all 1,007 tests green.
+
+The spike made no engine, world-generation, RNG, canonical-command, save-format, or
+replay change. Its conditional five-seed sweep was not triggered. Player review and the
+shipping-host verdict remain required before a replacement release candidate is built.

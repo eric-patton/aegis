@@ -55,8 +55,10 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - Path to 1.0: **8 of 10 tranches Verified** (V1-01 D-166, V1-02 D-167, V1-03 D-168,
   V1-04 D-169, V1-05 D-170, V1-06 D-171, V1-07 D-172, V1-08 D-173); V1-09 is
   Implemented under D-174, but its terminal candidate is superseded by D-175. V1-10 is
-  Implemented under D-177, and its clean candidate is built under D-178; visible review,
-  the fresh guided campaign, and explicit signoff remain
+  Implemented under D-177, and its clean candidate is built under D-178. The bounded
+  D-181 Godot presentation spike is built and verified after the second packaged review;
+  the player host verdict, replacement candidate, fresh guided campaign, and explicit
+  signoff remain
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
@@ -149,12 +151,12 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   line: the fells capstone; weather and seasons; D3 prose variety; D1 pacing steering;
   town and economy depth; character and activity breadth; combat and magic depth;
   companions, factions, and consequence depth; then the next full-density region and
-  release audit; then the SadConsole client and release recovery. Open-ended catalogs
+  release audit; then the player client and release recovery. Open-ended catalogs
   remain tracked but do not block 1.0 unless a later decision explicitly promotes them
   into the gate. V1-01 through V1-08 are built and Verified under D-166 through D-173.
-  V1-09 and V1-10 are Implemented. D-180 closes the guided-review remediation, its
-  complete automated engine gate, and the rebuilt package. The fresh guided campaign
-  and explicit signoff are the active release gate.
+  V1-09 and V1-10 are Implemented. D-180 closes the first guided-review remediation,
+  its complete automated engine gate, and the rebuilt package. D-181 approves the
+  bounded Godot presentation spike that now gates the final host decision.
 
 ### Path to 1.0 tracker (ordered, adopted D-155/D-157)
 
@@ -177,7 +179,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
 - [~] 9. Next full-density region, launch content closure, and the 1.0 release audit
   (V1-09 design Approved D-165; built D-174; terminal candidate superseded D-175,
   replacement packaged manual playthrough and explicit user signoff pending)
-- [~] 10. SadConsole client migration and replacement 1.0 candidate
+- [~] 10. Player client migration and replacement 1.0 candidate
   (V1-10 direction Approved D-175; complete migration contract Approved D-176;
   Implemented D-177; replacement candidate built D-178; explicit user signoff pending)
   - [x] D-180 guided-playtest remediation: iron rose compass, interactive menus,
@@ -187,7 +189,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   - [x] Clean v100 Native AOT package and extracted-package smokes (D-180)
   - [ ] Second packaged-review blockers: scalable text, light theme, full-screen
     creation, persistent compass mode, complete wrapping, and responsive conversations
-  - [ ] Decide SadConsole remediation or a Godot .NET presentation migration
+  - [x] Godot .NET presentation spike built and verified (D-181)
+  - [ ] Review the Godot spike and decide the shipping presentation host
   - [ ] Fresh packaged guided campaign and explicit player verdict
 
 The detailed tranche contents and design statuses live in `design/plan-1.0.md`; the
@@ -802,12 +805,12 @@ kind, and the evaluation harness that hardens every generator change.
 
 ## Open design questions (mirror of the `decisions.md` parking lot)
 
-The active 1.0 question is the presentation host after the second packaged review. The
+The active 1.0 question is the presentation host after the approved D-181 spike. The
 earlier parking-lot questions remain classified post-1.0 under D-165 unless a later
 decision promotes one into a release.
 
-- ◇ Active 1.0 host decision: another SadConsole remediation pass, or a Godot .NET
-  presentation migration that preserves Core, Host, saves, commands, and tools
+- ◇ Active 1.0 host verdict after D-181: complete the Godot .NET migration, return to a
+  SadConsole remediation pass, or run a narrower second spike
 - ◇ Folk cultures: how worldgen recultures the five folk per world, and whether factions read folk (D-017, D-092)
 - ◇ Spell list growth past the seven V1-07 workings / school-shaped content, if any
   (D-022, D-091, D-163)
@@ -823,6 +826,20 @@ decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-24: **The D-181 Godot presentation spike passes.** Godot 4.7.1 .NET now
+  presents semantic full-window creation, responsive world and conversation surfaces,
+  designed dark and light themes, bundled vector fonts, complete wrapping and
+  scrolling, and a persistent iron rose. Background pointer and pilot paths, v100
+  save/reload snapshot parity, a clean embedded Windows x64 export, zero-warning Release
+  build, 22 focused Host tests, and all 1,007 tests pass. No deterministic engine
+  boundary changed, so the conditional five-seed sweep was not triggered. The player
+  host verdict remains the active gate.
+- 2026-07-24: **D-181 approves a bounded Godot .NET presentation spike.** The spike
+  preserves Core, Host, save v100, generator 1, canonical commands, deterministic tools,
+  Frame, and Presenter while proving responsive semantic creation, world, and
+  conversation screens, designed dark and light themes, vector text, a persistent iron
+  rose, focus-free pilot control, save reload, parity, and Windows x64 export. It is a
+  review gate, not approval for a complete migration.
 - 2026-07-24: **The second packaged review reopens V1-10.** The player confirms that
   bitmap glyph scaling is poor, creation remains distractingly over the live map, the
   iron rose loses its open mode across conversation, long lines still fail to wrap, and

@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-23, D-180 implemented and sweep-verified)
+# Aegis handoff (updated 2026-07-24, D-181 Godot spike complete)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,24 +8,32 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-180 currently at its head), then the parking lot of open
+  newest-first block (D-181 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-180)". Bump it whenever a decision lands.
+  "(D-001 through D-181)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence is complete;
   V1-09 is built, and D-175 supersedes its terminal candidate.
 - `design/plan-1.0.md`: the canonical ten-card implementation queue. V1-01 through V1-08
   are Verified; V1-09 and V1-10 are Implemented.
 - `design/sadconsole-client-migration.md`: the implemented V1-10 contract.
+- `design/godot-presentation-spike.md`: the approved D-181 host-decision proof.
 - `design/story/`: arc spec and world-story templates. Full story detail lives there.
 - `docs/dev-harness.md`: the pilot/sim/journey harness.
 
 ## Current state
 
-- Latest approved direction: D-175 replaces the terminal-owned player with a SadConsole
-  10.10.1 and MonoGame DesktopGL client before 1.0 signoff. D-176 approves the complete
-  contract, D-177 implements it without changing the engine, and D-178 builds the clean
-  replacement candidate.
+- Latest completed work: the bounded D-181 Godot 4.7.1 .NET presentation spike passes.
+  `src/Aegis.Godot` provides semantic creation, world, and conversation surfaces,
+  designed dark and light themes, bundled vector fonts, responsive wrapping and
+  scrolling, persistent compass state, background pointer input, focus-free pilot
+  control, exact v100 save reload parity, and a clean Windows x64 export. It preserves
+  Core, Host, generator 1, canonical commands, deterministic tools, Frame, and
+  Presenter. It does not approve a complete migration.
+- Core and Host now multi-target .NET 8 and .NET 10. Godot uses .NET 8 for runtime
+  compatibility. Existing clients, tools, and tests remain on .NET 10.
+- D-175 through D-178 remain the implemented SadConsole baseline and clean candidate.
+  That candidate is available for comparison but is not approved.
 - D-180 implements the bounded guided-playtest remediation package: the presentation-only
   iron rose compass, canonical keyboard and mouse parity, modern interactive screens,
   creation backtracking at save v100, contextual teaching, readability repairs, and
@@ -45,6 +53,11 @@ The canonical design truth stays where it always was:
 - Generator format: campaign-scoped generator 1, recorded separately in v100 saves.
 - Product version: 1.0.0.
 - Tests: 1007 green (`dotnet test Aegis.slnx -c Release --no-build`).
+- D-181 Release build is zero-warning. Its 22 focused Host tests and all 1,007 tests
+  pass. The exported Godot client reports save v100 and generator 1, accepts pilot and
+  background pointer input, and exits cleanly. Two real save loads produced exact
+  snapshot SHA-256
+  `92834354423CFB9AA20560CA62BEF2D8E69A3A623D3B2D63EB06349A5D55C34B`.
 - The D-180 Release build, focused and full tests, default and release sweeps, both
   seed-1 replays, and the 240-world generator-1 purity gate are green.
 - D-180 adds semantic presentation actions, focus-free local UI pilot commands, the
@@ -58,7 +71,7 @@ The canonical design truth stays where it always was:
 - The 2026-07-24 second packaged review found release-blocking font scaling, dark-only
   presentation, creation clutter, lost compass mode, incomplete wrapping, and
   conversation clipping. Automated gates remain green, but the candidate is not
-  approved. SadConsole remediation versus a Godot .NET client is under discussion.
+  approved. The D-181 spike is complete, and the player host verdict is the active gate.
 
 ## Working conventions (were in user-level config, not visible to a new tool)
 
@@ -238,9 +251,10 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Resolve the presentation-host question: another SadConsole remediation pass, or a
-   Godot .NET client that preserves Core, Host, saves, commands, and tools.
-2. Build and verify the approved replacement candidate.
+1. Review the completed D-181 Godot presentation spike and record the player's host
+   verdict.
+2. Build and verify the approved replacement
+   candidate.
 3. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
    explicit user approval can make V1-09 and V1-10 Verified and close Aegis 1.0.
 

@@ -4,6 +4,7 @@
     <Project Path="src/Aegis.Cli/Aegis.Cli.csproj" />
     <Project Path="src/Aegis.Core/Aegis.Core.csproj" />
     <Project Path="src/Aegis.Host/Aegis.Host.csproj" />
+    <Project Path="src/Aegis.Godot/Aegis.Godot.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Aegis.Core.Tests/Aegis.Core.Tests.csproj" />

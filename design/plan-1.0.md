@@ -36,7 +36,7 @@ criteria, and decision associations for the ten 1.0 tranches.
 | V1-07 | Combat and magic depth | Verified | D-163, D-172 | Completed |
 | V1-08 | Companions, factions, and consequences | Verified | D-164, D-173 | Completed |
 | V1-09 | Next region and 1.0 release closure | Implemented | D-165, D-174 | Original candidate superseded |
-| V1-10 | SadConsole client and release recovery | Implemented | D-175 through D-180 | Fresh packaged campaign and signoff pending |
+| V1-10 | Player client and release recovery | Implemented, reopened | D-175 through D-181 | Godot spike complete; host verdict, replacement candidate, and signoff pending |
 
 ## V1-01: High-fells capstone, the black tarn
 
@@ -1554,11 +1554,11 @@ this card becomes Verified.
 - No installer, updater, telemetry, network dependency, code signing, cloud save,
   automatic migration, remote CI or release, Linux package, or macOS package.
 
-## V1-10: SadConsole client and release recovery
+## V1-10: Player client and release recovery
 
-**Design status:** Implemented
+**Design status:** Implemented, reopened by second packaged review
 
-**Decisions:** D-175 through D-180
+**Decisions:** D-175 through D-181
 
 **Roadmap association:** Path to 1.0 tranche 10; presentation; tooling and verification;
 Windows x64 release package
@@ -1566,8 +1566,9 @@ Windows x64 release package
 **Dependencies:** V1-09 implemented under D-174; existing D-027 pilot and sim contract;
 D-175 compatibility and focus-free control spike
 
-**Implementation status:** Complete through the D-180 guided-review remediation, full
-automated engine gate, and rebuilt package; fresh campaign and user signoff pending
+**Implementation status:** Complete through the passing D-181 bounded Godot .NET spike.
+The player shipping-host verdict, replacement candidate, fresh campaign, and user
+signoff remain.
 
 ### Player-facing outcome
 
@@ -1647,6 +1648,23 @@ automated engine gate, and rebuilt package; fresh campaign and user signoff pend
   report is unchanged.
 - The D-178 exclusions remain the migration baseline. D-180 is the separately approved
   usability and behavior delta that supersedes the no-engine-change and save-v99 clauses.
+
+### D-181 presentation spike evidence
+
+- Godot 4.7.1 .NET builds and runs a semantic creation, world, and conversation client.
+- Core and Host multi-target .NET 8 and .NET 10. Godot uses .NET 8, while all existing
+  clients, tools, and tests remain on .NET 10.
+- Dark and light themes, bundled vector fonts, responsive wrapping and scrolling,
+  persistent compass state, background pointer input, and focus-free pilot control are
+  visibly proven.
+- A real v100 save reloads with exact snapshot parity. The embedded Windows x64 export
+  passes pilot startup, state, presentation action, and clean shutdown smokes.
+- Release builds with zero warnings. All 22 focused Host tests and all 1,007 repository
+  tests pass.
+- No deterministic engine boundary changed. The conditional five-seed sweep was not
+  triggered.
+- Engineering recommends the complete Godot migration. Player review and an explicit
+  host verdict remain the gate.
 
 ### Explicit exclusions
 

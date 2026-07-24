@@ -64,6 +64,9 @@ public class ClientHostTests
             creation,
             Presenter.Render(creation, 120, 40));
         Assert.Equal(ClientSurface.CreationChoice, creationContext.Surface);
+        Assert.Equal("What paid for the rise in Might?", creationContext.Prompt);
+        Assert.Equal(4, creationContext.ProgressStep);
+        Assert.Equal(10, creationContext.ProgressTotal);
         Assert.Contains(creationContext.Actions, a => a.Key == '1' && !a.Enabled);
         Assert.Contains(creationContext.Actions, a => a.Key == '2' && a.Enabled);
 
@@ -95,6 +98,10 @@ public class ClientHostTests
         Assert.NotEmpty(talkContext.Actions);
         Assert.NotEmpty(talkContext.Transcript);
         Assert.Contains(npc.Name, talkContext.Title);
+        Assert.Equal(
+            talk.Topics.Select(topic => $"Ask about {topic.Label}")
+                .Concat(talk.Offers.Select(offer => offer.Label)),
+            talkContext.Actions.Select(action => action.Label));
     }
 
     [Fact]

@@ -218,6 +218,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   - [x] World-only diagonal shortcuts: Ctrl+Left/Right for north diagonals and
     Alt+Left/Right for south diagonals
   - [x] Restore all character-creation choice descriptions and verify every stage
+  - [ ] Phase 5 whole-solution formatter reconciliation: the current .NET SDK reports
+    legacy whitespace outside the D-182 changed files; normalize it as a dedicated
+    mechanical pass before the release candidate
   - [ ] Fresh packaged guided campaign and explicit player verdict
 
 The detailed tranche contents and design statuses live in `design/plan-1.0.md`; the
@@ -861,7 +864,9 @@ Newest first. Log when a feature is checked off, or when new work is added to th
   History ownership. Release build is warning-free, all 1,028 tests pass, and a clean
   extraction reports save v100 and generator 1 before clean exit. No engine behavior,
   RNG, save, or canonical key meaning changed, so the conditional engine sweep did not
-  trigger.
+  trigger. Changed-file formatting is clean. The current SDK's whole-solution formatter
+  also exposed legacy whitespace outside this tranche, now tracked for the dedicated
+  Phase 5 mechanical pass.
 - 2026-07-24: **D-182 Phase 1 ships the Godot client foundation and modern creation.**
   The client now keeps persistent screens, reads a typed creation projection, uses
   native text fields, preserves every creation description, renders Atkinson vector

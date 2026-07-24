@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-24, D-183 world-screen base approved)
+# Aegis handoff (updated 2026-07-24, D-184 Character Creation base approved)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,10 +8,10 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-183 currently at its head), then the parking lot of open
+  newest-first block (D-184 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-183)". Bump it whenever a decision lands.
+  "(D-001 through D-184)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence is complete;
   V1-09 is built, and D-175 supersedes its terminal candidate.
 - `design/plan-1.0.md`: the canonical ten-card implementation queue. V1-01 through V1-08
@@ -19,7 +19,7 @@ The canonical design truth stays where it always was:
 - `design/sadconsole-client-migration.md`: the implemented V1-10 contract.
 - `design/godot-presentation-spike.md`: the approved D-181 host-decision proof.
 - `design/godot-client-modernization.md`: the approved D-182 shipping-client contract.
-- `design/godot-ui-mockup-review.md`: the active D-182/D-183 visual-contract review.
+- `design/godot-ui-mockup-review.md`: the active D-182/D-184 visual-contract review.
 - `design/story/`: arc spec and world-story templates. Full story detail lives there.
 - `docs/dev-harness.md`: the pilot/sim/journey harness.
 
@@ -35,6 +35,12 @@ The canonical design truth stays where it always was:
   fixed right condition and Activity sidebar, bottom currencies, and a map-only context
   footer. This locks layout and information hierarchy, not the reference map colors.
   The default world shell no longer carries the iron rose or a permanent control legend.
+- D-184 approves `05-focused-question-explained-selection.png` as the canonical
+  Character Creation architecture. Choice cards keep the name, description, and terse
+  mechanics together. The bottom selected-detail band must explain what each selected
+  gain, tradeoff, and benefit does, never repeat the same values. The ten-stage route,
+  stable footer, responsive one-column fallback, fixed text-entry frame, contextual
+  summary drawer, and same-canvas final review complete the screen-family contract.
 - Latest completed implementation: D-182 Phases 1 and 2 pass. Phase 1 supplies the
   persistent Godot foundation and modern creation flow. Phase 2 adds the responsive
   world rail and drawer, newest-entry activity ribbon, colored full-session History,
@@ -63,19 +69,15 @@ The canonical design truth stays where it always was:
   context footer. Its sixth image makes resource bars thinner and icon-led, sets Stamina
   green and Focus blue, and moves Activity category color from row tags to message text.
   D-183 approves the sixth image as the structural base. Phase 3 implementation remains
-  paused while Character Creation, Conversation and event sheets, Character, Pack,
-  Journal, Help, Settings, campaign entry, system states, and task-surface variants are
-  reviewed in the order recorded by `design/godot-ui-mockup-review.md`.
-- Character Creation is the active next review. Four controlled light-theme
+  paused while Conversation and event sheets, Character, Pack, Journal, Help, Settings,
+  campaign entry, system states, and task-surface variants are reviewed in the order
+  recorded by `design/godot-ui-mockup-review.md`.
+- Character Creation is approved under D-184. Five controlled light-theme
   architectures are preserved under
   `artifacts/d183-character-creation-architectures-v1/`: Focused Question, Comparison
-  Workbench, Scrolling Ledger, and Choice Gallery. `01-focused-question.png` is the
-  structural recommendation, with a context-sensitive summary drawer borrowed from the
-  workbench only for stages that need it. The player-directed
-  `05-focused-question-explained-selection.png` refinement keeps that structure and
-  turns the bottom selected-detail band into a plain-language explanation of the
-  selected mechanics instead of repeating the card summary. It is the current
-  recommendation, but no Character Creation architecture is approved yet.
+  Workbench, Scrolling Ledger, Choice Gallery, and the approved hybrid.
+  `05-focused-question-explained-selection.png` is canonical. Conversation, commerce,
+  and the reusable world-event sheet are the active next review.
 - Core and Host now multi-target .NET 8 and .NET 10. Godot uses .NET 8 for runtime
   compatibility. Existing clients, tools, and tests remain on .NET 10.
 - D-175 through D-178 remain the implemented SadConsole baseline and clean candidate.
@@ -307,14 +309,13 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Review the four controlled light-theme game-screen architectures under
-   `artifacts/d182-game-screen-architectures-v1/` with the player, especially the sixth
-   player-directed Map as Workspace sidebar refinement. Select one architecture, or one
-   explicit limited hybrid, before revising individual screens.
-2. Review and revise `design/godot-ui-mockup-review.md` with the player. Record the
-   approved style and shell revision under a new decision before implementation.
-3. Implement the approved D-182 Phase 2 remediation, then produce a fresh packaged
-   checkpoint.
+1. Review Conversation, commerce, and the reusable world-event sheet on the D-183
+   visual base. Record the approved task-surface grammar before implementation.
+2. Review Character, Pack, Journal, Help, Settings, campaign entry, system states, and
+   remaining task surfaces in the order recorded by
+   `design/godot-ui-mockup-review.md`.
+3. Complete the responsive and light/dark parity matrix, then implement the approved
+   D-182 Phase 2 remediation and produce a fresh packaged checkpoint.
 4. Implement D-182 Phase 3: dedicated modern Character, Inventory, and Equipment
    screens with every canonical action and required long, empty, under-met, and
    pending-choice state.

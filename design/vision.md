@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-183); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-184); the research behind it lives in `../research/`.
 
 ---
 
@@ -80,6 +80,13 @@ Factions are small state vectors with causal transition rules on a coarse tick. 
 Pick a **folk** and a **background** (seeds starting skills: the hunter reads trails, the apprentice reads books). Every origin starts near the bottom. Some starts are illiterate; literacy is a learnable skill, and books gate recipes, techniques, and history.
 
 Stage 1 shipped at D-092 as **the asking**: no creation screen, the Aegis takes the bearer's measure at the first wake, one journaled question at a time. The folk went original and world-grown at the user's direction, superseding this section's earlier familiar-anchors sketch (dwarf/elf/orc-ish) while keeping its structure: five fixed anchors (Steadfolk, Emberwrought, Cairnborn, Heathborn, Wrightkin), each one attribute tilt plus one qualitative trait, cultures still to be regenerated per world. Seven pasts bank a skill's first level and one concrete extra each; up to two paired attribute swaps keep the start humble; one precious thing is soul-bound (a known word, fine arms, a craft kit, a heavy purse, or an unassuming thing whose story waits for stage 2); the name is typed in-fiction or drawn from the folk's stream, and the fate door rolls the whole bearer from the seed. Stage 2 shipped at D-093: a burden may be taken (an old wound, a hunted past, a marked face: live weights every world collects on) and buys a second precious thing; a vow (vengeance, finding, the road's end) gives the road something to answer, and it does; a remembered face waits to be half-seen in a stranger; and the unassuming thing's wager pays through the keeper of songs, or waits down the chain if it went unchosen. Full spec in `creation.md`.
+
+D-184 gives the Godot asking its canonical full-window presentation. One focused
+question, a visible ten-stage route, a responsive choice field, and a stable footer
+form the base. Choice cards summarize each option. The selected-detail band does not
+repeat those labels; it explains in plain language what every selected gain, tradeoff,
+and special benefit does before confirmation. Text entry and final review keep the same
+frame, while narrow or high-scale layouts collapse the choice field to one column.
 
 ### Attributes: seven, bought with deeds
 Might, Grace, Vigor, Wits, Mind, Will, Presence. Raised by spending **Essence** at rest points; Essence is earned from meaningful accomplishment (kills, quests, discoveries, feats). The Aegis gathers the essence of your deeds and reshapes you where it anchors. Soft caps everywhere: diminishing, never zero, returns. Mental (Mind/Will) and physical power sit on independent axes so hybrid builds compose freely.
@@ -255,7 +262,8 @@ And the loop closes on itself: **your finished characters enter the mythology.**
   remain canonical for terminal clients and deterministic observation. The hard 80% is
   still the deterministic simulation core, not the host. D-182 Phases 1 and 2 now ship
   the persistent creation, responsive world, structured History, repaired conversation,
-  world-owned movement, and draggable iron rose foundations. Character, Inventory,
+  world-owned movement, and draggable iron rose foundations. D-183 and D-184 approve
+  the replacement world and Character Creation architectures. Character, Inventory,
   Equipment, Journal, and release-candidate assurance remain in Phases 3 through 5.
 - **Save architecture**: versioned seed and campaign-generator contract for regenerable content, append-only key journal for authored/player-mutated state.
 - **RNG**: hierarchical seed tree (master seed hashed with stable subsystem/region/site identifiers); subsystems never share a stream.

@@ -1,9 +1,9 @@
 # Aegis Godot UI mockup review
 
-Status: World-screen architecture approved under D-183; remaining screens under review,
-no implementation authorized
+Status: World-screen and Character Creation architectures approved under D-183 and
+D-184; remaining screens under review, no implementation authorized
 
-Related decisions: D-182, D-183
+Related decisions: D-182, D-183, D-184
 
 Mockup set: `artifacts/d182-ui-mockups-v1/`
 
@@ -101,7 +101,7 @@ approved, and the remaining screens still need review before implementation resu
 
 ## Character-creation architecture review
 
-The first remaining screen family now has a controlled four-image architecture set.
+The first remaining screen family now has a controlled five-image architecture set.
 Every image holds the D-183 light visual language, stage, option count, and content
 scope approximately constant while changing navigation, comparison, progress, and
 information density. Generated descriptions, traits, icons, attribute labels, and
@@ -130,17 +130,21 @@ stage names are illustrative, not canonical.
    named once and explained in plain language before Continue. The reference uses
    canonical folk effects instead of illustrative statistics or starting items.
 
-The current recommendation is the hybrid represented by
-`05-focused-question-explained-selection.png`: use `01-focused-question.png` as the
-structural base, but let its bottom selected-detail band explain what each mechanical
-consequence does instead of repeating the terse card summary. It should borrow one
-additional behavior from the workbench, not its permanent third pane: an optional
-context-sensitive summary drawer for shaping, text entry, and final review. The
-two-column choice field becomes one column at narrow widths or high text scale. Text
-entry replaces the choice field without moving the question, progress route, or footer.
-Final review uses the same canvas as a readable summary, so creation remains one
-coherent screen family. This hybrid is still a review proposal pending explicit visual
-approval.
+## Approved Character Creation base
+
+D-184 approves `05-focused-question-explained-selection.png` as the canonical
+architecture. It uses `01-focused-question.png` as the structural base, but its bottom
+selected-detail band explains what each mechanical consequence does instead of
+repeating the terse card summary. Cards summarize; the detail band teaches. A gain,
+tradeoff, and qualitative benefit receive separate explanation cells when present.
+
+An optional context-sensitive summary drawer may serve shaping, text entry, and final
+review, but never becomes a permanent third pane. The two-column choice field becomes
+one column at narrow widths or high text scale. Text entry replaces the choice field
+without moving the question, progress route, or footer. Final review uses the same
+canvas as a readable summary, so creation remains one coherent screen family.
+Production icons, exact theme tokens, and dark-theme parity remain to be completed
+without changing this information hierarchy.
 
 ## Findings from the Phase 2 package
 
@@ -295,12 +299,11 @@ shape is the same.
 - The theme comparison is the target parity contract, not evidence that the current
   implementation satisfies it.
 
-## Decisions requested before implementation
+## Decisions remaining before implementation
 
 1. Settle the exact light-theme surface treatment and canonical map-glyph palette on
    the approved D-183 world geometry.
-2. Select or revise one Character Creation architecture from the controlled D-183 set.
-3. Approve Conversation and commerce plus the reusable event and action-sheet grammar.
-4. Approve Character, Pack and equipment, Journal, Help, and Settings.
-5. Approve Campaign entry, pause, save, confirmation, and boundary states.
-6. Approve the focused task-surface variants and the complete responsive/theme matrix.
+2. Approve Conversation and commerce plus the reusable event and action-sheet grammar.
+3. Approve Character, Pack and equipment, Journal, Help, and Settings.
+4. Approve Campaign entry, pause, save, confirmation, and boundary states.
+5. Approve the focused task-surface variants and the complete responsive/theme matrix.

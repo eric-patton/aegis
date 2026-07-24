@@ -231,6 +231,43 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-184: The asking made plain: focused creation and explained effects (2026-07-24)
+
+The player approves `05-focused-question-explained-selection.png` as the canonical
+Character Creation architecture. It keeps the Focused Question structure: creation is
+a full-window destination, one question owns the screen at a time, a ten-stage route
+keeps progress visible, the choice field uses two columns at ordinary desktop widths,
+and Back, the contextual key hint, and Continue remain in a stable footer. Choice cards
+carry three distinct layers in one scan: the choice name, a short descriptive blurb,
+and a concise mechanical summary.
+
+The bottom selected-detail band has a different job from the card and must never repeat
+the same summary as if repetition were explanation. It names each selected consequence,
+then explains in plain language what that attribute change, tradeoff, or qualitative
+benefit does in play. Gains, costs, and special benefits receive separate explanation
+cells when all three are present. The band updates with selection before confirmation,
+so a player can compare meaning rather than memorize labels. The approved reference
+selects a mechanically mixed option specifically to prove that gain, cost, and benefit
+all fit without clipping.
+
+The same frame governs the remaining creation stages. At narrow widths or high text
+scale, the two-column choice field becomes one column. Text entry replaces the choice
+field without moving the question, route, or footer, receives focus on entry, and stays
+visible while typing. A context-sensitive summary drawer may expose accumulated choices
+only where shaping, text entry, or final review needs them; it is not a permanent third
+pane. Final review uses the same central canvas as a readable summary. Long content
+scrolls inside the central work area without moving the footer off-screen. Keyboard and
+pointer selection share one visible selected state and one visible input-focus state.
+
+This decision locks creation layout, hierarchy, and the summarize-versus-explain
+contract. Exact production icons, final token values, and dark-theme colors remain
+implementation and parity work, but may not change the approved information structure.
+Options set aside: the original Focused Question detail strip that merely repeated the
+selected name and terse effects; the Comparison Workbench's permanent three panes; the
+Scrolling Ledger's form-like all-stage document; and the Choice Gallery's six-wide
+plates. Phase 3 remains paused for the next screen family review.
+
+
 ### D-183: The watch at the map's edge: the world-screen base (2026-07-24)
 
 The player approves `06-map-workspace-sidebar-icons.png` as the structural base for

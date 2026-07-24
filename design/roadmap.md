@@ -239,8 +239,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     screen families remain)
   - [ ] Design player-facing campaign entry: title, Continue, New campaign, campaign
     slots, load, safe deletion, version, and quit
-  - [ ] Design full-window Character Creation across all stages, review, long content,
-    and supported responsive states
+  - [x] Design full-window Character Creation across all stages, review, long content,
+    and supported responsive states (D-184)
   - [ ] Design Conversation and commerce plus the reusable world-event and action-sheet
     grammar that replaces every remaining legacy surface
   - [ ] Modern dedicated character, inventory, and equipment screens, including
@@ -898,18 +898,25 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-24: **D-184 locks the asking into one focused, explanatory screen family.**
+  `05-focused-question-explained-selection.png` is the canonical Character Creation
+  architecture. Cards keep descriptions and terse effects together for scanning. The
+  bottom band has a separate teaching job: explain each selected gain, tradeoff, and
+  benefit in plain language, never repeat the same values. The fixed route and footer,
+  one-column responsive fallback, stable text-entry frame, contextual summary drawer,
+  and same-canvas final review complete the family contract.
 - 2026-07-24: **The Focused Question proposal gains an explained-selection band.**
   The player-directed hybrid keeps concise canonical effects in the choice cards and
   uses the bottom detail band to explain what each selected attribute change, tradeoff,
   and benefit does before Continue. It is preserved as
-  `05-focused-question-explained-selection.png` for visual approval before a Character
-  Creation decision is recorded.
+  `05-focused-question-explained-selection.png`; D-184 subsequently approves it as the
+  canonical Character Creation architecture.
 - 2026-07-24: **Character Creation receives four architecture choices on the D-183
   visual base.** Focused Question, Comparison Workbench, Scrolling Ledger, and Choice
   Gallery keep one light visual language while changing interaction structure. Focused
   Question is recommended for its calm focus and responsive path, with a
   context-sensitive summary drawer borrowed from the workbench for the stages that need
-  it. These are review proposals, not an implementation decision.
+  it. D-184 subsequently selects the player-directed Focused Question hybrid.
 - 2026-07-24: **D-183 locks the world-screen structural base and exposes the remaining
   presentation inventory.** The approved Map as Workspace layout keeps the map dominant,
   uses a floating screen launcher, and fixes a right sidebar around thin Health, Stamina,

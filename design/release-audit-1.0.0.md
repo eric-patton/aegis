@@ -1,10 +1,10 @@
 # Aegis 1.0.0 release audit
 
-This is the durable audit for V1-09 under D-165 and D-174, amended by D-175 through D-177. Automated
+This is the durable audit for V1-09 under D-165 and D-174, amended by D-175 through D-178. Automated
 evidence may be regenerated. The manual section is a human gate and cannot be inferred
 from automated tools.
 
-## Candidate identity
+## Superseded terminal candidate identity
 
 Status: superseded by D-175. This package cannot receive final 1.0 signoff.
 
@@ -17,6 +17,43 @@ Status: superseded by D-175. This package cannot receive final 1.0 signoff.
 - Package SHA-256: recorded in the sibling `aegis-1.0.0-win-x64.zip.sha256`
 - Verification environment: Windows x64, .NET SDK 10.0.300
 - Manual seed and slot: pending user run
+
+## Active SadConsole candidate identity
+
+Status: automated gates passed under D-178. Visible review and fresh guided campaign
+pending.
+
+- Product version: 1.0.0
+- Save version: 99
+- Generator version: 1
+- Runtime identifier: win-x64
+- Package: `artifacts/aegis-1.0.0-win-x64.zip`
+- Commit: `379406da87ea08437b017cbe5ad61fbba8b9b9b4`
+- Package SHA-256:
+  `a1c3526de55ebb327ef180d1944238dc8d31e8ef0351c3e429af9d0d0ef5ec4c`
+- Client: SadConsole 10.10.1 with MonoGame DesktopGL 3.8.4.1
+- Payload: `aegis.exe`, `aegis-tools.exe`, `SDL2.dll`, `openal.dll`, README,
+  release notes, third-party notices, and `SHA256SUMS.txt`
+- Verification environment: Windows x64, .NET SDK 10.0.300
+- Manual seed and slot: pending user run
+
+## SadConsole automated recovery gate
+
+- [x] Release build: zero warnings and zero errors
+- [x] Complete test suite: 999 passed, zero failed, zero skipped
+- [x] Focused client, host, input, pilot, save, frame, settings, and package tests
+- [x] Five default twin pairs byte-identical to their mates and D-174
+- [x] Five release twin pairs byte-identical to their mates and D-174
+- [x] Both seed-1 replays byte-identical to D-174
+- [x] Generator 1 worldgen report byte-identical to D-174
+- [x] Client and tools Windows x64 Native AOT publishes
+- [x] Exact seven-entry approved third-party AOT warning set
+- [x] Tools AOT publish with zero warnings
+- [x] Clean-extraction tools help, sim, and worldgen smokes
+- [x] Clean-extraction current-user pilot ping, keys, state, and frame smokes
+- [x] Structured frame: 120 by 40, 4,800 glyph-and-RGB cells
+- [x] Named save creation, orderly shutdown, second-process reload, and second shutdown
+- [x] Every manifest payload hash and outer archive hash verified
 
 ## Automated gate
 
@@ -72,14 +109,14 @@ route replays exactly at 35,094 keys, cycle 13, and turn 33,981. Generator 1 reg
    was produced. The conditions now use valid operator continuations, and the release-tool
    test invokes PowerShell's parser over the complete script.
 
-### Open
+### Superseded-candidate defect resolved by replacement
 
-1. Major presentation portability defect: the terminal client inherits palette, font,
+1. Major presentation portability defect: the terminal client inherited palette, font,
    and theme behavior from the user's terminal environment, so the intended presentation
    is not controlled by Aegis. The user did not approve the terminal candidate and
-   approved the SadConsole replacement direction under D-175. Disposition: supersede the
-   package, implement V1-10, rerun the release gates, and restart the fresh manual
-   campaign. This is not accepted for release.
+   approved the SadConsole replacement direction under D-175. D-177 replaced that client
+   with an owned window, and D-178 built the active candidate. Visible review and the
+   fresh manual campaign remain before the replacement is accepted for release.
 
 ## Roadmap classification
 
@@ -106,14 +143,13 @@ decision.
 
 ## Manual packaged campaign protocol
 
-Status: terminal candidate superseded. Restart from step 1 with the replacement
-SadConsole package.
+Status: D-178 SadConsole candidate active. Start from step 1 with the clean extraction.
 
 Use only the cleanly extracted package. Do not use a development binary, pilot, debug
 hook, edited journal, or an existing slot.
 
-1. Record the package SHA-256, commit, Windows version, terminal application, terminal
-   size, seed, and a fresh named save slot.
+1. Record the package SHA-256, commit, Windows version, display scale, initial window
+   size, font scale, seed, and a fresh named save slot.
 2. Complete character creation and confirm ordinary map, sidebar, help, movement,
    conversation, inventory, and save behavior are readable.
 3. Exercise ordinary life in each activity family: craft, wilderness, crime, and town.
@@ -138,5 +174,5 @@ hook, edited journal, or an existing slot.
 - Final cycle and turn: pending
 - Defects accepted: none; the presentation defect requires replacement
 - V1-09 status: Implemented, not yet Verified
-- V1-10 status: Implemented under D-177, replacement package and user signoff pending
-- Aegis 1.0 status: release recovery, no active candidate
+- V1-10 status: Implemented under D-177, candidate built D-178, user signoff pending
+- Aegis 1.0 status: active D-178 candidate, visible review and guided campaign pending

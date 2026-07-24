@@ -4,7 +4,7 @@ Status: Implemented, packaged campaign and explicit signoff pending
 
 Roadmap card: V1-10
 
-Governing decisions: D-175, D-176, and D-177
+Governing decisions: D-175 through D-178
 
 Spike evidence: `../artifacts/sadconsole-spike/RESULTS.md`
 

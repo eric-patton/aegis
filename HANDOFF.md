@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-23, D-177 V1-10 implemented)
+# Aegis handoff (updated 2026-07-23, D-178 replacement candidate)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,10 +8,10 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-177 currently at its head), then the parking lot of open
+  newest-first block (D-178 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-177)". Bump it whenever a decision lands.
+  "(D-001 through D-178)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence is complete;
   V1-09 is built, and D-175 supersedes its terminal candidate.
 - `design/plan-1.0.md`: the canonical ten-card implementation queue. V1-01 through V1-08
@@ -24,7 +24,8 @@ The canonical design truth stays where it always was:
 
 - Latest approved direction: D-175 replaces the terminal-owned player with a SadConsole
   10.10.1 and MonoGame DesktopGL client before 1.0 signoff. D-176 approves the complete
-  contract, and D-177 implements it without changing the engine.
+  contract, D-177 implements it without changing the engine, and D-178 builds the clean
+  replacement candidate.
 - Latest completed product work: D-174 and V1-09. Its engine, content, release journey,
   audits, and automated evidence remain green, but its terminal package is superseded
   and cannot receive final signoff.
@@ -44,6 +45,11 @@ The canonical design truth stays where it always was:
 - D-177 adds `Aegis.Host`, the SadConsole `Aegis.Client`, `aegis-tools.exe`, structured
   frame observations, current-user pilot hardening, presentation settings, release
   packaging, and focused coverage. `Aegis.Core` remains unchanged.
+- D-178 candidate: commit `379406da87ea08437b017cbe5ad61fbba8b9b9b4`, archive
+  `artifacts/aegis-1.0.0-win-x64.zip`, SHA-256
+  `a1c3526de55ebb327ef180d1944238dc8d31e8ef0351c3e429af9d0d0ef5ec4c`.
+  Both AOT publishes, warning pinning, clean-extraction tools, pilot, structured frame,
+  save creation and reload, shutdown, manifest, and archive hashes pass.
 
 ## Working conventions (were in user-level config, not visible to a new tool)
 
@@ -221,9 +227,9 @@ hard failures. The fixed-surface warning remains expected.
 
 ## What is next (queued, in recommended order)
 
-1. Build the clean SadConsole candidate from D-177 with `scripts/release.ps1`.
-2. Complete visible and physical-keyboard review without synthetic input.
-3. Restart the fresh packaged manual campaign in
+1. Complete visible and physical-keyboard review of the D-178 package without synthetic
+   input.
+2. Restart the fresh packaged manual campaign in
    `design/release-audit-1.0.0.md`. Only explicit user approval can make V1-09 and V1-10
    Verified and close Aegis 1.0.
 

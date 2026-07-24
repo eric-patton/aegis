@@ -231,6 +231,35 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-178: The clean glass: the replacement 1.0 candidate built (2026-07-23)
+
+The clean-worktree release route completed against commit
+`379406da87ea08437b017cbe5ad61fbba8b9b9b4`. The replacement Windows x64 archive is
+`artifacts/aegis-1.0.0-win-x64.zip`, SHA-256
+`a1c3526de55ebb327ef180d1944238dc8d31e8ef0351c3e429af9d0d0ef5ec4c`. Its fixed
+payload is `aegis.exe`, `aegis-tools.exe`, `SDL2.dll`, `openal.dll`, spoiler-free
+README and release notes, third-party notices, and `SHA256SUMS.txt`. The internal
+manifest records product 1.0.0, save v99, generator 1, the commit, runtime, client and
+host versions, and a hash for every other packaged file.
+
+Both Windows x64 Native AOT publishes succeeded. The client matched the exact seven-line
+approved third-party analysis-warning baseline, and the tools publish emitted no
+warnings. From a clean extraction, the tools help, exact sim, and worldgen smokes passed.
+The headless packaged client completed character creation through the current-user
+pilot, returned all 4,800 structured glyph-and-RGB cells, wrote a named save, acknowledged
+an orderly shutdown, reloaded the save in a second process to the same state, acknowledged
+the second shutdown, and exited. Every manifest hash and the outer archive hash then
+verified. The first packaging run exposed and fixed a real shutdown race: the client now
+keeps the pilot alive for a short grace after the engine stops so the final
+acknowledgment is flushed before process teardown.
+
+The exact packaged commit also rebuilds with zero warnings and passes all 999 tests.
+The D-177 engine evidence remains current because the race fix touched only client
+shutdown timing: `Aegis.Core`, key meaning, save v99, generator 1, all journey outputs,
+both seed-1 replays, and worldgen are unchanged. V1-09 and V1-10 remain Implemented,
+not Verified. What remains is deliberately human: visible client and physical-keyboard
+review, then the fresh guided packaged campaign and explicit user verdict.
+
 ### D-177: The glass takes the key: the SadConsole client implemented (2026-07-23)
 
 V1-10 is Implemented and awaits the replacement packaged campaign and explicit user

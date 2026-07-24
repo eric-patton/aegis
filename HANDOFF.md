@@ -50,7 +50,11 @@ The canonical design truth stays where it always was:
   and a possible iron rose removal. Nine generated concepts are preserved under
   `artifacts/d182-ui-mockups-v1/`, and their review contract is
   `design/godot-ui-mockup-review.md`. These are proposals, not approved design changes.
-  Phase 3 implementation is paused until the player settles that review.
+  The first controlled style set was correctly classified as four surface treatments on
+  one shell. A second light-theme set under
+  `artifacts/d182-game-screen-architectures-v1/` now compares four genuinely different
+  world-screen architectures. Phase 3 implementation is paused until the player settles
+  that review.
 - Core and Host now multi-target .NET 8 and .NET 10. Godot uses .NET 8 for runtime
   compatibility. Existing clients, tools, and tests remain on .NET 10.
 - D-175 through D-178 remain the implemented SadConsole baseline and clean candidate.
@@ -282,9 +286,9 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Review the four controlled style directions under
-   `artifacts/d182-style-directions-v1/` with the player. Select one direction, or one
-   explicit limited hybrid, before revising individual screens.
+1. Review the four controlled light-theme game-screen architectures under
+   `artifacts/d182-game-screen-architectures-v1/` with the player. Select one
+   architecture, or one explicit limited hybrid, before revising individual screens.
 2. Review and revise `design/godot-ui-mockup-review.md` with the player. Record the
    approved style and shell revision under a new decision before implementation.
 3. Implement the approved D-182 Phase 2 remediation, then produce a fresh packaged

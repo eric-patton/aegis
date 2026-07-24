@@ -3054,8 +3054,12 @@ accessibility role, full-window focused information screens, centered event shee
 separate text-size and map-zoom controls, one consistent visual style direction, and any
 required second visual pass. The controlled style comparison lives under
 `artifacts/d182-style-directions-v1/`: Field Instrument, Blackened Brass, Moss and Ash,
-and Winter Signal all use the same neutral world-shell master. These are proposals only
-and do not amend D-182 until approved.
+and Winter Signal all use the same neutral world-shell master. Player review correctly
+classified them as theme and surface-treatment variations rather than different designs.
+The architecture comparison under `artifacts/d182-game-screen-architectures-v1/` holds
+one light theme and information scope constant while comparing Map as Workspace, Split
+Command Deck, Atlas Frame, and Chronicle Stage. These are proposals only and do not amend
+D-182 until approved.
 
 ## Not yet raised (parking lot)
 

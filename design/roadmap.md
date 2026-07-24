@@ -861,9 +861,9 @@ The Godot client architecture is settled under D-182. The active mockup question
 must be settled for 1.0. The remaining parking-lot questions are classified post-1.0
 under D-165 unless a later decision promotes one into a release.
 
-- ◇ D-182 UI review: one consistent visual style direction, integrated Activity/History
-  behavior, iron rose removal, focused screen shapes, separate text-size and map-zoom
-  controls, and mockup revisions
+- ◇ D-182 UI review: one game-screen architecture and later one consistent surface
+  treatment, integrated Activity/History behavior, iron rose removal, focused screen
+  shapes, separate text-size and map-zoom controls, and mockup revisions
 - ◇ Folk cultures: how worldgen recultures the five folk per world, and whether factions read folk (D-017, D-092)
 - ◇ Spell list growth past the seven V1-07 workings / school-shaped content, if any
   (D-022, D-091, D-163)
@@ -879,6 +879,13 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-24: **The D-182 visual review separates architecture from theme.** The
+  fixed-shell style set proved to be a surface-treatment comparison, not four different
+  designs. A second controlled light-theme set now compares four different world-screen
+  architectures: Map as Workspace, Split Command Deck, Atlas Frame, and Chronicle Stage.
+  Information scope and glyph-map premise stay fixed. Chronicle Stage is the current
+  recommendation, but no architecture or style is approved and implementation remains
+  paused.
 - 2026-07-24: **The D-182 visual review moves style before screen design.** The first
   suite mixed unrelated visual languages, so screen-specific work is paused. A neutral
   world-shell master now anchors four controlled variations: Field Instrument,

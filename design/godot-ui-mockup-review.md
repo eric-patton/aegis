@@ -1,7 +1,8 @@
 # Aegis Godot UI mockup review
 
 Status: World-screen and Character Creation architectures approved under D-183 and
-D-184; remaining screens under review, no implementation authorized
+D-184; Conversation and commerce comparison ready for player review, no implementation
+authorized
 
 Related decisions: D-182, D-183, D-184
 
@@ -14,6 +15,9 @@ Game-screen architecture set: `artifacts/d182-game-screen-architectures-v1/`
 Character-creation architecture set:
 `artifacts/d183-character-creation-architectures-v1/`
 
+Conversation and commerce architecture set:
+`artifacts/d184-conversation-commerce-architectures-v1/`
+
 ## Purpose
 
 The D-182 Phase 2 packaged review showed that individual UI repairs are not enough to
@@ -23,6 +27,26 @@ Character, Inventory, Journal, History, Help, and both themes.
 
 The generated images are layout and visual-language references only. Their names,
 numbers, item catalogs, icons, map content, and prose are not canonical game content.
+
+## Review progress ledger
+
+Status key: `[x]` approved, `[~]` comparison ready for player review, `[ ]` not yet
+reviewed.
+
+1. [x] World-screen structure (D-183).
+2. [x] Character Creation (D-184).
+3. [~] Conversation and commerce. Three controlled architectures are ready, with
+   Conversation Desk recommended.
+4. [ ] Reusable world-event and action sheet. This is next after Conversation and
+   commerce is approved.
+5. [ ] Character.
+6. [ ] Pack and equipment.
+7. [ ] Journal: History, People, Bestiary, and Threads.
+8. [ ] Help.
+9. [ ] Settings and accessibility.
+10. [ ] Campaign entry and system states.
+11. [ ] Remaining focused task-surface variants.
+12. [ ] Complete responsive and light/dark parity matrix.
 
 ## Architecture-first correction
 
@@ -77,6 +101,33 @@ bars thinner and icon-led, with no resource names inside them. Health remains cl
 Stamina becomes field green, and Focus becomes blue. Activity rows drop their repeated
 category labels. Field, Combat, and Words instead color the complete message text, and
 their filter labels use those same green, clay-red, and brass colors.
+
+## Conversation and commerce architecture comparison
+
+The conversation set holds the D-183 light visual language, floating launcher, and
+fixed right sidebar constant. Only the task-workspace interaction model changes:
+
+1. `01-conversation-desk.png`: a durable Talk, Trade, and Services workspace. Topics
+   and actions remain in a scrollable left list, the bottom-following transcript owns
+   the larger right pane, and a full-width selected-action band explains price,
+   requirements, affordability, and consequence before confirmation. This is the
+   recommendation because one stable grammar handles both short exchanges and large
+   catalogs.
+2. `02-thread-and-cards.png`: the transcript dominates the workspace, with a horizontal
+   rail of large action cards and an expanded confirmation tray below. It gives written
+   exchange the calmest reading path, but four-wide cards consume space quickly and
+   large commerce catalogs need another browsing state.
+3. `03-exchange-table.png`: a narrow conversation rail sits beside a dense offer table
+   and selected-item inspector. It is the strongest direct comparison-shopping surface,
+   but makes ordinary conversation feel secondary and creates a different hierarchy
+   when the player switches away from commerce.
+
+All three preserve the persistent Condition, Activity, Coin, and Essence sidebar. They
+remove the old charted connector, show local prices and affordability beside the
+selected action, keep focus inside the task workspace, and reserve complete controls for
+Help. The final contract must also define bottom-follow behavior, deliberate scroll-away
+preservation, disabled reasons, confirmations, keyboard and pointer parity, and the
+split-to-stacked responsive state.
 
 Chronicle Stage was the recommendation before this refinement. The player approved
 `06-map-workspace-sidebar-icons.png` under D-183 as the structural world-screen base

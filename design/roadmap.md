@@ -241,8 +241,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     slots, load, safe deletion, version, and quit
   - [x] Design full-window Character Creation across all stages, review, long content,
     and supported responsive states (D-184)
-  - [ ] Design Conversation and commerce plus the reusable world-event and action-sheet
-    grammar that replaces every remaining legacy surface
+  - [~] Design Conversation and commerce plus the reusable world-event and action-sheet
+    grammar that replaces every remaining legacy surface (three Conversation and
+    commerce architectures ready for review; world-event sheet is next)
   - [ ] Modern dedicated character, inventory, and equipment screens, including
     keyboard and pointer access to all ten launch gear entries
   - [ ] Journal screen with current-session history plus read-only people, bestiary,
@@ -898,6 +899,13 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-24: **Conversation and commerce receives three controlled architectures.**
+  Conversation Desk, Thread and Cards, and Exchange Table keep the D-183 world shell
+  and light visual language fixed while changing the interaction model. Conversation
+  Desk is recommended because its list, transcript, and selected-action explanation
+  band support both short exchanges and large catalogs without changing grammar. The
+  comparison is ready for player review, not approved. The reusable world-event sheet
+  remains next.
 - 2026-07-24: **D-184 locks the asking into one focused, explanatory screen family.**
   `05-focused-question-explained-selection.png` is the canonical Character Creation
   architecture. Cards keep descriptions and terse effects together for scanning. The

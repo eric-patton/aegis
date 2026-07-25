@@ -91,7 +91,10 @@ The canonical design truth stays where it always was:
   `artifacts/d185-world-event-action-sheet-architectures-v1/`: Centered Field Sheet,
   Docked Side Sheet, and Lower Stage Sheet. Centered Field Sheet is recommended because
   it gives long prose and visible checks the strongest reading path while retaining map
-  context on all four sides. These are proposals, not an approved D-186 decision.
+  context on all four sides. The player selected it and requested event text on the left
+  plus choices on the right with independent scrolling. The refined
+  `04-centered-field-sheet-split-scroll.png` is the active candidate. It keeps the
+  header and selected-action band fixed. This is not yet an approved D-186 decision.
 - Core and Host now multi-target .NET 8 and .NET 10. Godot uses .NET 8 for runtime
   compatibility. Existing clients, tools, and tests remain on .NET 10.
 - D-175 through D-178 remain the implemented SadConsole baseline and clean candidate.
@@ -323,8 +326,8 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Review the three reusable world-event and action-sheet architectures using the D-183
-   world base and D-185 selected-action grammar, then select one or request a hybrid.
+1. Confirm or revise `04-centered-field-sheet-split-scroll.png`, then record the
+   reusable world-event and action-sheet contract as D-186.
 2. Review Character, Pack, Journal, Help, Settings, campaign entry, system states, and
    remaining task surfaces in the order recorded by
    `design/godot-ui-mockup-review.md`.

@@ -246,8 +246,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     transcript, relevant resources, requirements, affordability, confirmations, and
     responsive stacking (D-185)
   - [~] Design the reusable world-event and action-sheet grammar that replaces every
-    remaining legacy event surface (three controlled architectures ready for review;
-    Centered Field Sheet recommended)
+    remaining legacy event surface (Centered Field Sheet selected; player-directed
+    split-scroll refinement ready for confirmation)
   - [ ] Modern dedicated character, inventory, and equipment screens, including
     keyboard and pointer access to all ten launch gear entries
   - [ ] Journal screen with current-session history plus read-only people, bestiary,
@@ -903,6 +903,11 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-25: **Centered Field Sheet gains independent prose and choice scrolling.**
+  The player selects the centered event architecture and requests event text on the
+  left, options on the right, and separate scroll ownership for both. The refined
+  `04-centered-field-sheet-split-scroll.png` keeps its header and selected-action band
+  fixed. It is ready for confirmation before D-186 is recorded.
 - 2026-07-24: **The reusable world-event sheet receives three controlled
   architectures.** Centered Field Sheet, Docked Side Sheet, and Lower Stage Sheet keep
   the D-183 world shell and D-185 selected-action grammar fixed while changing how the

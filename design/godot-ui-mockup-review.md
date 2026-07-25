@@ -39,8 +39,8 @@ reviewed.
 1. [x] World-screen structure (D-183).
 2. [x] Character Creation (D-184).
 3. [x] Conversation and commerce (D-185).
-4. [~] Reusable world-event and action sheet. Three controlled architectures are ready,
-   with Centered Field Sheet recommended.
+4. [~] Reusable world-event and action sheet. The player selected Centered Field Sheet
+   and requested a split-scroll refinement, now ready for confirmation.
 5. [ ] Character.
 6. [ ] Pack and equipment.
 7. [ ] Journal: History, People, Bestiary, and Threads.
@@ -167,13 +167,24 @@ sheet's relationship to the map changes:
    upper map remains unobstructed. Prose and choices sit side by side above one
    explanation band. It feels most directly attached to movement, but gives long prose
    the least vertical room and needs the earliest stacked fallback.
+4. `04-centered-field-sheet-split-scroll.png`: the player-directed refinement keeps the
+   centered sheet and map context from the recommended first architecture, then divides
+   its interior into independently scrolling Event and Your Choices panes. The header
+   and full-width selected-action band remain fixed. This gives long prose and long
+   option lists separate capacity without turning the sheet into a full-window
+   destination. It is the active candidate for approval.
 
-All three preserve the complete right sidebar and map footer, use the custom square-cell
+All candidates preserve the complete right sidebar and map footer, use the custom square-cell
 glyph map rather than an illustrated map, keep Close explicit, distinguish checked from
 unchecked choices, and show no hidden odds. Exact generated prose, labels, numbers, and
 icons are illustrative only. The final contract must cover long-text scrolling,
 multi-step events, disabled choices, check disclosure, result acknowledgement, focus
 return, keyboard and pointer parity, and narrow or high-scale stacking.
+
+The split-scroll refinement adds one responsive rule to that contract: at ordinary
+desktop widths, Event and Your Choices scroll independently side by side. At narrow
+widths or high text scale they stack into separately bounded regions, while the header
+and confirmation band stay fixed and reachable.
 
 Chronicle Stage was the recommendation before this refinement. The player approved
 `06-map-workspace-sidebar-icons.png` under D-183 as the structural world-screen base

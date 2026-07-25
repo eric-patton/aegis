@@ -1,10 +1,10 @@
 # Aegis Godot UI mockup review
 
 Status: World-screen, Character Creation, Conversation, reusable world-event, Character,
-and Pack architectures approved under D-183 through D-188; Journal architecture
+Pack, and Journal architectures approved under D-183 through D-189; Help architecture
 comparison ready for player review, no implementation authorized
 
-Related decisions: D-182, D-183, D-184, D-185, D-186, D-187, D-188
+Related decisions: D-182, D-183, D-184, D-185, D-186, D-187, D-188, D-189
 
 Mockup set: `artifacts/d182-ui-mockups-v1/`
 
@@ -30,6 +30,9 @@ Pack and equipment architecture set:
 Journal architecture set:
 `artifacts/d188-journal-architectures-v1/`
 
+Help architecture set:
+`artifacts/d189-help-architectures-v1/`
+
 ## Purpose
 
 The D-182 Phase 2 packaged review showed that individual UI repairs are not enough to
@@ -51,9 +54,8 @@ reviewed.
 4. [x] Reusable world-event and action sheet (D-186).
 5. [x] Character (D-187).
 6. [x] Pack and equipment (D-188).
-7. [~] Journal: History, People, Bestiary, and Threads. Three controlled architectures
-   are ready for player review.
-8. [ ] Help.
+7. [x] Journal: History, People, Bestiary, and Threads (D-189).
+8. [~] Help: three controlled architectures are ready for player review.
 9. [ ] Settings and accessibility.
 10. [ ] Campaign entry and system states.
 11. [ ] Remaining focused task-surface variants.
@@ -347,6 +349,60 @@ unknowns. The final contract must cover complete and long current-session Histor
 bottom-follow and deliberate scroll-away, loading earlier records, preserving world
 Activity filters and position, zero and long learned collections, record updates,
 search, keyboard and pointer parity, and narrow or high-scale fallbacks.
+
+## Approved Journal base
+
+- `01-chronicle-desk.png` is canonical under D-189.
+- Journal is a full-window destination under the shared launcher. History opens by
+  default, with People, Bestiary, and Threads one top-level tab away.
+- History shows the complete reconstructed current session with turn and time grouping,
+  a turn scrubber, search, category filters, and fixed session context.
+- World Activity and Journal History share one structured record model. Expanding to
+  History preserves filters and reading position.
+- New records follow the bottom only while the player is already at the latest entry.
+  Deliberate scroll-away pauses follow-tail and reveals `Return to latest`.
+- `Load earlier` prepends records without jumping the current reading position.
+- Field, Combat, and Words color complete messages and matching filters. Rows do not
+  repeat category tags.
+- People, Bestiary, and Threads reveal learned information only. They show no locked
+  records, unknown counts, hidden steps, rewards, or undiscovered teases.
+- Keyboard and pointer access remain equivalent. Narrow or high-scale layouts preserve
+  the four tabs, use a drawer or stacked session context, avoid horizontal prose scroll,
+  and keep `Return to latest` reachable.
+- Exact icons, tokens, density, counts, illustrative content, and breakpoints remain
+  implementation work and may not change the approved hierarchy or disclosure rules.
+
+## Help architecture comparison
+
+The Help set holds the approved light visual language, shared launcher, searchable
+reference, contextual return, keyboard and pointer parity, map legend, message-color
+legend, and a route to Settings constant. Generated controls, icons, key labels,
+symbol meanings, and explanatory text are illustrative only. Production Help must be
+derived from the canonical input and presentation contracts rather than copied from
+the images.
+
+1. `01-help-center.png`: a task-oriented Help Center puts global search first, then uses
+   a category rail, topic cards and selected article, plus a fixed contextual quick
+   reference. This is the recommendation because it scales from controls to concepts,
+   provides the shortest route from a question to an answer, and gives contextual Help
+   links from every screen an obvious landing place.
+2. `02-command-atlas.png`: a control-first command constellation places the movement
+   cluster and surrounding command families at the center, with a live selected-command
+   inspector and fixed legend band. It is the strongest at-a-glance control reference,
+   but longer concepts, accessibility guidance, and non-command topics become secondary
+   appendages.
+3. `03-field-manual.png`: a reading-first continuous manual uses sticky chapter anchors,
+   a narrow progress rail, editorial two-column chapters, and inline legends. It offers
+   the calmest guided learning path and strongest long-form continuity, but known-answer
+   retrieval requires more scrolling and contextual links have less precise targets.
+
+All three remove permanent control text from the world shell, keep Help available from
+the shared launcher, support search, separate map zoom from UI scale, expose equivalent
+keyboard and pointer methods, and route appearance changes to Settings. The final
+contract must cover exact canonical controls, context-sensitive entry, search with no
+results, map and message legends, long and short topics, reduced-motion and readability
+guidance, focus and selection, return to the invoking screen, and narrow or high-scale
+fallbacks. Help explains behavior but does not own live settings controls.
 
 Chronicle Stage was the recommendation before this refinement. The player approved
 `06-map-workspace-sidebar-icons.png` under D-183 as the structural world-screen base

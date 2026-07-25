@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-25, D-188 Outfitter's Bench approved)
+# Aegis handoff (updated 2026-07-25, D-189 Chronicle Desk approved)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,10 +8,10 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-188 currently at its head), then the parking lot of open
+  newest-first block (D-189 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-188)". Bump it whenever a decision lands.
+  "(D-001 through D-189)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence is complete;
   V1-09 is built, and D-175 supersedes its terminal candidate.
 - `design/plan-1.0.md`: the canonical ten-card implementation queue. V1-01 through V1-08
@@ -19,7 +19,7 @@ The canonical design truth stays where it always was:
 - `design/sadconsole-client-migration.md`: the implemented V1-10 contract.
 - `design/godot-presentation-spike.md`: the approved D-181 host-decision proof.
 - `design/godot-client-modernization.md`: the approved D-182 shipping-client contract.
-- `design/godot-ui-mockup-review.md`: the active D-182/D-188 visual-contract review.
+- `design/godot-ui-mockup-review.md`: the active D-182/D-189 visual-contract review.
 - `design/story/`: arc spec and world-story templates. Full story detail lives there.
 - `docs/dev-harness.md`: the pilot/sim/journey harness.
 
@@ -120,8 +120,18 @@ The canonical design truth stays where it always was:
   `artifacts/d188-journal-architectures-v1/`: Chronicle Desk, Indexed Cabinet, and Open
   Folio. They hold History, People, Bestiary, Threads, learned-only disclosure, and the
   approved light language constant while changing the chronological, archival, and
-  selected-record reading model. Chronicle Desk is recommended. The set is ready for
-  player review and no D-189 decision has been recorded.
+  selected-record reading model. Chronicle Desk is approved under D-189. History opens
+  by default with the complete current-session chronology, shared world Activity state,
+  bottom-follow ownership, deliberate scroll-away, `Return to latest`, and
+  position-preserving earlier loads. People, Bestiary, and Threads expose learned
+  information only. Help is the active next review.
+- Three controlled Help architectures are preserved under
+  `artifacts/d189-help-architectures-v1/`: Help Center, Command Atlas, and Field Manual.
+  They hold the approved light language, shared launcher, search, contextual return,
+  map and message legends, keyboard and pointer parity, and Settings route constant
+  while changing task lookup, control visualization, and continuous reading. Help
+  Center is recommended. Generated controls and legend details are illustrative, and
+  the set is ready for player review before D-190.
 - Core and Host now multi-target .NET 8 and .NET 10. Godot uses .NET 8 for runtime
   compatibility. Existing clients, tools, and tests remain on .NET 10.
 - D-175 through D-178 remain the implemented SadConsole baseline and clean candidate.
@@ -353,10 +363,10 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Review the three Journal architectures under
-   `artifacts/d188-journal-architectures-v1/`, refine if needed, then record the
-   approved Journal contract as D-189.
-2. Review Help, Settings, campaign entry, system states, and remaining task
+1. Review the three Help architectures under
+   `artifacts/d189-help-architectures-v1/`, refine if needed, then record the approved
+   Help contract as D-190.
+2. Review Settings, campaign entry, system states, and remaining task
    surfaces in the order recorded by
    `design/godot-ui-mockup-review.md`.
 3. Complete the responsive and light/dark parity matrix, then implement the approved

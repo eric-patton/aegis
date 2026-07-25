@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-188); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-189); the research behind it lives in `../research/`.
 
 ---
 
@@ -115,6 +115,14 @@ a secondary resources band. An unmet requirement is unmistakable through icon, s
 text, required-versus-current values, explanation, and confirmation, but it never blocks
 Equip. Every launch item remains reachable, and narrow or high-scale layouts stack the
 list above the inspector without losing the warning or confirmation path.
+
+D-189 gives Journal one canonical full-window chronicle desk. History opens by default
+as a complete, searchable, filterable current-session chronology with turn context,
+bottom-follow, deliberate scroll-away, `Return to latest`, and position-preserving
+`Load earlier`. People, Bestiary, and Threads expose learned information only, never
+locks, hidden counts, objectives, rewards, or unknown teases. The world Activity view
+and Journal History share one structured record model, while narrow or high-scale
+layouts keep every section and return path reachable without horizontal prose scroll.
 
 ### Attributes: seven, bought with deeds
 Might, Grace, Vigor, Wits, Mind, Will, Presence. Raised by spending **Essence** at rest points; Essence is earned from meaningful accomplishment (kills, quests, discoveries, feats). The Aegis gathers the essence of your deeds and reshapes you where it anchors. Soft caps everywhere: diminishing, never zero, returns. Mental (Mind/Will) and physical power sit on independent axes so hybrid builds compose freely.
@@ -290,9 +298,9 @@ And the loop closes on itself: **your finished characters enter the mythology.**
   remain canonical for terminal clients and deterministic observation. The hard 80% is
   still the deterministic simulation core, not the host. D-182 Phases 1 and 2 now ship
   the persistent creation, responsive world, structured History, repaired conversation,
-  world-owned movement, and draggable iron rose foundations. D-183 through D-188 approve
+  world-owned movement, and draggable iron rose foundations. D-183 through D-189 approve
   the replacement world, Character Creation, Conversation, reusable event-sheet, and
-  Character, Inventory, and Equipment architectures. Journal and release-candidate
+  Character, Inventory, Equipment, and Journal architectures. Help and release-candidate
   assurance remain in Phases 3 through 5.
 - **Save architecture**: versioned seed and campaign-generator contract for regenerable content, append-only key journal for authored/player-mutated state.
 - **RNG**: hierarchical seed tree (master seed hashed with stable subsystem/region/site identifiers); subsystems never share a stream.

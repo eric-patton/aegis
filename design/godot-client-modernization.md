@@ -1,8 +1,8 @@
 # Aegis Godot client modernization
 
 Status: Approved under D-182, Phases 1 and 2 implemented and verified; D-183 through
-D-188 world, Character Creation, Conversation, reusable world-event, Character, and Pack
-bases approved, Journal architecture comparison ready for player review before Phase 3
+D-189 world, Character Creation, Conversation, reusable world-event, Character, Pack,
+and Journal bases approved, Help architecture comparison ready before Phase 3
 
 ## Implementation status
 
@@ -29,9 +29,10 @@ confirmation band. D-187 approves Character Ledger as the dedicated Character
 architecture: a section navigator, complete browse list, and deep inspector with
 independent scrolling and a stacked high-scale fallback. D-188 approves Pack and
 equipment as Outfitter's Bench, with an unmistakable
-under-requirement warning that does not block Equip. Journal is the next screen family
-in `design/godot-ui-mockup-review.md`, with three controlled architectures ready and
-Chronicle Desk recommended. The approved next build will remediate the
+under-requirement warning that does not block Equip. D-189 approves Journal as
+Chronicle Desk, with complete current-session History, shared Activity state,
+bottom-follow ownership, and learned-only People, Bestiary, and Threads. Help is the
+next screen family in `design/godot-ui-mockup-review.md`. The approved next build will remediate the
 review findings before or with the dedicated Character, Inventory, and Equipment
 surfaces.
 
@@ -412,6 +413,31 @@ gives complete current-session History the strongest chronological reading and f
 surface while keeping People, Bestiary, and Threads adjacent. Indexed Cabinet prioritizes
 reference browsing, while Open Folio prioritizes long-form selected-record reading.
 No architecture may show locks or counts for undiscovered records.
+
+D-189 approves Chronicle Desk as the canonical Journal base. History opens by default
+and preserves the complete reconstructed current session. World Activity and Journal
+History share filters and reading position. Follow-tail continues only while the player
+is already at the latest entry; deliberate scroll-away reveals `Return to latest`, and
+`Load earlier` prepends without moving the record being read. People, Bestiary, and
+Threads expose learned information only. At narrow widths or high text scale, section
+tabs remain reachable and session context becomes a drawer or stacks after the
+chronology without introducing horizontal prose scroll.
+
+### Help
+
+Help is a full-window searchable reference under the shared launcher. It owns exact
+controls, task guidance, map and message legends, readability guidance, and contextual
+entry from other screens. It does not own live appearance controls, which remain in
+Settings. Opening Help records the invoking screen so `Return` restores the player's
+prior task and meaningful focus.
+
+Three controlled Help architectures are ready under
+`artifacts/d189-help-architectures-v1/`. Help Center is recommended because its global
+search, category rail, topic workspace, and contextual quick-reference rail scale from
+short command lookup to conceptual guidance. Command Atlas prioritizes at-a-glance
+control relationships, while Field Manual prioritizes guided continuous reading.
+Generated controls and legends are illustrative only. Implementation must project the
+canonical input and presentation contracts.
 
 ## Responsive contract
 

@@ -247,8 +247,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     responsive stacking (D-185)
   - [x] Design the reusable world-event and action-sheet grammar that replaces every
     remaining legacy event surface (D-186)
-  - [ ] Modern dedicated character, inventory, and equipment screens, including
-    keyboard and pointer access to all ten launch gear entries
+  - [~] Modern dedicated character, inventory, and equipment screens, including
+    keyboard and pointer access to all ten launch gear entries (Character architecture
+    comparison ready; Pack and equipment remain)
   - [ ] Journal screen with current-session history plus read-only people, bestiary,
     and active-thread views over knowledge the character has actually earned
   - [ ] Design Help plus Settings and accessibility, including live theme and text-size
@@ -902,6 +903,11 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-25: **Character receives three controlled architectures.** Character Atlas,
+  Character Ledger, and Character Record keep the approved light language and canonical
+  information scope while changing comparison, explanation, and scrolling. Character
+  Atlas is recommended for its immediate cross-system view. The set is ready for player
+  review before D-187.
 - 2026-07-25: **D-186 gives event prose and choices independent room.** The canonical
   `04-centered-field-sheet-split-scroll.png` preserves map context around a centered
   sheet, with Event prose on the left, Your Choices on the right, independent scrolling,

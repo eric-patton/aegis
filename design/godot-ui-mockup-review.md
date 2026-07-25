@@ -1,8 +1,8 @@
 # Aegis Godot UI mockup review
 
 Status: World-screen, Character Creation, Conversation, and reusable world-event
-architectures approved under D-183 through D-186; Character comparison is next, no
-implementation authorized
+architectures approved under D-183 through D-186; Character architecture comparison
+ready for player review, no implementation authorized
 
 Related decisions: D-182, D-183, D-184, D-185, D-186
 
@@ -20,6 +20,9 @@ Conversation and commerce architecture set:
 
 World-event and action-sheet architecture set:
 `artifacts/d185-world-event-action-sheet-architectures-v1/`
+
+Character architecture set:
+`artifacts/d186-character-architectures-v1/`
 
 ## Purpose
 
@@ -40,7 +43,7 @@ reviewed.
 2. [x] Character Creation (D-184).
 3. [x] Conversation and commerce (D-185).
 4. [x] Reusable world-event and action sheet (D-186).
-5. [~] Character. Controlled architecture comparison is next.
+5. [~] Character. Three controlled architectures are ready for player review.
 6. [ ] Pack and equipment.
 7. [ ] Journal: History, People, Bestiary, and Threads.
 8. [ ] Help.
@@ -202,6 +205,36 @@ and confirmation band stay fixed and reachable.
   independent scroll ownership.
 - Exact icons, tokens, breakpoints, content, map colors, and theme parity remain
   implementation work and may not change the approved hierarchy.
+
+## Character architecture comparison
+
+The Character set holds the approved light visual language, full-window destination,
+launcher, canonical resource colors, seven attributes, eighteen skills, and durable
+character-state scope constant. The generated names, values, descriptions, icons, and
+choice copy are illustrative. Production content must come only from existing semantic
+projections. The three images change how the player browses and understands the record:
+
+1. `01-character-atlas.png`: a three-zone overview keeps identity and condition at left,
+   all eighteen skills in the broad center, and durable state plus pending choices at
+   right. A fixed bottom inspector explains the selected attribute or skill. It offers
+   the fastest cross-system comparison and is the recommendation for a screen the player
+   will revisit often.
+2. `02-character-ledger.png`: a section navigator, complete browse list, and deep
+   inspector form a master-detail reference tool. It gives selected mechanics, growth,
+   earned choices, and related state the strongest explanation and scales cleanly to
+   large text, but only one family is readily comparable at a time.
+3. `03-character-record.png`: a sticky section index navigates one continuous scrollable
+   document. Attributes, skills, knacks, lessons, burden, scars, standing, and pending
+   choices read as one long-lived record, with details expanding inline. It is the most
+   coherent and extensible over a long campaign, but requires more vertical travel and
+   makes distant systems harder to compare.
+
+All three exclude equipment and inventory, preserve Health, Stamina, and Focus as thin
+icon-led bars, expose pending progression instead of hiding it, and require selection and
+keyboard focus to remain visually distinct. The final contract must cover zero, short,
+and long collections; all eighteen skills; pending and resolved choices; long
+descriptions; independent or single-scroll ownership as appropriate; keyboard and
+pointer parity; and narrow or high-scale fallbacks.
 
 Chronicle Stage was the recommendation before this refinement. The player approved
 `06-map-workspace-sidebar-icons.png` under D-183 as the structural world-screen base
@@ -428,7 +461,6 @@ shape is the same.
 
 1. Settle the exact light-theme surface treatment and canonical map-glyph palette on
    the approved D-183 world geometry.
-2. Approve the reusable world-event and action-sheet grammar.
-3. Approve Character, Pack and equipment, Journal, Help, and Settings.
-4. Approve Campaign entry, pause, save, confirmation, and boundary states.
-5. Approve the focused task-surface variants and the complete responsive/theme matrix.
+2. Approve Character, Pack and equipment, Journal, Help, and Settings.
+3. Approve Campaign entry, pause, save, confirmation, and boundary states.
+4. Approve the focused task-surface variants and the complete responsive/theme matrix.

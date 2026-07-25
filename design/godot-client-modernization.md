@@ -2,7 +2,7 @@
 
 Status: Approved under D-182, Phases 1 and 2 implemented and verified; D-183 through
 D-186 world, Character Creation, Conversation, and reusable world-event bases approved,
-Character comparison next before Phase 3
+Character architecture comparison ready for player review before Phase 3
 
 ## Implementation status
 
@@ -25,10 +25,11 @@ Talk, Trade, and Services architecture, including its action list, bottom-follow
 transcript, persistent resource context, and selected-action explanation band. Phase 3
 implementation remains paused. D-186 approves the centered reusable world-event sheet
 with independently scrolling Event and Your Choices panes plus a fixed explanation and
-confirmation band. Character and the remaining screen families in
-`design/godot-ui-mockup-review.md` are next. The approved next build will remediate the
-review findings before or with the dedicated Character, Inventory, and Equipment
-surfaces.
+confirmation band. Three controlled Character architectures are now ready for player
+review in `design/godot-ui-mockup-review.md`; Character Atlas is recommended for its
+immediate cross-system view. The remaining screen families follow. The approved next
+build will remediate the review findings before or with the dedicated Character,
+Inventory, and Equipment surfaces.
 
 ## Purpose
 

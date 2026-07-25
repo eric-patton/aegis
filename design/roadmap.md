@@ -57,9 +57,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   Implemented under D-174, but its terminal candidate is superseded by D-175. V1-10 is
   Implemented under D-177, and its clean candidate is built under D-178. The bounded
   D-181 Godot presentation spike is built and verified, D-182 approves the complete
-  modernization contract, and D-183 through D-185 lock the world, Character Creation,
-  and Conversation bases. Phases 1 and 2 are built and verified. The remaining screen
-  review, Phases 3 through 5, the
+  modernization contract, and D-183 through D-186 lock the world, Character Creation,
+  Conversation, and reusable event-sheet bases. Phases 1 and 2 are built and verified.
+  The remaining screen review, Phases 3 through 5, the
   replacement candidate, a fresh guided campaign, and explicit signoff remain
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
@@ -236,8 +236,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   - [x] Select and document the D-183 world-screen architecture before revising
     individual screen mockups
   - [~] Review and approve the visual contract in `design/godot-ui-mockup-review.md`
-    before Phase 3 implementation (world-screen structure approved D-183; all other
-    screen families remain)
+    before Phase 3 implementation (world, creation, conversation, and event-sheet
+    structures approved D-183 through D-186; remaining screen families continue)
   - [ ] Design player-facing campaign entry: title, Continue, New campaign, campaign
     slots, load, safe deletion, version, and quit
   - [x] Design full-window Character Creation across all stages, review, long content,
@@ -245,9 +245,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   - [x] Design Conversation and commerce across Talk, Trade, and Services, including
     transcript, relevant resources, requirements, affordability, confirmations, and
     responsive stacking (D-185)
-  - [~] Design the reusable world-event and action-sheet grammar that replaces every
-    remaining legacy event surface (Centered Field Sheet selected; player-directed
-    split-scroll refinement ready for confirmation)
+  - [x] Design the reusable world-event and action-sheet grammar that replaces every
+    remaining legacy event surface (D-186)
   - [ ] Modern dedicated character, inventory, and equipment screens, including
     keyboard and pointer access to all ten launch gear entries
   - [ ] Journal screen with current-session history plus read-only people, bestiary,
@@ -903,11 +902,15 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-25: **D-186 gives event prose and choices independent room.** The canonical
+  `04-centered-field-sheet-split-scroll.png` preserves map context around a centered
+  sheet, with Event prose on the left, Your Choices on the right, independent scrolling,
+  and a fixed selected-action band beneath both. Character is the next visual decision.
 - 2026-07-25: **Centered Field Sheet gains independent prose and choice scrolling.**
   The player selects the centered event architecture and requests event text on the
   left, options on the right, and separate scroll ownership for both. The refined
   `04-centered-field-sheet-split-scroll.png` keeps its header and selected-action band
-  fixed. It is ready for confirmation before D-186 is recorded.
+  fixed. It became the approved D-186 base after confirmation.
 - 2026-07-24: **The reusable world-event sheet receives three controlled
   architectures.** Centered Field Sheet, Docked Side Sheet, and Lower Stage Sheet keep
   the D-183 world shell and D-185 selected-action grammar fixed while changing how the

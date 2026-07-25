@@ -1,10 +1,10 @@
 # Aegis Godot UI mockup review
 
-Status: World-screen, Character Creation, and Conversation architectures approved under
-D-183 through D-185; reusable world-event and action-sheet comparison ready for player
-review, no implementation authorized
+Status: World-screen, Character Creation, Conversation, and reusable world-event
+architectures approved under D-183 through D-186; Character comparison is next, no
+implementation authorized
 
-Related decisions: D-182, D-183, D-184, D-185
+Related decisions: D-182, D-183, D-184, D-185, D-186
 
 Mockup set: `artifacts/d182-ui-mockups-v1/`
 
@@ -39,9 +39,8 @@ reviewed.
 1. [x] World-screen structure (D-183).
 2. [x] Character Creation (D-184).
 3. [x] Conversation and commerce (D-185).
-4. [~] Reusable world-event and action sheet. The player selected Centered Field Sheet
-   and requested a split-scroll refinement, now ready for confirmation.
-5. [ ] Character.
+4. [x] Reusable world-event and action sheet (D-186).
+5. [~] Character. Controlled architecture comparison is next.
 6. [ ] Pack and equipment.
 7. [ ] Journal: History, People, Bestiary, and Threads.
 8. [ ] Help.
@@ -167,12 +166,12 @@ sheet's relationship to the map changes:
    upper map remains unobstructed. Prose and choices sit side by side above one
    explanation band. It feels most directly attached to movement, but gives long prose
    the least vertical room and needs the earliest stacked fallback.
-4. `04-centered-field-sheet-split-scroll.png`: the player-directed refinement keeps the
+4. `04-centered-field-sheet-split-scroll.png`: the player-approved refinement keeps the
    centered sheet and map context from the recommended first architecture, then divides
    its interior into independently scrolling Event and Your Choices panes. The header
    and full-width selected-action band remain fixed. This gives long prose and long
    option lists separate capacity without turning the sheet into a full-window
-   destination. It is the active candidate for approval.
+   destination. It is canonical under D-186.
 
 All candidates preserve the complete right sidebar and map footer, use the custom square-cell
 glyph map rather than an illustrated map, keep Close explicit, distinguish checked from
@@ -185,6 +184,24 @@ The split-scroll refinement adds one responsive rule to that contract: at ordina
 desktop widths, Event and Your Choices scroll independently side by side. At narrow
 widths or high text scale they stack into separately bounded regions, while the header
 and confirmation band stay fixed and reachable.
+
+## Approved world-event and action-sheet base
+
+- `04-centered-field-sheet-split-scroll.png` is canonical under D-186.
+- The centered sheet keeps map context visible on all four sides and preserves the
+  complete D-183 sidebar and map-only footer.
+- The header remains fixed and keeps Close explicit.
+- Event prose owns the left pane and its scroll position. Your Choices owns the right
+  pane and its scroll position.
+- The full-width selected-action band remains fixed beneath both panes and carries
+  visible check state, known values, requirements, uncertainty, consequence, disabled
+  reasons, and confirmation.
+- Multi-step events update in place, results require clear acknowledgement, and leaving
+  returns focus to the world.
+- Narrow or high-scale layouts stack the separately bounded panes without surrendering
+  independent scroll ownership.
+- Exact icons, tokens, breakpoints, content, map colors, and theme parity remain
+  implementation work and may not change the approved hierarchy.
 
 Chronicle Stage was the recommendation before this refinement. The player approved
 `06-map-workspace-sidebar-icons.png` under D-183 as the structural world-screen base

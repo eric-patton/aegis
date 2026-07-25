@@ -1,8 +1,8 @@
 # Aegis Godot client modernization
 
 Status: Approved under D-182, Phases 1 and 2 implemented and verified; D-183 through
-D-185 world, Character Creation, and Conversation bases approved, reusable world-event
-and action-sheet comparison ready for player review before Phase 3
+D-186 world, Character Creation, Conversation, and reusable world-event bases approved,
+Character comparison next before Phase 3
 
 ## Implementation status
 
@@ -23,10 +23,12 @@ colors. D-184 approves the full-window Focused Question creation architecture an
 non-repeating explained-selection band. D-185 approves Conversation Desk as the shared
 Talk, Trade, and Services architecture, including its action list, bottom-following
 transcript, persistent resource context, and selected-action explanation band. Phase 3
-implementation remains paused while the reusable world-event sheet and remaining screen
-families in `design/godot-ui-mockup-review.md` are reviewed. The approved next build will
-remediate those findings before or with the dedicated Character, Inventory, and
-Equipment surfaces.
+implementation remains paused. D-186 approves the centered reusable world-event sheet
+with independently scrolling Event and Your Choices panes plus a fixed explanation and
+confirmation band. Character and the remaining screen families in
+`design/godot-ui-mockup-review.md` are next. The approved next build will remediate the
+review findings before or with the dedicated Character, Inventory, and Equipment
+surfaces.
 
 ## Purpose
 

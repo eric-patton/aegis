@@ -1,10 +1,10 @@
 # Aegis Godot UI mockup review
 
-Status: World-screen and Character Creation architectures approved under D-183 and
-D-184; Conversation and commerce comparison ready for player review, no implementation
+Status: World-screen, Character Creation, and Conversation architectures approved under
+D-183 through D-185; reusable world-event and action sheet is next, no implementation
 authorized
 
-Related decisions: D-182, D-183, D-184
+Related decisions: D-182, D-183, D-184, D-185
 
 Mockup set: `artifacts/d182-ui-mockups-v1/`
 
@@ -35,10 +35,8 @@ reviewed.
 
 1. [x] World-screen structure (D-183).
 2. [x] Character Creation (D-184).
-3. [~] Conversation and commerce. Three controlled architectures are ready, with
-   Conversation Desk recommended.
-4. [ ] Reusable world-event and action sheet. This is next after Conversation and
-   commerce is approved.
+3. [x] Conversation and commerce (D-185).
+4. [ ] Reusable world-event and action sheet. This is next.
 5. [ ] Character.
 6. [ ] Pack and equipment.
 7. [ ] Journal: History, People, Bestiary, and Threads.
@@ -128,6 +126,24 @@ selected action, keep focus inside the task workspace, and reserve complete cont
 Help. The final contract must also define bottom-follow behavior, deliberate scroll-away
 preservation, disabled reasons, confirmations, keyboard and pointer parity, and the
 split-to-stacked responsive state.
+
+## Approved Conversation and commerce base
+
+- `01-conversation-desk.png` is canonical under D-185.
+- The focused task workspace replaces the map region while the D-183 launcher and
+  complete right sidebar remain visible.
+- Talk, Trade, and Services share one mode row and one interaction grammar.
+- A scrollable action list sits beside the larger bottom-following transcript.
+- Deliberate transcript scroll-away pauses follow-tail and exposes a return-to-newest
+  action.
+- The full-width selected-action band owns explanation, price, requirements,
+  affordability, consequences, disabled reasons, and confirmation.
+- Buying, selling, repair, and other services reuse the same hierarchy with suitable
+  list and detail content.
+- Narrow or high-scale layouts stack actions above transcript and detail without
+  horizontal prose scrolling.
+- Exact icons, tokens, density, breakpoints, and theme parity remain implementation
+  work and may not change the approved hierarchy.
 
 Chronicle Stage was the recommendation before this refinement. The player approved
 `06-map-workspace-sidebar-icons.png` under D-183 as the structural world-screen base
@@ -354,7 +370,7 @@ shape is the same.
 
 1. Settle the exact light-theme surface treatment and canonical map-glyph palette on
    the approved D-183 world geometry.
-2. Approve Conversation and commerce plus the reusable event and action-sheet grammar.
+2. Approve the reusable world-event and action-sheet grammar.
 3. Approve Character, Pack and equipment, Journal, Help, and Settings.
 4. Approve Campaign entry, pause, save, confirmation, and boundary states.
 5. Approve the focused task-surface variants and the complete responsive/theme matrix.

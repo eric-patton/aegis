@@ -57,8 +57,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   Implemented under D-174, but its terminal candidate is superseded by D-175. V1-10 is
   Implemented under D-177, and its clean candidate is built under D-178. The bounded
   D-181 Godot presentation spike is built and verified, D-182 approves the complete
-  modernization contract, and D-183 locks the world-screen layout base. Phases 1 and 2
-  are built and verified. The remaining screen review, Phases 3 through 5, the
+  modernization contract, and D-183 through D-185 lock the world, Character Creation,
+  and Conversation bases. Phases 1 and 2 are built and verified. The remaining screen
+  review, Phases 3 through 5, the
   replacement candidate, a fresh guided campaign, and explicit signoff remain
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
@@ -241,9 +242,11 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     slots, load, safe deletion, version, and quit
   - [x] Design full-window Character Creation across all stages, review, long content,
     and supported responsive states (D-184)
-  - [~] Design Conversation and commerce plus the reusable world-event and action-sheet
-    grammar that replaces every remaining legacy surface (three Conversation and
-    commerce architectures ready for review; world-event sheet is next)
+  - [x] Design Conversation and commerce across Talk, Trade, and Services, including
+    transcript, relevant resources, requirements, affordability, confirmations, and
+    responsive stacking (D-185)
+  - [ ] Design the reusable world-event and action-sheet grammar that replaces every
+    remaining legacy event surface
   - [ ] Modern dedicated character, inventory, and equipment screens, including
     keyboard and pointer access to all ten launch gear entries
   - [ ] Journal screen with current-session history plus read-only people, bestiary,
@@ -899,6 +902,12 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-24: **D-185 puts words and wares at one Conversation Desk.**
+  `01-conversation-desk.png` is canonical. Talk, Trade, and Services share one split
+  action-list and transcript workspace while the D-183 sidebar remains visible. The
+  selected-action band owns explanation, price, requirements, affordability,
+  consequences, disabled reasons, and confirmation. The reusable world-event and action
+  sheet is now the active next design.
 - 2026-07-24: **Conversation and commerce receives three controlled architectures.**
   Conversation Desk, Thread and Cards, and Exchange Table keep the D-183 world shell
   and light visual language fixed while changing the interaction model. Conversation

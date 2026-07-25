@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-24, D-184 Character Creation base approved)
+# Aegis handoff (updated 2026-07-24, D-185 Conversation Desk approved)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,10 +8,10 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-184 currently at its head), then the parking lot of open
+  newest-first block (D-185 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-184)". Bump it whenever a decision lands.
+  "(D-001 through D-185)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence is complete;
   V1-09 is built, and D-175 supersedes its terminal candidate.
 - `design/plan-1.0.md`: the canonical ten-card implementation queue. V1-01 through V1-08
@@ -19,7 +19,7 @@ The canonical design truth stays where it always was:
 - `design/sadconsole-client-migration.md`: the implemented V1-10 contract.
 - `design/godot-presentation-spike.md`: the approved D-181 host-decision proof.
 - `design/godot-client-modernization.md`: the approved D-182 shipping-client contract.
-- `design/godot-ui-mockup-review.md`: the active D-182/D-184 visual-contract review.
+- `design/godot-ui-mockup-review.md`: the active D-182/D-185 visual-contract review.
 - `design/story/`: arc spec and world-story templates. Full story detail lives there.
 - `docs/dev-harness.md`: the pilot/sim/journey harness.
 
@@ -77,13 +77,16 @@ The canonical design truth stays where it always was:
   `artifacts/d183-character-creation-architectures-v1/`: Focused Question, Comparison
   Workbench, Scrolling Ledger, Choice Gallery, and the approved hybrid.
   `05-focused-question-explained-selection.png` is canonical.
-- Conversation and commerce is now the active player decision. Three controlled
+- D-185 approves Conversation Desk as the canonical Conversation and commerce
+  architecture. Three controlled
   architectures are preserved under
   `artifacts/d184-conversation-commerce-architectures-v1/`: Conversation Desk, Thread
   and Cards, and Exchange Table. Conversation Desk is recommended because its stable
   list, transcript, and selected-action band can carry both ordinary exchange and large
-  catalogs. These are proposals, not an approved D-185 decision. The reusable
-  world-event sheet is next immediately after this choice.
+  catalogs. The D-183 sidebar remains visible, Talk, Trade, and Services share one
+  grammar, and responsive stacking, bottom-follow ownership, resource context, and
+  confirmations are part of the approval. The reusable world-event and action sheet is
+  now the active next review.
 - Core and Host now multi-target .NET 8 and .NET 10. Godot uses .NET 8 for runtime
   compatibility. Existing clients, tools, and tests remain on .NET 10.
 - D-175 through D-178 remain the implemented SadConsole baseline and clean candidate.
@@ -315,22 +318,19 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Review the three Conversation and commerce architectures on the D-183 visual base
-   and select one or request a hybrid. Record the approved interaction grammar before
-   implementation.
-2. Review the reusable world-event and action sheet using the selected Conversation
-   grammar where appropriate.
-3. Review Character, Pack, Journal, Help, Settings, campaign entry, system states, and
+1. Review the reusable world-event and action sheet using the D-183 world base and the
+   D-185 selected-action grammar where appropriate.
+2. Review Character, Pack, Journal, Help, Settings, campaign entry, system states, and
    remaining task surfaces in the order recorded by
    `design/godot-ui-mockup-review.md`.
-4. Complete the responsive and light/dark parity matrix, then implement the approved
+3. Complete the responsive and light/dark parity matrix, then implement the approved
    D-182 Phase 2 remediation and produce a fresh packaged checkpoint.
-5. Implement D-182 Phase 3: dedicated modern Character, Inventory, and Equipment
+4. Implement D-182 Phase 3: dedicated modern Character, Inventory, and Equipment
    screens with every canonical action and required long, empty, under-met, and
    pending-choice state.
-6. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
+5. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
    review gate.
-7. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
+6. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
    explicit user approval can make V1-09 and V1-10 Verified and close Aegis 1.0.
 
 ## Handoff hygiene

@@ -1,8 +1,8 @@
 # Aegis Godot client modernization
 
-Status: Approved under D-182, Phases 1 and 2 implemented and verified; D-183 world-screen
-and D-184 Character Creation bases approved, Conversation and commerce comparison ready
-for player review, remaining visual contract under review before Phase 3
+Status: Approved under D-182, Phases 1 and 2 implemented and verified; D-183 through
+D-185 world, Character Creation, and Conversation bases approved, reusable world-event
+and action sheet next before Phase 3
 
 ## Implementation status
 
@@ -20,12 +20,13 @@ zoom, and shell-level information design questions. D-183 now approves the Map a
 Workspace world geometry with its fixed condition, Activity, and currency sidebar,
 floating launcher, and map-only context footer. It does not approve the reference map
 colors. D-184 approves the full-window Focused Question creation architecture and its
-non-repeating explained-selection band. Phase 3 implementation remains paused while
-the remaining screen families in `design/godot-ui-mockup-review.md` are reviewed. Three
-controlled Conversation and commerce architectures are now ready for player review,
-with the reusable world-event sheet queued immediately after that decision. The
-approved next build will remediate those findings before or with the dedicated
-Character, Inventory, and Equipment surfaces.
+non-repeating explained-selection band. D-185 approves Conversation Desk as the shared
+Talk, Trade, and Services architecture, including its action list, bottom-following
+transcript, persistent resource context, and selected-action explanation band. Phase 3
+implementation remains paused while the reusable world-event sheet and remaining screen
+families in `design/godot-ui-mockup-review.md` are reviewed. The approved next build will
+remediate those findings before or with the dedicated Character, Inventory, and
+Equipment surfaces.
 
 ## Purpose
 

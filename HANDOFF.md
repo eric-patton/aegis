@@ -87,6 +87,11 @@ The canonical design truth stays where it always was:
   grammar, and responsive stacking, bottom-follow ownership, resource context, and
   confirmations are part of the approval. The reusable world-event and action sheet is
   now the active next review.
+- Three controlled world-event and action-sheet architectures are preserved under
+  `artifacts/d185-world-event-action-sheet-architectures-v1/`: Centered Field Sheet,
+  Docked Side Sheet, and Lower Stage Sheet. Centered Field Sheet is recommended because
+  it gives long prose and visible checks the strongest reading path while retaining map
+  context on all four sides. These are proposals, not an approved D-186 decision.
 - Core and Host now multi-target .NET 8 and .NET 10. Godot uses .NET 8 for runtime
   compatibility. Existing clients, tools, and tests remain on .NET 10.
 - D-175 through D-178 remain the implemented SadConsole baseline and clean candidate.
@@ -318,8 +323,8 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Review the reusable world-event and action sheet using the D-183 world base and the
-   D-185 selected-action grammar where appropriate.
+1. Review the three reusable world-event and action-sheet architectures using the D-183
+   world base and D-185 selected-action grammar, then select one or request a hybrid.
 2. Review Character, Pack, Journal, Help, Settings, campaign entry, system states, and
    remaining task surfaces in the order recorded by
    `design/godot-ui-mockup-review.md`.

@@ -2,7 +2,7 @@
 
 Status: Approved under D-182, Phases 1 and 2 implemented and verified; D-183 through
 D-185 world, Character Creation, and Conversation bases approved, reusable world-event
-and action sheet next before Phase 3
+and action-sheet comparison ready for player review before Phase 3
 
 ## Implementation status
 

@@ -1,8 +1,8 @@
 # Aegis Godot UI mockup review
 
 Status: World-screen, Character Creation, and Conversation architectures approved under
-D-183 through D-185; reusable world-event and action sheet is next, no implementation
-authorized
+D-183 through D-185; reusable world-event and action-sheet comparison ready for player
+review, no implementation authorized
 
 Related decisions: D-182, D-183, D-184, D-185
 
@@ -17,6 +17,9 @@ Character-creation architecture set:
 
 Conversation and commerce architecture set:
 `artifacts/d184-conversation-commerce-architectures-v1/`
+
+World-event and action-sheet architecture set:
+`artifacts/d185-world-event-action-sheet-architectures-v1/`
 
 ## Purpose
 
@@ -36,7 +39,8 @@ reviewed.
 1. [x] World-screen structure (D-183).
 2. [x] Character Creation (D-184).
 3. [x] Conversation and commerce (D-185).
-4. [ ] Reusable world-event and action sheet. This is next.
+4. [~] Reusable world-event and action sheet. Three controlled architectures are ready,
+   with Centered Field Sheet recommended.
 5. [ ] Character.
 6. [ ] Pack and equipment.
 7. [ ] Journal: History, People, Bestiary, and Threads.
@@ -144,6 +148,32 @@ split-to-stacked responsive state.
   horizontal prose scrolling.
 - Exact icons, tokens, density, breakpoints, and theme parity remain implementation
   work and may not change the approved hierarchy.
+
+## World-event and action-sheet architecture comparison
+
+The event-sheet set holds the D-183 world shell, terminal glyph map, fixed sidebar,
+map-only footer, and D-185 selected-action explanation grammar constant. Only the
+sheet's relationship to the map changes:
+
+1. `01-centered-field-sheet.png`: a large sheet floats inside the map workspace with
+   visible map context on all four sides. Long prose has the widest readable measure,
+   choices stack beneath it, and the selected-action band keeps a visible check,
+   consequence, and confirmation together. This is the recommendation because it
+   handles both short choices and long authored text while retaining place.
+2. `02-docked-side-sheet.png`: a tall sheet docks beside a continuously visible map
+   slice. It preserves the strongest direct spatial context and gives choices a stable
+   vertical rail, but narrows long prose and leaves less room for high text scale.
+3. `03-lower-stage-sheet.png`: a full map-width stage rises from the bottom while the
+   upper map remains unobstructed. Prose and choices sit side by side above one
+   explanation band. It feels most directly attached to movement, but gives long prose
+   the least vertical room and needs the earliest stacked fallback.
+
+All three preserve the complete right sidebar and map footer, use the custom square-cell
+glyph map rather than an illustrated map, keep Close explicit, distinguish checked from
+unchecked choices, and show no hidden odds. Exact generated prose, labels, numbers, and
+icons are illustrative only. The final contract must cover long-text scrolling,
+multi-step events, disabled choices, check disclosure, result acknowledgement, focus
+return, keyboard and pointer parity, and narrow or high-scale stacking.
 
 Chronicle Stage was the recommendation before this refinement. The player approved
 `06-map-workspace-sidebar-icons.png` under D-183 as the structural world-screen base

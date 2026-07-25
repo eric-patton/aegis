@@ -245,8 +245,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   - [x] Design Conversation and commerce across Talk, Trade, and Services, including
     transcript, relevant resources, requirements, affordability, confirmations, and
     responsive stacking (D-185)
-  - [ ] Design the reusable world-event and action-sheet grammar that replaces every
-    remaining legacy event surface
+  - [~] Design the reusable world-event and action-sheet grammar that replaces every
+    remaining legacy event surface (three controlled architectures ready for review;
+    Centered Field Sheet recommended)
   - [ ] Modern dedicated character, inventory, and equipment screens, including
     keyboard and pointer access to all ten launch gear entries
   - [ ] Journal screen with current-session history plus read-only people, bestiary,
@@ -902,6 +903,12 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-24: **The reusable world-event sheet receives three controlled
+  architectures.** Centered Field Sheet, Docked Side Sheet, and Lower Stage Sheet keep
+  the D-183 world shell and D-185 selected-action grammar fixed while changing how the
+  sheet relates to the map. Centered Field Sheet is recommended for its readable long
+  prose, visible checks, and map context on all sides. The comparison is ready for
+  player review, not approved.
 - 2026-07-24: **D-185 puts words and wares at one Conversation Desk.**
   `01-conversation-desk.png` is canonical. Talk, Trade, and Services share one split
   action-list and transcript workspace while the D-183 sidebar remains visible. The

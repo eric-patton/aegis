@@ -2,7 +2,8 @@
 
 Status: Approved under D-182, Phases 1 and 2 implemented and verified; D-183 through
 D-187 world, Character Creation, Conversation, reusable world-event, and Character bases
-approved, Pack and equipment comparison next before Phase 3
+approved, Pack and equipment architecture comparison ready for player review before
+Phase 3
 
 ## Implementation status
 
@@ -28,9 +29,10 @@ with independently scrolling Event and Your Choices panes plus a fixed explanati
 confirmation band. D-187 approves Character Ledger as the dedicated Character
 architecture: a section navigator, complete browse list, and deep inspector with
 independent scrolling and a stacked high-scale fallback. Pack and equipment is the next
-screen family in `design/godot-ui-mockup-review.md`. The approved next build will
-remediate the review findings before or with the dedicated Character, Inventory, and
-Equipment surfaces.
+screen family in `design/godot-ui-mockup-review.md`, with three controlled architectures
+ready and Outfitter's Bench recommended. The approved next build will remediate the
+review findings before or with the dedicated Character, Inventory, and Equipment
+surfaces.
 
 ## Purpose
 

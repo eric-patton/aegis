@@ -250,7 +250,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     remaining legacy event surface (D-186)
   - [~] Modern dedicated character, inventory, and equipment screens, including
     keyboard and pointer access to all ten launch gear entries (Character approved
-    D-187; Pack and equipment remain)
+    D-187; Pack and equipment architecture comparison ready)
   - [ ] Journal screen with current-session history plus read-only people, bestiary,
     and active-thread views over knowledge the character has actually earned
   - [ ] Design Help plus Settings and accessibility, including live theme and text-size
@@ -904,6 +904,11 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-25: **Pack and equipment receives three controlled architectures.**
+  Outfitter's Bench, Pack Map, and Inventory Ledger keep the three canonical slots, ten
+  launch gear entries, comparison facts, and carried resources constant while changing
+  the equip-decision model. Outfitter's Bench is recommended. The set is ready for player
+  review before D-188.
 - 2026-07-25: **D-187 opens Character as a master-detail ledger.**
   `02-character-ledger.png` is canonical. A section navigator, complete active list, and
   deep inspector carry every Character family, with independent scrolling, visible

@@ -106,6 +106,14 @@ The canonical design truth stays where it always was:
   Independent list and inspector scrolling, visible pending choices, distinct selection
   and focus, and stacked high-scale behavior are part of the approval. Pack and equipment
   is now the active visual review.
+- Three controlled Pack and equipment architectures are preserved under
+  `artifacts/d187-pack-equipment-architectures-v1/`: Outfitter's Bench, Pack Map, and
+  Inventory Ledger. They hold the approved light language, exactly three equipment slots,
+  ten launch gear entries, comparison facts, honest reduced-benefit state, and carried
+  resources constant while changing the equip-decision model. Outfitter's Bench is
+  recommended because it keeps the selected item, current replacement, requirements,
+  wear, and confirmation in one reading path. The set is ready for player review and no
+  D-188 decision has been recorded.
 - Core and Host now multi-target .NET 8 and .NET 10. Godot uses .NET 8 for runtime
   compatibility. Existing clients, tools, and tests remain on .NET 10.
 - D-175 through D-178 remain the implemented SadConsole baseline and clean candidate.
@@ -337,18 +345,20 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Review Pack and equipment, then Journal, Help, Settings, campaign entry, system
-   states, and remaining
-   task surfaces in the order recorded by
+1. Review the three Pack and equipment architectures under
+   `artifacts/d187-pack-equipment-architectures-v1/`, refine if needed, then record the
+   approved Pack contract as D-188.
+2. Review Journal, Help, Settings, campaign entry, system states, and remaining task
+   surfaces in the order recorded by
    `design/godot-ui-mockup-review.md`.
-2. Complete the responsive and light/dark parity matrix, then implement the approved
+3. Complete the responsive and light/dark parity matrix, then implement the approved
    D-182 Phase 2 remediation and produce a fresh packaged checkpoint.
-3. Implement D-182 Phase 3: dedicated modern Character, Inventory, and Equipment
+4. Implement D-182 Phase 3: dedicated modern Character, Inventory, and Equipment
    screens with every canonical action and required long, empty, under-met, and
    pending-choice state.
-4. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
+5. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
    review gate.
-5. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
+6. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
    explicit user approval can make V1-09 and V1-10 Verified and close Aegis 1.0.
 
 ## Handoff hygiene

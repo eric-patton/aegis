@@ -2,7 +2,7 @@
 
 Status: World-screen, Character Creation, Conversation, reusable world-event, and
 Character architectures approved under D-183 through D-187; Pack and equipment
-comparison is next, no implementation authorized
+architecture comparison ready for player review, no implementation authorized
 
 Related decisions: D-182, D-183, D-184, D-185, D-186, D-187
 
@@ -24,6 +24,9 @@ World-event and action-sheet architecture set:
 Character architecture set:
 `artifacts/d186-character-architectures-v1/`
 
+Pack and equipment architecture set:
+`artifacts/d187-pack-equipment-architectures-v1/`
+
 ## Purpose
 
 The D-182 Phase 2 packaged review showed that individual UI repairs are not enough to
@@ -44,7 +47,7 @@ reviewed.
 3. [x] Conversation and commerce (D-185).
 4. [x] Reusable world-event and action sheet (D-186).
 5. [x] Character (D-187).
-6. [~] Pack and equipment. Controlled architecture comparison is next.
+6. [~] Pack and equipment. Three controlled architectures are ready for player review.
 7. [ ] Journal: History, People, Bestiary, and Threads.
 8. [ ] Help.
 9. [ ] Settings and accessibility.
@@ -255,6 +258,38 @@ pointer parity; and narrow or high-scale fallbacks.
   stack the selected list above its inspector.
 - Exact icons, tokens, density, breakpoints, and generated content remain implementation
   work and may not change the approved hierarchy.
+
+## Pack and equipment architecture comparison
+
+The Pack set holds the approved light visual language, shared launcher, three canonical
+equipment slots, ten launch gear entries, gear facts, carried resources, honest
+under-requirement behavior, and keyboard or pointer reach constant. Generated values,
+descriptions, icons, comparison text, and any noncanonical attribute names are
+illustrative only. Production content must come from semantic projections.
+
+1. `01-outfitters-bench.png`: a fixed three-slot equipped shelf sits above a split
+   carried-gear list and comparison inspector. The selected and currently equipped items
+   align fact by fact, while carried resources remain a secondary band. This is the
+   recommendation because equipping is a decision, and this architecture keeps the item,
+   its replacement, requirements, wear, reduced-benefit state, and confirmation in one
+   reading path.
+2. `02-pack-map.png`: a vertical equipment rail filters a broad field of categorized
+   item tiles, with one focused inspector at right. It gives Weapon, Armor, Ranged, and
+   Resources the strongest spatial identity and makes the three equipped slots tangible,
+   but tiles provide less dense comparison and require earlier stacking at high scale.
+3. `03-inventory-ledger.png`: a compact three-slot strip sits above one full-width gear
+   table. Selection opens a fixed bottom comparison drawer rather than a side inspector,
+   and Resources is a sibling view. It offers the fastest keyboard scan and the strongest
+   growth path for long collections, but its dense table is less approachable for a
+   first-time player.
+
+All three keep exactly Weapon, Armor, and Ranged slots; make every one of the ten launch
+gear entries reachable without the old tenth-item path; separate selection from focus;
+show requirements and reduced benefit in text rather than color alone; keep resources
+secondary to gear; and omit invented capacity, weight, and derived-stat systems. The
+final contract must cover empty slots, no gear, ten or more gear rows, under-requirement
+equipment, worn gear, already-equipped state, resource-only inventory, sorting and
+filtering, confirmation, keyboard and pointer parity, and narrow or high-scale fallbacks.
 
 Chronicle Stage was the recommendation before this refinement. The player approved
 `06-map-workspace-sidebar-icons.png` under D-183 as the structural world-screen base

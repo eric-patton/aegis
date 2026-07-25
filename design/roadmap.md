@@ -57,9 +57,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   Implemented under D-174, but its terminal candidate is superseded by D-175. V1-10 is
   Implemented under D-177, and its clean candidate is built under D-178. The bounded
   D-181 Godot presentation spike is built and verified, D-182 approves the complete
-  modernization contract, and D-183 through D-187 lock the world, Character Creation,
-  Conversation, reusable event-sheet, and Character bases. Phases 1 and 2 are built and
-  verified. The remaining screen review, Phases 3 through 5, the
+  modernization contract, and D-183 through D-188 lock the world, Character Creation,
+  Conversation, reusable event-sheet, Character, and Pack bases. Phases 1 and 2 are
+  built and verified. The remaining screen review, Phases 3 through 5, the
   replacement candidate, a fresh guided campaign, and explicit signoff remain
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
@@ -237,8 +237,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     individual screen mockups
   - [~] Review and approve the visual contract in `design/godot-ui-mockup-review.md`
     before Phase 3 implementation (world, creation, conversation, and event-sheet
-    structures plus Character approved D-183 through D-187; remaining screen families
-    continue)
+    structures plus Character and Pack approved D-183 through D-188; remaining screen
+    families continue)
   - [ ] Design player-facing campaign entry: title, Continue, New campaign, campaign
     slots, load, safe deletion, version, and quit
   - [x] Design full-window Character Creation across all stages, review, long content,
@@ -250,9 +250,10 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     remaining legacy event surface (D-186)
   - [~] Modern dedicated character, inventory, and equipment screens, including
     keyboard and pointer access to all ten launch gear entries (Character approved
-    D-187; Pack and equipment architecture comparison ready)
-  - [ ] Journal screen with current-session history plus read-only people, bestiary,
+    D-187; Pack and equipment approved D-188)
+  - [~] Journal screen with current-session history plus read-only people, bestiary,
     and active-thread views over knowledge the character has actually earned
+    (three architecture options ready for review)
   - [ ] Design Help plus Settings and accessibility, including live theme and text-size
     preview, map-only zoom, and any optional movement assistance
   - [ ] Design rest and attribute raising, progression choices, target selection,
@@ -904,6 +905,15 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-25: **Journal receives three controlled architectures.** Chronicle Desk,
+  Indexed Cabinet, and Open Folio keep the four learned-only sections and approved light
+  language constant while changing chronological, archival, and reading relationships.
+  Chronicle Desk is recommended. The set is ready for player review before D-189.
+- 2026-07-25: **D-188 opens Pack as the Outfitter's Bench.**
+  `01-outfitters-bench.png` is canonical. Its three-slot shelf, sortable gear list,
+  selected-versus-equipped inspector, and secondary resources band form one equip path.
+  Under-requirement gear stays equipable, with unmistakable icon, state text, value,
+  explanation, and confirmation warnings. Journal is next.
 - 2026-07-25: **Pack and equipment receives three controlled architectures.**
   Outfitter's Bench, Pack Map, and Inventory Ledger keep the three canonical slots, ten
   launch gear entries, comparison facts, and carried resources constant while changing

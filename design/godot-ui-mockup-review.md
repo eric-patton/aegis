@@ -1,10 +1,10 @@
 # Aegis Godot UI mockup review
 
-Status: World-screen, Character Creation, Conversation, reusable world-event, and
-Character architectures approved under D-183 through D-187; Pack and equipment
-architecture comparison ready for player review, no implementation authorized
+Status: World-screen, Character Creation, Conversation, reusable world-event, Character,
+and Pack architectures approved under D-183 through D-188; Journal architecture
+comparison ready for player review, no implementation authorized
 
-Related decisions: D-182, D-183, D-184, D-185, D-186, D-187
+Related decisions: D-182, D-183, D-184, D-185, D-186, D-187, D-188
 
 Mockup set: `artifacts/d182-ui-mockups-v1/`
 
@@ -27,6 +27,9 @@ Character architecture set:
 Pack and equipment architecture set:
 `artifacts/d187-pack-equipment-architectures-v1/`
 
+Journal architecture set:
+`artifacts/d188-journal-architectures-v1/`
+
 ## Purpose
 
 The D-182 Phase 2 packaged review showed that individual UI repairs are not enough to
@@ -47,8 +50,9 @@ reviewed.
 3. [x] Conversation and commerce (D-185).
 4. [x] Reusable world-event and action sheet (D-186).
 5. [x] Character (D-187).
-6. [~] Pack and equipment. Three controlled architectures are ready for player review.
-7. [ ] Journal: History, People, Bestiary, and Threads.
+6. [x] Pack and equipment (D-188).
+7. [~] Journal: History, People, Bestiary, and Threads. Three controlled architectures
+   are ready for player review.
 8. [ ] Help.
 9. [ ] Settings and accessibility.
 10. [ ] Campaign entry and system states.
@@ -291,6 +295,59 @@ final contract must cover empty slots, no gear, ten or more gear rows, under-req
 equipment, worn gear, already-equipped state, resource-only inventory, sorting and
 filtering, confirmation, keyboard and pointer parity, and narrow or high-scale fallbacks.
 
+## Approved Pack and equipment base
+
+- `01-outfitters-bench.png` is canonical under D-188.
+- Pack is a full-window destination under the shared launcher.
+- A fixed top shelf shows exactly Weapon, Armor, and Ranged equipped slots.
+- A broad sortable carried-gear list sits beside a deep selected-versus-equipped
+  inspector. Carried resources remain a secondary band.
+- Every one of the ten launch gear entries is reachable by keyboard and pointer.
+- Unmet requirements never block Equip, but they must be unmistakable without relying
+  on color: warning icon, `Reduced benefit` row state, required-versus-current values,
+  inspector warning, plain-language canonical penalty, and confirmation copy.
+- The inspector owns comparison, benefit, requirement, wear, applicable family or move,
+  replacement consequence, and confirmation.
+- Empty slots, no gear, worn gear, already-equipped items, under-requirement items,
+  resources-only inventory, and long lists keep direct text and reachable actions.
+- Narrow or high-scale layouts wrap or stack the equipped shelf and place the list above
+  the inspector without horizontal scrolling.
+- Exact icons, warning colors, tokens, density, breakpoints, and illustrative content
+  remain implementation work and may not change the approved hierarchy.
+
+## Journal architecture comparison
+
+The Journal set holds the approved light visual language, shared launcher, learned-only
+disclosure, and four sections constant: History, People, Bestiary, and Threads. No
+candidate shows locks or counts for undiscovered records. Generated names, values,
+descriptions, icons, and record prose are illustrative only. Production content must
+come from semantic projections.
+
+1. `01-chronicle-desk.png`: History owns a broad chronological workspace with a turn
+   scrubber, grouped record stream, compact search and category filters, and a fixed
+   session rail. Complete message text carries Field, Combat, or Words color without
+   repeated row tags. This is the recommendation because the complete current-session
+   record is the Journal's most frequent reading task, while the other three sections
+   remain one top-level tab away.
+2. `02-indexed-cabinet.png`: four large archival drawers select a broad alphabetized
+   record index and deep inspector, with recent additions across sections in a bottom
+   strip. It gives People, Bestiary, and Threads the strongest reference-library
+   identity, but History becomes one collection among peers rather than the dominant
+   chronological tool.
+3. `03-open-folio.png`: a screen-native two-leaf workspace places a filtered record list
+   on the left and the complete selected record on the right, with section index marks
+   at the edge. It offers the calmest long-form reading and strongest game-specific
+   character, but the paired leaves stack earlier and create more navigation travel for
+   long History sessions.
+
+All three keep History, People, Bestiary, and Threads in one destination; expose only
+knowledge the character has earned; provide honest empty states; keep selection and
+focus distinct; and avoid objectives, hidden steps, reward checklists, or locked
+unknowns. The final contract must cover complete and long current-session History,
+bottom-follow and deliberate scroll-away, loading earlier records, preserving world
+Activity filters and position, zero and long learned collections, record updates,
+search, keyboard and pointer parity, and narrow or high-scale fallbacks.
+
 Chronicle Stage was the recommendation before this refinement. The player approved
 `06-map-workspace-sidebar-icons.png` under D-183 as the structural world-screen base
 because it preserves more map height while making the complete live log persistent.
@@ -516,6 +573,6 @@ shape is the same.
 
 1. Settle the exact light-theme surface treatment and canonical map-glyph palette on
    the approved D-183 world geometry.
-2. Approve Pack and equipment, Journal, Help, and Settings.
+2. Approve Journal, Help, and Settings.
 3. Approve Campaign entry, pause, save, confirmation, and boundary states.
 4. Approve the focused task-surface variants and the complete responsive/theme matrix.

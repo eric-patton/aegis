@@ -1,9 +1,8 @@
 # Aegis Godot client modernization
 
 Status: Approved under D-182, Phases 1 and 2 implemented and verified; D-183 through
-D-187 world, Character Creation, Conversation, reusable world-event, and Character bases
-approved, Pack and equipment architecture comparison ready for player review before
-Phase 3
+D-188 world, Character Creation, Conversation, reusable world-event, Character, and Pack
+bases approved, Journal architecture comparison ready for player review before Phase 3
 
 ## Implementation status
 
@@ -28,9 +27,11 @@ implementation remains paused. D-186 approves the centered reusable world-event 
 with independently scrolling Event and Your Choices panes plus a fixed explanation and
 confirmation band. D-187 approves Character Ledger as the dedicated Character
 architecture: a section navigator, complete browse list, and deep inspector with
-independent scrolling and a stacked high-scale fallback. Pack and equipment is the next
-screen family in `design/godot-ui-mockup-review.md`, with three controlled architectures
-ready and Outfitter's Bench recommended. The approved next build will remediate the
+independent scrolling and a stacked high-scale fallback. D-188 approves Pack and
+equipment as Outfitter's Bench, with an unmistakable
+under-requirement warning that does not block Equip. Journal is the next screen family
+in `design/godot-ui-mockup-review.md`, with three controlled architectures ready and
+Chronicle Desk recommended. The approved next build will remediate the
 review findings before or with the dedicated Character, Inventory, and Equipment
 surfaces.
 
@@ -376,6 +377,14 @@ A dedicated full-window screen replaces the combined terminal list:
   selects the tenth. This replaces the current inaccessible `:` tenth-item path and
   is included in the save v101 engine sweep.
 
+D-188 approves Outfitter's Bench as the visual and interaction base. At ordinary
+desktop widths, a fixed three-slot shelf sits above a sortable carried-gear list and
+selected-versus-equipped inspector, with resources in a secondary band. An unmet
+requirement uses a warning icon, explicit `Reduced benefit` state, required and current
+values, plain-language penalty, and confirmation copy. Equip remains available.
+At narrow widths or high text scale, the shelf wraps or stacks and the list moves above
+the inspector without losing the warning or confirmation path.
+
 ### Journal
 
 One `Journal` destination contains four tabs:
@@ -396,6 +405,13 @@ receive a small deterministic knowledge ledger if existing facts cannot prove th
 character learned an entry. That ledger is end-appended, journal-derived, and covered
 by the same full engine sweep. It records discovery only and cannot affect gameplay
 eligibility.
+
+Three controlled Journal architectures are ready under
+`artifacts/d188-journal-architectures-v1/`. Chronicle Desk is recommended because it
+gives complete current-session History the strongest chronological reading and filtering
+surface while keeping People, Bestiary, and Threads adjacent. Indexed Cabinet prioritizes
+reference browsing, while Open Folio prioritizes long-form selected-record reading.
+No architecture may show locks or counts for undiscovered records.
 
 ## Responsive contract
 

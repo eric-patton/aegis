@@ -57,9 +57,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   Implemented under D-174, but its terminal candidate is superseded by D-175. V1-10 is
   Implemented under D-177, and its clean candidate is built under D-178. The bounded
   D-181 Godot presentation spike is built and verified, D-182 approves the complete
-  modernization contract, and D-183 through D-186 lock the world, Character Creation,
-  Conversation, and reusable event-sheet bases. Phases 1 and 2 are built and verified.
-  The remaining screen review, Phases 3 through 5, the
+  modernization contract, and D-183 through D-187 lock the world, Character Creation,
+  Conversation, reusable event-sheet, and Character bases. Phases 1 and 2 are built and
+  verified. The remaining screen review, Phases 3 through 5, the
   replacement candidate, a fresh guided campaign, and explicit signoff remain
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
@@ -237,7 +237,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     individual screen mockups
   - [~] Review and approve the visual contract in `design/godot-ui-mockup-review.md`
     before Phase 3 implementation (world, creation, conversation, and event-sheet
-    structures approved D-183 through D-186; remaining screen families continue)
+    structures plus Character approved D-183 through D-187; remaining screen families
+    continue)
   - [ ] Design player-facing campaign entry: title, Continue, New campaign, campaign
     slots, load, safe deletion, version, and quit
   - [x] Design full-window Character Creation across all stages, review, long content,
@@ -248,8 +249,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   - [x] Design the reusable world-event and action-sheet grammar that replaces every
     remaining legacy event surface (D-186)
   - [~] Modern dedicated character, inventory, and equipment screens, including
-    keyboard and pointer access to all ten launch gear entries (Character architecture
-    comparison ready; Pack and equipment remain)
+    keyboard and pointer access to all ten launch gear entries (Character approved
+    D-187; Pack and equipment remain)
   - [ ] Journal screen with current-session history plus read-only people, bestiary,
     and active-thread views over knowledge the character has actually earned
   - [ ] Design Help plus Settings and accessibility, including live theme and text-size
@@ -903,6 +904,10 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-25: **D-187 opens Character as a master-detail ledger.**
+  `02-character-ledger.png` is canonical. A section navigator, complete active list, and
+  deep inspector carry every Character family, with independent scrolling, visible
+  pending progression, and a stacked high-scale fallback. Pack and equipment is next.
 - 2026-07-25: **Character receives three controlled architectures.** Character Atlas,
   Character Ledger, and Character Record keep the approved light language and canonical
   information scope while changing comparison, explanation, and scrolling. Character

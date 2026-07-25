@@ -1,10 +1,10 @@
 # Aegis Godot UI mockup review
 
-Status: World-screen, Character Creation, Conversation, and reusable world-event
-architectures approved under D-183 through D-186; Character architecture comparison
-ready for player review, no implementation authorized
+Status: World-screen, Character Creation, Conversation, reusable world-event, and
+Character architectures approved under D-183 through D-187; Pack and equipment
+comparison is next, no implementation authorized
 
-Related decisions: D-182, D-183, D-184, D-185, D-186
+Related decisions: D-182, D-183, D-184, D-185, D-186, D-187
 
 Mockup set: `artifacts/d182-ui-mockups-v1/`
 
@@ -43,8 +43,8 @@ reviewed.
 2. [x] Character Creation (D-184).
 3. [x] Conversation and commerce (D-185).
 4. [x] Reusable world-event and action sheet (D-186).
-5. [~] Character. Three controlled architectures are ready for player review.
-6. [ ] Pack and equipment.
+5. [x] Character (D-187).
+6. [~] Pack and equipment. Controlled architecture comparison is next.
 7. [ ] Journal: History, People, Bestiary, and Threads.
 8. [ ] Help.
 9. [ ] Settings and accessibility.
@@ -222,7 +222,8 @@ projections. The three images change how the player browses and understands the 
 2. `02-character-ledger.png`: a section navigator, complete browse list, and deep
    inspector form a master-detail reference tool. It gives selected mechanics, growth,
    earned choices, and related state the strongest explanation and scales cleanly to
-   large text, but only one family is readily comparable at a time.
+   large text, but only one family is readily comparable at a time. It is canonical
+   under D-187.
 3. `03-character-record.png`: a sticky section index navigates one continuous scrollable
    document. Attributes, skills, knacks, lessons, burden, scars, standing, and pending
    choices read as one long-lived record, with details expanding inline. It is the most
@@ -235,6 +236,25 @@ keyboard focus to remain visually distinct. The final contract must cover zero, 
 and long collections; all eighteen skills; pending and resolved choices; long
 descriptions; independent or single-scroll ownership as appropriate; keyboard and
 pointer parity; and narrow or high-scale fallbacks.
+
+## Approved Character base
+
+- `02-character-ledger.png` is canonical under D-187.
+- Character is a full-window destination under the shared launcher. Pack remains a
+  separate destination.
+- Identity plus thin Health, Stamina, and Focus bars remain visible while browsing.
+- A left section navigator, complete middle list, and deep right inspector share one
+  master-detail grammar across every Character section.
+- The middle list and inspector scroll independently. Selection and keyboard focus remain
+  distinct, and directional navigation stays within the active region.
+- All seven attributes, all eighteen skills and progress, knacks, lessons, burden, scars,
+  standing, and pending choices come from semantic projections.
+- Pending progression stays visible and opens as a focused, fully explained decision in
+  the inspector.
+- Narrow or high-scale layouts replace the left rail with a compact section control and
+  stack the selected list above its inspector.
+- Exact icons, tokens, density, breakpoints, and generated content remain implementation
+  work and may not change the approved hierarchy.
 
 Chronicle Stage was the recommendation before this refinement. The player approved
 `06-map-workspace-sidebar-icons.png` under D-183 as the structural world-screen base
@@ -461,6 +481,6 @@ shape is the same.
 
 1. Settle the exact light-theme surface treatment and canonical map-glyph palette on
    the approved D-183 world geometry.
-2. Approve Character, Pack and equipment, Journal, Help, and Settings.
+2. Approve Pack and equipment, Journal, Help, and Settings.
 3. Approve Campaign entry, pause, save, confirmation, and boundary states.
 4. Approve the focused task-surface variants and the complete responsive/theme matrix.

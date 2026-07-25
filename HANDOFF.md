@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-25, D-186 event sheet approved)
+# Aegis handoff (updated 2026-07-25, D-187 Character Ledger approved)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,10 +8,10 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-186 currently at its head), then the parking lot of open
+  newest-first block (D-187 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-186)". Bump it whenever a decision lands.
+  "(D-001 through D-187)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence is complete;
   V1-09 is built, and D-175 supersedes its terminal candidate.
 - `design/plan-1.0.md`: the canonical ten-card implementation queue. V1-01 through V1-08
@@ -19,7 +19,7 @@ The canonical design truth stays where it always was:
 - `design/sadconsole-client-migration.md`: the implemented V1-10 contract.
 - `design/godot-presentation-spike.md`: the approved D-181 host-decision proof.
 - `design/godot-client-modernization.md`: the approved D-182 shipping-client contract.
-- `design/godot-ui-mockup-review.md`: the active D-182/D-186 visual-contract review.
+- `design/godot-ui-mockup-review.md`: the active D-182/D-187 visual-contract review.
 - `design/story/`: arc spec and world-story templates. Full story detail lives there.
 - `docs/dev-harness.md`: the pilot/sim/journey harness.
 
@@ -101,9 +101,11 @@ The canonical design truth stays where it always was:
   `artifacts/d186-character-architectures-v1/`: Character Atlas, Character Ledger, and
   Character Record. They hold the approved light language and canonical information
   scope constant while changing comparison, explanation, and scroll ownership.
-  Character Atlas is recommended because the frequently revisited screen benefits from
-  immediate cross-system comparison. The set is ready for player review and no D-187
-  decision has been recorded.
+  `02-character-ledger.png` is approved under D-187. Its section navigator, complete
+  active list, and deep inspector form one grammar across every Character section.
+  Independent list and inspector scrolling, visible pending choices, distinct selection
+  and focus, and stacked high-scale behavior are part of the approval. Pack and equipment
+  is now the active visual review.
 - Core and Host now multi-target .NET 8 and .NET 10. Godot uses .NET 8 for runtime
   compatibility. Existing clients, tools, and tests remain on .NET 10.
 - D-175 through D-178 remain the implemented SadConsole baseline and clean candidate.
@@ -335,20 +337,18 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Review the three Character architectures under
-   `artifacts/d186-character-architectures-v1/`, refine if needed, then record the
-   approved Character contract as D-187.
-2. Review Pack, Journal, Help, Settings, campaign entry, system states, and remaining
+1. Review Pack and equipment, then Journal, Help, Settings, campaign entry, system
+   states, and remaining
    task surfaces in the order recorded by
    `design/godot-ui-mockup-review.md`.
-3. Complete the responsive and light/dark parity matrix, then implement the approved
+2. Complete the responsive and light/dark parity matrix, then implement the approved
    D-182 Phase 2 remediation and produce a fresh packaged checkpoint.
-4. Implement D-182 Phase 3: dedicated modern Character, Inventory, and Equipment
+3. Implement D-182 Phase 3: dedicated modern Character, Inventory, and Equipment
    screens with every canonical action and required long, empty, under-met, and
    pending-choice state.
-5. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
+4. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
    review gate.
-6. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
+5. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
    explicit user approval can make V1-09 and V1-10 Verified and close Aegis 1.0.
 
 ## Handoff hygiene

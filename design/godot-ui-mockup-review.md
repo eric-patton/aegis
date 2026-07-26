@@ -1,11 +1,11 @@
 # Aegis Godot UI mockup review
 
 Status: World-screen, Character Creation, Conversation, reusable world-event, Character,
-Pack, Journal, and Help architectures approved under D-183 through D-190; Settings and
-accessibility architecture comparison ready for player review, no implementation
-authorized
+Pack, Journal, Help, and Settings architectures approved under D-183 through D-191;
+campaign entry and system-state architecture comparison ready for player review, no
+implementation authorized
 
-Related decisions: D-182, D-183, D-184, D-185, D-186, D-187, D-188, D-189, D-190
+Related decisions: D-182, D-183, D-184, D-185, D-186, D-187, D-188, D-189, D-190, D-191
 
 Mockup set: `artifacts/d182-ui-mockups-v1/`
 
@@ -37,6 +37,9 @@ Help architecture set:
 Settings and accessibility architecture set:
 `artifacts/d190-settings-accessibility-architectures-v1/`
 
+Campaign entry and system-state architecture set:
+`artifacts/d191-campaign-entry-system-states-architectures-v1/`
+
 ## Purpose
 
 The D-182 Phase 2 packaged review showed that individual UI repairs are not enough to
@@ -60,9 +63,9 @@ reviewed.
 6. [x] Pack and equipment (D-188).
 7. [x] Journal: History, People, Bestiary, and Threads (D-189).
 8. [x] Help (D-190).
-9. [~] Settings and accessibility: three controlled architectures are ready for player
-   review.
-10. [ ] Campaign entry and system states.
+9. [x] Settings and accessibility (D-191).
+10. [~] Campaign entry and system states: controlled architectures are ready for player
+    review.
 11. [ ] Remaining focused task-surface variants.
 12. [ ] Complete responsive and light/dark parity matrix.
 
@@ -463,6 +466,64 @@ contract must settle save semantics, restore defaults, unsaved-change handling, 
 mode transitions, exact UI scales, text spacing, map zoom limits and shortcuts, reduced
 motion, input reference or rebinding scope, optional movement assistance, focus return,
 and narrow or high-scale fallbacks.
+
+## Approved Settings and accessibility base
+
+D-191 approves `01-live-preview-workshop.png` as the canonical Settings architecture.
+The left rail selects Display, Text, Map, Input, or Motion; the center owns grouped
+controls for the active category; and the fixed right preview keeps a square-cell map
+sample, prose, Activity colors, and focus treatment visible together. A stable action
+bar owns Reset section, Revert, and Save changes.
+
+Changes preview immediately but remain provisional. Save commits, Revert restores the
+last saved values, and Reset section affects only the active category. Leaving with
+unsaved changes offers Save, Discard, and Cancel. Window-mode changes receive their own
+keep-or-revert confirmation. UI scale reflows semantic screens, while map zoom changes
+square map cells only and retains Ctrl+minus, Ctrl+plus, and Ctrl+0. Reduced motion never
+changes engine pacing. Input guidance does not promise arbitrary v1 rebinding.
+
+At narrow widths or high scale, categories become a drawer and the preview stacks after
+the controls or becomes a reachable preview drawer. The action bar and invoking-screen
+return remain reachable with one-axis scrolling. Exact tokens, values, zoom limits,
+platform window modes, transition timings, and optional movement-aid controls remain
+implementation work.
+
+## Campaign entry and system-state architecture comparison
+
+The campaign-entry set holds the approved light visual language, spoiler-free record
+summaries, Continue, New campaign, campaign selection, compatibility, load, guarded
+deletion, Settings, Help, Quit, version visibility, keyboard and pointer parity, and
+distinct focus and selection constant. Generated dates, times, campaign counts, status
+values, icons, and registration marks are illustrative only.
+
+1. `01-campaign-shelf.png`: a narrow welcome and primary-action column leads into a broad
+   vertical campaign shelf, while a fixed right inspector owns the selected campaign's
+   compatibility, metadata, and Resume, Load, and Delete actions. This is the
+   recommendation because it welcomes a first campaign without sacrificing efficient
+   scanning, clear compatibility, or safe management as the list grows.
+2. `02-campaign-gallery.png`: one large selected campaign volume sits between smaller
+   previous and next volumes, with Resume and More actions attached directly to it. It
+   has the warmest, most game-like entry and strongest sense of a personal collection,
+   but browsing many campaigns takes more navigation and comparison is less direct.
+3. `03-campaign-ledger.png`: a broad campaign table, inline compatibility notice, and
+   deep command panel optimize version review, precise keyboard movement, and a larger
+   campaign collection. It is the strongest campaign-management tool, but its registry
+   density makes the first launch feel more administrative.
+
+`04-system-state-grammar.png` is a shared boundary-state board rather than a fourth
+campaign-entry option. It proposes one transient-surface grammar for Pause, non-blocking
+Saving, guarded Delete campaign, Older version, Could not load, and No campaigns yet.
+Destructive confirmation names its target, states permanence, defaults focus to Cancel,
+and visually separates the destructive action. Saving does not invent a percentage when
+progress is not measurable. Compatibility and load failures state what is known and
+offer the next safe action without a technical trace. Empty entry preserves Settings,
+Help, and Quit beside New campaign.
+
+The final contract must settle Continue behavior, whether production campaigns expose
+manual save selection or only campaign-level load, which compatibility cases can be
+upgraded, save-failure and exit behavior, campaign naming, safe deletion mechanics,
+focus return, narrow or high-scale fallbacks, and whether Pause owns a manual Save now
+action. The architecture review does not change save or replay semantics.
 
 Chronicle Stage was the recommendation before this refinement. The player approved
 `06-map-workspace-sidebar-icons.png` under D-183 as the structural world-screen base

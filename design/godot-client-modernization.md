@@ -1,8 +1,9 @@
 # Aegis Godot client modernization
 
 Status: Approved under D-182, Phases 1 and 2 implemented and verified; D-183 through
-D-190 world, Character Creation, Conversation, reusable world-event, Character, Pack,
-Journal, and Help bases approved, Settings architecture comparison ready before Phase 3
+D-191 world, Character Creation, Conversation, reusable world-event, Character, Pack,
+Journal, Help, and Settings bases approved, campaign entry comparison ready before
+Phase 3
 
 ## Implementation status
 
@@ -31,10 +32,12 @@ independent scrolling and a stacked high-scale fallback. D-188 approves Pack and
 equipment as Outfitter's Bench, with an unmistakable
 under-requirement warning that does not block Equip. D-189 approves Journal as
 Chronicle Desk, with complete current-session History, shared Activity state,
-bottom-follow ownership, and learned-only People, Bestiary, and Threads. D-190 approves
-Help Center, with search-first lookup, contextual return, canonical metadata projection,
-and a fixed quick-reference rail. Settings and accessibility is the next screen family
-in `design/godot-ui-mockup-review.md`. The approved next build will remediate the review
+  bottom-follow ownership, and learned-only People, Bestiary, and Threads. D-190 approves
+  Help Center, with search-first lookup, contextual return, canonical metadata projection,
+  and a fixed quick-reference rail. D-191 approves Settings as the Live Preview Workshop,
+  with grouped categories, provisional live preview, explicit save or revert actions,
+  and separate semantic UI scale and map-only zoom. Campaign entry and system states are
+  the next screen family in `design/godot-ui-mockup-review.md`. The approved next build will remediate the review
 findings before or with the dedicated Character, Inventory, and Equipment surfaces.
 
 ## Purpose
@@ -454,6 +457,28 @@ focus preview, and stable action bar keep frequent changes direct and discoverab
 Comfort Profiles prioritizes transparent before-and-after setup, while Guided
 Calibration prioritizes a one-decision-at-a-time accessibility path. Generated values
 and sample content are illustrative only.
+
+D-191 approves Live Preview Workshop as the canonical Settings base. Its category rail
+selects Display, Text, Map, Input, or Motion; its broad center workspace owns the active
+controls; and its fixed right preview keeps map cells, prose, Activity colors, focus, and
+selection visible together. Changes preview immediately but remain provisional until
+Save changes. Revert restores saved values, Reset section affects only the active
+category, unsaved exit offers Save, Discard, and Cancel, and window-mode changes receive
+a keep-or-revert confirmation. At narrow widths or high UI scale, categories become a
+drawer and the preview stacks or becomes a reachable drawer while the action bar remains
+available.
+
+### Campaign entry and system states
+
+Three controlled campaign-entry architectures and one shared system-state board are
+ready under `artifacts/d191-campaign-entry-system-states-architectures-v1/`. Campaign
+Shelf is recommended because its welcome and primary-action column, broad campaign
+shelf, and selected-record inspector balance first use, repeat entry, compatibility
+review, and safe management. Campaign Gallery prioritizes a spatial personal collection.
+Campaign Ledger prioritizes dense campaign and version administration. The shared state
+board proposes one transient grammar for Pause, non-blocking Saving, guarded deletion,
+compatibility, load failure, and empty entry. Generated records and values are
+illustrative only, and no save or replay semantics change through this review.
 
 ## Responsive contract
 

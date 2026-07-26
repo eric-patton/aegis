@@ -57,7 +57,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   Implemented under D-174, but its terminal candidate is superseded by D-175. V1-10 is
   Implemented under D-177, and its clean candidate is built under D-178. The bounded
   D-181 Godot presentation spike is built and verified, D-182 approves the complete
-  modernization contract, and D-183 through D-190 lock the world, Character Creation,
+  modernization contract, and D-183 through D-191 lock the world, Character Creation,
   Conversation, reusable event-sheet, Character, Pack, Journal, and Help bases. Phases 1
   and 2 are built and verified. The remaining screen review, Phases 3 through 5, the
   replacement candidate, a fresh guided campaign, and explicit signoff remain
@@ -237,10 +237,11 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     individual screen mockups
   - [~] Review and approve the visual contract in `design/godot-ui-mockup-review.md`
     before Phase 3 implementation (world, creation, conversation, and event-sheet
-    structures plus Character, Pack, Journal, and Help approved D-183 through D-190;
-    remaining screen families continue)
-  - [ ] Design player-facing campaign entry: title, Continue, New campaign, campaign
+    structures plus Character, Pack, Journal, Help, and Settings approved D-183 through
+    D-191; remaining screen families continue)
+  - [~] Design player-facing campaign entry: title, Continue, New campaign, campaign
     slots, load, safe deletion, version, and quit
+    (three architecture options and shared state grammar ready for review)
   - [x] Design full-window Character Creation across all stages, review, long content,
     and supported responsive states (D-184)
   - [x] Design Conversation and commerce across Talk, Trade, and Services, including
@@ -257,12 +258,13 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   - [x] Design searchable Help with contextual entry, canonical controls, map and
     message legends, accessibility guidance, and responsive behavior
     (D-190)
-  - [~] Design Settings and accessibility controls, including live theme and text-size
+  - [x] Design Settings and accessibility controls, including live theme and text-size
     preview, map-only zoom, and any optional movement assistance
-    (three architecture options ready for review)
+    (D-191)
   - [ ] Design rest and attribute raising, progression choices, target selection,
     trade/craft/service/activity menus, world transition, and fall/recovery variants
-  - [ ] Design pause, confirmation, loading, save, empty, and error states
+  - [~] Design pause, confirmation, loading, save, empty, and error states
+    (shared boundary-state grammar ready for review)
   - [ ] Approve the full responsive and light/dark theme parity matrix for every screen
   - [x] Conversation repair: full transcript color, bottom-follow on open and updates,
     independently scrolling actions, and focus trapped inside the conversation (D-182)
@@ -909,6 +911,19 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-25: **Campaign entry and boundary states receive a controlled review set.**
+  Campaign Shelf, Campaign Gallery, and Campaign Ledger keep primary entry, campaign
+  records, compatibility, load, guarded deletion, utilities, version, and input parity
+  constant while changing the browsing model. A shared state board covers Pause,
+  non-blocking Saving, destructive confirmation, compatibility, load failure, and empty
+  entry. Campaign Shelf is recommended. The set is ready for player review before D-192.
+- 2026-07-25: **D-191 opens Settings as the Live Preview Workshop.**
+  `01-live-preview-workshop.png` is canonical. Display, Text, Map, Input, and Motion
+  categories share grouped controls, a persistent map, prose, Activity, and focus
+  preview, and a stable Reset section, Revert, and Save changes bar. Changes preview
+  provisionally, unsaved exit is guarded, UI scale remains separate from map-only zoom,
+  and narrow or high-scale layouts keep every action reachable. Campaign entry and
+  system states are next.
 - 2026-07-25: **Settings and accessibility receives three controlled architectures.**
   Live Preview Workshop, Comfort Profiles, and Guided Calibration keep immediate
   preview, theme parity, separate UI scale and map zoom, window mode, text spacing,

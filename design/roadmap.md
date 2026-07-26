@@ -57,11 +57,12 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   Implemented under D-174, but its terminal candidate is superseded by D-175. V1-10 is
   Implemented under D-177, and its clean candidate is built under D-178. The bounded
   D-181 Godot presentation spike is built and verified, D-182 approves the complete
-  modernization contract, and D-183 through D-193 lock the world, Character Creation,
+  modernization contract, and D-183 through D-194 lock the world, Character Creation,
   Conversation, reusable event-sheet, Character, Pack, Journal, Help, Settings, Campaign
-  entry, and boundary-state bases. Phases 1
-  and 2 are built and verified. The remaining screen review, Phases 3 through 5, the
-  replacement candidate, a fresh guided campaign, and explicit signoff remain
+  entry, boundary-state bases, focused tasks, and the complete responsive and theme
+  parity contract. Phases 1 and 2 are built and verified. Phase 2 review remediation,
+  Phases 3 through 5, the replacement candidate, a fresh guided campaign, and explicit
+  signoff remain
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
@@ -236,11 +237,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     optional accessibility control
   - [x] Select and document the D-183 world-screen architecture before revising
     individual screen mockups
-  - [~] Review and approve the visual contract in `design/godot-ui-mockup-review.md`
-    before Phase 3 implementation (world, creation, conversation, and event-sheet
-    structures plus Character, Pack, Journal, Help, Settings, Campaign entry, and
-    boundary states and focused task surfaces approved D-183 through D-193; final
-    four-board parity review ready for player approval)
+  - [x] Review and approve the visual contract in `design/godot-ui-mockup-review.md`
+    before Phase 3 implementation (D-183 through D-194)
   - [x] Design player-facing campaign entry: title, Continue, New campaign, campaign
     slots, load, safe deletion, version, and quit
     (D-192)
@@ -268,7 +266,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     (D-193)
   - [x] Design pause, confirmation, loading, save, empty, and error states
     (D-192)
-  - [ ] Approve the full responsive and light/dark theme parity matrix for every screen
+  - [x] Approve the full responsive and light/dark theme parity matrix for every screen
+    (D-194)
   - [x] Conversation repair: full transcript color, bottom-follow on open and updates,
     independently scrolling actions, and focus trapped inside the conversation (D-182)
   - [x] Draggable persistent iron rose with a reset position action (D-182)
@@ -892,14 +891,12 @@ kind, and the evaluation harness that hardens every generator change.
 
 ## Open design questions (mirror of the `decisions.md` parking lot)
 
-The Godot client architecture is settled under D-182. The active mockup questions below
-must be settled for 1.0. The remaining parking-lot questions are classified post-1.0
-under D-165 unless a later decision promotes one into a release.
+The Godot client architecture and visual contract are settled through D-194. The
+remaining parking-lot questions are classified post-1.0 under D-165 unless a later
+decision promotes one into a release.
 
-- ◇ D-182/D-193 Godot UI review: approve or revise the proposed Field Drawer operational
-  defaults (contextual selection memory, reversible zero-cost confirmation, stable
-  target cycling, Rest projections, and exact focus return), then approve the complete
-  four-board responsive and light/dark parity matrix over D-183 through D-193
+- ◇ D-194 implementation-token review: settle the canonical map-glyph palette in light
+  and dark themes without changing the approved world architecture or semantic states
 - ◇ Folk cultures: how worldgen recultures the five folk per world, and whether factions read folk (D-017, D-092)
 - ◇ Spell list growth past the seven V1-07 workings / school-shaped content, if any
   (D-022, D-091, D-163)
@@ -915,6 +912,13 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-26: **D-194 closes the Godot visual contract in both lights.** The four-board
+  responsive and theme-parity matrix is approved with identical light and dark geometry,
+  one-axis reachability from 1100 by 700 and 100 through 200 percent UI scale, separate
+  map zoom, keyboard and pointer parity, and non-color state cues. Field Drawers now have
+  canonical contextual selection memory, one commitment for fully described reversible
+  zero-cost actions, stable spatial target cycling, known Rest projections, and exact
+  focus return. Phase 2 review remediation is authorized before Phase 3 resumes.
 - 2026-07-25: **The final Godot UI parity review is ready.** Four grouped boards under
   `artifacts/d193-responsive-theme-parity-review-v1/` cover identical light and dark
   world geometry, supported responsive reflow, keyboard and pointer states, full-window

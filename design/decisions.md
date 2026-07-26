@@ -231,6 +231,47 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-194: The same field in every light: parity closes the visual contract (2026-07-26)
+
+The player approves the complete four-board responsive and theme-parity matrix under
+`artifacts/d193-responsive-theme-parity-review-v1/`. Light and dark themes keep the same
+geometry, hierarchy, semantic states, and focus treatment. Theme changes refresh every
+tokenized surface immediately. The supported 1100 by 700 minimum and 100 through 200
+percent UI scales keep every action reachable through one-axis scrolling without clipped
+or overlapping text or cells. UI scale reflows semantic surfaces while map zoom remains
+independent and never changes because the surrounding layout reflows.
+
+The Field Drawer operational defaults are now canonical. Selection persists while a
+drawer remains open, through nested confirmation, and while acting on the same contextual
+entity. A later reopen begins from the current contextual default rather than a stale
+unrelated selection. Immediate, fully described, reversible zero-cost actions use one
+confirmation. Resource spending and irreversible choices still confirm explicitly.
+Tab and Shift+Tab cycle valid targets nearest first, then clockwise from north, with
+canonical entity identity as the final tie-break. Pointer hover previews, click selects,
+and Confirm commits.
+
+Rest projects current and resulting Health, Stamina, and Focus, elapsed time, resource
+cost, and known immediate consequences without exposing unknown outcomes. Closing any
+task returns focus to its exact invoking control or map cell, falling back to a safe world
+default only when that anchor no longer exists. Keyboard and pointer paths expose the same
+actions, while focus, selection, disabled, warning, error, and follow-tail states remain
+distinguishable without color alone.
+
+The matrix also approves one shared visual language across full-window destinations,
+Campaign entry, system states, Conversation, reusable events, and Field Drawers in both
+themes. This closes the D-183 through D-194 design pass and authorizes implementation to
+resume. Exact production tokens, icons, and the canonical map-glyph palette remain
+implementation work inside this contract. Generated sample values and content remain
+illustrative. This decision changes presentation only and does not alter costs,
+availability, targeting, recovery, progression, turn timing, saves, replay, or
+deterministic engine semantics.
+
+Options set aside: separate light and dark layouts, which would make navigation and
+responsive behavior theme-dependent; confirmation on every zero-cost action, which adds
+friction without protecting state; stale selection memory across unrelated drawer
+reopens; target cycling by unstable render order; and exposing hidden Rest outcomes in
+the projection.
+
 ### D-193: The field drawer system: the world stays in reach (2026-07-25)
 
 The player approves `03-field-drawer-system.png` as the canonical architecture for Rest
@@ -3485,31 +3526,14 @@ Pays D-063's own named deferrals in one stroke, arming the autopilot at the smit
 
 ## Under discussion
 
-The D-182 Phase 2 packaged review has opened a visual-contract revision before Phase 3.
-The review draft and nine generated concepts live in
-`design/godot-ui-mockup-review.md` and `artifacts/d182-ui-mockups-v1/`. Player approval
-is required for the integrated Activity/History model, iron rose removal or optional
-accessibility role, full-window focused information screens, centered event sheet,
-separate text-size and map-zoom controls, one consistent visual style direction, and any
-required second visual pass. The controlled style comparison lives under
-`artifacts/d182-style-directions-v1/`: Field Instrument, Blackened Brass, Moss and Ash,
-and Winter Signal all use the same neutral world-shell master. Player review correctly
-classified them as theme and surface-treatment variations rather than different designs.
-The architecture comparison under `artifacts/d182-game-screen-architectures-v1/` holds
-one light theme and information scope constant while comparing Map as Workspace, Split
-Command Deck, Atlas Frame, and Chronicle Stage. A fifth player-directed refinement adds a
-fixed condition, Activity, and currency sidebar to Map as Workspace while keeping its
-floating launcher and a map-only context footer. Its sixth image refines that sidebar
-with thinner icon-led resource bars, green Stamina, blue Focus, and category-colored
-Activity prose instead of repeated row tags. These are proposals only and do not amend
-D-182 until approved.
+The D-182 replacement-client visual contract is settled through D-194. Implementation
+token review still needs to settle the canonical map-glyph palette without changing the
+approved layouts, responsive behavior, themes, or interaction rules.
 
 ## Not yet raised (parking lot)
 
-- D-182/D-193 Godot UI review: approve or revise the proposed Field Drawer operational
-  defaults (contextual selection memory, reversible zero-cost confirmation, stable
-  target cycling, Rest projections, and exact focus return), then approve the complete
-  four-board responsive and light/dark parity matrix over D-183 through D-193
+- D-194 implementation-token review: settle the canonical map-glyph palette in light
+  and dark themes without changing the approved world architecture or semantic states
 - Folk cultures: how worldgen recultures the five folk per world, and whether factions
   read folk (D-017, D-092)
 - Spell list growth past the seven V1-07 workings / magic schools content design

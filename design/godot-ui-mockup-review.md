@@ -3,10 +3,10 @@
 Status: World-screen, Character Creation, Conversation, reusable world-event, Character,
 Pack, Journal, Help, Settings, Campaign entry, system-state, and focused task-surface
 architectures approved under D-183 through D-193; complete responsive and light/dark
-parity matrix ready for player review, no implementation authorized
+parity matrix approved under D-194, implementation authorized
 
 Related decisions: D-182, D-183, D-184, D-185, D-186, D-187, D-188, D-189, D-190, D-191,
-D-192, D-193
+D-192, D-193, D-194
 
 Mockup set: `artifacts/d182-ui-mockups-v1/`
 
@@ -73,7 +73,7 @@ reviewed.
 9. [x] Settings and accessibility (D-191).
 10. [x] Campaign entry and system states (D-192).
 11. [x] Remaining focused task-surface variants (D-193).
-12. [~] Complete responsive and light/dark parity matrix.
+12. [x] Complete responsive and light/dark parity matrix (D-194).
 
 ## Architecture-first correction
 
@@ -596,7 +596,7 @@ D-183 through D-193 system rather than propose another architecture:
 4. `04-destinations-boundaries.png`: full-window tasks, narrow Campaign entry, and
    system-state parity across both themes.
 
-The boards carry these proposed operational defaults for player approval:
+The boards carry these approved operational defaults under D-194:
 
 - Selection memory lasts while a drawer remains open, through a nested confirmation,
   and while acting on the same contextual entity. A later reopen starts from the
@@ -625,14 +625,14 @@ The validation contract is:
 - Full-window destinations, campaign entry, system states, conversation, events, and
   Field Drawers share one visual language in both themes.
 
-These defaults and boards remain proposals until the player approves them. Approval
-will settle the final visual contract before Phase 3 implementation resumes.
+D-194 approves these defaults and boards as the final visual contract. Phase 3
+implementation may resume after the approved Phase 2 remediation checkpoint.
 
 Chronicle Stage was the recommendation before this refinement. The player approved
 `06-map-workspace-sidebar-icons.png` under D-183 as the structural world-screen base
 because it preserves more map height while making the complete live log persistent.
-The approval covers layout and information hierarchy. The reference map colors are not
-approved, and the final parity matrix still needs review before implementation resumes.
+The approval covers layout and information hierarchy. D-194 approves the final parity
+matrix. The production map-glyph palette remains implementation-token work.
 
 ## Approved world-screen base
 
@@ -693,8 +693,8 @@ review, but never becomes a permanent third pane. The two-column choice field be
 one column at narrow widths or high text scale. Text entry replaces the choice field
 without moving the question, progress route, or footer. Final review uses the same
 canvas as a readable summary, so creation remains one coherent screen family.
-Production icons, exact theme tokens, and dark-theme parity remain to be completed
-without changing this information hierarchy.
+Production icons and exact theme tokens remain implementation work. Dark-theme parity
+is required by D-194 without changing this information hierarchy.
 
 ## Findings from the Phase 2 package
 
@@ -851,6 +851,6 @@ shape is the same.
 
 ## Decisions remaining before implementation
 
-1. Approve or revise the proposed Field Drawer operational defaults.
-2. Approve the complete responsive and light/dark theme matrix.
-3. Settle the exact canonical map-glyph palette during implementation-token review.
+The visual contract is approved through D-194. Settle the exact canonical map-glyph
+palette during implementation-token review without reopening the approved architecture,
+responsive behavior, or interaction rules.

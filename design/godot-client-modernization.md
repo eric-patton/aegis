@@ -1,9 +1,8 @@
 # Aegis Godot client modernization
 
 Status: Approved under D-182, Phases 1 and 2 implemented and verified; D-183 through
-D-193 world, Character Creation, Conversation, reusable world-event, Character, Pack,
-Journal, Help, Settings, Campaign entry, system-state, and focused-task bases approved;
-final parity matrix is ready for player review before Phase 3
+D-194 approve the complete replacement-client visual contract; Phase 2 review
+remediation is active before Phase 3
 
 ## Implementation status
 
@@ -38,10 +37,10 @@ Chronicle Desk, with complete current-session History, shared Activity state,
   with grouped categories, provisional live preview, explicit save or revert actions,
   and separate semantic UI scale and map-only zoom. D-192 approves Campaign Shelf and
   the shared system-state grammar. D-193 approves Field Drawer System for the remaining
-  focused task surfaces. The complete responsive and theme parity matrix is ready under
-  `artifacts/d193-responsive-theme-parity-review-v1/` and remains the active review in
-  `design/godot-ui-mockup-review.md`. The approved next build will remediate the review
-  findings before or with the dedicated Character, Inventory, and Equipment surfaces.
+  focused task surfaces. D-194 approves the complete responsive and theme parity matrix
+  under `artifacts/d193-responsive-theme-parity-review-v1/`, including the Field Drawer
+  operational defaults. The active build now remediates the Phase 2 review findings
+  before the dedicated Character, Inventory, and Equipment surfaces.
 
 ## Purpose
 

@@ -918,7 +918,10 @@ Newest first. Log when a feature is checked off, or when new work is added to th
   through 200 percent UI scale. The Release solution is warning-free, 55 focused Host
   tests and all 1,040 tests pass, and background probes cover both themes, map-only
   zoom, drawer reflow, creation typing, History, and Conversation. Core behavior did
-  not move, so the engine sweep did not trigger. The map-glyph palette remains open.
+  not move, so the engine sweep did not trigger. The clean D-195 Windows checkpoint
+  creates and reloads a v100 campaign over pilot and is archived with SHA-256
+  `0259F45839FC175AF6F5184D267F79EDEC428DE6A788774C2DB5FC9B7BBF8B4D`.
+  The map-glyph palette remains open.
 - 2026-07-26: **D-194 closes the Godot visual contract in both lights.** The four-board
   responsive and theme-parity matrix is approved with identical light and dark geometry,
   one-axis reachability from 1100 by 700 and 100 through 200 percent UI scale, separate

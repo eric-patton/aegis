@@ -559,7 +559,11 @@ review. The exact review archive is
 Review remediation passed under D-195: the approved D-183 world geometry, complete
 creation route and explained selection, shared Activity and History state, Conversation
 follow-tail, map-only zoom, live theme parity, Help, and narrow or high-scale
-reachability are verified. The fresh Windows checkpoint is recorded in `HANDOFF.md`.
+reachability are verified. The fresh Windows checkpoint is
+`artifacts/aegis-d195-phase2-remediation-win-x64.zip`, built from `c9f4cdc`, SHA-256
+`0259F45839FC175AF6F5184D267F79EDEC428DE6A788774C2DB5FC9B7BBF8B4D`.
+Its clean extraction reports save v100 and generator 1, serves the structured frame,
+completes creation, exits cleanly, and reloads the created save exactly.
 
 ### Phase 3: character and inventory
 

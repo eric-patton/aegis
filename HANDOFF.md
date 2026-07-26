@@ -51,7 +51,11 @@ The canonical design truth stays where it always was:
   focused Host tests, and all 1,040 tests pass. Background probes exercise both themes,
   map-only zoom, drawer reflow, creation typing, History, and Conversation. No Core
   behavior moved, so the engine sweep did not trigger. The canonical map-glyph palette
-  remains open before its colors can be called final.
+  remains open before its colors can be called final. The fresh checkpoint is
+  `artifacts/aegis-d195-phase2-remediation-win-x64.zip`, built from `c9f4cdc`, SHA-256
+  `0259F45839FC175AF6F5184D267F79EDEC428DE6A788774C2DB5FC9B7BBF8B4D`.
+  A clean extraction completes creation, reports save v100 and generator 1, serves the
+  structured 120 by 40 frame, exits cleanly, and reloads the created save exactly.
 - Earlier completed implementation: D-182 Phases 1 and 2 pass. Phase 1 supplies the
   persistent Godot foundation and modern creation flow. Phase 2 adds the responsive
   world rail and drawer, newest-entry activity ribbon, colored full-session History,
@@ -412,15 +416,13 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Produce and smoke the fresh D-195 Phase 2 remediation checkpoint, then record its
-   archive hash here.
-2. Settle the open D-194 canonical map-glyph palette review when the player answers.
-3. Implement D-182 Phase 3: dedicated modern Character, Inventory, and Equipment
+1. Settle the open D-194 canonical map-glyph palette review when the player answers.
+2. Implement D-182 Phase 3: dedicated modern Character, Inventory, and Equipment
    screens with every canonical action and required long, empty, under-met, and
    pending-choice state.
-4. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
+3. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
    review gate.
-5. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
+4. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
    explicit user approval can make V1-09 and V1-10 Verified and close Aegis 1.0.
 
 ## Handoff hygiene

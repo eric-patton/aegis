@@ -265,6 +265,11 @@ and dark world geometry, 100 and 150 percent map zoom isolation, the 1100 by 700
 200 percent one-axis reachability, creation typing and step focus, History follow-tail,
 and Conversation follow-tail after interaction. No Core file, RNG draw, save meaning,
 turn rule, or canonical key changed, so the engine sweep did not trigger.
+The fresh Windows checkpoint
+`artifacts/aegis-d195-phase2-remediation-win-x64.zip`, built from `c9f4cdc`, has SHA-256
+`0259F45839FC175AF6F5184D267F79EDEC428DE6A788774C2DB5FC9B7BBF8B4D`.
+Its clean extraction completes creation, reports save v100 and generator 1, serves the
+structured frame, exits cleanly, and reloads the created save exactly.
 
 Options set aside: finalizing the reference map colors without player review; retaining
 the iron rose merely because its implementation existed; scaling the entire interface

@@ -1,8 +1,8 @@
 # Aegis Godot client modernization
 
 Status: Approved under D-182, Phases 1 and 2 implemented and verified; D-183 through
-D-189 world, Character Creation, Conversation, reusable world-event, Character, Pack,
-and Journal bases approved, Help architecture comparison ready before Phase 3
+D-190 world, Character Creation, Conversation, reusable world-event, Character, Pack,
+Journal, and Help bases approved, Settings architecture comparison ready before Phase 3
 
 ## Implementation status
 
@@ -31,10 +31,11 @@ independent scrolling and a stacked high-scale fallback. D-188 approves Pack and
 equipment as Outfitter's Bench, with an unmistakable
 under-requirement warning that does not block Equip. D-189 approves Journal as
 Chronicle Desk, with complete current-session History, shared Activity state,
-bottom-follow ownership, and learned-only People, Bestiary, and Threads. Help is the
-next screen family in `design/godot-ui-mockup-review.md`. The approved next build will remediate the
-review findings before or with the dedicated Character, Inventory, and Equipment
-surfaces.
+bottom-follow ownership, and learned-only People, Bestiary, and Threads. D-190 approves
+Help Center, with search-first lookup, contextual return, canonical metadata projection,
+and a fixed quick-reference rail. Settings and accessibility is the next screen family
+in `design/godot-ui-mockup-review.md`. The approved next build will remediate the review
+findings before or with the dedicated Character, Inventory, and Equipment surfaces.
 
 ## Purpose
 
@@ -431,13 +432,28 @@ entry from other screens. It does not own live appearance controls, which remain
 Settings. Opening Help records the invoking screen so `Return` restores the player's
 prior task and meaningful focus.
 
-Three controlled Help architectures are ready under
-`artifacts/d189-help-architectures-v1/`. Help Center is recommended because its global
-search, category rail, topic workspace, and contextual quick-reference rail scale from
-short command lookup to conceptual guidance. Command Atlas prioritizes at-a-glance
-control relationships, while Field Manual prioritizes guided continuous reading.
-Generated controls and legends are illustrative only. Implementation must project the
-canonical input and presentation contracts.
+D-190 approves Help Center as the canonical Help base. Global search leads into a
+category rail, topic workspace, complete selected article, and contextual quick-reference
+rail. Direct entry selects a relevant topic without hiding search, and Return restores
+the invoking screen and meaningful focus. Production Help projects canonical controls
+and presentation meanings from shared metadata wherever practical. At narrow widths or
+high text scale, categories become a drawer and quick reference stacks after the article.
+
+### Settings and accessibility
+
+Settings owns every live appearance and accessibility control. Theme, UI scale, text
+spacing, map zoom, window mode, motion, input guidance, and any optional movement aid
+remain separate, inspectable settings. Map zoom changes square map cells only. UI scale
+reflows semantic screens. Runtime theme changes must refresh every visible surface from
+shared tokens.
+
+Three controlled Settings architectures are ready under
+`artifacts/d190-settings-accessibility-architectures-v1/`. Live Preview Workshop is
+recommended because its category rail, grouped controls, fixed map, prose, Activity and
+focus preview, and stable action bar keep frequent changes direct and discoverable.
+Comfort Profiles prioritizes transparent before-and-after setup, while Guided
+Calibration prioritizes a one-decision-at-a-time accessibility path. Generated values
+and sample content are illustrative only.
 
 ## Responsive contract
 

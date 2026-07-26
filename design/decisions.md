@@ -231,6 +231,42 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-190: The help center: every answer returns to the work (2026-07-25)
+
+The player approves `01-help-center.png` as the canonical Help architecture. Help is a
+full-window destination beneath the shared AEGIS launcher. Opening it records the
+invoking screen and meaningful focus, then `Return` restores both. Contextual entry
+selects the most relevant category or topic without hiding the global search.
+
+Search is the first control in the reading order. A left category rail groups Getting
+Started, Movement, World, Combat, Conversations, Character, Pack, Journal, and
+Accessibility. The broad center workspace moves from matching topic cards into one
+complete selected article. A fixed right quick-reference rail carries the map legend,
+message-color legend, and a route to Settings. Its contents respond to the invoking
+screen and selected topic without becoming a second navigation system.
+
+Production Help projects exact controls and presentation meanings from canonical input
+and presentation metadata wherever practical. It does not maintain scattered copied
+command strings inside individual scenes. Search supports direct and tolerant matching,
+keyboard result navigation, honest no-result guidance, and clearing the query without
+losing invoking context. Map and message legends expose only current non-secret
+presentation meanings. Keyboard and pointer methods remain peers, and focus stays
+visually distinct from selection.
+
+Help explains appearance, readability, movement assistance, and input behavior, but it
+does not own live settings controls. Settings owns theme, UI scale, text spacing, map
+zoom, motion, window mode, and any optional movement aid. At narrow widths or high text
+scale, the category rail becomes a drawer, quick reference stacks after the article,
+search stays reachable, and the article keeps one-axis scrolling. Return and the route
+to Settings remain reachable in every layout.
+
+Options set aside: Command Atlas, whose spatial control constellation is the strongest
+at-a-glance command reference but makes concepts and accessibility guidance secondary;
+and Field Manual, whose continuous reading path is calm and coherent but slows known
+answer retrieval and gives contextual links less precise landing targets. Exact icons,
+typography tokens, topic copy, search thresholds, density, and breakpoints remain
+implementation work. Settings and accessibility is the next visual decision.
+
 ### D-189: The chronicle desk: the present journey keeps its place (2026-07-25)
 
 The player approves `01-chronicle-desk.png` as the canonical Journal architecture.

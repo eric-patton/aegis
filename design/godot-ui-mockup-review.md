@@ -1,10 +1,11 @@
 # Aegis Godot UI mockup review
 
 Status: World-screen, Character Creation, Conversation, reusable world-event, Character,
-Pack, and Journal architectures approved under D-183 through D-189; Help architecture
-comparison ready for player review, no implementation authorized
+Pack, Journal, and Help architectures approved under D-183 through D-190; Settings and
+accessibility architecture comparison ready for player review, no implementation
+authorized
 
-Related decisions: D-182, D-183, D-184, D-185, D-186, D-187, D-188, D-189
+Related decisions: D-182, D-183, D-184, D-185, D-186, D-187, D-188, D-189, D-190
 
 Mockup set: `artifacts/d182-ui-mockups-v1/`
 
@@ -33,6 +34,9 @@ Journal architecture set:
 Help architecture set:
 `artifacts/d189-help-architectures-v1/`
 
+Settings and accessibility architecture set:
+`artifacts/d190-settings-accessibility-architectures-v1/`
+
 ## Purpose
 
 The D-182 Phase 2 packaged review showed that individual UI repairs are not enough to
@@ -55,8 +59,9 @@ reviewed.
 5. [x] Character (D-187).
 6. [x] Pack and equipment (D-188).
 7. [x] Journal: History, People, Bestiary, and Threads (D-189).
-8. [~] Help: three controlled architectures are ready for player review.
-9. [ ] Settings and accessibility.
+8. [x] Help (D-190).
+9. [~] Settings and accessibility: three controlled architectures are ready for player
+   review.
 10. [ ] Campaign entry and system states.
 11. [ ] Remaining focused task-surface variants.
 12. [ ] Complete responsive and light/dark parity matrix.
@@ -403,6 +408,61 @@ contract must cover exact canonical controls, context-sensitive entry, search wi
 results, map and message legends, long and short topics, reduced-motion and readability
 guidance, focus and selection, return to the invoking screen, and narrow or high-scale
 fallbacks. Help explains behavior but does not own live settings controls.
+
+## Approved Help base
+
+- `01-help-center.png` is canonical under D-190.
+- Help is a full-window destination under the shared launcher. It records the invoking
+  screen and meaningful focus so `Return` restores both.
+- Global search is first in the reading order. Contextual entry selects the most
+  relevant category or topic without bypassing search.
+- A category rail, topic workspace, complete selected article, and contextual
+  quick-reference rail form one lookup path from short command questions to long
+  conceptual guidance.
+- Production content derives exact controls and presentation meanings from canonical
+  metadata wherever practical. Individual scenes do not own copied command strings.
+- Search supports direct and tolerant matching, keyboard navigation, honest no-result
+  guidance, and clearing without losing invoking context.
+- Map and message legends expose current non-secret presentation meanings. Help explains
+  accessibility and appearance, while Settings owns the live controls.
+- Keyboard and pointer methods remain equivalent, with focus distinct from selection.
+- Narrow or high-scale layouts turn categories into a drawer, stack quick reference
+  after the article, keep one-axis article scrolling, and preserve search, Return, and
+  the Settings route.
+- Exact icons, typography, topic copy, matching thresholds, density, and breakpoints
+  remain implementation work.
+
+## Settings and accessibility architecture comparison
+
+The Settings set holds the approved light visual language, shared launcher, crisp
+vector-text intent, immediate preview, theme parity, separate UI scale and map zoom,
+window mode, text spacing, motion, keyboard and pointer parity, visible focus, reset
+actions, and return to Help constant. Generated values, copy, map symbols, and sample
+content are illustrative only. Final controls must follow the approved Settings
+contract and platform capabilities.
+
+1. `01-live-preview-workshop.png`: a category rail selects Display, Text, Map, Input, or
+   Motion. The broad center workspace owns grouped controls, while a fixed right preview
+   studio shows map, prose, Activity color, and focus together. A stable action bar owns
+   reset, revert, and save. This is the recommendation because it keeps every setting
+   discoverable, makes UI scale and map zoom visibly independent, and gives frequent
+   revisits the shortest path without hiding what will change.
+2. `02-comfort-profiles.png`: transparent profile plates lead into a large before and
+   after comparison, an inspectable `What changes` rail, and a compact tuning drawer.
+   It offers the fastest accessible starting point and makes every bundled change
+   explicit, but profiles add a second mental model above the individual settings.
+3. `03-guided-calibration.png`: a six-stage path asks one comfort question at a time,
+   compares live samples, preserves completed choices, and ends at a full review. It is
+   the strongest first-run accessibility experience, but routine changes require more
+   navigation than the workshop.
+
+All three keep map zoom independent from UI scale, preview runtime theme and readability
+changes before commitment, expose keyboard and pointer access, preserve a clear route
+back to Help, and require full light, dark, and high-contrast token refresh. The final
+contract must settle save semantics, restore defaults, unsaved-change handling, window
+mode transitions, exact UI scales, text spacing, map zoom limits and shortcuts, reduced
+motion, input reference or rebinding scope, optional movement assistance, focus return,
+and narrow or high-scale fallbacks.
 
 Chronicle Stage was the recommendation before this refinement. The player approved
 `06-map-workspace-sidebar-icons.png` under D-183 as the structural world-screen base

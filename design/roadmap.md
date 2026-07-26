@@ -57,9 +57,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   Implemented under D-174, but its terminal candidate is superseded by D-175. V1-10 is
   Implemented under D-177, and its clean candidate is built under D-178. The bounded
   D-181 Godot presentation spike is built and verified, D-182 approves the complete
-  modernization contract, and D-183 through D-189 lock the world, Character Creation,
-  Conversation, reusable event-sheet, Character, Pack, and Journal bases. Phases 1 and 2 are
-  built and verified. The remaining screen review, Phases 3 through 5, the
+  modernization contract, and D-183 through D-190 lock the world, Character Creation,
+  Conversation, reusable event-sheet, Character, Pack, Journal, and Help bases. Phases 1
+  and 2 are built and verified. The remaining screen review, Phases 3 through 5, the
   replacement candidate, a fresh guided campaign, and explicit signoff remain
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
@@ -237,8 +237,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     individual screen mockups
   - [~] Review and approve the visual contract in `design/godot-ui-mockup-review.md`
     before Phase 3 implementation (world, creation, conversation, and event-sheet
-    structures plus Character, Pack, and Journal approved D-183 through D-189; remaining screen
-    families continue)
+    structures plus Character, Pack, Journal, and Help approved D-183 through D-190;
+    remaining screen families continue)
   - [ ] Design player-facing campaign entry: title, Continue, New campaign, campaign
     slots, load, safe deletion, version, and quit
   - [x] Design full-window Character Creation across all stages, review, long content,
@@ -254,11 +254,12 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   - [x] Journal screen with complete current-session History plus read-only People,
     Bestiary, and Threads views over knowledge the character has actually earned
     (D-189)
-  - [~] Design searchable Help with contextual entry, canonical controls, map and
+  - [x] Design searchable Help with contextual entry, canonical controls, map and
     message legends, accessibility guidance, and responsive behavior
-    (three architecture options ready for review)
-  - [ ] Design Settings and accessibility controls, including live theme and text-size
+    (D-190)
+  - [~] Design Settings and accessibility controls, including live theme and text-size
     preview, map-only zoom, and any optional movement assistance
+    (three architecture options ready for review)
   - [ ] Design rest and attribute raising, progression choices, target selection,
     trade/craft/service/activity menus, world transition, and fall/recovery variants
   - [ ] Design pause, confirmation, loading, save, empty, and error states
@@ -908,6 +909,18 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-25: **Settings and accessibility receives three controlled architectures.**
+  Live Preview Workshop, Comfort Profiles, and Guided Calibration keep immediate
+  preview, theme parity, separate UI scale and map zoom, window mode, text spacing,
+  motion, focus, reset actions, and Help return constant while changing the adjustment
+  workflow. Live Preview Workshop is recommended. The set is ready for player review
+  before D-191.
+- 2026-07-25: **D-190 opens the searchable Help Center.**
+  `01-help-center.png` is canonical. Global and contextual lookup share one category,
+  topic, article, and quick-reference path. Help restores the invoking screen and focus,
+  derives exact controls and presentation meanings from canonical metadata where
+  practical, preserves keyboard and pointer parity, and routes live appearance changes
+  to Settings. Settings and accessibility is next.
 - 2026-07-25: **Help receives three controlled architectures.** Help Center, Command
   Atlas, and Field Manual keep search, contextual return, canonical-reference intent,
   legends, keyboard and pointer parity, and the Settings route constant while changing

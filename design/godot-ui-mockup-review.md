@@ -1,11 +1,12 @@
 # Aegis Godot UI mockup review
 
 Status: World-screen, Character Creation, Conversation, reusable world-event, Character,
-Pack, Journal, Help, and Settings architectures approved under D-183 through D-191;
-campaign entry and system-state architecture comparison ready for player review, no
-implementation authorized
+Pack, Journal, Help, Settings, Campaign entry, and system-state architectures approved
+under D-183 through D-192; remaining focused task-surface comparison is ready for player
+review, no implementation authorized
 
-Related decisions: D-182, D-183, D-184, D-185, D-186, D-187, D-188, D-189, D-190, D-191
+Related decisions: D-182, D-183, D-184, D-185, D-186, D-187, D-188, D-189, D-190, D-191,
+D-192
 
 Mockup set: `artifacts/d182-ui-mockups-v1/`
 
@@ -40,6 +41,9 @@ Settings and accessibility architecture set:
 Campaign entry and system-state architecture set:
 `artifacts/d191-campaign-entry-system-states-architectures-v1/`
 
+Focused task-surface architecture set:
+`artifacts/d192-focused-task-surface-architectures-v1/`
+
 ## Purpose
 
 The D-182 Phase 2 packaged review showed that individual UI repairs are not enough to
@@ -64,9 +68,9 @@ reviewed.
 7. [x] Journal: History, People, Bestiary, and Threads (D-189).
 8. [x] Help (D-190).
 9. [x] Settings and accessibility (D-191).
-10. [~] Campaign entry and system states: controlled architectures are ready for player
-    review.
-11. [ ] Remaining focused task-surface variants.
+10. [x] Campaign entry and system states (D-192).
+11. [~] Remaining focused task-surface variants: controlled architectures are ready for
+    player review.
 12. [ ] Complete responsive and light/dark parity matrix.
 
 ## Architecture-first correction
@@ -488,7 +492,7 @@ return remain reachable with one-axis scrolling. Exact tokens, values, zoom limi
 platform window modes, transition timings, and optional movement-aid controls remain
 implementation work.
 
-## Campaign entry and system-state architecture comparison
+## Approved Campaign entry and system-state base
 
 The campaign-entry set holds the approved light visual language, spoiler-free record
 summaries, Continue, New campaign, campaign selection, compatibility, load, guarded
@@ -499,7 +503,7 @@ values, icons, and registration marks are illustrative only.
 1. `01-campaign-shelf.png`: a narrow welcome and primary-action column leads into a broad
    vertical campaign shelf, while a fixed right inspector owns the selected campaign's
    compatibility, metadata, and Resume, Load, and Delete actions. This is the
-   recommendation because it welcomes a first campaign without sacrificing efficient
+   approved base because it welcomes a first campaign without sacrificing efficient
    scanning, clear compatibility, or safe management as the list grows.
 2. `02-campaign-gallery.png`: one large selected campaign volume sits between smaller
    previous and next volumes, with Resume and More actions attached directly to it. It
@@ -510,8 +514,8 @@ values, icons, and registration marks are illustrative only.
    campaign collection. It is the strongest campaign-management tool, but its registry
    density makes the first launch feel more administrative.
 
-`04-system-state-grammar.png` is a shared boundary-state board rather than a fourth
-campaign-entry option. It proposes one transient-surface grammar for Pause, non-blocking
+`04-system-state-grammar.png` is the approved shared boundary-state board rather than a
+fourth campaign-entry option. It defines one transient-surface grammar for Pause, non-blocking
 Saving, guarded Delete campaign, Older version, Could not load, and No campaigns yet.
 Destructive confirmation names its target, states permanence, defaults focus to Cancel,
 and visually separates the destructive action. Saving does not invent a percentage when
@@ -519,11 +523,49 @@ progress is not measurable. Compatibility and load failures state what is known 
 offer the next safe action without a technical trace. Empty entry preserves Settings,
 Help, and Quit beside New campaign.
 
-The final contract must settle Continue behavior, whether production campaigns expose
-manual save selection or only campaign-level load, which compatibility cases can be
-upgraded, save-failure and exit behavior, campaign naming, safe deletion mechanics,
-focus return, narrow or high-scale fallbacks, and whether Pause owns a manual Save now
-action. The architecture review does not change save or replay semantics.
+D-192 makes Continue resume the most recent safely resumable campaign or explain why it
+cannot. New campaign remains distinct. The selected record's compatibility, metadata,
+and actions remain visible in the inspector. Status uses icon plus text, focus remains
+distinct from selection, and transient surfaces return focus to their invoking record.
+At narrow widths or high UI scale, welcome actions become a top band before the shelf and
+inspector stack in reading order. Exact campaign naming, manual save selection, supported
+compatibility upgrades, save-failure and exit behavior, safe deletion mechanics, and
+whether Pause owns a manual Save now action remain implementation work. The architecture
+approval does not change save or replay semantics.
+
+## Focused task-surface architecture comparison
+
+The focused task set covers six remaining families together: Rest and shaping,
+Progression choice, Action and target, Services and activities, Transition and terms,
+and Fall and recovery. Every option holds the approved light visual language, semantic
+cost and requirement display, projected results, disabled reasons, explicit cancellation,
+keyboard and pointer parity, distinct focus and selection, permanent-choice warning, and
+spoiler-free sample content constant. Generated labels, values, icons, maps, and
+progression routes are illustrative only.
+
+1. `01-contextual-workbench.png`: a reusable three-zone work surface gives context a
+   narrow rail, choices or items the broad center, and selected consequences a fixed
+   inspector. A stable action bar owns cost, confirmation, and cancellation. Targeting
+   keeps the map readable and uses a compact context rail plus selected-action tray.
+   This is the recommendation because it gives long content, comparison, requirements,
+   and projected consequences enough room without forcing routine actions through many
+   steps or keeping the map behind tasks that do not need it.
+2. `02-guided-decision-path.png`: every task becomes a visible route with one decision
+   and one explanation at a time. It provides the calmest learning and strongest
+   irreversible-choice pacing, but makes repair, trade, rest, and other repeated work
+   slower and adds backtracking between related selections.
+3. `03-field-drawer-system.png`: a right-edge drawer and bottom commitment tray keep the
+   map present through every task. It gives targeting the strongest spatial continuity
+   and makes short actions feel immediate, but long lists, detailed comparison,
+   permanent choices, and 150-200 percent UI scale compete with map space even when the
+   map has no bearing on the decision.
+
+The final contract must settle whether routine workbench categories preserve their last
+selection, how confirmation is skipped for reversible zero-cost actions, target-cycle
+behavior, action-preview ownership, what a Rest summary includes, how projected values
+are derived, the exact permanent-choice warning, focus return, and narrow or high-scale
+fallbacks. This architecture review does not change costs, availability, targeting,
+recovery, progression, world transition, or deterministic engine semantics.
 
 Chronicle Stage was the recommendation before this refinement. The player approved
 `06-map-workspace-sidebar-icons.png` under D-183 as the structural world-screen base
@@ -751,5 +793,5 @@ shape is the same.
 1. Settle the exact light-theme surface treatment and canonical map-glyph palette on
    the approved D-183 world geometry.
 2. Approve Journal, Help, and Settings.
-3. Approve Campaign entry, pause, save, confirmation, and boundary states.
-4. Approve the focused task-surface variants and the complete responsive/theme matrix.
+3. Approve the focused task-surface variants.
+4. Approve the complete responsive and light/dark theme matrix.

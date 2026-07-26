@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-191); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-192); the research behind it lives in `../research/`.
 
 ---
 
@@ -140,6 +140,17 @@ values, Reset section affects only the active category, and leaving with changes
 Save, Discard, and Cancel. UI scale reflows semantic screens while map zoom changes map
 cells only. Narrow or high-scale layouts turn categories into a drawer and stack or
 expose the preview without losing the action bar or invoking-screen return.
+
+D-192 gives campaign entry one canonical Campaign Shelf. A welcome and primary-action
+column leads into a scrollable campaign collection, while a fixed inspector keeps the
+selected campaign's compatibility, metadata, and safe actions in view. Continue resumes
+the most recent safely resumable campaign or explains why it cannot. New campaign and
+the Settings, Help, Quit, and version utilities remain reachable in empty and populated
+states. Pause, Saving, deletion, compatibility, load failure, and empty entry share one
+boundary-state grammar with explicit safe exits, icon-plus-text status, Cancel-first
+destructive confirmation, and distinct focus and selection. Narrow and high-scale
+layouts stack actions, shelf, and inspector in reading order without losing focus return
+or one-axis reachability.
 
 ### Attributes: seven, bought with deeds
 Might, Grace, Vigor, Wits, Mind, Will, Presence. Raised by spending **Essence** at rest points; Essence is earned from meaningful accomplishment (kills, quests, discoveries, feats). The Aegis gathers the essence of your deeds and reshapes you where it anchors. Soft caps everywhere: diminishing, never zero, returns. Mental (Mind/Will) and physical power sit on independent axes so hybrid builds compose freely.

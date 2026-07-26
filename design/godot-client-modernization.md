@@ -1,9 +1,9 @@
 # Aegis Godot client modernization
 
 Status: Approved under D-182, Phases 1 and 2 implemented and verified; D-183 through
-D-191 world, Character Creation, Conversation, reusable world-event, Character, Pack,
-Journal, Help, and Settings bases approved, campaign entry comparison ready before
-Phase 3
+D-192 world, Character Creation, Conversation, reusable world-event, Character, Pack,
+Journal, Help, Settings, Campaign entry, and system-state bases approved; focused task
+surface comparison ready before Phase 3
 
 ## Implementation status
 
@@ -36,8 +36,9 @@ Chronicle Desk, with complete current-session History, shared Activity state,
   Help Center, with search-first lookup, contextual return, canonical metadata projection,
   and a fixed quick-reference rail. D-191 approves Settings as the Live Preview Workshop,
   with grouped categories, provisional live preview, explicit save or revert actions,
-  and separate semantic UI scale and map-only zoom. Campaign entry and system states are
-  the next screen family in `design/godot-ui-mockup-review.md`. The approved next build will remediate the review
+  and separate semantic UI scale and map-only zoom. D-192 approves Campaign Shelf and
+  the shared system-state grammar. Focused task surfaces are the active screen family in
+  `design/godot-ui-mockup-review.md`. The approved next build will remediate the review
 findings before or with the dedicated Character, Inventory, and Equipment surfaces.
 
 ## Purpose
@@ -471,14 +472,36 @@ available.
 ### Campaign entry and system states
 
 Three controlled campaign-entry architectures and one shared system-state board are
-ready under `artifacts/d191-campaign-entry-system-states-architectures-v1/`. Campaign
-Shelf is recommended because its welcome and primary-action column, broad campaign
+preserved under `artifacts/d191-campaign-entry-system-states-architectures-v1/`. D-192
+approves Campaign Shelf because its welcome and primary-action column, broad campaign
 shelf, and selected-record inspector balance first use, repeat entry, compatibility
 review, and safe management. Campaign Gallery prioritizes a spatial personal collection.
 Campaign Ledger prioritizes dense campaign and version administration. The shared state
-board proposes one transient grammar for Pause, non-blocking Saving, guarded deletion,
+board defines one transient grammar for Pause, non-blocking Saving, guarded deletion,
 compatibility, load failure, and empty entry. Generated records and values are
 illustrative only, and no save or replay semantics change through this review.
+
+Continue resumes the most recent safely resumable campaign or explains why it cannot.
+New campaign and utilities stay reachable in empty and populated states. Status uses
+icon plus text, focus stays distinct from selection, guarded deletion defaults to Cancel,
+and transient states restore their invoking focus. Narrow and high-scale layouts move
+welcome actions into a top band before the shelf and inspector stack in reading order.
+
+### Focused task surfaces
+
+Three controlled reusable systems are ready under
+`artifacts/d192-focused-task-surface-architectures-v1/`. Each covers Rest and shaping,
+Progression choice, Action and target, Services and activities, Transition and terms,
+and Fall and recovery while holding cost, requirements, projected results, disabled
+reasons, cancellation, permanent-choice warning, and input parity constant.
+
+Contextual Workbench is recommended because its context rail, broad choice or item
+workspace, selected-detail inspector, and stable action bar support long content and
+routine comparison, while its targeting form keeps the square-cell map readable. Guided
+Decision Path prioritizes one-decision-at-a-time learning and irreversible-choice
+pacing. Field Drawer System prioritizes continuous map context through a right drawer
+and bottom commitment tray. Generated values and sample content are illustrative only,
+and no engine semantics change through this review.
 
 ## Responsive contract
 

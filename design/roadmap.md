@@ -57,8 +57,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   Implemented under D-174, but its terminal candidate is superseded by D-175. V1-10 is
   Implemented under D-177, and its clean candidate is built under D-178. The bounded
   D-181 Godot presentation spike is built and verified, D-182 approves the complete
-  modernization contract, and D-183 through D-191 lock the world, Character Creation,
-  Conversation, reusable event-sheet, Character, Pack, Journal, and Help bases. Phases 1
+  modernization contract, and D-183 through D-192 lock the world, Character Creation,
+  Conversation, reusable event-sheet, Character, Pack, Journal, Help, Settings, Campaign
+  entry, and boundary-state bases. Phases 1
   and 2 are built and verified. The remaining screen review, Phases 3 through 5, the
   replacement candidate, a fresh guided campaign, and explicit signoff remain
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
@@ -237,11 +238,11 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     individual screen mockups
   - [~] Review and approve the visual contract in `design/godot-ui-mockup-review.md`
     before Phase 3 implementation (world, creation, conversation, and event-sheet
-    structures plus Character, Pack, Journal, Help, and Settings approved D-183 through
-    D-191; remaining screen families continue)
-  - [~] Design player-facing campaign entry: title, Continue, New campaign, campaign
+    structures plus Character, Pack, Journal, Help, Settings, Campaign entry, and
+    boundary states approved D-183 through D-192; remaining screen families continue)
+  - [x] Design player-facing campaign entry: title, Continue, New campaign, campaign
     slots, load, safe deletion, version, and quit
-    (three architecture options and shared state grammar ready for review)
+    (D-192)
   - [x] Design full-window Character Creation across all stages, review, long content,
     and supported responsive states (D-184)
   - [x] Design Conversation and commerce across Talk, Trade, and Services, including
@@ -261,10 +262,11 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   - [x] Design Settings and accessibility controls, including live theme and text-size
     preview, map-only zoom, and any optional movement assistance
     (D-191)
-  - [ ] Design rest and attribute raising, progression choices, target selection,
+  - [~] Design rest and attribute raising, progression choices, target selection,
     trade/craft/service/activity menus, world transition, and fall/recovery variants
-  - [~] Design pause, confirmation, loading, save, empty, and error states
-    (shared boundary-state grammar ready for review)
+    (three reusable architecture systems ready for review)
+  - [x] Design pause, confirmation, loading, save, empty, and error states
+    (D-192)
   - [ ] Approve the full responsive and light/dark theme parity matrix for every screen
   - [x] Conversation repair: full transcript color, bottom-follow on open and updates,
     independently scrolling actions, and focus trapped inside the conversation (D-182)
@@ -893,9 +895,11 @@ The Godot client architecture is settled under D-182. The active mockup question
 must be settled for 1.0. The remaining parking-lot questions are classified post-1.0
 under D-165 unless a later decision promotes one into a release.
 
-- ◇ D-182 UI review: one game-screen architecture and later one consistent surface
-  treatment, integrated Activity/History behavior, iron rose removal, focused screen
-  shapes, separate text-size and map-zoom controls, and mockup revisions
+- ◇ D-182 Godot UI review: settle the focused task architecture and its routine-state
+  behavior (selection memory, reversible zero-cost confirmation, target cycling and
+  preview, Rest summary, projected-value derivation, permanent-choice warning, focus
+  return, and narrow or high-scale fallback), then approve the complete responsive and
+  light/dark parity matrix over D-183 through D-192
 - ◇ Folk cultures: how worldgen recultures the five folk per world, and whether factions read folk (D-017, D-092)
 - ◇ Spell list growth past the seven V1-07 workings / school-shaped content, if any
   (D-022, D-091, D-163)
@@ -911,6 +915,21 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-25: **Focused task surfaces receive three controlled architecture systems.**
+  Contextual Workbench, Guided Decision Path, and Field Drawer System each cover Rest
+  and shaping, Progression choice, Action and target, Services and activities,
+  Transition and terms, and Fall and recovery. Cost, requirements, projected results,
+  disabled reasons, cancellation, permanent-choice warning, and input parity remain
+  constant while the work model changes. Contextual Workbench is recommended. The set
+  is ready for player review before D-193.
+- 2026-07-25: **D-192 opens the Campaign Shelf and shared boundary-state grammar.**
+  `01-campaign-shelf.png` is the canonical pre-campaign home: welcome actions, a
+  scrollable campaign shelf, and a fixed selected-record inspector keep first use,
+  repeat entry, compatibility, and safe management together. Continue resumes the most
+  recent safely resumable campaign or explains why it cannot. The approved shared board
+  governs Pause, non-blocking Saving, guarded deletion, compatibility, load failure, and
+  empty entry. Responsive fallbacks stack in reading order and preserve focus return.
+  Remaining focused task surfaces are next.
 - 2026-07-25: **Campaign entry and boundary states receive a controlled review set.**
   Campaign Shelf, Campaign Gallery, and Campaign Ledger keep primary entry, campaign
   records, compatibility, load, guarded deletion, utilities, version, and input parity

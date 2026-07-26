@@ -1,5 +1,7 @@
 namespace Aegis.Host;
 
+using Aegis.Core;
+
 public enum WorldRailPresentation
 {
     Docked,
@@ -44,7 +46,7 @@ public readonly record struct ResponsiveClientLayout(
 {
     public static ResponsiveClientLayout Resolve(int viewportWidth, float uiScale)
     {
-        bool collapseSecondaryColumns = viewportWidth < 1400 || uiScale >= 1.5f;
+        bool collapseSecondaryColumns = viewportWidth < 1220 || uiScale >= 1.5f;
         return new ResponsiveClientLayout(
             collapseSecondaryColumns
                 ? WorldRailPresentation.Drawer
@@ -53,6 +55,87 @@ public readonly record struct ResponsiveClientLayout(
                 ? ConversationPresentation.Stacked
                 : ConversationPresentation.Split);
     }
+}
+
+public sealed record WorldHudPresentation(
+    string PlayerName,
+    int Health,
+    int MaxHealth,
+    int Stamina,
+    int MaxStamina,
+    int Focus,
+    int MaxFocus,
+    int Coin,
+    int Essence,
+    int Rations,
+    int Cycle,
+    int Turn,
+    string Season,
+    string Weather,
+    string WorldName,
+    string SettlementName)
+{
+    public static WorldHudPresentation From(Game game)
+    {
+        Player player = game.Player;
+        return new WorldHudPresentation(
+            player.Name.Length > 0 ? player.Name : "The bearer",
+            player.Hp,
+            player.EffectiveMaxHp,
+            player.Stamina,
+            player.MaxStamina,
+            player.Focus,
+            player.MaxFocus,
+            player.Coin,
+            player.Essence,
+            player.Rations,
+            game.Cycle,
+            game.Turn,
+            game.Season.ToString(),
+            game.WeatherRead(game.LocalClimate),
+            game.World.Name,
+            game.World.SettlementName);
+    }
+}
+
+public enum ActivityFilter
+{
+    All,
+    Field,
+    Combat,
+    Words,
+}
+
+public static class ActivityLog
+{
+    public static bool Includes(ActivityFilter filter, LogTone tone) => filter switch
+    {
+        ActivityFilter.Field => tone is LogTone.Info or LogTone.Reward,
+        ActivityFilter.Combat => tone is LogTone.Combat or LogTone.Danger,
+        ActivityFilter.Words => tone == LogTone.Aegis,
+        _ => true,
+    };
+}
+
+public static class MapZoom
+{
+    public const int MinimumIndex = -2;
+    public const int MaximumIndex = 4;
+
+    public static int ClampIndex(int index) => Math.Clamp(index, MinimumIndex, MaximumIndex);
+
+    public static float Factor(int index) => ClampIndex(index) switch
+    {
+        -2 => 0.75f,
+        -1 => 0.875f,
+        1 => 1.25f,
+        2 => 1.5f,
+        3 => 1.75f,
+        4 => 2f,
+        _ => 1f,
+    };
+
+    public static int Percent(int index) => (int)MathF.Round(Factor(index) * 100);
 }
 
 public sealed class FollowTailState

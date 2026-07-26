@@ -62,7 +62,12 @@ internal readonly record struct UiPalette(
     Color Muted,
     Color Accent,
     Color Warm,
-    Color Danger)
+    Color Danger,
+    Color Health,
+    Color Stamina,
+    Color Field,
+    Color Combat,
+    Color Words)
 {
     public static UiPalette Dark => new(
         Color.FromHtml("#0E1518"),
@@ -72,7 +77,12 @@ internal readonly record struct UiPalette(
         Color.FromHtml("#B3BDBC"),
         Color.FromHtml("#78CED0"),
         Color.FromHtml("#E2A54D"),
-        Color.FromHtml("#E06F68"));
+        Color.FromHtml("#E06F68"),
+        Color.FromHtml("#D95F5F"),
+        Color.FromHtml("#65B86E"),
+        Color.FromHtml("#B3BDBC"),
+        Color.FromHtml("#E88A72"),
+        Color.FromHtml("#78CED0"));
 
     public static UiPalette Light => new(
         Color.FromHtml("#F3EEE4"),
@@ -82,7 +92,12 @@ internal readonly record struct UiPalette(
         Color.FromHtml("#536166"),
         Color.FromHtml("#14676E"),
         Color.FromHtml("#8A5B16"),
-        Color.FromHtml("#9F3434"));
+        Color.FromHtml("#9F3434"),
+        Color.FromHtml("#A73535"),
+        Color.FromHtml("#2F7A43"),
+        Color.FromHtml("#536166"),
+        Color.FromHtml("#A13B34"),
+        Color.FromHtml("#14676E"));
 
     public Color MapColor(Hue hue, bool light) =>
         light

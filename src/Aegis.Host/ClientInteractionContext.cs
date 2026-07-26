@@ -29,7 +29,12 @@ public sealed record CreationChoice(
     string Description,
     string Detail,
     bool Enabled = true,
-    string DisabledReason = "");
+    string DisabledReason = "",
+    string Explanation = "");
+
+public sealed record TaskPresentation(
+    string Title,
+    string Body);
 
 public sealed record CreationPresentation(
     CreationStage Stage,
@@ -51,6 +56,7 @@ public sealed record ClientInteractionContext(
     public int? ProgressStep { get; init; }
     public int? ProgressTotal { get; init; }
     public CreationPresentation? Creation { get; init; }
+    public TaskPresentation? Task { get; init; }
 
     public bool SupportsCompass => Surface == ClientSurface.World;
     public bool SupportsActionFocus => Actions.Length > 0;
@@ -106,6 +112,12 @@ public sealed record ClientInteractionContext(
                     CreationChoices(game),
                     CreationReview(game)),
             };
+        }
+        else if (surface is ClientSurface.Menu or ClientSurface.Character or ClientSurface.Equipment)
+        {
+            context = context with { Task = TaskPresentationFrom(frame, actions, title) };
+            if (context.Title.Length == 0 && context.Task.Title.Length > 0)
+                context = context with { Title = context.Task.Title };
         }
         return context;
     }
@@ -166,12 +178,14 @@ public sealed record ClientInteractionContext(
                     (char)('1' + index),
                     def.Name,
                     def.Blurb,
-                    def.Trait)),
+                    def.Trait,
+                    Explanation: FolkExplanation(def))),
                 new CreationChoice(
                     '0',
                     "Leave it to fate",
                     "The shrine decides the whole of you at once.",
-                    "All creation choices are rolled together."),
+                    "All creation choices are rolled together.",
+                    Explanation: "Every creation choice is selected together from the same campaign seed."),
             ],
             CreationStage.Past =>
             [
@@ -179,7 +193,8 @@ public sealed record ClientInteractionContext(
                     (char)('1' + index),
                     def.Name,
                     def.Blurb,
-                    SkillSet.NameOf(def.Skill))),
+                    SkillSet.NameOf(def.Skill),
+                    Explanation: PastExplanation(def))),
             ],
             CreationStage.ShapeRaise or CreationStage.ShapePay =>
             [
@@ -203,7 +218,10 @@ public sealed record ClientInteractionContext(
                         AttributeSet.DescriptionOf(attribute),
                         $"Current value {player.Attributes[attribute]}",
                         enabled,
-                        reason);
+                        reason,
+                        game.CreationStage == CreationStage.ShapeRaise
+                            ? $"Raises {AttributeSet.NameOf(attribute)} by 1. {AttributeSet.DescriptionOf(attribute)}"
+                            : $"Lowers {AttributeSet.NameOf(attribute)} by 1. {AttributeSet.DescriptionOf(attribute)}");
                 }),
                 .. game.CreationStage == CreationStage.ShapeRaise
                     ? new[]
@@ -212,7 +230,8 @@ public sealed record ClientInteractionContext(
                             '0',
                             "Stand as you are",
                             "Finish shaping without spending the remaining choices.",
-                            ""),
+                            "",
+                            Explanation: "Keeps the current attribute values and advances to the next stage."),
                     }
                     : [],
             ],
@@ -227,7 +246,8 @@ public sealed record ClientInteractionContext(
                         def.Blurb,
                         held ? "Already carried" : "",
                         !held,
-                        held ? "Already chosen." : "");
+                        held ? "Already chosen." : "",
+                        def.Blurb);
                 }),
             ],
             CreationStage.Burden =>
@@ -236,12 +256,14 @@ public sealed record ClientInteractionContext(
                     (char)('1' + index),
                     def.Name,
                     def.Blurb,
-                    def.Price)),
+                    def.Price,
+                    Explanation: $"{def.Price}. In return, creation includes a second precious thing.")),
                 new CreationChoice(
                     '0',
                     "Carry nothing more",
                     "Continue without a burden or a second precious thing.",
-                    ""),
+                    "",
+                    Explanation: "Adds no lasting burden and does not add a second precious thing."),
             ],
             CreationStage.Vow =>
             [
@@ -249,15 +271,61 @@ public sealed record ClientInteractionContext(
                     (char)('1' + index),
                     def.Name,
                     def.Blurb,
-                    "")),
+                    "",
+                    Explanation: "Adds a persistent personal aim that the world can answer.")),
                 new CreationChoice(
                     '0',
                     "No vow but the road",
                     "Continue without swearing a private aim.",
-                    ""),
+                    "",
+                    Explanation: "Adds no personal vow. The rest of the campaign remains unchanged."),
             ],
             _ => [],
         };
+    }
+
+    private static string FolkExplanation(FolkDef def)
+    {
+        var parts = new List<string>();
+        if (def.TiltUp is { } up)
+            parts.Add($"+1 {AttributeSet.NameOf(up)}. {AttributeSet.DescriptionOf(up)}");
+        if (def.TiltDown is { } down)
+            parts.Add($"-1 {AttributeSet.NameOf(down)}. {AttributeSet.DescriptionOf(down)}");
+        parts.Add(def.Id switch
+        {
+            FolkId.Steadfolk =>
+                "Adds a third shaping choice and 10 starting coin.",
+            FolkId.Emberwrought =>
+                "Adds 1 maximum Focus, increasing the pool spent on workings.",
+            FolkId.Cairnborn =>
+                "Reads every hostile tell one tier more clearly.",
+            FolkId.Heathborn =>
+                "Harvesting yields one additional hide or sprig.",
+            FolkId.Wrightkin =>
+                "Carried gear gains wear half as often.",
+            _ => def.Trait,
+        });
+        return string.Join("\n", parts);
+    }
+
+    private static string PastExplanation(PastDef def)
+    {
+        string skill =
+            $"Begins with {SkillSet.NameOf(def.Skill)} at level 1. {SkillSet.DescriptionOf(def.Skill)}";
+        string extra = def.Id switch
+        {
+            PastId.Soldier => "Begins wearing a half-worn quilted jack.",
+            PastId.Poacher => "Begins with a hunting bow equipped.",
+            PastId.HedgeHealer =>
+                "Begins with 3 sprigs, the Stillcraft lesson, and Lore at level 1.",
+            PastId.SmithsHand => "Carries the recognition attached to a smith's hand.",
+            PastId.ScribesWard => "Also begins with Lore at level 1.",
+            PastId.Wayfarer => "Begins with 2 additional rations.",
+            PastId.Oathbreaker =>
+                "Also begins with Larceny at level 1, while the home stead begins suspicious.",
+            _ => "",
+        };
+        return extra.Length > 0 ? $"{skill}\n{extra}" : skill;
     }
 
     private static string[] CreationReview(Game game)
@@ -380,4 +448,94 @@ public sealed record ClientInteractionContext(
         }
         return [.. actions];
     }
+
+    private static TaskPresentation TaskPresentationFrom(
+        Frame frame,
+        IReadOnlyList<ClientAction> actions,
+        string fallbackTitle)
+    {
+        string[] lines = frame.ToTextLines();
+        if (actions.Count == 0)
+            return new TaskPresentation(fallbackTitle, ExtractReadableLines(lines));
+
+        int firstActionRow = actions.Min(action => action.Y);
+        int left = actions.Min(action => action.X);
+        int right = actions.Max(action => action.X + action.Width);
+        int top = Math.Max(0, firstActionRow - 12);
+        int bottom = Math.Min(lines.Length - 1, actions.Max(action => action.Y) + 4);
+
+        for (int row = firstActionRow - 1; row >= 0; row--)
+        {
+            string line = lines[row];
+            int candidate = IsHorizontalBorder(line)
+                ? FindBorderLeft(line, left)
+                : -1;
+            if (candidate >= 0)
+            {
+                left = candidate + 1;
+                top = row + 1;
+                break;
+            }
+        }
+
+        for (int row = actions.Max(action => action.Y) + 1; row < lines.Length; row++)
+        {
+            string line = lines[row];
+            if (IsHorizontalBorder(line) && FindBorderLeft(line, left) >= 0)
+            {
+                bottom = row - 1;
+                break;
+            }
+        }
+
+        var content = new List<string>();
+        for (int row = top; row <= bottom; row++)
+        {
+            string line = lines[row];
+            int start = Math.Clamp(left, 0, line.Length);
+            int length = Math.Clamp(right - left + 8, 0, line.Length - start);
+            string value = length > 0 ? line.Substring(start, length) : "";
+            value = value.Trim().Trim('|', '+', '-', '─', '│', '┌', '┐', '└', '┘');
+            if (value.Length == 0)
+            {
+                if (content.Count > 0 && content[^1].Length > 0)
+                    content.Add("");
+                continue;
+            }
+            if (actions.Any(action => action.Y == row))
+                continue;
+            content.Add(value);
+        }
+
+        while (content.Count > 0 && content[^1].Length == 0)
+            content.RemoveAt(content.Count - 1);
+        string title = fallbackTitle;
+        if (title.Length == 0 && content.Count > 0)
+        {
+            title = content[0];
+            content.RemoveAt(0);
+        }
+        return new TaskPresentation(title, string.Join("\n", content));
+    }
+
+    private static int FindBorderLeft(string line, int before)
+    {
+        int start = Math.Min(before, line.Length - 1);
+        for (int index = start; index >= 0; index--)
+        {
+            if (line[index] is '|' or '│' or '+' or '┌' or '└')
+                return index;
+        }
+        return -1;
+    }
+
+    private static bool IsHorizontalBorder(string line) =>
+        line.Count(character => character is '-' or '─') >= 8;
+
+    private static string ExtractReadableLines(IEnumerable<string> lines) =>
+        string.Join(
+            "\n",
+            lines.Select(line => line.Trim())
+                .Where(line => line.Length > 0)
+                .Take(24));
 }

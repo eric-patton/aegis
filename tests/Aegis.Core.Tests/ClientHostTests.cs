@@ -143,6 +143,9 @@ public class ClientHostTests
         Assert.Equal(
             CreationCatalog.Folk.Select(def => def.Trait),
             folk.Creation.Choices.Take(CreationCatalog.Folk.Count).Select(choice => choice.Detail));
+        Assert.All(
+            folk.Creation.Choices.Take(CreationCatalog.Folk.Count),
+            choice => Assert.False(string.IsNullOrWhiteSpace(choice.Explanation)));
 
         foreach (char key in "150400..")
             game.ApplyKey(key);
@@ -178,8 +181,8 @@ public class ClientHostTests
 
     [Theory]
     [InlineData(1920, 1.0f, WorldRailPresentation.Docked, ConversationPresentation.Split)]
-    [InlineData(1400, 1.0f, WorldRailPresentation.Docked, ConversationPresentation.Split)]
-    [InlineData(1399, 1.0f, WorldRailPresentation.Drawer, ConversationPresentation.Stacked)]
+    [InlineData(1220, 1.0f, WorldRailPresentation.Docked, ConversationPresentation.Split)]
+    [InlineData(1219, 1.0f, WorldRailPresentation.Drawer, ConversationPresentation.Stacked)]
     [InlineData(1920, 1.5f, WorldRailPresentation.Drawer, ConversationPresentation.Stacked)]
     [InlineData(1100, 2.0f, WorldRailPresentation.Drawer, ConversationPresentation.Stacked)]
     public void ResponsiveClientLayout_CollapsesSecondaryColumnsBeforeTextShrinks(
@@ -192,6 +195,55 @@ public class ClientHostTests
 
         Assert.Equal(world, layout.WorldRail);
         Assert.Equal(conversation, layout.Conversation);
+    }
+
+    [Theory]
+    [InlineData(-9, -2, 75)]
+    [InlineData(-1, -1, 88)]
+    [InlineData(0, 0, 100)]
+    [InlineData(2, 2, 150)]
+    [InlineData(9, 4, 200)]
+    public void MapZoom_ClampsToDiscreteMapOnlySteps(
+        int requested,
+        int expectedIndex,
+        int expectedPercent)
+    {
+        Assert.Equal(expectedIndex, MapZoom.ClampIndex(requested));
+        Assert.Equal(expectedPercent, MapZoom.Percent(requested));
+    }
+
+    [Theory]
+    [InlineData(ActivityFilter.All, LogTone.Info, true)]
+    [InlineData(ActivityFilter.Field, LogTone.Reward, true)]
+    [InlineData(ActivityFilter.Field, LogTone.Combat, false)]
+    [InlineData(ActivityFilter.Combat, LogTone.Danger, true)]
+    [InlineData(ActivityFilter.Words, LogTone.Aegis, true)]
+    [InlineData(ActivityFilter.Words, LogTone.Info, false)]
+    public void ActivityFilter_UsesStableSemanticToneGroups(
+        ActivityFilter filter,
+        LogTone tone,
+        bool expected)
+    {
+        Assert.Equal(expected, ActivityLog.Includes(filter, tone));
+    }
+
+    [Fact]
+    public void WorldHudProjection_UsesCanonicalResourcesAndPlace()
+    {
+        var game = new Game(176);
+
+        WorldHudPresentation hud = WorldHudPresentation.From(game);
+
+        Assert.Equal(game.Player.Hp, hud.Health);
+        Assert.Equal(game.Player.EffectiveMaxHp, hud.MaxHealth);
+        Assert.Equal(game.Player.Stamina, hud.Stamina);
+        Assert.Equal(game.Player.MaxStamina, hud.MaxStamina);
+        Assert.Equal(game.Player.Focus, hud.Focus);
+        Assert.Equal(game.Player.MaxFocus, hud.MaxFocus);
+        Assert.Equal(game.Player.Coin, hud.Coin);
+        Assert.Equal(game.Player.Essence, hud.Essence);
+        Assert.Equal(game.World.Name, hud.WorldName);
+        Assert.Equal(game.World.SettlementName, hud.SettlementName);
     }
 
     [Theory]

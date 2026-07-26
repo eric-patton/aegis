@@ -18,26 +18,29 @@ public sealed partial class Main : Control, IFrameSink
     private GodotPresentationSettings _settings = null!;
     private UiScaleTokens _scale;
     private UiPalette _palette;
+    private readonly ActivityFeedState _activityState = new();
 
     private ColorRect _background = null!;
     private MarginContainer _outerMargin = null!;
     private VBoxContainer _shell = null!;
+    private HBoxContainer _header = null!;
     private Label _wordmark = null!;
     private Label _place = null!;
-    private Button _moveButton = null!;
-    private Button _historyButton = null!;
-    private Button _scaleButton = null!;
-    private Button _themeButton = null!;
+    private Button _characterButton = null!;
+    private Button _packButton = null!;
+    private Button _journalButton = null!;
+    private Button _helpButton = null!;
     private PanelContainer _surfacePanel = null!;
     private Control _screenHost = null!;
     private CreationScreen _creation = null!;
     private WorldScreen _world = null!;
     private ConversationScreen _conversation = null!;
-    private LegacyScreen _legacy = null!;
+    private ModernTaskScreen _task = null!;
     private HistoryOverlay _history = null!;
-    private IronRoseControl _compass = null!;
-    private bool _compassOpen;
+    private HelpOverlay _help = null!;
     private bool _historyOpen;
+    private bool _helpOpen;
+    private Control? _overlayReturnFocus;
 
     public (int Width, int Height) CurrentSize
     {
@@ -109,6 +112,21 @@ public sealed partial class Main : Control, IFrameSink
             }
             return;
         }
+        if (_helpOpen)
+        {
+            if (key.Keycode == Key.Escape)
+            {
+                CloseHelp();
+                GetViewport().SetInputAsHandled();
+            }
+            return;
+        }
+
+        if (_interaction.Surface == ClientSurface.CreationChoice && _creation.HandleKey(key))
+        {
+            GetViewport().SetInputAsHandled();
+            return;
+        }
 
         if (_interaction.Surface == ClientSurface.Conversation
             && key.Keycode is Key.Up or Key.Down
@@ -117,13 +135,32 @@ public sealed partial class Main : Control, IFrameSink
             GetViewport().SetInputAsHandled();
             return;
         }
+        if (_task.Visible
+            && key.Keycode is Key.Up or Key.Down
+            && _task.MoveSelection(key.Keycode == Key.Up ? -1 : 1))
+        {
+            GetViewport().SetInputAsHandled();
+            return;
+        }
 
         if (_interaction.Surface != ClientSurface.World)
             return;
 
-        if (key.Keycode == Key.Quoteleft)
+        if (key.CtrlPressed && key.Keycode is Key.Minus or Key.KpSubtract)
         {
-            ToggleCompass();
+            _world.SetZoom((_settings?.MapZoomIndex ?? 0) - 1);
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+        if (key.CtrlPressed && key.Keycode is Key.Equal or Key.KpAdd)
+        {
+            _world.SetZoom((_settings?.MapZoomIndex ?? 0) + 1);
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+        if (key.CtrlPressed && key.Keycode == Key.Key0)
+        {
+            _world.SetZoom(0);
             GetViewport().SetInputAsHandled();
             return;
         }
@@ -186,16 +223,27 @@ public sealed partial class Main : Control, IFrameSink
         _interaction = interaction;
         bool becameVisible = _visibleSurface != interaction.Surface;
         _visibleSurface = interaction.Surface;
-        if (interaction.Surface != ClientSurface.World && _historyOpen)
+        if (interaction.IsCreation && _historyOpen)
             CloseHistory();
+        if (interaction.IsCreation && _helpOpen)
+            CloseHelp();
 
         bool isCreation = interaction.IsCreation;
-        bool isWorld = interaction.Surface is ClientSurface.World or ClientSurface.DirectionPrompt;
+        bool isWorld = interaction.Surface is
+            ClientSurface.World or
+            ClientSurface.DirectionPrompt or
+            ClientSurface.Menu;
         bool isConversation = interaction.Surface == ClientSurface.Conversation;
+        bool isTask = interaction.Surface is
+            ClientSurface.Menu or
+            ClientSurface.Character or
+            ClientSurface.Equipment;
         _creation.Visible = isCreation;
         _world.Visible = isWorld;
         _conversation.Visible = isConversation;
-        _legacy.Visible = !isCreation && !isWorld && !isConversation;
+        _task.Visible = isTask;
+        _activityState.SetEntries(interaction.Transcript);
+        WorldHudPresentation hud = CurrentHud();
 
         if (isCreation)
         {
@@ -205,26 +253,31 @@ public sealed partial class Main : Control, IFrameSink
         else if (isWorld)
         {
             _place.Text = WorldTitle();
-            _world.UpdateView(frame, interaction, StatusText());
+            _world.UpdateView(frame, interaction, hud, _settings.MapZoomIndex);
+            if (isTask)
+                _task.UpdateView(interaction, becameVisible);
             if (_historyOpen)
                 _history.UpdateEntries(interaction.Transcript);
         }
         else if (isConversation)
         {
             _place.Text = interaction.Title;
-            _conversation.UpdateView(interaction, becameVisible);
+            _conversation.UpdateView(interaction, becameVisible, hud);
+            if (_historyOpen)
+                _history.UpdateEntries(interaction.Transcript);
         }
-        else
+        else if (isTask)
         {
             _place.Text = interaction.Title.Length > 0 ? interaction.Title : "The road";
-            _legacy.UpdateView(frame);
+            _task.UpdateView(interaction, becameVisible);
         }
 
-        _moveButton.Visible = interaction.Surface == ClientSurface.World;
-        _historyButton.Visible = interaction.Surface == ClientSurface.World;
-        _compass.Visible = _compassOpen
-            && interaction.Surface == ClientSurface.World
-            && !_historyOpen;
+        bool launcherVisible = !isCreation;
+        _header.Visible = launcherVisible;
+        _characterButton.Visible = interaction.Surface == ClientSurface.World;
+        _packButton.Visible = interaction.Surface == ClientSurface.World;
+        _journalButton.Visible = launcherVisible;
+        _helpButton.Visible = launcherVisible;
         ScheduleLayoutPass();
     }
 
@@ -233,14 +286,11 @@ public sealed partial class Main : Control, IFrameSink
         switch (request.Action)
         {
             case "compass":
-                if (_interaction.Surface != ClientSurface.World)
-                    return new PilotResponse
-                    {
-                        Ok = false,
-                        Error = "the iron rose is available only on the world view",
-                    };
-                ToggleCompass();
-                return new PilotResponse { Ok = true };
+                return new PilotResponse
+                {
+                    Ok = false,
+                    Error = "the movement panel is not part of the default world shell",
+                };
             case "history":
             case "log":
                 if (_interaction.Surface != ClientSurface.World)
@@ -251,19 +301,59 @@ public sealed partial class Main : Control, IFrameSink
                     };
                 ToggleHistory();
                 return new PilotResponse { Ok = true };
+            case "activity":
+                if (_interaction.Surface != ClientSurface.World)
+                    return new PilotResponse
+                    {
+                        Ok = false,
+                        Error = "the Activity drawer is available only on the world view",
+                    };
+                _world.ToggleSidebar();
+                return new PilotResponse { Ok = true };
             case "theme":
                 ToggleTheme();
                 return new PilotResponse { Ok = true };
+            case "help":
+            case "guide":
+                ToggleHelp();
+                return new PilotResponse { Ok = true };
             case "scale":
                 CycleScale();
+                return new PilotResponse { Ok = true };
+            case "zoom-in":
+                if (_interaction.Surface != ClientSurface.World)
+                    return new PilotResponse
+                    {
+                        Ok = false,
+                        Error = "map zoom is available only on the world view",
+                    };
+                _world.SetZoom((_settings?.MapZoomIndex ?? 0) + 1);
+                return new PilotResponse { Ok = true };
+            case "zoom-out":
+                if (_interaction.Surface != ClientSurface.World)
+                    return new PilotResponse
+                    {
+                        Ok = false,
+                        Error = "map zoom is available only on the world view",
+                    };
+                _world.SetZoom((_settings?.MapZoomIndex ?? 0) - 1);
+                return new PilotResponse { Ok = true };
+            case "zoom-reset":
+                if (_interaction.Surface != ClientSurface.World)
+                    return new PilotResponse
+                    {
+                        Ok = false,
+                        Error = "map zoom is available only on the world view",
+                    };
+                _world.SetZoom(0);
                 return new PilotResponse { Ok = true };
             case "stress":
                 return new PilotResponse { Ok = true };
             case "close":
                 if (_historyOpen)
                     CloseHistory();
-                else
-                    CloseCompass();
+                else if (_helpOpen)
+                    CloseHelp();
                 return new PilotResponse { Ok = true };
             case "next":
                 MoveFocus(1);
@@ -295,11 +385,11 @@ public sealed partial class Main : Control, IFrameSink
         _shell = new VBoxContainer();
         _outerMargin.AddChild(_shell);
 
-        var header = new HBoxContainer();
-        _shell.AddChild(header);
+        _header = new HBoxContainer();
+        _shell.AddChild(_header);
         _wordmark = new Label { Text = "AEGIS", CustomMinimumSize = new Vector2(132, 0) };
-        header.AddChild(_wordmark);
-        header.AddChild(new VSeparator());
+        _header.AddChild(_wordmark);
+        _header.AddChild(new VSeparator());
         _place = new Label
         {
             Text = "The first road",
@@ -307,20 +397,20 @@ public sealed partial class Main : Control, IFrameSink
             VerticalAlignment = VerticalAlignment.Center,
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
-        header.AddChild(_place);
+        _header.AddChild(_place);
 
-        _moveButton = new Button { Text = "Move  ~" };
-        _moveButton.Pressed += ToggleCompass;
-        header.AddChild(_moveButton);
-        _historyButton = new Button { Text = "History" };
-        _historyButton.Pressed += ToggleHistory;
-        header.AddChild(_historyButton);
-        _scaleButton = new Button();
-        _scaleButton.Pressed += CycleScale;
-        header.AddChild(_scaleButton);
-        _themeButton = new Button();
-        _themeButton.Pressed += ToggleTheme;
-        header.AddChild(_themeButton);
+        _characterButton = new Button { Text = "Character" };
+        _characterButton.Pressed += () => SendKey('c');
+        _header.AddChild(_characterButton);
+        _packButton = new Button { Text = "Pack" };
+        _packButton.Pressed += () => SendKey('i');
+        _header.AddChild(_packButton);
+        _journalButton = new Button { Text = "Journal" };
+        _journalButton.Pressed += ToggleHistory;
+        _header.AddChild(_journalButton);
+        _helpButton = new Button { Text = "Help" };
+        _helpButton.Pressed += ToggleHelp;
+        _header.AddChild(_helpButton);
 
         _surfacePanel = new PanelContainer
         {
@@ -334,31 +424,32 @@ public sealed partial class Main : Control, IFrameSink
         _creation = new CreationScreen(_fonts, _scale, _palette);
         _creation.KeyRequested += SendKey;
         AddScreen(_creation);
-        _world = new WorldScreen(_fonts, _scale, _palette, _settings?.LightTheme == true);
-        _world.HistoryRequested += ToggleHistory;
+        _world = new WorldScreen(
+            _fonts,
+            _scale,
+            _palette,
+            _settings?.LightTheme == true,
+            _activityState);
+        _world.MapZoomChanged += SaveMapZoom;
         AddScreen(_world);
         _conversation = new ConversationScreen(_fonts, _scale, _palette);
         _conversation.KeyRequested += SendKey;
         AddScreen(_conversation);
-        _legacy = new LegacyScreen(_fonts.Mono, _scale, _palette, _settings?.LightTheme == true);
-        AddScreen(_legacy);
+        _task = new ModernTaskScreen(_fonts, _scale, _palette);
+        _task.KeyRequested += SendKey;
+        AddScreen(_task);
 
-        _history = new HistoryOverlay(_fonts, _scale, _palette);
+        _history = new HistoryOverlay(_fonts, _scale, _palette, _activityState);
         _history.CloseRequested += CloseHistory;
         _history.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         _history.Visible = false;
         AddChild(_history);
 
-        _compass = new IronRoseControl(_fonts, _scale, _palette);
-        _compass.KeyRequested += SendKey;
-        _compass.CloseRequested += CloseCompass;
-        _compass.PositionCommitted += SaveCompassPosition;
-        _compass.SetNormalizedPosition(
-            _settings?.IronRosePosition ?? NormalizedFloatingPosition.Default);
-        _compassOpen = _settings?.IronRoseOpen == true;
-        _moveButton.Text = _compassOpen ? "Close move  ~" : "Move  ~";
-        _compass.Visible = false;
-        AddChild(_compass);
+        _help = new HelpOverlay(_fonts, _scale, _palette);
+        _help.CloseRequested += CloseHelp;
+        _help.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        _help.Visible = false;
+        AddChild(_help);
 
         GetViewport().SizeChanged += ScheduleLayoutPass;
         RefreshVisuals();
@@ -390,11 +481,9 @@ public sealed partial class Main : Control, IFrameSink
         _creation.ApplyVisuals(_scale, _palette);
         _world.ApplyVisuals(_scale, _palette, _settings?.LightTheme == true);
         _conversation.ApplyVisuals(_scale, _palette);
-        _legacy.ApplyVisuals(_scale, _palette, _settings?.LightTheme == true);
+        _task.ApplyVisuals(_scale, _palette);
         _history.ApplyVisuals(_scale, _palette);
-        _compass.ApplyVisuals(_scale, _palette);
-        _scaleButton.Text = $"{_scale.Percent}%  F7";
-        _themeButton.Text = _settings?.LightTheme == true ? "Dark iron  F6" : "Light field  F6";
+        _help.ApplyVisuals(_scale, _palette);
 
         if (_frame is not null)
             ((IFrameSink)this).Draw(_frame, _interaction);
@@ -419,33 +508,35 @@ public sealed partial class Main : Control, IFrameSink
         RefreshVisuals();
     }
 
-    private void ToggleCompass()
+    private void SaveMapZoom(int index)
     {
-        if (_interaction.Surface != ClientSurface.World)
+        if (_settings is null)
             return;
-        _compassOpen = !_compassOpen;
-        _compass.Visible = _compassOpen;
-        _moveButton.Text = _compassOpen ? "Close move  ~" : "Move  ~";
-        if (_settings is not null)
-        {
-            _settings.IronRoseOpen = _compassOpen;
-            _settings.Save();
-        }
-        ScheduleLayoutPass();
+        _settings.MapZoomIndex = MapZoom.ClampIndex(index);
+        _settings.Save();
     }
 
-    private void CloseCompass()
+    private void ToggleHelp()
     {
-        if (!_compassOpen)
-            return;
-        _compassOpen = false;
-        _compass.Visible = false;
-        _moveButton.Text = "Move  ~";
-        if (_settings is not null)
+        if (_helpOpen)
         {
-            _settings.IronRoseOpen = false;
-            _settings.Save();
+            CloseHelp();
+            return;
         }
+        if (_interaction.IsCreation)
+            return;
+        _overlayReturnFocus = GetViewport().GuiGetFocusOwner();
+        _helpOpen = true;
+        _help.Open();
+    }
+
+    private void CloseHelp()
+    {
+        if (!_helpOpen)
+            return;
+        _helpOpen = false;
+        _help.Visible = false;
+        RestoreOverlayFocus();
     }
 
     private void ToggleHistory()
@@ -457,10 +548,9 @@ public sealed partial class Main : Control, IFrameSink
             CloseHistory();
             return;
         }
+        _overlayReturnFocus = GetViewport().GuiGetFocusOwner();
         _historyOpen = true;
         _history.Open(_interaction.Transcript);
-        _historyButton.Text = "Close history";
-        _compass.Visible = false;
         ScheduleLayoutPass();
     }
 
@@ -468,9 +558,17 @@ public sealed partial class Main : Control, IFrameSink
     {
         _historyOpen = false;
         _history.Visible = false;
-        _historyButton.Text = "History";
-        _compass.Visible = _compassOpen && _interaction.Surface == ClientSurface.World;
+        RestoreOverlayFocus();
         ScheduleLayoutPass();
+    }
+
+    private void RestoreOverlayFocus()
+    {
+        if (_overlayReturnFocus is { Visible: true } control && control.IsInsideTree())
+            control.CallDeferred(Control.MethodName.GrabFocus);
+        else if (_world.Visible)
+            _world.CallDeferred(Control.MethodName.GrabFocus);
+        _overlayReturnFocus = null;
     }
 
     private void ScheduleLayoutPass()
@@ -482,18 +580,10 @@ public sealed partial class Main : Control, IFrameSink
     {
         Vector2 viewport = GetViewportRect().Size;
         _place.Visible = viewport.X >= 1400 && _scale.Scale < 1.5f;
+        _creation.ApplyLayout(viewport.X);
         _world.ApplyLayout(viewport.X);
         _conversation.ApplyLayout(viewport.X);
-        if (_compassOpen && _compass.Visible)
-            _compass.ClampToViewport(viewport, _scale.Space2);
-    }
-
-    private void SaveCompassPosition(NormalizedFloatingPosition position)
-    {
-        if (_settings is null)
-            return;
-        _settings.IronRosePosition = position;
-        _settings.Save();
+        _task.ApplyLayout(viewport.X);
     }
 
     private static char? WorldMovement(InputEventKey key)
@@ -531,6 +621,8 @@ public sealed partial class Main : Control, IFrameSink
     {
         if (_conversation.Visible && _conversation.MoveSelection(delta))
             return;
+        if (_task.Visible && _task.MoveSelection(delta))
+            return;
         Control active = ActiveScreen();
         Button[] buttons = FindEnabledButtons(active).ToArray();
         if (buttons.Length == 0)
@@ -550,10 +642,11 @@ public sealed partial class Main : Control, IFrameSink
     }
 
     private Control ActiveScreen() =>
-        _history.Visible ? _history
+        _help.Visible ? _help
+        : _history.Visible ? _history
         : _creation.Visible ? _creation
         : _conversation.Visible ? _conversation
-        : _legacy.Visible ? _legacy
+        : _task.Visible ? _task
         : _world;
 
     private static IEnumerable<Button> FindEnabledButtons(Node node)
@@ -567,27 +660,27 @@ public sealed partial class Main : Control, IFrameSink
         }
     }
 
-    private string StatusText()
+    private WorldHudPresentation CurrentHud()
     {
         if (_runtime is null)
-            return "";
-        Game game = _runtime.Game;
-        Player player = game.Player;
-        return string.Join(
-            "\n",
-            new[]
-            {
-                player.Name.Length > 0 ? player.Name : "The bearer",
-                $"Cycle {game.Cycle}  |  Turn {game.Turn}",
-                $"{game.Season}  |  {game.WeatherRead(game.LocalClimate)}",
+            return new WorldHudPresentation(
+                "The bearer",
+                1,
+                1,
+                1,
+                1,
+                1,
+                1,
+                0,
+                0,
+                0,
+                1,
+                0,
                 "",
-                $"Health     {player.Hp} / {player.EffectiveMaxHp}",
-                $"Stamina    {player.Stamina} / {player.MaxStamina}",
-                $"Coin       {player.Coin}",
-                $"Essence    {player.Essence}",
-                player.Rations > 0 ? $"Rations    {player.Rations}" : "",
-                player.WoundedTurns > 0 ? $"Wounded    {player.WoundedTurns}" : "",
-            }.Where(line => line.Length > 0));
+                "",
+                "",
+                "");
+        return WorldHudPresentation.From(_runtime.Game);
     }
 
     private string WorldTitle()
@@ -601,10 +694,10 @@ public sealed partial class Main : Control, IFrameSink
     private void ShowStartupError(string message)
     {
         _place.Text = "The window could not open";
-        _moveButton.Visible = false;
-        _historyButton.Visible = false;
-        _scaleButton.Visible = false;
-        _themeButton.Visible = false;
+        _characterButton.Visible = false;
+        _packButton.Visible = false;
+        _journalButton.Visible = false;
+        _helpButton.Visible = false;
         var label = new Label
         {
             Text = message,

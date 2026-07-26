@@ -9,19 +9,30 @@ internal sealed partial class CreationScreen : MarginContainer
 {
     private readonly ClientFonts _fonts;
     private readonly Label _eyebrow;
+    private readonly HBoxContainer _route;
+    private readonly List<PanelContainer> _routeSteps = [];
+    private readonly List<Label> _routeLabels = [];
     private readonly ProgressBar _progress;
     private readonly Label _prompt;
     private readonly LineEdit _entry;
     private readonly RichTextLabel _review;
     private readonly ScrollContainer _choiceScroll;
-    private readonly VBoxContainer _choices;
+    private readonly GridContainer _choices;
     private readonly Button _back;
     private readonly Button _continue;
     private readonly Label _hint;
     private readonly VBoxContainer _stack;
+    private readonly PanelContainer _panel;
+    private readonly MarginContainer _inner;
+    private readonly PanelContainer _detailPanel;
+    private readonly Label _selectedDetail;
+    private readonly HBoxContainer _footer;
+    private readonly Dictionary<char, Button> _choiceButtons = [];
     private CreationStage? _stage;
+    private char? _selectedKey;
     private string _submittedText = "";
     private bool _suppressEntry;
+    private int _currentStep = 1;
     private UiScaleTokens _scale;
     private UiPalette _palette;
 
@@ -34,28 +45,44 @@ internal sealed partial class CreationScreen : MarginContainer
         _palette = palette;
         SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
 
-        var center = new CenterContainer();
-        center.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-        AddChild(center);
-
-        var panel = new PanelContainer
+        _panel = new PanelContainer
         {
-            CustomMinimumSize = new Vector2(820, 520),
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
             SizeFlagsVertical = SizeFlags.ExpandFill,
         };
-        panel.AddThemeStyleboxOverride(
+        _panel.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        _panel.AddThemeStyleboxOverride(
             "panel",
             UiThemeFactory.BorderBox(palette.Raised, palette.Accent, scale, 0));
-        center.AddChild(panel);
+        AddChild(_panel);
 
-        var inner = new MarginContainer();
-        panel.AddChild(inner);
+        _inner = new MarginContainer();
+        _panel.AddChild(_inner);
         _stack = new VBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
-        inner.AddChild(_stack);
+        _inner.AddChild(_stack);
 
         _eyebrow = new Label();
         _stack.AddChild(_eyebrow);
+
+        _route = new HBoxContainer();
+        _stack.AddChild(_route);
+        for (int step = 1; step <= 10; step++)
+        {
+            var stepPanel = new PanelContainer
+            {
+                SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            };
+            var stepLabel = new Label
+            {
+                Text = step.ToString(),
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+            stepPanel.AddChild(stepLabel);
+            _route.AddChild(stepPanel);
+            _routeSteps.Add(stepPanel);
+            _routeLabels.Add(stepLabel);
+        }
 
         _progress = new ProgressBar
         {
@@ -96,14 +123,27 @@ internal sealed partial class CreationScreen : MarginContainer
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
         };
         _stack.AddChild(_choiceScroll);
-        _choices = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        _choices = new GridContainer
+        {
+            Columns = 2,
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+        };
         _choiceScroll.AddChild(_choices);
 
-        var footer = new HBoxContainer();
-        _stack.AddChild(footer);
+        _detailPanel = new PanelContainer();
+        _stack.AddChild(_detailPanel);
+        _selectedDetail = new Label
+        {
+            Text = "Select a choice to see what it changes.",
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        _detailPanel.AddChild(WorldScreen.Wrap(_selectedDetail));
+
+        _footer = new HBoxContainer();
+        _stack.AddChild(_footer);
         _back = new Button { Text = "Back  Esc" };
         _back.Pressed += () => KeyRequested?.Invoke('[');
-        footer.AddChild(_back);
+        _footer.AddChild(_back);
 
         _hint = new Label
         {
@@ -111,11 +151,11 @@ internal sealed partial class CreationScreen : MarginContainer
             HorizontalAlignment = HorizontalAlignment.Center,
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         };
-        footer.AddChild(_hint);
+        _footer.AddChild(_hint);
 
         _continue = new Button();
-        _continue.Pressed += () => KeyRequested?.Invoke('.');
-        footer.AddChild(_continue);
+        _continue.Pressed += SubmitSelection;
+        _footer.AddChild(_continue);
 
         ApplyVisuals(scale, palette);
     }
@@ -129,10 +169,35 @@ internal sealed partial class CreationScreen : MarginContainer
         AddThemeConstantOverride("margin_top", scale.Space3);
         AddThemeConstantOverride("margin_bottom", scale.Space3);
         _stack.AddThemeConstantOverride("separation", scale.Space2);
+        _inner.AddThemeConstantOverride("margin_left", scale.Space4);
+        _inner.AddThemeConstantOverride("margin_right", scale.Space4);
+        _inner.AddThemeConstantOverride("margin_top", scale.Space3);
+        _inner.AddThemeConstantOverride("margin_bottom", scale.Space3);
+        _footer.AddThemeConstantOverride("separation", scale.Space2);
+        _route.AddThemeConstantOverride("separation", scale.Space1);
+        _choices.AddThemeConstantOverride("h_separation", scale.Space2);
+        _choices.AddThemeConstantOverride("v_separation", scale.Space1);
         _progress.CustomMinimumSize = new Vector2(0, Math.Max(6, scale.Space1));
+        _panel.AddThemeStyleboxOverride(
+            "panel",
+            UiThemeFactory.BorderBox(palette.Raised, palette.Muted, scale, 0));
+        _detailPanel.AddThemeStyleboxOverride(
+            "panel",
+            UiThemeFactory.BorderBox(palette.Panel, palette.Accent, scale, 0));
         UiThemeFactory.Mark(_eyebrow, "eyebrow", _fonts, scale, palette);
         UiThemeFactory.Mark(_prompt, "heading", _fonts, scale, palette);
         UiThemeFactory.Mark(_hint, "muted", _fonts, scale, palette);
+        _selectedDetail.AddThemeColorOverride("font_color", palette.Text);
+        RefreshRouteVisuals();
+    }
+
+    public void ApplyLayout(float viewportWidth)
+    {
+        _choices.Columns = viewportWidth >= 1280 && _scale.Scale < 1.5f ? 2 : 1;
+        bool expandedRoute = viewportWidth >= 1180 && _scale.Scale < 1.5f;
+        _route.Visible = expandedRoute;
+        _progress.Visible = !expandedRoute;
+        Callable.From(RefreshChoiceWidths).CallDeferred();
     }
 
     public void UpdateView(ClientInteractionContext context, bool becameVisible)
@@ -140,9 +205,13 @@ internal sealed partial class CreationScreen : MarginContainer
         CreationPresentation creation = context.Creation
             ?? throw new InvalidOperationException("Creation screen requires a creation projection.");
         bool stageChanged = creation.Stage != _stage;
+        if (stageChanged)
+            _selectedKey = null;
         _stage = creation.Stage;
+        _currentStep = creation.Step;
         _eyebrow.Text = $"BECOMING  {creation.Step:00} / {creation.TotalSteps:00}";
         _progress.Value = creation.Step;
+        RefreshRouteVisuals();
         _prompt.Text = creation.Prompt;
         _back.Disabled = creation.Step == 1;
 
@@ -151,13 +220,16 @@ internal sealed partial class CreationScreen : MarginContainer
         _entry.Visible = textStage;
         _review.Visible = reviewStage;
         _choiceScroll.Visible = creation.Choices.Length > 0;
-        _continue.Visible = textStage || reviewStage;
+        bool choiceStage = creation.Choices.Length > 0;
+        _continue.Visible = textStage || reviewStage || choiceStage;
+        _continue.Disabled = choiceStage && _selectedKey is null;
         _continue.Text = reviewStage ? "Begin  Enter" : "Continue  Enter";
+        _detailPanel.Visible = choiceStage;
         _hint.Text = textStage
             ? "Type normally. Backspace erases. Escape returns."
             : reviewStage
                 ? "Review every choice before beginning."
-                : "Use a number key or select a row.";
+                : "Select a choice, review its effect, then continue.";
 
         if (textStage)
             SynchronizeEntry(creation.Entry, stageChanged || becameVisible);
@@ -174,6 +246,25 @@ internal sealed partial class CreationScreen : MarginContainer
             else
                 FirstEnabledChoice()?.CallDeferred(Control.MethodName.GrabFocus);
         }
+    }
+
+    public bool HandleKey(InputEventKey key)
+    {
+        if (_stage is CreationStage.Face or CreationStage.Name or CreationStage.Review)
+            return false;
+        if (key.Keycode is Key.Enter or Key.KpEnter)
+        {
+            SubmitSelection();
+            return true;
+        }
+        if (key.Unicode <= 0 || key.Unicode > char.MaxValue)
+            return false;
+        char value = (char)key.Unicode;
+        if (!_choiceButtons.TryGetValue(value, out Button? button) || button.Disabled)
+            return false;
+        SelectChoice(button);
+        button.GrabFocus();
+        return true;
     }
 
     private void SynchronizeEntry(string authoritative, bool force)
@@ -236,6 +327,7 @@ internal sealed partial class CreationScreen : MarginContainer
             _choices.RemoveChild(child);
             child.QueueFree();
         }
+        _choiceButtons.Clear();
         _choices.AddThemeConstantOverride("separation", _scale.Space1);
 
         var buttons = new List<Button>();
@@ -249,15 +341,27 @@ internal sealed partial class CreationScreen : MarginContainer
             {
                 Text = $"{choice.Key}  {choice.Name}\n{choice.Description}{detail}{reason}",
                 Disabled = !choice.Enabled,
+                ToggleMode = true,
                 Alignment = HorizontalAlignment.Left,
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
                 TextOverrunBehavior = TextServer.OverrunBehavior.NoTrimming,
                 CustomMinimumSize = new Vector2(0, Math.Max(84, _scale.Space4 * 3)),
             };
             char key = choice.Key;
-            button.Pressed += () => KeyRequested?.Invoke(key);
+            button.SetMeta("canonical_key", key.ToString());
+            button.SetMeta(
+                "explanation",
+                choice.Explanation.Length > 0
+                    ? choice.Explanation
+                    : choice.Detail.Length > 0
+                        ? choice.Detail
+                        : choice.Description);
+            button.Pressed += () => SelectChoice(button);
+            button.FocusEntered += () => SelectChoice(button);
+            button.MouseEntered += () => SelectChoice(button);
             _choices.AddChild(button);
             buttons.Add(button);
+            _choiceButtons[key] = button;
         }
 
         if (buttons.Count > 1)
@@ -268,55 +372,138 @@ internal sealed partial class CreationScreen : MarginContainer
                 buttons[index].FocusNeighborBottom = buttons[(index + 1) % buttons.Count].GetPath();
             }
         }
+        Button? selected = _selectedKey is { } selectedKey
+            && _choiceButtons.TryGetValue(selectedKey, out Button? selectedButton)
+                ? selectedButton
+                : null;
+        if (selected is not null)
+            SelectChoice(selected);
+        else
+            _selectedDetail.Text = "Select a choice to see what it changes.";
+        Callable.From(RefreshChoiceWidths).CallDeferred();
     }
 
     private Button? FirstEnabledChoice() =>
         _choices.GetChildren().OfType<Button>().FirstOrDefault(button => !button.Disabled);
+
+    private void SelectChoice(Button button)
+    {
+        string key = button.GetMeta("canonical_key", "").AsString();
+        if (key.Length != 1 || button.Disabled)
+            return;
+        _selectedKey = key[0];
+        foreach (Button choice in _choiceButtons.Values)
+            choice.SetPressedNoSignal(ReferenceEquals(choice, button));
+        _selectedDetail.Text = button.GetMeta(
+            "explanation",
+            "Select a choice to see what it changes.").AsString();
+        _continue.Disabled = false;
+    }
+
+    private void SubmitSelection()
+    {
+        if (_stage == CreationStage.Review || _stage is CreationStage.Face or CreationStage.Name)
+        {
+            KeyRequested?.Invoke('.');
+            return;
+        }
+        if (_selectedKey is { } selected)
+            KeyRequested?.Invoke(selected);
+    }
+
+    private void RefreshChoiceWidths()
+    {
+        float available = Math.Max(320, _choiceScroll.Size.X - _scale.Space2);
+        float width = Math.Max(
+            320,
+            (available - (_choices.Columns - 1) * _scale.Space2) / _choices.Columns);
+        _choices.CustomMinimumSize = new Vector2(available, 0);
+        foreach (Button button in _choiceButtons.Values)
+            button.CustomMinimumSize = new Vector2(
+                width,
+                Math.Max(96, _scale.Space4 * 3));
+    }
+
+    private void RefreshRouteVisuals()
+    {
+        for (int index = 0; index < _routeSteps.Count; index++)
+        {
+            int step = index + 1;
+            bool current = step == _currentStep;
+            bool complete = step < _currentStep;
+            Color border = current || complete ? _palette.Accent : _palette.Muted;
+            Color background = current ? _palette.Accent : _palette.Panel;
+            _routeSteps[index].CustomMinimumSize = new Vector2(
+                0,
+                Math.Max(34, _scale.Space3 + _scale.Space1));
+            _routeSteps[index].AddThemeStyleboxOverride(
+                "panel",
+                UiThemeFactory.BorderBox(background, border, _scale, _scale.Space1));
+            _routeLabels[index].AddThemeFontOverride("font", _fonts.MonoSemibold);
+            _routeLabels[index].AddThemeFontSizeOverride("font_size", _scale.Metadata);
+            _routeLabels[index].AddThemeColorOverride(
+                "font_color",
+                current ? _palette.Background : border);
+        }
+    }
 }
 
 internal sealed partial class WorldScreen : Control
 {
     private readonly ClientFonts _fonts;
     private readonly MapGridControl _map;
-    private readonly Label _dockedTitle;
-    private readonly Label _drawerTitle;
-    private readonly Label _dockedStatus;
-    private readonly Label _drawerStatus;
-    private readonly RichTextLabel _activity;
-    private readonly Label _hint;
-    private readonly HBoxContainer _body;
-    private readonly PanelContainer _dockedRail;
-    private readonly PanelContainer _drawer;
-    private readonly Button _drawerButton;
-    private readonly GridContainer _activityGrid;
+    private readonly ActivityFeedState _activityState;
+    private readonly ActivityLogView _activity;
+    private readonly Control _mapRegion;
+    private readonly PanelContainer _sidebar;
+    private readonly MarginContainer _sidebarMargin;
+    private readonly Label _playerName;
+    private readonly Label _condition;
+    private readonly ResourceMeter _health;
+    private readonly ResourceMeter _stamina;
+    private readonly ResourceMeter _focus;
+    private readonly Label _coin;
+    private readonly Label _essence;
+    private readonly Label _rations;
+    private readonly Label _context;
+    private readonly Label _zoomLabel;
+    private readonly Button _sidebarButton;
+    private readonly Button _sidebarClose;
     private UiScaleTokens _scale;
     private UiPalette _palette;
     private bool _lightTheme;
-    private bool _drawerOpen;
+    private int _mapZoomIndex;
+    private bool _sidebarOpen;
 
-    public event Action? HistoryRequested;
+    public event Action<int>? MapZoomChanged;
 
-    public WorldScreen(ClientFonts fonts, UiScaleTokens scale, UiPalette palette, bool lightTheme)
+    public WorldScreen(
+        ClientFonts fonts,
+        UiScaleTokens scale,
+        UiPalette palette,
+        bool lightTheme,
+        ActivityFeedState activityState)
     {
         _fonts = fonts;
         _scale = scale;
         _palette = palette;
         _lightTheme = lightTheme;
+        _activityState = activityState;
         ClipContents = true;
 
-        var root = new VBoxContainer();
-        root.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-        AddChild(root);
-
-        _body = new HBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
-        root.AddChild(_body);
+        _mapRegion = new Control();
+        _mapRegion.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        AddChild(_mapRegion);
+        var mapStack = new VBoxContainer();
+        mapStack.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        _mapRegion.AddChild(mapStack);
 
         var mapPanel = new PanelContainer
         {
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
             SizeFlagsVertical = SizeFlags.ExpandFill,
         };
-        _body.AddChild(mapPanel);
+        mapStack.AddChild(mapPanel);
         var mapMargin = new MarginContainer();
         mapPanel.AddChild(mapMargin);
         _map = new MapGridControl(fonts.Mono, palette, lightTheme)
@@ -326,63 +513,94 @@ internal sealed partial class WorldScreen : Control
         };
         mapMargin.AddChild(_map);
 
-        _dockedRail = new PanelContainer { CustomMinimumSize = new Vector2(340, 0) };
-        _body.AddChild(_dockedRail);
-        var dockedStack = new VBoxContainer();
-        _dockedTitle = new Label { Text = "CURRENT CONDITION" };
-        dockedStack.AddChild(_dockedTitle);
-        _dockedStatus = StatusLabel();
-        dockedStack.AddChild(_dockedStatus);
-        _dockedRail.AddChild(Wrap(dockedStack));
-
-        var activityPanel = new PanelContainer();
-        root.AddChild(activityPanel);
-        _activityGrid = new GridContainer { Columns = 3 };
-        activityPanel.AddChild(Wrap(_activityGrid));
-        _activity = new RichTextLabel
+        var footer = new PanelContainer();
+        mapStack.AddChild(footer);
+        var footerRow = new HBoxContainer();
+        footer.AddChild(Wrap(footerRow));
+        _context = new Label
         {
-            BbcodeEnabled = true,
-            ScrollActive = false,
-            FitContent = true,
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
-            CustomMinimumSize = new Vector2(0, 54),
         };
-        _activityGrid.AddChild(_activity);
-
-        _drawerButton = new Button { Text = "Conditions" };
-        _drawerButton.Pressed += ToggleDrawer;
-        _activityGrid.AddChild(_drawerButton);
-
-        var history = new Button { Text = "Open history" };
-        history.Pressed += () => HistoryRequested?.Invoke();
-        _activityGrid.AddChild(history);
-
-        _hint = new Label
+        footerRow.AddChild(_context);
+        var zoomOut = new Button { Text = "−", TooltipText = "Zoom map out, Ctrl+minus" };
+        zoomOut.Pressed += () => ChangeZoom(-1);
+        footerRow.AddChild(zoomOut);
+        _zoomLabel = new Label
         {
-            Text = "Arrows and HJKL move. Ctrl+Left/Right moves northwest/northeast. Alt+Left/Right moves southwest/southeast.",
-            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            CustomMinimumSize = new Vector2(72, 0),
         };
-        root.AddChild(_hint);
+        footerRow.AddChild(_zoomLabel);
+        var zoomIn = new Button { Text = "+", TooltipText = "Zoom map in, Ctrl+plus" };
+        zoomIn.Pressed += () => ChangeZoom(1);
+        footerRow.AddChild(zoomIn);
+        var zoomReset = new Button { Text = "Reset", TooltipText = "Reset map zoom, Ctrl+0" };
+        zoomReset.Pressed += () => SetZoom(0);
+        footerRow.AddChild(zoomReset);
+        _sidebarButton = new Button { Text = "Activity" };
+        _sidebarButton.Pressed += ToggleSidebar;
+        footerRow.AddChild(_sidebarButton);
 
-        _drawer = new PanelContainer { MouseFilter = MouseFilterEnum.Stop };
-        AddChild(_drawer);
-        var drawerStack = new VBoxContainer();
-        _drawer.AddChild(Wrap(drawerStack));
-        var drawerHeader = new HBoxContainer();
-        drawerStack.AddChild(drawerHeader);
-        _drawerTitle = new Label
+        _sidebar = new PanelContainer { MouseFilter = MouseFilterEnum.Stop };
+        AddChild(_sidebar);
+        var sidebarScroll = new ScrollContainer
+        {
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            VerticalScrollMode = ScrollContainer.ScrollMode.Auto,
+            FollowFocus = true,
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+        };
+        _sidebar.AddChild(sidebarScroll);
+        var sidebarStack = new VBoxContainer
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+        };
+        _sidebarMargin = Wrap(sidebarStack);
+        _sidebarMargin.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        _sidebarMargin.SizeFlagsVertical = SizeFlags.ExpandFill;
+        sidebarScroll.AddChild(_sidebarMargin);
+        var sidebarHeader = new HBoxContainer();
+        sidebarStack.AddChild(sidebarHeader);
+        var title = new Label
         {
             Text = "CURRENT CONDITION",
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
         };
-        drawerHeader.AddChild(_drawerTitle);
-        var drawerClose = new Button { Text = "Close" };
-        drawerClose.Pressed += ToggleDrawer;
-        drawerHeader.AddChild(drawerClose);
-        _drawerStatus = StatusLabel();
-        drawerStack.AddChild(_drawerStatus);
-        _drawer.Visible = false;
+        sidebarHeader.AddChild(title);
+        _sidebarClose = new Button { Text = "Close" };
+        _sidebarClose.Pressed += ToggleSidebar;
+        sidebarHeader.AddChild(_sidebarClose);
+
+        _playerName = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        sidebarStack.AddChild(_playerName);
+        _condition = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        sidebarStack.AddChild(_condition);
+        _health = new ResourceMeter("♥");
+        sidebarStack.AddChild(_health);
+        _stamina = new ResourceMeter("◆");
+        sidebarStack.AddChild(_stamina);
+        _focus = new ResourceMeter("◉");
+        sidebarStack.AddChild(_focus);
+        sidebarStack.AddChild(new HSeparator());
+
+        var activityTitle = new Label { Text = "ACTIVITY" };
+        sidebarStack.AddChild(activityTitle);
+        _activity = new ActivityLogView(fonts, scale, palette, activityState);
+        sidebarStack.AddChild(_activity);
+        sidebarStack.AddChild(new HSeparator());
+
+        var currencies = new GridContainer { Columns = 2 };
+        sidebarStack.AddChild(currencies);
+        _coin = CurrencyLabel();
+        currencies.AddChild(_coin);
+        _essence = CurrencyLabel();
+        currencies.AddChild(_essence);
+        _rations = CurrencyLabel();
+        currencies.AddChild(_rations);
 
         ApplyVisuals(scale, palette, lightTheme);
     }
@@ -392,17 +610,30 @@ internal sealed partial class WorldScreen : Control
         _scale = scale;
         _palette = palette;
         _lightTheme = lightTheme;
-        _body.AddThemeConstantOverride("separation", scale.Space2);
-        _activityGrid.AddThemeConstantOverride("h_separation", scale.Space2);
-        _activityGrid.AddThemeConstantOverride("v_separation", scale.Space1);
-        _activity.CustomMinimumSize = new Vector2(0, Math.Max(54, scale.Body * 3));
-        _dockedRail.CustomMinimumSize = new Vector2(Math.Max(340, 340 * scale.Scale), 0);
-        _drawer.AddThemeStyleboxOverride(
+        _sidebar.AddThemeStyleboxOverride(
             "panel",
-            UiThemeFactory.BorderBox(palette.Raised, palette.Accent, scale, scale.Space2));
-        UiThemeFactory.Mark(_dockedTitle, "eyebrow", _fonts, scale, palette);
-        UiThemeFactory.Mark(_drawerTitle, "eyebrow", _fonts, scale, palette);
-        UiThemeFactory.Mark(_hint, "muted", _fonts, scale, palette);
+            UiThemeFactory.BorderBox(palette.Panel, palette.Muted, scale, 0));
+        UiThemeFactory.Mark(_playerName, "heading", _fonts, scale, palette);
+        UiThemeFactory.Mark(_condition, "muted", _fonts, scale, palette);
+        UiThemeFactory.Mark(_context, "muted", _fonts, scale, palette);
+        UiThemeFactory.Mark(_zoomLabel, "eyebrow", _fonts, scale, palette);
+        _health.ApplyVisuals(_fonts, scale, palette, palette.Health);
+        _stamina.ApplyVisuals(_fonts, scale, palette, palette.Stamina);
+        _focus.ApplyVisuals(_fonts, scale, palette, palette.Accent);
+        _activity.ApplyVisuals(scale, palette);
+        _activity.CustomMinimumSize = new Vector2(
+            0,
+            240 * Math.Min(scale.Scale, 1.5f));
+        _sidebarMargin.AddThemeConstantOverride("margin_left", scale.Space3);
+        _sidebarMargin.AddThemeConstantOverride("margin_right", scale.Space3);
+        _sidebarMargin.AddThemeConstantOverride("margin_top", scale.Space2);
+        _sidebarMargin.AddThemeConstantOverride("margin_bottom", scale.Space2);
+        foreach (Label label in new[] { _coin, _essence, _rations })
+        {
+            label.AddThemeFontOverride("font", _fonts.MonoSemibold);
+            label.AddThemeFontSizeOverride("font_size", scale.Metadata);
+            label.AddThemeColorOverride("font_color", palette.Warm);
+        }
         if (_map is not null && _map.IsInsideTree())
             _map.QueueRedraw();
     }
@@ -413,41 +644,73 @@ internal sealed partial class WorldScreen : Control
             (int)MathF.Round(viewportWidth),
             _scale.Scale);
         bool docked = layout.WorldRail == WorldRailPresentation.Docked;
-        _dockedRail.Visible = docked;
-        _drawerButton.Visible = !docked;
-        _activityGrid.Columns = 3;
-        _hint.Visible = docked;
-        _drawer.Visible = !docked && _drawerOpen;
+        float width = Math.Min(
+            Math.Max(0, Size.X - _scale.Space4 * 2),
+            Math.Max(330, 360 * _scale.Scale));
+        _sidebarButton.Visible = !docked;
+        _sidebarClose.Visible = !docked;
+        _sidebar.Visible = docked || _sidebarOpen;
 
-        float width = Math.Min(Size.X - _scale.Space4 * 2, Math.Max(360, 420 * _scale.Scale));
-        _drawer.SetAnchor(Side.Left, 1);
-        _drawer.SetAnchor(Side.Top, 0);
-        _drawer.SetAnchor(Side.Right, 1);
-        _drawer.SetAnchor(Side.Bottom, 1);
-        _drawer.OffsetLeft = -width;
-        _drawer.OffsetTop = _scale.Space2;
-        _drawer.OffsetRight = -_scale.Space2;
-        _drawer.OffsetBottom = -_scale.Space2;
+        _sidebar.SetAnchor(Side.Left, 1);
+        _sidebar.SetAnchor(Side.Top, 0);
+        _sidebar.SetAnchor(Side.Right, 1);
+        _sidebar.SetAnchor(Side.Bottom, 1);
+        _sidebar.OffsetLeft = -width;
+        _sidebar.OffsetTop = 0;
+        _sidebar.OffsetRight = 0;
+        _sidebar.OffsetBottom = 0;
+        _sidebarMargin.CustomMinimumSize = new Vector2(
+            Math.Max(0, width - _scale.Space1),
+            Math.Max(0, Size.Y - _scale.Space1));
+
+        _mapRegion.OffsetRight = docked ? -width - _scale.Space2 : 0;
     }
 
-    public void UpdateView(Frame frame, ClientInteractionContext context, string status)
+    public void UpdateView(
+        Frame frame,
+        ClientInteractionContext context,
+        WorldHudPresentation hud,
+        int mapZoomIndex)
     {
-        _dockedStatus.Text = status;
-        _drawerStatus.Text = status;
-        _map.UpdateFrame(frame, _fonts.Mono, _palette, _lightTheme);
-        _activity.Text = LogMarkup(context.Transcript.TakeLast(1), _palette);
+        _mapZoomIndex = MapZoom.ClampIndex(mapZoomIndex);
+        _map.UpdateFrame(frame, _fonts.Mono, _palette, _lightTheme, _mapZoomIndex);
+        _playerName.Text = hud.PlayerName;
+        _condition.Text =
+            $"Cycle {hud.Cycle}  |  Turn {hud.Turn}\n{hud.Season}  |  {hud.Weather}";
+        _health.UpdateValue(hud.Health, hud.MaxHealth);
+        _stamina.UpdateValue(hud.Stamina, hud.MaxStamina);
+        _focus.UpdateValue(hud.Focus, hud.MaxFocus);
+        _coin.Text = $"●  {hud.Coin:N0} coin";
+        _essence.Text = $"✦  {hud.Essence:N0} essence";
+        _rations.Text = hud.Rations > 0 ? $"□  {hud.Rations:N0} rations" : "";
+        _context.Text =
+            $"{hud.WorldName}  |  {hud.SettlementName}  |  {hud.Season}  |  {hud.Weather}";
+        _zoomLabel.Text = $"{MapZoom.Percent(_mapZoomIndex)}%";
     }
 
-    private void ToggleDrawer()
+    public void SetZoom(int index)
     {
-        _drawerOpen = !_drawerOpen;
+        int clamped = MapZoom.ClampIndex(index);
+        if (clamped == _mapZoomIndex)
+            return;
+        _mapZoomIndex = clamped;
+        _zoomLabel.Text = $"{MapZoom.Percent(_mapZoomIndex)}%";
+        _map.SetZoom(_mapZoomIndex);
+        MapZoomChanged?.Invoke(_mapZoomIndex);
+    }
+
+    private void ChangeZoom(int delta) => SetZoom(_mapZoomIndex + delta);
+
+    public void ToggleSidebar()
+    {
+        _sidebarOpen = !_sidebarOpen;
         ApplyLayout(Size.X);
     }
 
-    private static Label StatusLabel() => new()
+    private static Label CurrencyLabel() => new()
     {
         AutowrapMode = TextServer.AutowrapMode.WordSmart,
-        SizeFlagsVertical = SizeFlags.ExpandFill,
+        SizeFlagsHorizontal = SizeFlags.ExpandFill,
     };
 
     internal static MarginContainer Wrap(Control child)
@@ -468,33 +731,20 @@ internal sealed partial class WorldScreen : Control
         {
             Color color = entry.Tone switch
             {
-                LogTone.Danger => palette.Danger,
-                LogTone.Reward => palette.Warm,
-                LogTone.Aegis => palette.Accent,
-                LogTone.Combat => palette.Text,
-                _ => palette.Muted,
+                LogTone.Danger or LogTone.Combat => palette.Combat,
+                LogTone.Aegis => palette.Words,
+                _ => palette.Field,
             };
             if (builder.Length > 0)
                 builder.Append("\n\n");
             builder.Append("[color=#");
             builder.Append(color.ToHtml(includeAlpha: false));
-            builder.Append("][b]");
-            builder.Append(ToneLabel(entry.Tone));
-            builder.Append("[/b]  ");
+            builder.Append(']');
             builder.Append(EscapeBbCode(entry.Text));
             builder.Append("[/color]");
         }
         return builder.ToString();
     }
-
-    private static string ToneLabel(LogTone tone) => tone switch
-    {
-        LogTone.Combat => "COMBAT",
-        LogTone.Danger => "DANGER",
-        LogTone.Aegis => "AEGIS",
-        LogTone.Reward => "GAIN",
-        _ => "FIELD",
-    };
 
     internal static string EscapeBbCode(string value) =>
         value.Replace("[", "[lb]", StringComparison.Ordinal)
@@ -505,8 +755,10 @@ internal sealed partial class ConversationScreen : MarginContainer
 {
     private readonly ClientFonts _fonts;
     private readonly Label _title;
+    private readonly Label _resources;
     private readonly VBoxContainer _actions;
     private readonly RichTextLabel _transcript;
+    private readonly Label _selectedAction;
     private readonly Button _leave;
     private readonly GridContainer _layout;
     private readonly PanelContainer _actionPanel;
@@ -522,10 +774,23 @@ internal sealed partial class ConversationScreen : MarginContainer
         _fonts = fonts;
         _scale = scale;
         _palette = palette;
-        var stack = new VBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
-        AddChild(stack);
+        var pageScroll = new ScrollContainer
+        {
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+        };
+        AddChild(pageScroll);
+        var stack = new VBoxContainer
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+        };
+        pageScroll.AddChild(stack);
         _title = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
         stack.AddChild(_title);
+        _resources = new Label();
+        stack.AddChild(_resources);
 
         _layout = new GridContainer
         {
@@ -564,6 +829,15 @@ internal sealed partial class ConversationScreen : MarginContainer
         };
         _transcriptPanel.AddChild(WorldScreen.Wrap(_transcript));
 
+        var selectedPanel = new PanelContainer();
+        stack.AddChild(selectedPanel);
+        _selectedAction = new Label
+        {
+            Text = "Choose a topic or action.",
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        selectedPanel.AddChild(WorldScreen.Wrap(_selectedAction));
+
         _leave = new Button { Text = "Leave  Esc" };
         _leave.Pressed += () => KeyRequested?.Invoke('q');
         stack.AddChild(_leave);
@@ -581,6 +855,8 @@ internal sealed partial class ConversationScreen : MarginContainer
         _layout.AddThemeConstantOverride("h_separation", scale.Space2);
         _layout.AddThemeConstantOverride("v_separation", scale.Space2);
         UiThemeFactory.Mark(_title, "heading", _fonts, scale, palette);
+        UiThemeFactory.Mark(_resources, "eyebrow", _fonts, scale, palette);
+        _selectedAction.AddThemeColorOverride("font_color", palette.Muted);
     }
 
     public void ApplyLayout(float viewportWidth)
@@ -598,12 +874,16 @@ internal sealed partial class ConversationScreen : MarginContainer
             : new Vector2(0, Math.Max(240, 240 * _scale.Scale));
     }
 
-    public void UpdateView(ClientInteractionContext context, bool becameVisible)
+    public void UpdateView(
+        ClientInteractionContext context,
+        bool becameVisible,
+        WorldHudPresentation hud)
     {
         _title.Text = context.Title;
+        _resources.Text = $"COIN  {hud.Coin:N0}     ESSENCE  {hud.Essence:N0}";
         RebuildActions(context.Actions, becameVisible);
         _transcript.Text = WorldScreen.LogMarkup(context.Transcript, _palette);
-        Callable.From(ScrollToBottom).CallDeferred();
+        QueueScrollToBottom();
     }
 
     public bool MoveSelection(int delta)
@@ -649,6 +929,9 @@ internal sealed partial class ConversationScreen : MarginContainer
             char key = action.Key;
             button.Pressed += () => KeyRequested?.Invoke(key);
             button.SetMeta("canonical_key", key.ToString());
+            button.SetMeta("action_label", action.Label);
+            button.FocusEntered += () => Select(button);
+            button.MouseEntered += () => Select(button);
             _actions.AddChild(button);
             buttons.Add(button);
         }
@@ -676,10 +959,28 @@ internal sealed partial class ConversationScreen : MarginContainer
         return value.Length == 1 ? value[0] : null;
     }
 
+    private void Select(Button button)
+    {
+        _selectedKey = ButtonKey(button);
+        _selectedAction.Text = button.GetMeta("action_label", "Choose a topic or action.").AsString();
+    }
+
     private void ScrollToBottom()
     {
         VScrollBar bar = _transcript.GetVScrollBar();
         bar.Value = bar.MaxValue;
+    }
+
+    private async void QueueScrollToBottom()
+    {
+        if (!IsInsideTree())
+        {
+            Callable.From(QueueScrollToBottom).CallDeferred();
+            return;
+        }
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+        ScrollToBottom();
     }
 }
 

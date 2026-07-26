@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-194); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-195); the research behind it lives in `../research/`.
 
 ---
 
@@ -173,6 +173,16 @@ selection only for the current task, use a single commitment for fully described
 reversible zero-cost actions, cycle targets in stable spatial order, project known Rest
 results, and restore exact invoking focus when possible. Keyboard and pointer paths stay
 equivalent, and state never depends on color alone.
+
+D-195 implements the Phase 2 review remediation inside that contract. The map remains
+the workspace beside a fixed or responsive Activity rail, with thin Health, Stamina,
+and Focus meters above, currencies below, and map-only context and zoom along its own
+footer. Creation keeps all ten stages visible at ordinary scale and a compact reachable
+fallback at narrow or high scale. Activity and History share filtering and follow-tail
+state, Conversation keeps resources and its selected action visible, Help owns control
+guidance, and live theme changes preserve geometry. The default movement panel and
+permanent control legend are gone. Dedicated Character, Pack, Journal knowledge,
+Settings, campaign entry, and focused-task depth remain in their approved later phases.
 
 ### Attributes: seven, bought with deeds
 Might, Grace, Vigor, Wits, Mind, Will, Presence. Raised by spending **Essence** at rest points; Essence is earned from meaningful accomplishment (kills, quests, discoveries, feats). The Aegis gathers the essence of your deeds and reshapes you where it anchors. Soft caps everywhere: diminishing, never zero, returns. Mental (Mind/Will) and physical power sit on independent axes so hybrid builds compose freely.

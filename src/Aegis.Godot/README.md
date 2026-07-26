@@ -4,10 +4,11 @@ This project is the approved D-182 replacement presentation layer for Aegis. The
 deterministic engine, save format, command language, and verification tools remain in
 their existing projects.
 
-D-182 Phase 2 is implemented. Creation, the responsive world, full colored History,
-conversation, and the draggable iron rose use persistent native Godot controls. The
-Character, Inventory, and Journal work remains in later approved phases, so this is a
-review checkpoint rather than the final release candidate.
+D-182 Phase 2 and its D-194 review remediation are implemented. Creation, the
+map-dominant responsive world, shared filtered Activity and History, Conversation, and
+searchable Help use persistent native Godot controls. Dedicated Character, Inventory,
+Equipment, Journal knowledge sections, Settings, and campaign entry remain in later
+approved phases, so this is a review checkpoint rather than the final release candidate.
 
 ## Development launch
 
@@ -31,10 +32,14 @@ The focus-free pilot controller can drive and inspect the client:
 ```powershell
 dotnet run --project ..\Aegis.Cli -- pilot --session godot-client ping
 dotnet run --project ..\Aegis.Cli -- pilot --session godot-client keys 150400...
-dotnet run --project ..\Aegis.Cli -- pilot --session godot-client ui compass
+dotnet run --project ..\Aegis.Cli -- pilot --session godot-client ui activity
 dotnet run --project ..\Aegis.Cli -- pilot --session godot-client ui history
+dotnet run --project ..\Aegis.Cli -- pilot --session godot-client ui help
 dotnet run --project ..\Aegis.Cli -- pilot --session godot-client ui theme
 dotnet run --project ..\Aegis.Cli -- pilot --session godot-client ui scale
+dotnet run --project ..\Aegis.Cli -- pilot --session godot-client ui zoom-in
+dotnet run --project ..\Aegis.Cli -- pilot --session godot-client ui zoom-out
+dotnet run --project ..\Aegis.Cli -- pilot --session godot-client ui zoom-reset
 dotnet run --project ..\Aegis.Cli -- pilot --session godot-client frame
 ```
 
@@ -43,13 +48,16 @@ dotnet run --project ..\Aegis.Cli -- pilot --session godot-client frame
 - Arrow keys or HJKL move in the four cardinal directions.
 - Ctrl+Left/Right moves northwest or northeast.
 - Alt+Left/Right moves southwest or southeast.
-- Tilde opens or closes the iron rose.
+- Ctrl+minus, Ctrl+plus, and Ctrl+0 change map zoom without scaling the interface.
+- Character, Pack, Journal, and Help open from the world launcher.
 - F6 changes theme.
 - F7 changes UI scale.
-- Escape closes History or leaves the current game surface.
+- Escape closes Help or History, or leaves the current game surface.
 
-The iron rose can be dragged by its MOVE or IRON ROSE handle. Its open state and
-normalized position persist in local presentation settings.
+The default world shell has no permanent control legend or movement panel. Help owns
+control guidance. Theme, UI scale, and map zoom persist in local presentation settings.
+The approved Settings screen will replace the temporary F6 and F7 review shortcuts in a
+later phase.
 
 ## Windows export
 

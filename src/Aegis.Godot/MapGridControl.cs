@@ -10,6 +10,7 @@ internal sealed partial class MapGridControl : Control
     private Font _font;
     private UiPalette _palette;
     private bool _lightTheme;
+    private int _zoomIndex;
 
     public MapGridControl(Font font, UiPalette palette, bool lightTheme)
     {
@@ -23,12 +24,24 @@ internal sealed partial class MapGridControl : Control
         GuiInput += OnMapInput;
     }
 
-    public void UpdateFrame(Frame frame, Font font, UiPalette palette, bool lightTheme)
+    public void UpdateFrame(
+        Frame frame,
+        Font font,
+        UiPalette palette,
+        bool lightTheme,
+        int zoomIndex)
     {
         _frame = frame;
         _font = font;
         _palette = palette;
         _lightTheme = lightTheme;
+        _zoomIndex = MapZoom.ClampIndex(zoomIndex);
+        QueueRedraw();
+    }
+
+    public void SetZoom(int zoomIndex)
+    {
+        _zoomIndex = MapZoom.ClampIndex(zoomIndex);
         QueueRedraw();
     }
 
@@ -47,33 +60,39 @@ internal sealed partial class MapGridControl : Control
             rows,
             1,
             48);
-        int fontSize = Math.Max(1, layout.CellSize - Math.Max(1, layout.CellSize / 9));
+        int cellSize = Math.Clamp(
+            (int)MathF.Round(layout.CellSize * MapZoom.Factor(_zoomIndex)),
+            1,
+            64);
+        int originX = (int)MathF.Round((Size.X - columns * cellSize) / 2f);
+        int originY = (int)MathF.Round((Size.Y - rows * cellSize) / 2f);
+        int fontSize = Math.Max(1, cellSize - Math.Max(1, cellSize / 9));
         float fontHeight = _font.GetHeight(fontSize);
         float ascent = _font.GetAscent(fontSize);
 
         for (int row = 0; row < rows; row++)
         {
             int sourceY = row + 1;
-            int y = layout.OriginY + row * layout.CellSize;
+            int y = originY + row * cellSize;
             for (int column = 0; column < columns; column++)
             {
-                int x = layout.OriginX + column * layout.CellSize;
+                int x = originX + column * cellSize;
                 Cell cell = _frame[column, sourceY];
                 Color background = _palette.MapColor(cell.Bg, _lightTheme);
                 DrawRect(
-                    new Rect2(x, y, layout.CellSize, layout.CellSize),
+                    new Rect2(x, y, cellSize, cellSize),
                     background,
                     filled: true);
                 if (cell.Ch == ' ')
                     continue;
 
-                float baseline = MathF.Round(y + (layout.CellSize - fontHeight) / 2f + ascent);
+                float baseline = MathF.Round(y + (cellSize - fontHeight) / 2f + ascent);
                 DrawString(
                     _font,
                     new Vector2(x, baseline),
                     cell.Ch.ToString(),
                     HorizontalAlignment.Center,
-                    layout.CellSize,
+                    cellSize,
                     fontSize,
                     _palette.MapColor(cell.Fg, _lightTheme));
             }

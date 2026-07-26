@@ -7,23 +7,25 @@ namespace Aegis.GodotClient;
 internal sealed partial class HistoryOverlay : MarginContainer
 {
     private readonly ClientFonts _fonts;
-    private readonly FollowTailState _follow = new();
+    private readonly ActivityFeedState _state;
     private readonly Label _summary;
-    private readonly RichTextLabel _history;
-    private readonly Button _newEntries;
+    private readonly ActivityLogView _history;
     private readonly Button _close;
     private UiScaleTokens _scale;
     private UiPalette _palette;
-    private LogEntry[] _entries = [];
-    private bool _programmaticScroll;
 
     public event Action? CloseRequested;
 
-    public HistoryOverlay(ClientFonts fonts, UiScaleTokens scale, UiPalette palette)
+    public HistoryOverlay(
+        ClientFonts fonts,
+        UiScaleTokens scale,
+        UiPalette palette,
+        ActivityFeedState state)
     {
         _fonts = fonts;
         _scale = scale;
         _palette = palette;
+        _state = state;
         MouseFilter = MouseFilterEnum.Stop;
 
         var panel = new PanelContainer();
@@ -46,25 +48,8 @@ internal sealed partial class HistoryOverlay : MarginContainer
         _close.Pressed += () => CloseRequested?.Invoke();
         header.AddChild(_close);
 
-        _history = new RichTextLabel
-        {
-            BbcodeEnabled = true,
-            ScrollActive = true,
-            ScrollFollowing = false,
-            FocusMode = FocusModeEnum.All,
-            SizeFlagsVertical = SizeFlags.ExpandFill,
-            AutowrapMode = TextServer.AutowrapMode.WordSmart,
-        };
+        _history = new ActivityLogView(fonts, scale, palette, state);
         stack.AddChild(_history);
-        _history.GetVScrollBar().ValueChanged += OnScrollChanged;
-
-        _newEntries = new Button
-        {
-            Text = "New entries, return to latest",
-            Visible = false,
-        };
-        _newEntries.Pressed += ResumeFollowing;
-        stack.AddChild(_newEntries);
         ApplyVisuals(scale, palette);
     }
 
@@ -77,65 +62,22 @@ internal sealed partial class HistoryOverlay : MarginContainer
         AddThemeConstantOverride("margin_top", scale.Space3);
         AddThemeConstantOverride("margin_bottom", scale.Space3);
         UiThemeFactory.Mark(_summary, "muted", _fonts, scale, palette);
-        RenderEntries();
+        _history.ApplyVisuals(scale, palette);
+        _summary.Text = $"{_state.Entries.Count:N0} entries this session";
     }
 
     public void Open(IReadOnlyList<LogEntry> entries)
     {
         Visible = true;
-        _entries = [.. entries];
-        _follow.Open(_entries.Length);
-        RenderEntries();
-        Callable.From(ScrollToBottom).CallDeferred();
-        _history.CallDeferred(Control.MethodName.GrabFocus);
+        _state.SetEntries(entries);
+        _summary.Text = $"{_state.Entries.Count:N0} entries this session";
+        _history.FocusLog();
     }
 
     public void UpdateEntries(IReadOnlyList<LogEntry> entries)
     {
-        double previous = _history.GetVScrollBar().Value;
-        _follow.EntriesChanged(entries.Count);
-        _entries = [.. entries];
-        RenderEntries();
-        if (_follow.Following)
-            Callable.From(ScrollToBottom).CallDeferred();
-        else
-            Callable.From(() => RestoreScroll(previous)).CallDeferred();
-    }
-
-    private void RenderEntries()
-    {
-        _history.Text = WorldScreen.LogMarkup(_entries, _palette);
-        _summary.Text = $"{_entries.Length:N0} entries this session";
-        _newEntries.Visible = _follow.HasNewEntries;
-    }
-
-    private void OnScrollChanged(double value)
-    {
-        if (_programmaticScroll)
-            return;
-        VScrollBar bar = _history.GetVScrollBar();
-        _follow.UserScrolled(value, bar.MaxValue, bar.Page);
-        _newEntries.Visible = _follow.HasNewEntries;
-    }
-
-    private void ResumeFollowing()
-    {
-        _follow.Resume();
-        _newEntries.Visible = false;
-        ScrollToBottom();
-    }
-
-    private void ScrollToBottom()
-    {
-        VScrollBar bar = _history.GetVScrollBar();
-        RestoreScroll(bar.MaxValue);
-    }
-
-    private void RestoreScroll(double value)
-    {
-        _programmaticScroll = true;
-        _history.GetVScrollBar().Value = value;
-        _programmaticScroll = false;
+        _state.SetEntries(entries);
+        _summary.Text = $"{_state.Entries.Count:N0} entries this session";
     }
 }
 

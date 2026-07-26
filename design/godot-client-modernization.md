@@ -1,18 +1,17 @@
 # Aegis Godot client modernization
 
-Status: Approved under D-182, Phases 1 and 2 implemented and verified; D-183 through
-D-194 approve the complete replacement-client visual contract; Phase 2 review
-remediation is active before Phase 3
+Status: Approved under D-182, Phases 1 and 2 plus packaged-review remediation
+implemented and verified through D-195; Phase 3 is next
 
 ## Implementation status
 
-Phases 1 and 2 are complete. The persistent screen foundation, typed creation projection,
+Phases 1 and 2 plus the D-195 review remediation are complete. The persistent screen foundation, typed creation projection,
 Atkinson font system, five discrete UI scales, dark and light palettes, custom
 square-cell map control, native creation fields, complete descriptions, resize probes,
 responsive world shell, structured colored History, repaired conversation behavior,
-draggable persistent iron rose, and complete world input ownership are built and
-verified. The warning-free Release build and all 1,028 tests pass. The Windows x64
-checkpoint reports save v100 and generator 1 through the focus-free pilot channel.
+map-only zoom, searchable Help, and complete world input ownership are built and
+verified. The default world shell no longer carries the iron rose or permanent control
+text. The warning-free Release build, 55 focused Host tests, and all 1,040 tests pass.
 
 The Phase 2 packaged review found creation spacing and focus defects, incomplete runtime
 theme refresh, a remaining legacy interaction surface, global rather than map-only
@@ -39,8 +38,10 @@ Chronicle Desk, with complete current-session History, shared Activity state,
   the shared system-state grammar. D-193 approves Field Drawer System for the remaining
   focused task surfaces. D-194 approves the complete responsive and theme parity matrix
   under `artifacts/d193-responsive-theme-parity-review-v1/`, including the Field Drawer
-  operational defaults. The active build now remediates the Phase 2 review findings
-  before the dedicated Character, Inventory, and Equipment surfaces.
+  operational defaults. D-195 implements the Phase 2 review remediation without
+  changing Core behavior, save v100, generator 1, or canonical keys. Dedicated
+  Character, Inventory, and Equipment surfaces are next. The reference map-glyph
+  colors remain provisional pending the separate implementation-token review.
 
 ## Purpose
 
@@ -69,11 +70,12 @@ The implementation is not complete until all of these findings are resolved:
 9. The journal provides History, People, Bestiary, and Threads views without revealing
    anything the character has not learned.
 10. Conversation navigation stays inside its own action list.
-11. The iron rose can be dragged, remains where it was placed, and can be reset.
+11. The default world shell has no permanent movement panel. Any later movement aid is
+    optional accessibility UI owned by Settings.
 12. Ctrl+Left/Right moves northwest/northeast, while Alt+Left/Right moves
     southwest/southeast.
 13. Combat and world activity remain pinned to the newest message.
-14. Closing the iron rose and clicking the map leaves arrow keys owned by movement,
+14. Closing Activity or another overlay and returning to the map leaves arrow keys owned by movement,
     never by header controls.
 
 ## Research basis
@@ -554,6 +556,11 @@ review. The exact review archive is
 `artifacts/aegis-d182-phase2-win-x64-final.zip`, SHA-256
 `D100ED3C364AC9246D938C42E27CE5E24CE67763FFBC031AA407395C8BCE5269`.
 
+Review remediation passed under D-195: the approved D-183 world geometry, complete
+creation route and explained selection, shared Activity and History state, Conversation
+follow-tail, map-only zoom, live theme parity, Help, and narrow or high-scale
+reachability are verified. The fresh Windows checkpoint is recorded in `HANDOFF.md`.
+
 ### Phase 3: character and inventory
 
 - Build dedicated Character.
@@ -609,8 +616,8 @@ Packaged visual and interaction evidence:
 - Conversation and combat logs at the newest entry after repeated interactions.
 - Focus cannot escape a conversation with Up/Down.
 - Every map cell is square and no glyph crosses its cell bounds.
-- The iron rose survives conversation, drag, resize, fullscreen, and reload of local
-  presentation settings.
+- The default world contains no permanent movement panel, and opening or closing the
+  responsive Activity drawer does not transfer movement ownership to the launcher.
 - Exact save and canonical snapshot parity before the release campaign begins.
 
 ## Approval package

@@ -10,6 +10,7 @@ internal sealed class GodotPresentationSettings
 
     public bool LightTheme { get; set; }
     public int ScaleIndex { get; set; }
+    public int MapZoomIndex { get; set; }
     public bool IronRoseOpen { get; set; }
     public NormalizedFloatingPosition IronRosePosition { get; set; } =
         NormalizedFloatingPosition.Default;
@@ -31,6 +32,7 @@ internal sealed class GodotPresentationSettings
                 {
                     LightTheme = data?.LightTheme ?? false,
                     ScaleIndex = Math.Clamp(data?.ScaleIndex ?? 0, 0, 4),
+                    MapZoomIndex = MapZoom.ClampIndex(data?.MapZoomIndex ?? 0),
                     IronRoseOpen = data?.Version >= 1 && data.IronRoseOpen,
                     IronRosePosition = data?.Version >= 1
                         ? new NormalizedFloatingPosition(
@@ -59,9 +61,10 @@ internal sealed class GodotPresentationSettings
                 _path,
                 JsonSerializer.Serialize(
                     new SettingsData(
-                        1,
+                        2,
                         LightTheme,
                         Math.Clamp(ScaleIndex, 0, 4),
+                        MapZoom.ClampIndex(MapZoomIndex),
                         IronRoseOpen,
                         Math.Clamp(IronRosePosition.X, 0, 1),
                         Math.Clamp(IronRosePosition.Y, 0, 1)),
@@ -77,6 +80,7 @@ internal sealed class GodotPresentationSettings
         int Version,
         bool LightTheme,
         int ScaleIndex,
+        int MapZoomIndex,
         bool IronRoseOpen,
         float IronRoseX,
         float IronRoseY);

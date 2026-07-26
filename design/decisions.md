@@ -231,6 +231,53 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-195: The field takes its shape: Phase 2 review remediation lands (2026-07-26)
+
+The D-194-authorized Phase 2 review remediation is built and verified. The D-183 world
+is now a map-dominant workspace with a fixed condition and Activity rail at ordinary
+widths and an overlay drawer at the 1100 by 700 minimum or high UI scale. Thin icon-led
+Health, Stamina, and Focus meters sit above one shared filtered Activity model; coin,
+essence, and rations sit below it; and location, weather, and discrete map-only zoom stay
+inside the map footer. Ctrl+minus, Ctrl+plus, and Ctrl+0 change only map cells. UI scale
+continues to reflow the interface from 100 through 200 percent. The default iron rose
+and permanent control legend are removed, while diagonal modifier movement remains.
+
+Character Creation now uses the full window, exposes all ten stages at ordinary scale,
+falls back to compact progress at narrow or high scale, separates selection from
+confirmation, and explains each selected effect without repeating its card. Native
+entry holds focus across steps 8 and 9, accepts background typing without disappearing,
+and survives resize. Conversation keeps coin and essence visible, constrains vertical
+selection to its own action list, preserves a selected-action band, and follows the
+newest transcript entry on open and after interaction. Activity and full-session History
+share filters, colors, follow-tail, deliberate scroll-away, and return-to-latest state.
+Searchable Help now owns control guidance and restores the invoking surface.
+
+The legacy world-screen fallback is no longer routed. A modern semantic task host keeps
+remaining world tasks on the current canvas while D-186's full event-sheet depth waits
+with the later approved surfaces. Dedicated Character, Inventory, Equipment, learned
+Journal sections, Settings, campaign entry, boundary states, and complete Field Drawer
+variants remain Phase 3 through Phase 5 work, exactly as approved under D-187 through
+D-193. Map-glyph colors remain provisional and the D-194 token question stays open.
+
+Verification is presentation-proportionate: the Release solution builds with zero
+warnings; 55 focused Host tests and all 1,040 tests pass; background probes cover light
+and dark world geometry, 100 and 150 percent map zoom isolation, the 1100 by 700 drawer,
+200 percent one-axis reachability, creation typing and step focus, History follow-tail,
+and Conversation follow-tail after interaction. No Core file, RNG draw, save meaning,
+turn rule, or canonical key changed, so the engine sweep did not trigger.
+
+Options set aside: finalizing the reference map colors without player review; retaining
+the iron rose merely because its implementation existed; scaling the entire interface
+for map zoom; separate Activity and History scroll models; reintroducing permanent
+control text; calling the provisional generic task host the completed D-186 event
+system; and pulling Phase 3 information screens into a Phase 2 remediation checkpoint.
+
+Deferred: the canonical map-glyph palette in both themes; dedicated Phase 3 Character,
+Inventory, and Equipment; Phase 4 learned Journal projections and any approved save
+change; Phase 5 Settings, campaign entry, boundary states, full event and Field Drawer
+depth, final accessibility and formatter reconciliation, replacement candidate,
+packaged campaign, and explicit player signoff.
+
 ### D-194: The same field in every light: parity closes the visual contract (2026-07-26)
 
 The player approves the complete four-board responsive and theme-parity matrix under
@@ -3526,7 +3573,8 @@ Pays D-063's own named deferrals in one stroke, arming the autopilot at the smit
 
 ## Under discussion
 
-The D-182 replacement-client visual contract is settled through D-194. Implementation
+The D-182 replacement-client visual contract is settled through D-194, and D-195
+implements its Phase 2 review remediation. Implementation
 token review still needs to settle the canonical map-glyph palette without changing the
 approved layouts, responsive behavior, themes, or interaction rules.
 

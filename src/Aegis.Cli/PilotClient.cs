@@ -52,7 +52,7 @@ public static class PilotClient
             return Fail(sub switch
             {
                 "keys" => "usage: aegis pilot keys \"<keys>\"",
-                "ui" => "usage: aegis pilot ui <dismiss-help|guide|compass|history|log|theme|scale|close|next|previous|activate>",
+                "ui" => "usage: aegis pilot ui <activity|guide|help|history|log|theme|scale|zoom-in|zoom-out|zoom-reset|close|next|previous|activate>",
                 _ => $"unknown pilot command '{sub}'",
             });
 

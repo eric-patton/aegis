@@ -57,12 +57,12 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   Implemented under D-174, but its terminal candidate is superseded by D-175. V1-10 is
   Implemented under D-177, and its clean candidate is built under D-178. The bounded
   D-181 Godot presentation spike is built and verified, D-182 approves the complete
-  modernization contract, and D-183 through D-194 lock the world, Character Creation,
+  modernization contract, and D-183 through D-195 lock and begin implementing the world, Character Creation,
   Conversation, reusable event-sheet, Character, Pack, Journal, Help, Settings, Campaign
   entry, boundary-state bases, focused tasks, and the complete responsive and theme
-  parity contract. Phases 1 and 2 are built and verified. Phase 2 review remediation,
-  Phases 3 through 5, the replacement candidate, a fresh guided campaign, and explicit
-  signoff remain
+  parity contract. Phases 1 and 2 plus the packaged-review remediation are built and
+  verified under D-195. Phases 3 through 5, the replacement candidate, a fresh guided
+  campaign, and explicit signoff remain
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
@@ -191,10 +191,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     scrollback, wrapping, contrast, explanations, and reproduced behavior findings
   - [x] Save v100 creation backtracking and complete engine sweep (D-180)
   - [x] Clean v100 Native AOT package and extracted-package smokes (D-180)
-  - [~] Second packaged-review blockers: scalable text, light theme, full-screen
+  - [x] Second packaged-review blockers: scalable text, light theme, full-screen
     creation, persistent compass mode, complete wrapping, and responsive conversations
-    (D-182 Phases 1 and 2 implemented; Phase 2 player review found incomplete runtime
-    theme refresh and creation-edge collisions)
+    (D-182 Phases 1 and 2; review remediation D-195)
   - [x] Godot .NET presentation spike built and verified (D-181)
   - [x] Review the Godot spike and decide the shipping presentation host (D-182)
     - [x] Player review confirms Godot is the preferred modernization direction
@@ -202,39 +201,37 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   - [x] D-182 Phase 1 foundation and creation: persistent screen tree, typed creation
     projection, native text entry, scalable font and theme system, square-cell map,
     resize probes, packaged export, and clean verification (D-182)
-  - [~] Godot UI architecture repair: persistent screens, stable responsive layout,
+  - [x] Godot Phase 2 UI architecture repair: persistent screens, stable responsive layout,
     native text entry, scoped focus, and preserved scroll positions
-    (foundation, focus, and scroll work complete; a world interaction still reaches the
-    legacy surface)
+    (D-195)
   - [x] Crisp scalable presentation: physical-pixel layout, discrete UI scale choices,
     vector text at native sizes, and a custom square-cell terminal map renderer
   - [x] D-182 Phase 2 world, conversation, logs, and movement checkpoint: responsive
     status rail and drawer, colored auto-follow activity, full-session History,
     bottom-follow transcript, scoped focus, draggable persistent iron rose, and clean
     keyboard and pointer ownership (D-182)
-  - [~] Modern world shell: colored auto-follow activity feed, expandable full-session
+  - [x] Modern world shell: colored auto-follow activity feed, expandable full-session
     history, responsive status, and clean keyboard/mouse ownership
-    (D-182 built; D-183 approves the replacement Map as Workspace geometry with an
-    integrated Activity sidebar, map-only footer, floating launcher, and no permanent
-    control legend)
-  - [ ] Implement the D-183 world-screen structural base: map-dominant workspace, fixed
+    (D-182, D-183, D-195)
+  - [x] Implement the D-183 world-screen structural base: map-dominant workspace, fixed
     right sidebar, thin icon-led condition bars, filtered Activity, bottom currencies,
-    floating launcher, and map-only context footer
+    floating launcher, and map-only context footer (D-195)
   - [ ] Define the canonical light and dark map-glyph palette on the D-183 geometry
-  - [ ] D-182 Phase 2 review: repair creation padding and step-9 text focus
-  - [ ] D-182 Phase 2 review: make runtime light/dark switching refresh every surface
-  - [ ] D-182 Phase 2 review: replace remaining legacy world interactions with modern
-    semantic event UI
-  - [ ] D-182 Phase 2 review: separate map zoom from text size and bind Ctrl+minus,
-    Ctrl+plus, and Ctrl+0
-  - [ ] D-182 Phase 2 review: make compact Activity and expanded History one scrollable,
-    filtered log model
-  - [ ] D-182 Phase 2 review: keep coin, requirements, and affordability visible beside
-    conversation and purchase actions
-  - [ ] D-182 Phase 2 review: replace permanent world control text with a dedicated Help
-    surface
-  - [ ] Remove the iron rose from the default D-183 world shell; any later form is an
-    optional accessibility control
+  - [x] D-182 Phase 2 review: repair creation padding and step-9 text focus (D-195)
+  - [x] D-182 Phase 2 review: make runtime light/dark switching refresh every surface
+    (D-195)
+  - [x] D-182 Phase 2 review: remove the remaining legacy world-screen fallback and
+    keep world tasks inside the modern shell (D-195; D-186 semantic event depth remains)
+  - [x] D-182 Phase 2 review: separate map zoom from text size and bind Ctrl+minus,
+    Ctrl+plus, and Ctrl+0 (D-195)
+  - [x] D-182 Phase 2 review: make compact Activity and expanded History one scrollable,
+    filtered log model (D-195)
+  - [x] D-182 Phase 2 review: keep coin, requirements, and affordability visible beside
+    conversation and purchase actions (D-195)
+  - [x] D-182 Phase 2 review: replace permanent world control text with a dedicated Help
+    surface (D-195; D-190 full Help Center depth remains)
+  - [x] Remove the iron rose from the default D-183 world shell; any later form is an
+    optional accessibility control (D-195)
   - [x] Select and document the D-183 world-screen architecture before revising
     individual screen mockups
   - [x] Review and approve the visual contract in `design/godot-ui-mockup-review.md`
@@ -912,6 +909,16 @@ decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-26: **D-195 completes the Phase 2 packaged-review remediation.** The Godot
+  client now carries the approved map workspace, fixed or drawer Activity sidebar,
+  icon-led Health, Stamina, and Focus meters, bottom currencies, map-only footer and
+  zoom, complete ten-stage creation route, stable native text entry, shared filtered
+  Activity and History follow-tail, resource-aware Conversation, searchable Help, and
+  identical live theme geometry. The 1100 by 700 minimum remains one-axis reachable
+  through 200 percent UI scale. The Release solution is warning-free, 55 focused Host
+  tests and all 1,040 tests pass, and background probes cover both themes, map-only
+  zoom, drawer reflow, creation typing, History, and Conversation. Core behavior did
+  not move, so the engine sweep did not trigger. The map-glyph palette remains open.
 - 2026-07-26: **D-194 closes the Godot visual contract in both lights.** The four-board
   responsive and theme-parity matrix is approved with identical light and dark geometry,
   one-axis reachability from 1100 by 700 and 100 through 200 percent UI scale, separate

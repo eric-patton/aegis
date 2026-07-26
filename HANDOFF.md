@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-26, D-194 visual contract approved)
+# Aegis handoff (updated 2026-07-26, D-195 Phase 2 remediation verified)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,10 +8,10 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-194 currently at its head), then the parking lot of open
+  newest-first block (D-195 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-194)". Bump it whenever a decision lands.
+  "(D-001 through D-195)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence is complete;
   V1-09 is built, and D-175 supersedes its terminal candidate.
 - `design/plan-1.0.md`: the canonical ten-card implementation queue. V1-01 through V1-08
@@ -41,7 +41,18 @@ The canonical design truth stays where it always was:
   gain, tradeoff, and benefit does, never repeat the same values. The ten-stage route,
   stable footer, responsive one-column fallback, fixed text-entry frame, contextual
   summary drawer, and same-canvas final review complete the screen-family contract.
-- Latest completed implementation: D-182 Phases 1 and 2 pass. Phase 1 supplies the
+- D-195 completes the D-194-authorized Phase 2 review remediation. The Godot client now
+  uses the D-183 map workspace with a fixed or responsive Activity rail, thin resource
+  meters, bottom currencies, map-only footer and zoom, complete ten-stage creation
+  route, stable native text entry, shared filtered Activity and History follow-tail,
+  resource-aware Conversation, searchable Help, immediate theme refresh, and
+  one-axis-reachable 1100 by 700 layouts through 200 percent UI scale. The default iron
+  rose and permanent control legend are removed. The warning-free Release build, 55
+  focused Host tests, and all 1,040 tests pass. Background probes exercise both themes,
+  map-only zoom, drawer reflow, creation typing, History, and Conversation. No Core
+  behavior moved, so the engine sweep did not trigger. The canonical map-glyph palette
+  remains open before its colors can be called final.
+- Earlier completed implementation: D-182 Phases 1 and 2 pass. Phase 1 supplies the
   persistent Godot foundation and modern creation flow. Phase 2 adds the responsive
   world rail and drawer, newest-entry activity ribbon, colored full-session History,
   split or stacked conversation with scoped focus and bottom-follow, draggable
@@ -192,7 +203,7 @@ The canonical design truth stays where it always was:
   comments in `src/Aegis.Core/SaveCodec.cs`).
 - Generator format: campaign-scoped generator 1, recorded separately in v100 saves.
 - Product version: 1.0.0.
-- Tests: 1,028 green (`dotnet test Aegis.slnx -c Release --no-build`).
+- Tests: 1,040 green (`dotnet test Aegis.slnx -c Release --no-build`).
 - D-181 Release build is zero-warning. Its 22 focused Host tests and all 1,007 tests
   pass. The exported Godot client reports save v100 and generator 1, accepts pilot and
   background pointer input, and exits cleanly. Two real save loads produced exact
@@ -401,14 +412,15 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Implement the D-194-approved D-182 Phase 2 remediation and produce a fresh packaged
-   checkpoint.
-2. Implement D-182 Phase 3: dedicated modern Character, Inventory, and Equipment
+1. Produce and smoke the fresh D-195 Phase 2 remediation checkpoint, then record its
+   archive hash here.
+2. Settle the open D-194 canonical map-glyph palette review when the player answers.
+3. Implement D-182 Phase 3: dedicated modern Character, Inventory, and Equipment
    screens with every canonical action and required long, empty, under-met, and
    pending-choice state.
-3. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
+4. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
    review gate.
-4. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
+5. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
    explicit user approval can make V1-09 and V1-10 Verified and close Aegis 1.0.
 
 ## Handoff hygiene

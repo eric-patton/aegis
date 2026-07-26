@@ -1,9 +1,9 @@
 # Aegis Godot client modernization
 
 Status: Approved under D-182, Phases 1 and 2 implemented and verified; D-183 through
-D-192 world, Character Creation, Conversation, reusable world-event, Character, Pack,
-Journal, Help, Settings, Campaign entry, and system-state bases approved; focused task
-surface comparison ready before Phase 3
+D-193 world, Character Creation, Conversation, reusable world-event, Character, Pack,
+Journal, Help, Settings, Campaign entry, system-state, and focused-task bases approved;
+final parity matrix remains before Phase 3
 
 ## Implementation status
 
@@ -37,8 +37,9 @@ Chronicle Desk, with complete current-session History, shared Activity state,
   and a fixed quick-reference rail. D-191 approves Settings as the Live Preview Workshop,
   with grouped categories, provisional live preview, explicit save or revert actions,
   and separate semantic UI scale and map-only zoom. D-192 approves Campaign Shelf and
-  the shared system-state grammar. Focused task surfaces are the active screen family in
-  `design/godot-ui-mockup-review.md`. The approved next build will remediate the review
+  the shared system-state grammar. D-193 approves Field Drawer System for the remaining
+  focused task surfaces. The complete responsive and theme parity matrix is the active
+  review in `design/godot-ui-mockup-review.md`. The approved next build will remediate the review
 findings before or with the dedicated Character, Inventory, and Equipment surfaces.
 
 ## Purpose
@@ -495,13 +496,16 @@ Progression choice, Action and target, Services and activities, Transition and t
 and Fall and recovery while holding cost, requirements, projected results, disabled
 reasons, cancellation, permanent-choice warning, and input parity constant.
 
-Contextual Workbench is recommended because its context rail, broad choice or item
-workspace, selected-detail inspector, and stable action bar support long content and
-routine comparison, while its targeting form keeps the square-cell map readable. Guided
-Decision Path prioritizes one-decision-at-a-time learning and irreversible-choice
-pacing. Field Drawer System prioritizes continuous map context through a right drawer
-and bottom commitment tray. Generated values and sample content are illustrative only,
-and no engine semantics change through this review.
+D-193 approves Field Drawer System. A right drawer temporarily owns Activity and may
+widen left over the map, while a bottom commitment tray owns cost, requirements,
+projected result, confirmation, and cancellation. Activity state returns intact when the
+task closes. Map input belongs only to explicit spatial targeting. Permanent choices
+confirm separately, unmet requirements state why, and projected values come from
+canonical semantic projections. Narrow or high-scale non-target tasks become a
+full-width stack, while targeting preserves map priority. Guided Decision Path and
+Contextual Workbench remain as rejected comparison references. Generated values and
+sample content are illustrative only, and no engine semantics change through this
+review.
 
 ## Responsive contract
 

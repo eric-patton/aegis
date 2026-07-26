@@ -2,7 +2,7 @@
 
 *A terminal RPG about starting from nothing, dying without ending, and outliving worlds.*
 
-This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-192); the research behind it lives in `../research/`.
+This document is the synthesized design. The audit trail with rationale and rejected alternatives lives in `decisions.md` (D-001 through D-193); the research behind it lives in `../research/`.
 
 ---
 
@@ -151,6 +151,18 @@ boundary-state grammar with explicit safe exits, icon-plus-text status, Cancel-f
 destructive confirmation, and distinct focus and selection. Narrow and high-scale
 layouts stack actions, shelf, and inspector in reading order without losing focus return
 or one-axis reachability.
+
+D-193 gives the remaining focused tasks one canonical Field Drawer System. Rest and
+shaping, progression, targeting, services and activities, transition and terms, and
+fall recovery open from the right edge of the D-183 world rather than replacing it.
+Drawer width follows the task, while a stable commitment tray keeps cost, requirements,
+projected result, confirmation, and cancellation beside the visible map. Activity
+returns with its filters and scroll state intact when the task closes. The map accepts
+input only during explicit target selection. Permanent choices warn and confirm
+separately, unmet requirements state why, and projected values come from canonical
+semantic projections rather than duplicated client rules. Narrow and high-scale
+fallbacks stack non-target tasks while targeting continues to prioritize square map
+cells and readable action detail.
 
 ### Attributes: seven, bought with deeds
 Might, Grace, Vigor, Wits, Mind, Will, Presence. Raised by spending **Essence** at rest points; Essence is earned from meaningful accomplishment (kills, quests, discoveries, feats). The Aegis gathers the essence of your deeds and reshapes you where it anchors. Soft caps everywhere: diminishing, never zero, returns. Mental (Mind/Will) and physical power sit on independent axes so hybrid builds compose freely.

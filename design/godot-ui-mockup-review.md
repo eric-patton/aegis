@@ -1,12 +1,12 @@
 # Aegis Godot UI mockup review
 
 Status: World-screen, Character Creation, Conversation, reusable world-event, Character,
-Pack, Journal, Help, Settings, Campaign entry, and system-state architectures approved
-under D-183 through D-192; remaining focused task-surface comparison is ready for player
-review, no implementation authorized
+Pack, Journal, Help, Settings, Campaign entry, system-state, and focused task-surface
+architectures approved under D-183 through D-193; complete responsive and light/dark
+parity matrix next, no implementation authorized
 
 Related decisions: D-182, D-183, D-184, D-185, D-186, D-187, D-188, D-189, D-190, D-191,
-D-192
+D-192, D-193
 
 Mockup set: `artifacts/d182-ui-mockups-v1/`
 
@@ -69,8 +69,7 @@ reviewed.
 8. [x] Help (D-190).
 9. [x] Settings and accessibility (D-191).
 10. [x] Campaign entry and system states (D-192).
-11. [~] Remaining focused task-surface variants: controlled architectures are ready for
-    player review.
+11. [x] Remaining focused task-surface variants (D-193).
 12. [ ] Complete responsive and light/dark parity matrix.
 
 ## Architecture-first correction
@@ -533,7 +532,7 @@ compatibility upgrades, save-failure and exit behavior, safe deletion mechanics,
 whether Pause owns a manual Save now action remain implementation work. The architecture
 approval does not change save or replay semantics.
 
-## Focused task-surface architecture comparison
+## Approved focused task-surface base
 
 The focused task set covers six remaining families together: Rest and shaping,
 Progression choice, Action and target, Services and activities, Transition and terms,
@@ -547,7 +546,7 @@ progression routes are illustrative only.
    narrow rail, choices or items the broad center, and selected consequences a fixed
    inspector. A stable action bar owns cost, confirmation, and cancellation. Targeting
    keeps the map readable and uses a compact context rail plus selected-action tray.
-   This is the recommendation because it gives long content, comparison, requirements,
+   It gives long content, comparison, requirements,
    and projected consequences enough room without forcing routine actions through many
    steps or keeping the map behind tasks that do not need it.
 2. `02-guided-decision-path.png`: every task becomes a visible route with one decision
@@ -560,18 +559,28 @@ progression routes are illustrative only.
    permanent choices, and 150-200 percent UI scale compete with map space even when the
    map has no bearing on the decision.
 
-The final contract must settle whether routine workbench categories preserve their last
-selection, how confirmation is skipped for reversible zero-cost actions, target-cycle
-behavior, action-preview ownership, what a Rest summary includes, how projected values
-are derived, the exact permanent-choice warning, focus return, and narrow or high-scale
-fallbacks. This architecture review does not change costs, availability, targeting,
-recovery, progression, world transition, or deterministic engine semantics.
+D-193 approves Field Drawer System. The drawer temporarily owns the Activity region and
+may widen left over the map, while the bottom commitment tray owns cost, requirements,
+projected result, confirmation, and cancellation. Drawer width follows the task.
+Activity returns with its filters, scroll position, and follow-tail state unchanged.
+The map accepts input only during explicit spatial targeting. Permanent choices use a
+separate irreversible confirmation, unmet requirements use icon plus text and state why,
+and projected values come from canonical semantic projections rather than duplicated
+client rules.
+
+At narrow widths or high UI scale, non-target drawers become a full-width task stack
+beneath the launcher. Targeting prioritizes the map and collapses secondary detail before
+shrinking cells or text. Exact selection memory, reversible zero-cost confirmation,
+target cycling, Rest summary contents, focus-return anchors, and the complete responsive
+and theme matrix remain to be settled. This approval does not change costs,
+availability, targeting, recovery, progression, world transition, or deterministic
+engine semantics.
 
 Chronicle Stage was the recommendation before this refinement. The player approved
 `06-map-workspace-sidebar-icons.png` under D-183 as the structural world-screen base
 because it preserves more map height while making the complete live log persistent.
 The approval covers layout and information hierarchy. The reference map colors are not
-approved, and the remaining screens still need review before implementation resumes.
+approved, and the final parity matrix still needs review before implementation resumes.
 
 ## Approved world-screen base
 
@@ -793,5 +802,4 @@ shape is the same.
 1. Settle the exact light-theme surface treatment and canonical map-glyph palette on
    the approved D-183 world geometry.
 2. Approve Journal, Help, and Settings.
-3. Approve the focused task-surface variants.
-4. Approve the complete responsive and light/dark theme matrix.
+3. Approve the complete responsive and light/dark theme matrix.

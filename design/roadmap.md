@@ -57,7 +57,7 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   Implemented under D-174, but its terminal candidate is superseded by D-175. V1-10 is
   Implemented under D-177, and its clean candidate is built under D-178. The bounded
   D-181 Godot presentation spike is built and verified, D-182 approves the complete
-  modernization contract, and D-183 through D-192 lock the world, Character Creation,
+  modernization contract, and D-183 through D-193 lock the world, Character Creation,
   Conversation, reusable event-sheet, Character, Pack, Journal, Help, Settings, Campaign
   entry, and boundary-state bases. Phases 1
   and 2 are built and verified. The remaining screen review, Phases 3 through 5, the
@@ -239,7 +239,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   - [~] Review and approve the visual contract in `design/godot-ui-mockup-review.md`
     before Phase 3 implementation (world, creation, conversation, and event-sheet
     structures plus Character, Pack, Journal, Help, Settings, Campaign entry, and
-    boundary states approved D-183 through D-192; remaining screen families continue)
+    boundary states and focused task surfaces approved D-183 through D-193; final parity
+    review remains)
   - [x] Design player-facing campaign entry: title, Continue, New campaign, campaign
     slots, load, safe deletion, version, and quit
     (D-192)
@@ -262,9 +263,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   - [x] Design Settings and accessibility controls, including live theme and text-size
     preview, map-only zoom, and any optional movement assistance
     (D-191)
-  - [~] Design rest and attribute raising, progression choices, target selection,
+  - [x] Design rest and attribute raising, progression choices, target selection,
     trade/craft/service/activity menus, world transition, and fall/recovery variants
-    (three reusable architecture systems ready for review)
+    (D-193)
   - [x] Design pause, confirmation, loading, save, empty, and error states
     (D-192)
   - [ ] Approve the full responsive and light/dark theme parity matrix for every screen
@@ -895,11 +896,10 @@ The Godot client architecture is settled under D-182. The active mockup question
 must be settled for 1.0. The remaining parking-lot questions are classified post-1.0
 under D-165 unless a later decision promotes one into a release.
 
-- ◇ D-182 Godot UI review: settle the focused task architecture and its routine-state
-  behavior (selection memory, reversible zero-cost confirmation, target cycling and
-  preview, Rest summary, projected-value derivation, permanent-choice warning, focus
-  return, and narrow or high-scale fallback), then approve the complete responsive and
-  light/dark parity matrix over D-183 through D-192
+- ◇ D-182/D-193 Godot UI review: settle Field Drawer operational details (selection
+  memory, reversible zero-cost confirmation, target cycling, Rest summary, and exact
+  focus-return anchors), then approve the complete responsive and light/dark parity
+  matrix over D-183 through D-193
 - ◇ Folk cultures: how worldgen recultures the five folk per world, and whether factions read folk (D-017, D-092)
 - ◇ Spell list growth past the seven V1-07 workings / school-shaped content, if any
   (D-022, D-091, D-163)
@@ -915,6 +915,14 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-25: **D-193 keeps focused work grounded in the Field Drawer System.**
+  `03-field-drawer-system.png` is canonical for Rest and shaping, Progression choice,
+  Action and target, Services and activities, Transition and terms, and Fall and
+  recovery. A right drawer temporarily owns Activity and may widen over the map, while a
+  stable commitment tray keeps cost, requirements, projected result, confirmation, and
+  cancellation together. Activity state returns intact, map input belongs only to
+  targeting, permanent choices confirm separately, and semantic host projections own
+  displayed consequences. The final responsive and light/dark parity matrix is next.
 - 2026-07-25: **Focused task surfaces receive three controlled architecture systems.**
   Contextual Workbench, Guided Decision Path, and Field Drawer System each cover Rest
   and shaping, Progression choice, Action and target, Services and activities,

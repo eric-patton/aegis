@@ -3,7 +3,7 @@
 Status: World-screen, Character Creation, Conversation, reusable world-event, Character,
 Pack, Journal, Help, Settings, Campaign entry, system-state, and focused task-surface
 architectures approved under D-183 through D-193; complete responsive and light/dark
-parity matrix next, no implementation authorized
+parity matrix ready for player review, no implementation authorized
 
 Related decisions: D-182, D-183, D-184, D-185, D-186, D-187, D-188, D-189, D-190, D-191,
 D-192, D-193
@@ -44,6 +44,9 @@ Campaign entry and system-state architecture set:
 Focused task-surface architecture set:
 `artifacts/d192-focused-task-surface-architectures-v1/`
 
+Responsive and theme-parity review set:
+`artifacts/d193-responsive-theme-parity-review-v1/`
+
 ## Purpose
 
 The D-182 Phase 2 packaged review showed that individual UI repairs are not enough to
@@ -70,7 +73,7 @@ reviewed.
 9. [x] Settings and accessibility (D-191).
 10. [x] Campaign entry and system states (D-192).
 11. [x] Remaining focused task-surface variants (D-193).
-12. [ ] Complete responsive and light/dark parity matrix.
+12. [~] Complete responsive and light/dark parity matrix.
 
 ## Architecture-first correction
 
@@ -576,6 +579,55 @@ and theme matrix remain to be settled. This approval does not change costs,
 availability, targeting, recovery, progression, world transition, or deterministic
 engine semantics.
 
+## Final responsive and theme-parity review
+
+Four grouped boards are ready under
+`artifacts/d193-responsive-theme-parity-review-v1/`. They validate the approved
+D-183 through D-193 system rather than propose another architecture:
+
+1. `01-theme-parity.png`: the same world and Field Drawer geometry, content hierarchy,
+   semantic states, and focus treatment in complete light and dark themes.
+2. `02-responsive-geometry.png`: wide desktop, the supported 1100 by 700 minimum,
+   150 percent Character Creation, and 200 percent stacked Conversation. UI scale
+   reflows the interface without changing map zoom.
+3. `03-interaction-states.png`: distinct focus and selection, unmet requirements,
+   reversible zero-cost action, permanent choice, spatial target mode, and follow-tail
+   ownership.
+4. `04-destinations-boundaries.png`: full-window tasks, narrow Campaign entry, and
+   system-state parity across both themes.
+
+The boards carry these proposed operational defaults for player approval:
+
+- Selection memory lasts while a drawer remains open, through a nested confirmation,
+  and while acting on the same contextual entity. A later reopen starts from the
+  current contextual default rather than a stale unrelated selection.
+- A zero-cost action needs no second confirmation when it is immediate, fully
+  described, and reversible. Spending resources and irreversible choices still require
+  explicit confirmation.
+- Tab and Shift+Tab cycle valid targets in a stable order: nearest first, then clockwise
+  from north, then canonical entity identity as the tie-break. Pointer hover previews,
+  click selects, and Confirm commits.
+- Rest shows current and projected Health, Stamina, and Focus, elapsed time, resource
+  cost, and known immediate consequences. It does not expose unknown future outcomes.
+- Closing returns focus to the exact invoking control or map cell. If that anchor no
+  longer exists, focus returns to a safe world default.
+
+The validation contract is:
+
+- Light and dark themes preserve geometry, hierarchy, states, semantic colors, and
+  readable contrast. Theme changes update every tokenized surface immediately.
+- The 1100 by 700 minimum and 100 through 200 percent UI scales keep every action
+  reachable through one-axis scrolling. Text and cells do not clip or overlap.
+- UI scale and map zoom remain separate. Responsive reflow never changes map position
+  or zoom.
+- Keyboard and pointer paths expose the same actions. Focus, selection, disabled,
+  warning, error, and follow-tail states remain distinguishable without color alone.
+- Full-window destinations, campaign entry, system states, conversation, events, and
+  Field Drawers share one visual language in both themes.
+
+These defaults and boards remain proposals until the player approves them. Approval
+will settle the final visual contract before Phase 3 implementation resumes.
+
 Chronicle Stage was the recommendation before this refinement. The player approved
 `06-map-workspace-sidebar-icons.png` under D-183 as the structural world-screen base
 because it preserves more map height while making the complete live log persistent.
@@ -799,7 +851,6 @@ shape is the same.
 
 ## Decisions remaining before implementation
 
-1. Settle the exact light-theme surface treatment and canonical map-glyph palette on
-   the approved D-183 world geometry.
-2. Approve Journal, Help, and Settings.
-3. Approve the complete responsive and light/dark theme matrix.
+1. Approve or revise the proposed Field Drawer operational defaults.
+2. Approve the complete responsive and light/dark theme matrix.
+3. Settle the exact canonical map-glyph palette during implementation-token review.

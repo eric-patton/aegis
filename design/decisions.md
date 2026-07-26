@@ -3506,10 +3506,10 @@ D-182 until approved.
 
 ## Not yet raised (parking lot)
 
-- D-182/D-193 Godot UI review: settle Field Drawer operational details (selection
-  memory, reversible zero-cost confirmation, target cycling, Rest summary, and exact
-  focus-return anchors), then approve the complete responsive and light/dark parity
-  matrix over D-183 through D-193
+- D-182/D-193 Godot UI review: approve or revise the proposed Field Drawer operational
+  defaults (contextual selection memory, reversible zero-cost confirmation, stable
+  target cycling, Rest projections, and exact focus return), then approve the complete
+  four-board responsive and light/dark parity matrix over D-183 through D-193
 - Folk cultures: how worldgen recultures the five folk per world, and whether factions
   read folk (D-017, D-092)
 - Spell list growth past the seven V1-07 workings / magic schools content design

@@ -162,6 +162,14 @@ The canonical design truth stays where it always was:
   System is approved under D-193. Its right drawer, bottom commitment tray, Activity
   restoration, targeting-only map input, separate permanent-choice confirmation, and
   stacked high-scale fallback are canonical.
+- The final responsive and theme-parity review is ready under
+  `artifacts/d193-responsive-theme-parity-review-v1/`. Four grouped boards cover exact
+  light/dark geometry, the 1100 by 700 minimum, 150 and 200 percent reflow, focus and
+  selection, unavailable and irreversible states, targeting, follow-tail, full-window
+  destinations, Campaign entry, and shared boundary states. The boards propose
+  contextual selection memory, one confirmation for reversible zero-cost actions,
+  stable target cycling, projected Rest summaries, and exact focus return. They await
+  player approval and do not authorize implementation.
 - Core and Host now multi-target .NET 8 and .NET 10. Godot uses .NET 8 for runtime
   compatibility. Existing clients, tools, and tests remain on .NET 10.
 - D-175 through D-178 remain the implemented SadConsole baseline and clean candidate.
@@ -393,9 +401,10 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Complete the responsive and light/dark parity matrix, including the remaining D-193
-   drawer behavior details, then implement the approved
-   D-182 Phase 2 remediation and produce a fresh packaged checkpoint.
+1. Review and approve or revise the four-board responsive and light/dark parity matrix,
+   including the proposed D-193 drawer behavior details. Then record the decision,
+   implement the approved D-182 Phase 2 remediation, and produce a fresh packaged
+   checkpoint.
 2. Implement D-182 Phase 3: dedicated modern Character, Inventory, and Equipment
    screens with every canonical action and required long, empty, under-met, and
    pending-choice state.

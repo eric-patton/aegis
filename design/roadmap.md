@@ -239,8 +239,8 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   - [~] Review and approve the visual contract in `design/godot-ui-mockup-review.md`
     before Phase 3 implementation (world, creation, conversation, and event-sheet
     structures plus Character, Pack, Journal, Help, Settings, Campaign entry, and
-    boundary states and focused task surfaces approved D-183 through D-193; final parity
-    review remains)
+    boundary states and focused task surfaces approved D-183 through D-193; final
+    four-board parity review ready for player approval)
   - [x] Design player-facing campaign entry: title, Continue, New campaign, campaign
     slots, load, safe deletion, version, and quit
     (D-192)
@@ -896,10 +896,10 @@ The Godot client architecture is settled under D-182. The active mockup question
 must be settled for 1.0. The remaining parking-lot questions are classified post-1.0
 under D-165 unless a later decision promotes one into a release.
 
-- ◇ D-182/D-193 Godot UI review: settle Field Drawer operational details (selection
-  memory, reversible zero-cost confirmation, target cycling, Rest summary, and exact
-  focus-return anchors), then approve the complete responsive and light/dark parity
-  matrix over D-183 through D-193
+- ◇ D-182/D-193 Godot UI review: approve or revise the proposed Field Drawer operational
+  defaults (contextual selection memory, reversible zero-cost confirmation, stable
+  target cycling, Rest projections, and exact focus return), then approve the complete
+  four-board responsive and light/dark parity matrix over D-183 through D-193
 - ◇ Folk cultures: how worldgen recultures the five folk per world, and whether factions read folk (D-017, D-092)
 - ◇ Spell list growth past the seven V1-07 workings / school-shaped content, if any
   (D-022, D-091, D-163)
@@ -915,6 +915,13 @@ under D-165 unless a later decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-25: **The final Godot UI parity review is ready.** Four grouped boards under
+  `artifacts/d193-responsive-theme-parity-review-v1/` cover identical light and dark
+  world geometry, supported responsive reflow, keyboard and pointer states, full-window
+  destinations, Campaign entry, and shared boundary states. They also present proposed
+  Field Drawer defaults for contextual selection memory, reversible zero-cost action,
+  stable target cycling, Rest projections, and exact focus return. The set awaits player
+  approval and does not authorize implementation.
 - 2026-07-25: **D-193 keeps focused work grounded in the Field Drawer System.**
   `03-field-drawer-system.png` is canonical for Rest and shaping, Progression choice,
   Action and target, Services and activities, Transition and terms, and Fall and

@@ -3,7 +3,7 @@
 Status: Approved under D-182, Phases 1 and 2 implemented and verified; D-183 through
 D-193 world, Character Creation, Conversation, reusable world-event, Character, Pack,
 Journal, Help, Settings, Campaign entry, system-state, and focused-task bases approved;
-final parity matrix remains before Phase 3
+final parity matrix is ready for player review before Phase 3
 
 ## Implementation status
 
@@ -38,9 +38,10 @@ Chronicle Desk, with complete current-session History, shared Activity state,
   with grouped categories, provisional live preview, explicit save or revert actions,
   and separate semantic UI scale and map-only zoom. D-192 approves Campaign Shelf and
   the shared system-state grammar. D-193 approves Field Drawer System for the remaining
-  focused task surfaces. The complete responsive and theme parity matrix is the active
-  review in `design/godot-ui-mockup-review.md`. The approved next build will remediate the review
-findings before or with the dedicated Character, Inventory, and Equipment surfaces.
+  focused task surfaces. The complete responsive and theme parity matrix is ready under
+  `artifacts/d193-responsive-theme-parity-review-v1/` and remains the active review in
+  `design/godot-ui-mockup-review.md`. The approved next build will remediate the review
+  findings before or with the dedicated Character, Inventory, and Equipment surfaces.
 
 ## Purpose
 
@@ -506,6 +507,14 @@ full-width stack, while targeting preserves map priority. Guided Decision Path a
 Contextual Workbench remain as rejected comparison references. Generated values and
 sample content are illustrative only, and no engine semantics change through this
 review.
+
+The final four-board review set is ready under
+`artifacts/d193-responsive-theme-parity-review-v1/`. It tests identical light and dark
+geometry, the 1100 by 700 minimum, 150 and 200 percent reflow, keyboard and pointer
+states, follow-tail, full-window destinations, Campaign entry, and shared boundary
+states. It also presents proposed defaults for contextual selection memory, reversible
+zero-cost confirmation, stable target cycling, Rest projections, and exact focus return.
+These proposals do not become implementation requirements until player approval.
 
 ## Responsive contract
 

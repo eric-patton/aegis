@@ -338,11 +338,12 @@ And the loop closes on itself: **your finished characters enter the mythology.**
   remain canonical for terminal clients and deterministic observation. The hard 80% is
   still the deterministic simulation core, not the host. D-182 Phases 1 and 2 now ship
   the persistent creation, responsive world, structured History, repaired conversation,
-  world-owned movement, and draggable iron rose foundations. D-183 through D-190 approve
-  the replacement world, Character Creation, Conversation, reusable event-sheet, and
-  Character, Inventory, Equipment, Journal, Help, and Settings architectures. Campaign
-  entry, remaining task surfaces, parity review, and release-candidate assurance remain
-  in Phases 3 through 5.
+  world-owned movement, and draggable iron rose foundations. D-183 through D-193 approve
+  the replacement world, Character Creation, Conversation, reusable event-sheet,
+  Character, Inventory, Equipment, Journal, Help, Settings, Campaign entry, boundary
+  states, and focused-task architectures. The final four-board responsive and theme
+  parity review is ready for player approval. Implementation and release-candidate
+  assurance remain in Phases 3 through 5.
 - **Save architecture**: versioned seed and campaign-generator contract for regenerable content, append-only key journal for authored/player-mutated state.
 - **RNG**: hierarchical seed tree (master seed hashed with stable subsystem/region/site identifiers); subsystems never share a stream.
 - **Content**: storylets and line banks; format v1 spec'd in `storylets.md` (C# catalog now, designed to map 1:1 onto data files when volume demands).

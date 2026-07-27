@@ -38,6 +38,72 @@ public sealed record TaskPresentation(
     string Title,
     string Body);
 
+public sealed record CharacterAttributePresentation(
+    string Name,
+    int Value,
+    string Description);
+
+public sealed record CharacterSkillPresentation(
+    string Name,
+    int Level,
+    int Uses,
+    int NextLevelUses,
+    string Description);
+
+public sealed record NamedDetailPresentation(
+    string Name,
+    string Detail);
+
+public sealed record KnackOptionPresentation(
+    char Key,
+    string Name,
+    string Detail);
+
+public sealed record CharacterPresentation(
+    string Name,
+    string Identity,
+    int Health,
+    int MaxHealth,
+    int Stamina,
+    int MaxStamina,
+    int Focus,
+    int MaxFocus,
+    CharacterAttributePresentation[] Attributes,
+    CharacterSkillPresentation[] Skills,
+    NamedDetailPresentation[] Knacks,
+    NamedDetailPresentation[] Lessons,
+    string Burden,
+    string Scars,
+    string Standing,
+    KnackOptionPresentation[] PendingKnacks);
+
+public sealed record EquippedSlotPresentation(
+    string Slot,
+    string Item,
+    string Summary);
+
+public sealed record GearPresentation(
+    char Key,
+    string Name,
+    string Slot,
+    string Benefit,
+    string Requirement,
+    bool MeetsRequirement,
+    bool Equipped,
+    int Wear,
+    int MaximumWear,
+    string Craft,
+    string Move);
+
+public sealed record CarriedResourcePresentation(
+    string Name,
+    string Amount);
+
+public sealed record PackPresentation(
+    EquippedSlotPresentation[] Slots,
+    GearPresentation[] Gear,
+    CarriedResourcePresentation[] Resources);
+
 public sealed record CreationPresentation(
     CreationStage Stage,
     int Step,
@@ -63,6 +129,8 @@ public sealed record ClientInteractionContext(
     public int? ProgressTotal { get; init; }
     public CreationPresentation? Creation { get; init; }
     public TaskPresentation? Task { get; init; }
+    public CharacterPresentation? Character { get; init; }
+    public PackPresentation? Pack { get; init; }
 
     public bool SupportsCompass => Surface == ClientSurface.World;
     public bool SupportsActionFocus => Actions.Length > 0;
@@ -80,6 +148,8 @@ public sealed record ClientInteractionContext(
             ClientSurface.World or ClientSurface.DirectionPrompt => [],
             ClientSurface.Conversation => ConversationActions(game),
             ClientSurface.Menu when game.InScene => SceneActions(game),
+            ClientSurface.Character => CharacterActions(game),
+            ClientSurface.Equipment => EquipmentActions(game),
             ClientSurface.CreationChoice => CreationChoices(game)
                 .Select(choice => new ClientAction(
                     choice.Key,
@@ -125,7 +195,15 @@ public sealed record ClientInteractionContext(
                 },
             };
         }
-        else if (surface is ClientSurface.Menu or ClientSurface.Character or ClientSurface.Equipment)
+        else if (surface == ClientSurface.Character)
+        {
+            context = context with { Character = CharacterPresentationFrom(game) };
+        }
+        else if (surface == ClientSurface.Equipment)
+        {
+            context = context with { Pack = PackPresentationFrom(game) };
+        }
+        else if (surface == ClientSurface.Menu)
         {
             context = context with
             {
@@ -140,6 +218,173 @@ public sealed record ClientInteractionContext(
         }
         return context;
     }
+
+    private static ClientAction[] CharacterActions(Game game) =>
+        game.PendingKnack is { } choice
+            ? choice.Options
+                .Select((option, index) => new ClientAction(
+                    (char)('1' + index),
+                    option.Name,
+                    0,
+                    0,
+                    0,
+                    Detail: option.Blurb))
+                .ToArray()
+            : [];
+
+    private static ClientAction[] EquipmentActions(Game game) =>
+        game.Player.AllGear
+            .Select((item, index) => new ClientAction(
+                (char)('1' + index),
+                item.Name,
+                0,
+                0,
+                0,
+                Detail: GearBenefit(item)))
+            .ToArray();
+
+    private static CharacterPresentation CharacterPresentationFrom(Game game)
+    {
+        Player player = game.Player;
+        CharacterAttributePresentation[] attributes = Enumerable.Range(0, AttributeSet.Count)
+            .Select(index =>
+            {
+                Attr attribute = (Attr)index;
+                return new CharacterAttributePresentation(
+                    AttributeSet.NameOf(attribute),
+                    player.Attributes[attribute],
+                    AttributeSet.DescriptionOf(attribute));
+            })
+            .ToArray();
+        CharacterSkillPresentation[] skills = Enumerable.Range(0, SkillSet.Count)
+            .Select(index =>
+            {
+                SkillId skill = (SkillId)index;
+                int level = player.Skills.Level(skill);
+                return new CharacterSkillPresentation(
+                    SkillSet.NameOf(skill),
+                    level,
+                    player.Skills.Uses(skill),
+                    SkillSet.UsesForLevel(level + 1),
+                    SkillSet.DescriptionOf(skill));
+            })
+            .ToArray();
+        NamedDetailPresentation[] knacks = player.Perks
+            .Select(id =>
+            {
+                PerkDef definition = PerkCatalog.Def(id);
+                return new NamedDetailPresentation(definition.Name, definition.Blurb);
+            })
+            .ToArray();
+        NamedDetailPresentation[] lessons = player.Lessons
+            .Select(id =>
+            {
+                LessonDef definition = LessonCatalog.Def(id);
+                return new NamedDetailPresentation(definition.Short, "Learned and kept.");
+            })
+            .ToArray();
+        KnackOptionPresentation[] pending = game.PendingKnack is { } choice
+            ? choice.Options
+                .Select((option, index) => new KnackOptionPresentation(
+                    (char)('1' + index),
+                    option.Name,
+                    option.Blurb))
+                .ToArray()
+            : [];
+        string identity = string.Join(
+            "  |  ",
+            new[]
+            {
+                player.Folk is { } folk ? CreationCatalog.FolkOf(folk).Name : "",
+                player.Past is { } past ? CreationCatalog.PastOf(past).Name : "",
+            }.Where(value => value.Length > 0));
+        string burden = player.Burden is { } burdenId
+            ? CreationCatalog.BurdenOf(burdenId).Name
+            : "None";
+        string scars = player.Scars.Count > 0
+            ? string.Join(", ", player.Scars.Select(DeathsToll.NameOf))
+            : "None";
+        string standing = game.Standing > 0
+            ? $"{LegendStanding.TitleOf(game.Standing)}  |  {player.Legend} legend"
+            : $"{player.Legend} legend";
+        return new CharacterPresentation(
+            player.Name.Length > 0 ? player.Name : "The bearer",
+            identity,
+            player.Hp,
+            player.EffectiveMaxHp,
+            player.Stamina,
+            player.MaxStamina,
+            player.Focus,
+            player.MaxFocus,
+            attributes,
+            skills,
+            knacks,
+            lessons,
+            burden,
+            scars,
+            standing,
+            pending);
+    }
+
+    private static PackPresentation PackPresentationFrom(Game game)
+    {
+        Player player = game.Player;
+        EquippedSlotPresentation[] slots =
+        [
+            Slot("Weapon", player.Weapon, player),
+            Slot("Armor", player.Armor, player),
+            Slot("Ranged", player.Bow, player),
+        ];
+        GearPresentation[] gear = player.AllGear
+            .Select((item, index) => new GearPresentation(
+                (char)('1' + index),
+                item.Name,
+                item.Slot.ToString(),
+                GearBenefit(item),
+                $"{AttributeSet.NameOf(item.ReqAttr)} {item.Req}, you have {player.Attributes[item.ReqAttr]}",
+                item.MeetsReq(player.Attributes),
+                ReferenceEquals(item, player.Weapon)
+                    || ReferenceEquals(item, player.Armor)
+                    || ReferenceEquals(item, player.Bow),
+                item.Wear,
+                item.MaxWear,
+                item.Slot == GearSlot.Armor ? "Warding" : SkillSet.NameOf(item.Family),
+                item.Move == MoveVerb.None ? "Standard" : item.Move.ToString()))
+            .ToArray();
+        CarriedResourcePresentation[] resources =
+        [
+            new("Coin", player.Coin.ToString()),
+            new("Essence", player.Essence.ToString()),
+            new("Rations", player.Rations.ToString()),
+            new("Draughts", player.Draughts.ToString()),
+            new("Herbs", player.Herb.ToString()),
+            new("Hides", (player.Hide + player.ProtectedHide).ToString()),
+            new("Raw meat", player.RawMeat.ToString()),
+            new("Tarn trout", player.TarnTrout.ToString()),
+            new("Salt", player.Salt.ToString()),
+            new("Tarn-iron", player.TarnIron.ToString()),
+            new("Iron blooms", player.IronBloom.ToString()),
+            new("Trinkets", player.Trinket.ToString()),
+            new("Books", player.Books.Count.ToString()),
+            new("Fishing line", player.FishingLine ? "Yes" : "No"),
+        ];
+        return new PackPresentation(slots, gear, resources);
+    }
+
+    private static EquippedSlotPresentation Slot(string slot, GearItem? item, Player player) =>
+        item is null
+            ? new EquippedSlotPresentation(slot, "Empty", "No item equipped")
+            : new EquippedSlotPresentation(
+                slot,
+                item.Name,
+                $"{GearBenefit(item)}  |  {item.EffectiveBonus(player.Attributes)} effective");
+
+    private static string GearBenefit(GearItem item) => item.Slot switch
+    {
+        GearSlot.Armor => $"{item.Bonus} protection",
+        GearSlot.Ranged => $"+{item.Bonus} ranged",
+        _ => $"+{item.Bonus} melee",
+    };
 
     private static int CreationStep(Game game) => game.CreationStage switch
     {

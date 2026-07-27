@@ -115,6 +115,60 @@ public class ClientHostTests
     }
 
     [Fact]
+    public void CharacterProjection_IsSemanticCompleteAndCarriesPendingChoices()
+    {
+        var game = new Game(176);
+        for (int use = 0; use < SkillSet.UsesForLevel(2); use++)
+            game.Player.Skills.AddUse(SkillId.Blades);
+        game.ApplyKey('c');
+
+        ClientInteractionContext context = ClientInteractionContext.From(
+            game,
+            Presenter.Render(game, 120, 40));
+
+        Assert.Equal(ClientSurface.Character, context.Surface);
+        Assert.Null(context.Task);
+        CharacterPresentation character = Assert.IsType<CharacterPresentation>(context.Character);
+        Assert.Equal(AttributeSet.Count, character.Attributes.Length);
+        Assert.Equal(SkillSet.Count, character.Skills.Length);
+        Assert.All(character.Attributes, item => Assert.False(string.IsNullOrWhiteSpace(item.Description)));
+        Assert.All(character.Skills, item => Assert.False(string.IsNullOrWhiteSpace(item.Description)));
+        Assert.Equal(game.Player.Hp, character.Health);
+        Assert.Equal(game.Player.MaxStamina, character.MaxStamina);
+        Assert.Equal(game.PendingKnack!.Options.Length, character.PendingKnacks.Length);
+        Assert.Equal(character.PendingKnacks.Select(option => option.Key), context.Actions.Select(action => action.Key));
+    }
+
+    [Fact]
+    public void PackProjection_ProvidesThreeSlotsGearRequirementsAndResources()
+    {
+        var game = new Game(176);
+        game.Player.Pack.Add(GearCatalog.Create("woodaxe"));
+        game.Player.Pack.Add(GearCatalog.Create("carvers_maul"));
+        game.ApplyKey('i');
+
+        ClientInteractionContext context = ClientInteractionContext.From(
+            game,
+            Presenter.Render(game, 120, 40));
+
+        Assert.Equal(ClientSurface.Equipment, context.Surface);
+        Assert.Null(context.Task);
+        PackPresentation pack = Assert.IsType<PackPresentation>(context.Pack);
+        Assert.Equal(["Weapon", "Armor", "Ranged"], pack.Slots.Select(slot => slot.Slot));
+        Assert.Equal(game.Player.AllGear.Count(), pack.Gear.Length);
+        Assert.All(pack.Gear, item =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(item.Benefit));
+            Assert.Contains("you have", item.Requirement);
+            Assert.InRange(item.Wear, 0, item.MaximumWear);
+        });
+        Assert.Contains(pack.Resources, resource => resource.Name == "Coin");
+        Assert.Contains(pack.Resources, resource => resource.Name == "Essence");
+        Assert.Contains(pack.Gear, item => !item.MeetsRequirement);
+        Assert.Equal(pack.Gear.Select(item => item.Key), context.Actions.Select(action => action.Key));
+    }
+
+    [Fact]
     public void Session_FrameObservationIsFixedAndUsesResolvedColors()
     {
         var game = new Game(176);

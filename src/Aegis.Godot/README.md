@@ -4,11 +4,13 @@ This project is the approved D-182 replacement presentation layer for Aegis. The
 deterministic engine, save format, command language, and verification tools remain in
 their existing projects.
 
-D-182 Phase 2 and its D-196 review remediation are implemented. Creation, the
+D-182 Phases 1 through 3 and their D-196 and D-197 review remediation are implemented. Creation, the
 map-dominant responsive world, shared filtered Activity and History, Conversation, and
-searchable Help use persistent native Godot controls. Dedicated Character, Inventory,
-Equipment, Journal knowledge sections, Settings, and campaign entry remain in later
-approved phases, so this is a review checkpoint rather than the final release candidate.
+searchable Help use persistent native Godot controls. Character uses the D-187
+Character Ledger and Inventory and Equipment use the D-188 Outfitter's Bench, both fed
+by typed Host projections. Journal knowledge sections, Settings, and campaign entry
+remain in later approved phases, so this is a review checkpoint rather than the final
+release candidate.
 
 ## Development launch
 

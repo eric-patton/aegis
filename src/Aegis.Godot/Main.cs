@@ -36,6 +36,8 @@ public sealed partial class Main : Control, IFrameSink
     private WorldScreen _world = null!;
     private ConversationScreen _conversation = null!;
     private ModernTaskScreen _task = null!;
+    private CharacterLedgerScreen _character = null!;
+    private PackScreen _pack = null!;
     private HistoryOverlay _history = null!;
     private HelpOverlay _help = null!;
     private bool _historyOpen;
@@ -142,6 +144,20 @@ public sealed partial class Main : Control, IFrameSink
             GetViewport().SetInputAsHandled();
             return;
         }
+        if (_character.Visible
+            && key.Keycode is Key.Up or Key.Down
+            && _character.MoveSelection(key.Keycode == Key.Up ? -1 : 1))
+        {
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+        if (_pack.Visible
+            && key.Keycode is Key.Up or Key.Down
+            && _pack.MoveSelection(key.Keycode == Key.Up ? -1 : 1))
+        {
+            GetViewport().SetInputAsHandled();
+            return;
+        }
 
         if (_interaction.Surface != ClientSurface.World)
             return;
@@ -234,14 +250,15 @@ public sealed partial class Main : Control, IFrameSink
             ClientSurface.DirectionPrompt or
             ClientSurface.Menu;
         bool isConversation = interaction.Surface == ClientSurface.Conversation;
-        bool isTask = interaction.Surface is
-            ClientSurface.Menu or
-            ClientSurface.Character or
-            ClientSurface.Equipment;
+        bool isTask = interaction.Surface == ClientSurface.Menu;
+        bool isCharacter = interaction.Surface == ClientSurface.Character;
+        bool isPack = interaction.Surface == ClientSurface.Equipment;
         _creation.Visible = isCreation;
         _world.Visible = isWorld;
         _conversation.Visible = isConversation;
         _task.Visible = isTask;
+        _character.Visible = isCharacter;
+        _pack.Visible = isPack;
         _activityState.SetEntries(interaction.Transcript);
         WorldHudPresentation hud = CurrentHud();
 
@@ -270,6 +287,16 @@ public sealed partial class Main : Control, IFrameSink
         {
             _place.Text = interaction.Title.Length > 0 ? interaction.Title : "The road";
             _task.UpdateView(interaction, becameVisible);
+        }
+        else if (isCharacter)
+        {
+            _place.Text = "Character";
+            _character.UpdateView(interaction, becameVisible);
+        }
+        else if (isPack)
+        {
+            _place.Text = "Inventory and equipment";
+            _pack.UpdateView(interaction, becameVisible);
         }
 
         bool launcherVisible = !isCreation;
@@ -438,6 +465,12 @@ public sealed partial class Main : Control, IFrameSink
         _task = new ModernTaskScreen(_fonts, _scale, _palette);
         _task.KeyRequested += SendKey;
         AddScreen(_task);
+        _character = new CharacterLedgerScreen(_fonts, _scale, _palette);
+        _character.KeyRequested += SendKey;
+        AddScreen(_character);
+        _pack = new PackScreen(_fonts, _scale, _palette);
+        _pack.KeyRequested += SendKey;
+        AddScreen(_pack);
 
         _history = new HistoryOverlay(_fonts, _scale, _palette, _activityState);
         _history.CloseRequested += CloseHistory;
@@ -482,6 +515,8 @@ public sealed partial class Main : Control, IFrameSink
         _world.ApplyVisuals(_scale, _palette, _settings?.LightTheme == true);
         _conversation.ApplyVisuals(_scale, _palette);
         _task.ApplyVisuals(_scale, _palette);
+        _character.ApplyVisuals(_scale, _palette);
+        _pack.ApplyVisuals(_scale, _palette);
         _history.ApplyVisuals(_scale, _palette);
         _help.ApplyVisuals(_scale, _palette);
 
@@ -579,11 +614,13 @@ public sealed partial class Main : Control, IFrameSink
     private void PerformLayoutPass()
     {
         Vector2 viewport = GetViewportRect().Size;
-        _place.Visible = viewport.X >= 1400 && _scale.Scale < 1.5f;
+        _place.Visible = !_world.Visible && viewport.X >= 1400 && _scale.Scale < 1.5f;
         _creation.ApplyLayout(viewport.X);
         _world.ApplyLayout(viewport.X);
         _conversation.ApplyLayout(viewport.X);
         _task.ApplyLayout(viewport.X);
+        _character.ApplyLayout(viewport.X);
+        _pack.ApplyLayout(viewport.X);
     }
 
     private static char? WorldMovement(InputEventKey key)
@@ -623,6 +660,10 @@ public sealed partial class Main : Control, IFrameSink
             return;
         if (_task.Visible && _task.MoveSelection(delta))
             return;
+        if (_character.Visible && _character.MoveSelection(delta))
+            return;
+        if (_pack.Visible && _pack.MoveSelection(delta))
+            return;
         Control active = ActiveScreen();
         Button[] buttons = FindEnabledButtons(active).ToArray();
         if (buttons.Length == 0)
@@ -646,6 +687,8 @@ public sealed partial class Main : Control, IFrameSink
         : _history.Visible ? _history
         : _creation.Visible ? _creation
         : _conversation.Visible ? _conversation
+        : _character.Visible ? _character
+        : _pack.Visible ? _pack
         : _task.Visible ? _task
         : _world;
 

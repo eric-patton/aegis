@@ -19,6 +19,7 @@ internal sealed partial class CreationScreen : MarginContainer
     private readonly LineEdit _entry;
     private readonly RichTextLabel _review;
     private readonly ScrollContainer _choiceScroll;
+    private readonly MarginContainer _choiceGutter;
     private readonly GridContainer _choices;
     private readonly Button _back;
     private readonly Button _continue;
@@ -134,12 +135,17 @@ internal sealed partial class CreationScreen : MarginContainer
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
         };
         _stack.AddChild(_choiceScroll);
+        _choiceGutter = new MarginContainer
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+        };
+        _choiceScroll.AddChild(_choiceGutter);
         _choices = new GridContainer
         {
             Columns = 2,
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
         };
-        _choiceScroll.AddChild(_choices);
+        _choiceGutter.AddChild(_choices);
 
         _detailPanel = new PanelContainer();
         _stack.AddChild(_detailPanel);
@@ -188,6 +194,10 @@ internal sealed partial class CreationScreen : MarginContainer
         _route.AddThemeConstantOverride("separation", scale.Space1);
         _choices.AddThemeConstantOverride("h_separation", scale.Space2);
         _choices.AddThemeConstantOverride("v_separation", scale.Space1);
+        _choiceGutter.AddThemeConstantOverride("margin_left", scale.Space1);
+        _choiceGutter.AddThemeConstantOverride("margin_right", scale.Space1);
+        _choiceGutter.AddThemeConstantOverride("margin_top", scale.Space1);
+        _choiceGutter.AddThemeConstantOverride("margin_bottom", scale.Space1);
         _progress.CustomMinimumSize = new Vector2(0, Math.Max(6, scale.Space1));
         _panel.AddThemeStyleboxOverride(
             "panel",
@@ -238,6 +248,9 @@ internal sealed partial class CreationScreen : MarginContainer
 
         bool textStage = creation.Stage is CreationStage.Face or CreationStage.Name;
         bool reviewStage = creation.Stage == CreationStage.Review;
+        _entry.PlaceholderText = creation.Stage == CreationStage.Face
+            ? "Type a remembered name (optional)"
+            : "Type your character's name";
         _entry.Visible = textStage;
         _review.Visible = reviewStage;
         _choiceScroll.Visible = creation.Choices.Length > 0;
@@ -263,7 +276,7 @@ internal sealed partial class CreationScreen : MarginContainer
         if (becameVisible || stageChanged)
         {
             if (textStage)
-                _entry.CallDeferred(Control.MethodName.GrabFocus);
+                FocusEntryAfterLayout();
             else
                 FirstEnabledChoice()?.CallDeferred(Control.MethodName.GrabFocus);
         }
@@ -377,7 +390,6 @@ internal sealed partial class CreationScreen : MarginContainer
                         ? choice.Detail
                         : choice.Description);
             button.Pressed += () => SelectChoice(button);
-            button.FocusEntered += () => SelectChoice(button);
             _choices.AddChild(card);
             buttons.Add(button);
             _choiceCards[key] = card;
@@ -407,7 +419,7 @@ internal sealed partial class CreationScreen : MarginContainer
             return;
         _selectedKey = key[0];
         foreach (CreationChoiceCard choice in _choiceCards.Values)
-            choice.Selection.SetPressedNoSignal(ReferenceEquals(choice.Selection, button));
+            choice.SetSelected(ReferenceEquals(choice.Selection, button));
         _selectedDetail.Text = button.GetMeta(
             "explanation",
             "Select a choice to see what it changes.").AsString();
@@ -466,7 +478,7 @@ internal sealed partial class CreationScreen : MarginContainer
 
     private void RefreshChoiceWidths()
     {
-        float available = Math.Max(320, _choiceScroll.Size.X - _scale.Space2);
+        float available = Math.Max(320, _choiceScroll.Size.X - _scale.Space2 * 2);
         float width = Math.Max(
             320,
             (available - (_choices.Columns - 1) * _scale.Space2) / _choices.Columns);
@@ -478,6 +490,18 @@ internal sealed partial class CreationScreen : MarginContainer
             card.CustomMinimumSize = new Vector2(
                 width,
                 Math.Max(112, _scale.Space4 * 3));
+        }
+    }
+
+    private async void FocusEntryAfterLayout()
+    {
+        for (int pass = 0; pass < 3; pass++)
+        {
+            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
+            if (!_entry.Visible || !IsVisibleInTree())
+                return;
+            _entry.GrabFocus();
+            _entry.CaretColumn = _entry.Text.Length;
         }
     }
 
@@ -644,6 +668,7 @@ internal sealed partial class WorldScreen : Control
         _playerName = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
         sidebarStack.AddChild(_playerName);
         _condition = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        _condition.Visible = false;
         sidebarStack.AddChild(_condition);
         _health = new ResourceMeter("♥");
         sidebarStack.AddChild(_health);
@@ -741,8 +766,7 @@ internal sealed partial class WorldScreen : Control
         _mapZoomIndex = MapZoom.ClampIndex(mapZoomIndex);
         _map.UpdateFrame(frame, _fonts.Mono, _palette, _lightTheme, _mapZoomIndex);
         _playerName.Text = hud.PlayerName;
-        _condition.Text =
-            $"Cycle {hud.Cycle}  |  Turn {hud.Turn}\n{hud.Season}  |  {hud.Weather}";
+        _condition.Text = "";
         _health.UpdateValue(hud.Health, hud.MaxHealth);
         _stamina.UpdateValue(hud.Stamina, hud.MaxStamina);
         _focus.UpdateValue(hud.Focus, hud.MaxFocus);
@@ -750,7 +774,7 @@ internal sealed partial class WorldScreen : Control
         _essence.Text = $"✦  {hud.Essence:N0} essence";
         _rations.Text = hud.Rations > 0 ? $"□  {hud.Rations:N0} rations" : "";
         _context.Text =
-            $"{hud.WorldName}  |  {hud.SettlementName}  |  {hud.Season}  |  {hud.Weather}";
+            $"⌖  {hud.WorldName} / {hud.SettlementName}     ◷  C{hud.Cycle} · T{hud.Turn}     ◐  {hud.Season}     ≋  {hud.Weather}";
         _zoomLabel.Text = $"{MapZoom.Percent(_mapZoomIndex)}%";
     }
 

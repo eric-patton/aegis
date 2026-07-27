@@ -156,6 +156,8 @@ internal static class UiThemeFactory
         theme.SetFont("font", "LineEdit", fonts.Body);
         theme.SetFontSize("font_size", "LineEdit", scale.Heading);
         theme.SetColor("font_color", "LineEdit", palette.Text);
+        theme.SetColor("font_placeholder_color", "LineEdit", Mix(palette.Muted, palette.Text, 0.24f));
+        theme.SetColor("font_uneditable_color", "LineEdit", palette.Muted);
         theme.SetColor("caret_color", "LineEdit", palette.Accent);
         theme.SetColor("selection_color", "LineEdit", WithAlpha(palette.Accent, 0.35f));
         theme.SetStylebox("normal", "LineEdit", FieldBox(palette.Background, palette.Muted, scale));
@@ -168,6 +170,17 @@ internal static class UiThemeFactory
         theme.SetFontSize("bold_font_size", "RichTextLabel", scale.Body);
         theme.SetFontSize("mono_font_size", "RichTextLabel", scale.Body);
         theme.SetColor("default_color", "RichTextLabel", palette.Text);
+
+        theme.SetFont("font", "ItemList", fonts.BodySemibold);
+        theme.SetFontSize("font_size", "ItemList", scale.Control);
+        theme.SetColor("font_color", "ItemList", palette.Text);
+        theme.SetColor("font_hovered_color", "ItemList", palette.Text);
+        theme.SetColor("font_selected_color", "ItemList", palette.Text);
+        theme.SetColor("font_hovered_selected_color", "ItemList", palette.Text);
+        theme.SetStylebox("panel", "ItemList", BorderBox(palette.Raised, palette.Muted, scale, scale.Space1));
+        theme.SetStylebox("cursor", "ItemList", Box(palette.Accent, scale, scale.Space1));
+        theme.SetStylebox("cursor_unfocused", "ItemList", Box(Mix(palette.Panel, palette.Accent, 0.24f), scale, scale.Space1));
+        theme.SetStylebox("focus", "ItemList", InsetFocusBox(palette.Accent, scale));
 
         theme.SetStylebox("panel", "PanelContainer", Box(palette.Panel, scale, 0));
         theme.SetStylebox("panel", "PopupPanel", BorderBox(palette.Raised, palette.Accent, scale, scale.Space2));
@@ -227,6 +240,14 @@ internal static class UiThemeFactory
         box.SetBorderWidthAll(Math.Max(2, (int)MathF.Round(2 * scale.Scale)));
         box.SetCornerRadiusAll(scale.Radius);
         box.SetExpandMarginAll(Math.Max(1, (int)MathF.Round(scale.Scale)));
+        return box;
+    }
+
+    internal static StyleBoxFlat InsetFocusBox(Color border, UiScaleTokens scale)
+    {
+        var box = new StyleBoxFlat { BgColor = Colors.Transparent, BorderColor = border };
+        box.SetBorderWidthAll(Math.Max(2, (int)MathF.Round(2 * scale.Scale)));
+        box.SetCornerRadiusAll(scale.Radius);
         return box;
     }
 

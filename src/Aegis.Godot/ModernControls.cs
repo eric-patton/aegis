@@ -7,6 +7,7 @@ namespace Aegis.GodotClient;
 internal sealed partial class ResourceMeter : Control
 {
     private readonly ProgressBar _bar;
+    private readonly MarginContainer _overlayMargin;
     private readonly Label _icon;
     private readonly Label _value;
 
@@ -26,9 +27,11 @@ internal sealed partial class ResourceMeter : Control
         _bar.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         AddChild(_bar);
 
+        _overlayMargin = new MarginContainer { MouseFilter = MouseFilterEnum.Ignore };
+        _overlayMargin.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        AddChild(_overlayMargin);
         var row = new HBoxContainer { MouseFilter = MouseFilterEnum.Ignore };
-        row.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-        AddChild(row);
+        _overlayMargin.AddChild(row);
         _icon = new Label
         {
             Text = icon,
@@ -59,12 +62,18 @@ internal sealed partial class ResourceMeter : Control
         _bar.AddThemeStyleboxOverride(
             "fill",
             UiThemeFactory.BorderBox(fill, fill, scale, scale.Space1));
+        _overlayMargin.AddThemeConstantOverride("margin_left", scale.Space1);
+        _overlayMargin.AddThemeConstantOverride("margin_right", scale.Space1);
         _icon.AddThemeFontOverride("font", fonts.MonoSemibold);
         _icon.AddThemeFontSizeOverride("font_size", scale.Metadata);
-        _icon.AddThemeColorOverride("font_color", palette.Text);
+        _icon.AddThemeColorOverride("font_color", Colors.White);
+        _icon.AddThemeColorOverride("font_outline_color", Color.FromHtml("#11181B"));
+        _icon.AddThemeConstantOverride("outline_size", Math.Max(1, (int)MathF.Round(scale.Scale)));
         _value.AddThemeFontOverride("font", fonts.MonoSemibold);
         _value.AddThemeFontSizeOverride("font_size", scale.Metadata);
-        _value.AddThemeColorOverride("font_color", palette.Text);
+        _value.AddThemeColorOverride("font_color", Colors.White);
+        _value.AddThemeColorOverride("font_outline_color", Color.FromHtml("#11181B"));
+        _value.AddThemeConstantOverride("outline_size", Math.Max(1, (int)MathF.Round(scale.Scale)));
     }
 
     public void UpdateValue(int value, int maximum)
@@ -592,6 +601,10 @@ internal sealed partial class HelpOverlay : MarginContainer
     ];
 
     private readonly ClientFonts _fonts;
+    private readonly PanelContainer _panel;
+    private readonly VBoxContainer _stack;
+    private readonly GridContainer _body;
+    private readonly PanelContainer _articlePanel;
     private readonly LineEdit _search;
     private readonly ItemList _topics;
     private readonly RichTextLabel _article;
@@ -608,14 +621,14 @@ internal sealed partial class HelpOverlay : MarginContainer
         _palette = palette;
         MouseFilter = MouseFilterEnum.Stop;
 
-        var panel = new PanelContainer();
-        panel.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
-        AddChild(panel);
-        var stack = new VBoxContainer();
-        panel.AddChild(WorldScreen.Wrap(stack));
+        _panel = new PanelContainer();
+        _panel.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        AddChild(_panel);
+        _stack = new VBoxContainer();
+        _panel.AddChild(WorldScreen.Wrap(_stack));
 
         var header = new HBoxContainer();
-        stack.AddChild(header);
+        _stack.AddChild(header);
         _title = new Label
         {
             Text = "Help",
@@ -628,21 +641,27 @@ internal sealed partial class HelpOverlay : MarginContainer
 
         _search = new LineEdit { PlaceholderText = "Search help" };
         _search.TextChanged += Filter;
-        stack.AddChild(_search);
+        _stack.AddChild(_search);
 
-        var body = new GridContainer
+        _body = new GridContainer
         {
             Columns = 2,
             SizeFlagsVertical = SizeFlags.ExpandFill,
         };
-        stack.AddChild(body);
+        _stack.AddChild(_body);
         _topics = new ItemList
         {
             CustomMinimumSize = new Vector2(300, 0),
             SizeFlagsVertical = SizeFlags.ExpandFill,
         };
         _topics.ItemSelected += ShowArticle;
-        body.AddChild(_topics);
+        _body.AddChild(_topics);
+        _articlePanel = new PanelContainer
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+        };
+        _body.AddChild(_articlePanel);
         _article = new RichTextLabel
         {
             ScrollActive = true,
@@ -650,7 +669,7 @@ internal sealed partial class HelpOverlay : MarginContainer
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
             SizeFlagsVertical = SizeFlags.ExpandFill,
         };
-        body.AddChild(_article);
+        _articlePanel.AddChild(WorldScreen.Wrap(_article));
         ApplyVisuals(scale, palette);
         Filter("");
     }
@@ -663,6 +682,35 @@ internal sealed partial class HelpOverlay : MarginContainer
         AddThemeConstantOverride("margin_right", scale.Space4);
         AddThemeConstantOverride("margin_top", scale.Space3);
         AddThemeConstantOverride("margin_bottom", scale.Space3);
+        _stack.AddThemeConstantOverride("separation", scale.Space2);
+        _body.AddThemeConstantOverride("h_separation", scale.Space2);
+        _body.AddThemeConstantOverride("v_separation", scale.Space2);
+        _panel.AddThemeStyleboxOverride(
+            "panel",
+            UiThemeFactory.BorderBox(palette.Raised, palette.Muted, scale, 0));
+        _articlePanel.AddThemeStyleboxOverride(
+            "panel",
+            UiThemeFactory.BorderBox(palette.Panel, palette.Muted, scale, 0));
+        _topics.AddThemeColorOverride("font_color", palette.Text);
+        _topics.AddThemeColorOverride("font_hovered_color", palette.Text);
+        _topics.AddThemeColorOverride("font_selected_color", palette.Text);
+        _topics.AddThemeColorOverride("font_hovered_selected_color", palette.Text);
+        _topics.AddThemeStyleboxOverride(
+            "panel",
+            UiThemeFactory.BorderBox(palette.Panel, palette.Muted, scale, scale.Space1));
+        _topics.AddThemeStyleboxOverride(
+            "cursor",
+            UiThemeFactory.BorderBox(palette.Accent, palette.Accent, scale, scale.Space1));
+        _topics.AddThemeStyleboxOverride(
+            "cursor_unfocused",
+            UiThemeFactory.BorderBox(
+                UiThemeFactory.Mix(palette.Panel, palette.Accent, 0.25f),
+                palette.Accent,
+                scale,
+                scale.Space1));
+        _article.AddThemeFontOverride("normal_font", _fonts.Prose);
+        _article.AddThemeFontSizeOverride("normal_font_size", scale.Body);
+        _article.AddThemeColorOverride("default_color", palette.Text);
         UiThemeFactory.Mark(_title, "heading", _fonts, scale, palette);
     }
 

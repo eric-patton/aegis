@@ -1,17 +1,19 @@
 # Aegis Godot client modernization
 
-Status: Approved under D-182, Phases 1 and 2 plus packaged-review remediation
-implemented and verified through D-196; Phase 3 is next
+Status: Approved under D-182, Phases 1 through 3 implemented and verified through
+D-197; packaged Phase 3 review is next
 
 ## Implementation status
 
-Phases 1 and 2 plus the D-196 review remediation are complete. The persistent screen foundation, typed creation projection,
+Phases 1 through 3 plus the D-196 and D-197 review remediation are complete. The persistent screen foundation, typed creation projection,
 Atkinson font system, five discrete UI scales, dark and light palettes, custom
 square-cell map control, native creation fields, complete descriptions, resize probes,
 responsive world shell, structured colored History, repaired conversation behavior,
 map-only zoom, searchable Help, and complete world input ownership are built and
 verified. The default world shell no longer carries the iron rose or permanent control
-text. The warning-free Release build, 66 focused Host tests, and all 1,051 tests pass.
+text. Character and Pack now use typed semantic projections and dedicated D-187 and
+D-188 information screens. The warning-free Release build, 68 focused Host tests, and
+all 1,053 tests pass.
 
 The Phase 2 packaged review found creation spacing and focus defects, incomplete runtime
 theme refresh, a remaining legacy interaction surface, global rather than map-only
@@ -21,8 +23,8 @@ floating launcher, and map-only context footer. It does not approve the referenc
 colors. D-184 approves the full-window Focused Question creation architecture and its
 non-repeating explained-selection band. D-185 approves Conversation Desk as the shared
 Talk, Trade, and Services architecture, including its action list, bottom-following
-transcript, persistent resource context, and selected-action explanation band. Phase 3
-implementation remains paused. D-186 approves the centered reusable world-event sheet
+transcript, persistent resource context, and selected-action explanation band. D-186
+approves the centered reusable world-event sheet
 with independently scrolling Event and Your Choices panes plus a fixed explanation and
 confirmation band. D-187 approves Character Ledger as the dedicated Character
 architecture: a section navigator, complete browse list, and deep inspector with
@@ -585,12 +587,16 @@ structured 120 by 40 frame, exits without stderr, and reloads the created save e
 
 ### Phase 3: character and inventory
 
-- Build dedicated Character.
-- Build dedicated Inventory and Equipment.
-- Preserve every canonical menu action.
-- Add empty, under-met, pending-choice, and long-content states.
+- [x] Build dedicated Character (D-197).
+- [x] Build dedicated Inventory and Equipment (D-197).
+- [x] Preserve every canonical menu action (D-197).
+- [x] Add empty, under-met, pending-choice, and long-content states (D-197).
 
-Checkpoint: screenshot and packaged information-screen review.
+Checkpoint implemented and screenshot-verified under D-197. The D-187 Character Ledger
+and D-188 Outfitter's Bench now consume typed Host projections instead of the fixed
+terminal frame. The Release build is warning-free, 68 focused Host tests and all 1,053
+tests pass, and no Core change triggers an engine sweep. The packaged
+information-screen review is the next gate before Phase 4 proceeds.
 
 ### Phase 4: journal knowledge
 

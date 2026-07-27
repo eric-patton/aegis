@@ -9,6 +9,7 @@ internal sealed partial class CreationChoiceCard : PanelContainer
     private readonly PanelContainer _keyPanel;
     private readonly Label _key;
     private readonly Label _name;
+    private readonly Label _selectedMark;
     private readonly Label _description;
     private readonly PanelContainer _mechanicsPanel;
     private readonly Label _detail;
@@ -18,6 +19,9 @@ internal sealed partial class CreationChoiceCard : PanelContainer
     private readonly MarginContainer _contentMargin;
     private readonly VBoxContainer _identity;
     private readonly VBoxContainer _mechanics;
+    private UiScaleTokens _scale;
+    private UiPalette _palette;
+    private bool _selected;
 
     public CreationChoice Choice { get; }
     public Button Selection { get; }
@@ -30,6 +34,8 @@ internal sealed partial class CreationChoiceCard : PanelContainer
     {
         Choice = choice;
         _fonts = fonts;
+        _scale = scale;
+        _palette = palette;
         MouseFilter = MouseFilterEnum.Ignore;
         SizeFlagsHorizontal = SizeFlags.ExpandFill;
 
@@ -77,6 +83,13 @@ internal sealed partial class CreationChoiceCard : PanelContainer
             AutowrapMode = TextServer.AutowrapMode.WordSmart,
         });
         heading.AddChild(_name);
+        _selectedMark = IgnoreMouse(new Label
+        {
+            Text = "SELECTED",
+            Visible = false,
+            VerticalAlignment = VerticalAlignment.Center,
+        });
+        heading.AddChild(_selectedMark);
 
         _description = IgnoreMouse(new Label
         {
@@ -132,8 +145,17 @@ internal sealed partial class CreationChoiceCard : PanelContainer
 
     public void ApplyVisuals(UiScaleTokens scale, UiPalette palette)
     {
+        _scale = scale;
+        _palette = palette;
         Color quietBorder = Choice.Enabled ? palette.Muted : UiThemeFactory.WithAlpha(palette.Muted, 0.5f);
         Color disabledBackground = UiThemeFactory.Mix(palette.Panel, palette.Background, 0.35f);
+        Color selectedBackground = UiThemeFactory.Mix(palette.Raised, palette.Accent, 0.15f);
+        StyleBoxFlat selectedBox = UiThemeFactory.BorderBox(
+            selectedBackground,
+            palette.Accent,
+            scale,
+            scale.Space2);
+        selectedBox.BorderWidthLeft = Math.Max(5, (int)MathF.Round(5 * scale.Scale));
         Selection.AddThemeStyleboxOverride(
             "normal",
             UiThemeFactory.BorderBox(palette.Raised, quietBorder, scale, scale.Space2));
@@ -146,18 +168,14 @@ internal sealed partial class CreationChoiceCard : PanelContainer
                 scale.Space2));
         Selection.AddThemeStyleboxOverride(
             "pressed",
-            UiThemeFactory.BorderBox(palette.Raised, palette.Accent, scale, scale.Space2));
+            selectedBox);
         Selection.AddThemeStyleboxOverride(
             "hover_pressed",
-            UiThemeFactory.BorderBox(
-                UiThemeFactory.Mix(palette.Raised, palette.Accent, 0.08f),
-                palette.Accent,
-                scale,
-                scale.Space2));
+            selectedBox);
         Selection.AddThemeStyleboxOverride(
             "disabled",
             UiThemeFactory.BorderBox(disabledBackground, quietBorder, scale, scale.Space2));
-        Selection.AddThemeStyleboxOverride("focus", UiThemeFactory.FocusBox(palette.Accent, scale));
+        Selection.AddThemeStyleboxOverride("focus", UiThemeFactory.InsetFocusBox(palette.Accent, scale));
 
         _contentMargin.AddThemeConstantOverride("margin_left", scale.Space2);
         _contentMargin.AddThemeConstantOverride("margin_right", scale.Space2);
@@ -206,6 +224,17 @@ internal sealed partial class CreationChoiceCard : PanelContainer
         _unavailable.AddThemeFontOverride("font", _fonts.BodySemibold);
         _unavailable.AddThemeFontSizeOverride("font_size", scale.Metadata);
         _unavailable.AddThemeColorOverride("font_color", palette.Danger);
+        _selectedMark.AddThemeFontOverride("font", _fonts.MonoSemibold);
+        _selectedMark.AddThemeFontSizeOverride("font_size", scale.Metadata);
+        _selectedMark.AddThemeColorOverride("font_color", palette.Accent);
+        RefreshSelectedVisuals();
+    }
+
+    public void SetSelected(bool selected)
+    {
+        _selected = selected;
+        Selection.SetPressedNoSignal(selected);
+        RefreshSelectedVisuals();
     }
 
     public void SetStacked(bool stacked)
@@ -221,5 +250,28 @@ internal sealed partial class CreationChoiceCard : PanelContainer
     {
         control.MouseFilter = MouseFilterEnum.Ignore;
         return control;
+    }
+
+    private void RefreshSelectedVisuals()
+    {
+        _selectedMark.Visible = _selected;
+        Color keyBackground = _selected ? _palette.Accent : _palette.Panel;
+        Color keyText = _selected ? _palette.Background : _palette.Accent;
+        Color mechanicsBackground = _selected
+            ? UiThemeFactory.Mix(_palette.Panel, _palette.Accent, 0.10f)
+            : _palette.Panel;
+        _keyPanel.AddThemeStyleboxOverride(
+            "panel",
+            UiThemeFactory.BorderBox(keyBackground, _palette.Accent, _scale, _scale.Space1));
+        _key.AddThemeColorOverride(
+            "font_color",
+            Choice.Enabled ? keyText : _palette.Muted);
+        _mechanicsPanel.AddThemeStyleboxOverride(
+            "panel",
+            UiThemeFactory.BorderBox(
+                mechanicsBackground,
+                _selected ? _palette.Accent : _palette.Muted,
+                _scale,
+                _scale.Space2));
     }
 }

@@ -57,11 +57,12 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   Implemented under D-174, but its terminal candidate is superseded by D-175. V1-10 is
   Implemented under D-177, and its clean candidate is built under D-178. The bounded
   D-181 Godot presentation spike is built and verified, D-182 approves the complete
-  modernization contract, and D-183 through D-196 lock and begin implementing the world, Character Creation,
+  modernization contract, and D-183 through D-197 lock and implement the world, Character Creation,
   Conversation, reusable event-sheet, Character, Pack, Journal, Help, Settings, Campaign
   entry, boundary-state bases, focused tasks, and the complete responsive and theme
   parity contract. Phases 1 and 2 plus the packaged-review remediation are built and
-  verified under D-196. Phases 3 through 5, the replacement candidate, a fresh guided
+  verified under D-196. Phase 3 and its information-screen repairs are verified under
+  D-197. Phases 4 and 5, the replacement candidate, a fresh guided
   campaign, and explicit signoff remain
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
@@ -217,11 +218,13 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     right sidebar, thin icon-led condition bars, filtered Activity, bottom currencies,
     floating launcher, and map-only context footer (D-195)
   - [ ] Define the canonical light and dark map-glyph palette on the D-183 geometry
-  - [x] D-182 Phase 2 review: repair creation padding and step-9 text focus (D-195)
+  - [x] D-182 Phase 2 review: repair creation padding and step-9 text focus
+    (D-195, D-197)
   - [x] Packaged-review interaction repair: hover previews without selecting, click and
     grid-aware keyboard selection, hierarchical creation cards, explicit shaping phases
     and projected values, player-following map zoom, readable Activity filters, and the
-    structured D-186 event sheet (D-196)
+    structured D-186 event sheet, including persistent selected-card treatment (D-196,
+    D-197)
   - [x] D-182 Phase 2 review: make runtime light/dark switching refresh every surface
     (D-195)
   - [x] D-182 Phase 2 review: remove the remaining legacy world-screen fallback and
@@ -251,9 +254,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     responsive stacking (D-185)
   - [x] Design the reusable world-event and action-sheet grammar that replaces every
     remaining legacy event surface (D-186)
-  - [~] Modern dedicated character, inventory, and equipment screens, including
+  - [x] Modern dedicated character, inventory, and equipment screens, including
     keyboard and pointer access to all ten launch gear entries (Character approved
-    D-187; Pack and equipment approved D-188)
+    D-187; Pack and equipment approved D-188; semantic implementation D-197)
   - [x] Journal screen with complete current-session History plus read-only People,
     Bestiary, and Threads views over knowledge the character has actually earned
     (D-189)
@@ -914,6 +917,28 @@ decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-27: **D-197 replaces the last legacy information frames and closes Phase 3.**
+  Creation selection is persistent and unmistakable, card focus no longer clips at the
+  viewport edge, light placeholders are readable, and steps 8 and 9 regain text focus
+  after layout. Typed Host projections now feed the D-187 Character Ledger and D-188
+  Outfitter's Bench directly from game state. Character covers attributes, skills,
+  knacks, lessons, burden, scars, standing, pending choices, progress, and resources.
+  Pack covers three fixed slots, every carried item, benefits, requirements, wear,
+  craft, moves, explicit reduced-benefit warnings, equip actions, and resources. Help
+  and resource-meter theme coverage are repaired, while repeated world context is
+  consolidated into the icon-led map footer. The warning-free Release build, 68 focused
+  Host tests, and all 1,053 tests pass. No Core behavior changed, so the engine sweep
+  did not trigger. The full D-190 Help Center, canonical map palette, and Phases 4 and 5
+  remain.
+- 2026-07-27: **The D-196 checkpoint review opens the final creation hardening and
+  confirms Phase 3 is next.** Selection persists but is not visually distinct enough,
+  the outward card focus border clips at the choice viewport, light placeholders and
+  Help inherit weak default contrast, and step-9 focus is still unreliable. Character
+  and Pack expose their approved modern shells around legacy fixed-frame text because
+  their semantic D-187 and D-188 screens are not implemented yet. The resource meters
+  need readable padded overlays, while repeated place, cycle, season, and weather
+  context should collapse into the D-183 footer. These findings are tracked for the
+  next implementation tranche rather than being lost in package feedback.
 - 2026-07-27: **D-196 repairs the first D-195 packaged-review interaction defects.**
   Hover no longer selects; click and grid-aware keyboard focus do. Creation cards
   separate identity, description, and mechanics, while shaping explains the raise and

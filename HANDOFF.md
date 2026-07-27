@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-27, D-196 packaged-review remediation verified)
+# Aegis handoff (updated 2026-07-27, D-197 Phase 3 information screens verified)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,10 +8,10 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-196 currently at its head), then the parking lot of open
+  newest-first block (D-197 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-196)". Bump it whenever a decision lands.
+  "(D-001 through D-197)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence is complete;
   V1-09 is built, and D-175 supersedes its terminal candidate.
 - `design/plan-1.0.md`: the canonical ten-card implementation queue. V1-01 through V1-08
@@ -73,6 +73,15 @@ The canonical design truth stays where it always was:
   A clean extraction completes creation, reports save v100 and generator 1, serves the
   structured 120 by 40 frame, exits without stderr, and reloads the created save to the
   exact same snapshot. The canonical map-glyph palette remains open.
+- D-197 closes the Phase 3 information-screen implementation. Character Creation now
+  carries an unmistakable persistent selection treatment, protected scroll gutters,
+  theme-owned placeholder contrast, and reliable post-layout text focus. Host projects
+  typed Character and Pack records directly from live state. Godot implements the
+  D-187 Character Ledger and D-188 Outfitter's Bench instead of wrapping the legacy
+  fixed frame. Help and resource-meter theme coverage are repaired, and world context
+  is consolidated into the map footer. The warning-free Release build, 68 focused Host
+  tests, and all 1,053 tests pass. No Core behavior moved, so the engine sweep did not
+  trigger. The packaged information-screen checkpoint is the next review gate.
 - Earlier completed implementation: D-182 Phases 1 and 2 pass. Phase 1 supplies the
   persistent Godot foundation and modern creation flow. Phase 2 adds the responsive
   world rail and drawer, newest-entry activity ribbon, colored full-session History,
@@ -224,7 +233,7 @@ The canonical design truth stays where it always was:
   comments in `src/Aegis.Core/SaveCodec.cs`).
 - Generator format: campaign-scoped generator 1, recorded separately in v100 saves.
 - Product version: 1.0.0.
-- Tests: 1,051 green (`dotnet test Aegis.slnx -c Release --no-build`).
+- Tests: 1,053 green (`dotnet test Aegis.slnx -c Release --no-build`).
 - D-181 Release build is zero-warning. Its 22 focused Host tests and all 1,007 tests
   pass. The exported Godot client reports save v100 and generator 1, accepts pilot and
   background pointer input, and exits cleanly. Two real save loads produced exact
@@ -253,7 +262,8 @@ The canonical design truth stays where it always was:
   presentation, creation clutter, lost compass mode, incomplete wrapping, and
   conversation clipping. Automated gates remain green, but the candidate is not
   approved. D-181 settled the host question, D-182 Phases 1 and 2 are verified, and
-  Phase 3 is now the active replacement-client work.
+  Phase 3 is implemented under D-197. Its packaged information-screen review is the
+  next gate before Phase 4 proceeds.
 
 ## Working conventions (were in user-level config, not visible to a new tool)
 
@@ -433,10 +443,8 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Settle the open D-194 canonical map-glyph palette review when the player answers.
-2. Implement D-182 Phase 3: dedicated modern Character, Inventory, and Equipment
-   screens with every canonical action and required long, empty, under-met, and
-   pending-choice state.
+1. Build and present the D-197 packaged information-screen checkpoint for player review.
+2. Settle the open D-194 canonical map-glyph palette review when the player answers.
 3. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
    review gate.
 4. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only

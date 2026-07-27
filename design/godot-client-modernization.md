@@ -606,13 +606,18 @@ checkpoint is
 SHA-256
 `C4CFB2360922DCBB98F09434D2658F6F726E488F291A1DA740688F0614D9CCF0`.
 Its clean extraction completes creation, reports save v100 and generator 1, serves the
-structured 120 by 40 frame, exits cleanly, and reloads the exact snapshot. A new D-199
-parity package is the player gate before Conversation Desk proceeds. That checkpoint is
+structured 120 by 40 frame, exits cleanly, and reloads the exact snapshot. The superseded
+D-199 parity checkpoint is
 `artifacts/aegis-d199-character-pack-parity-win-x64.zip`, built from `6e12f2e`,
 SHA-256
 `E690534CBBA7F1CB09980B9AEA26FB03B88CCCFF6BBCF237494197F8671C21E5`.
 Its clean extraction completes creation, reports save v100 and generator 1, serves the
-structured 120 by 40 frame, exits cleanly, and reloads the exact snapshot.
+structured 120 by 40 frame, exits cleanly, and reloads the exact snapshot. The corrected
+D-200 checkpoint is
+`artifacts/aegis-d200-parity-correction-win-x64.zip`, built from `2ab338c`, SHA-256
+`5D1DCD5C012F74E50FD43BFC2E56E91A841A7D63FB510F7713E979CF0D72FAB3`.
+Its clean extraction passes the same creation, version, frame, exit, and exact-reload
+smokes. D-200 is now the player gate before Conversation Desk proceeds.
 
 ### Phase 4: journal knowledge
 

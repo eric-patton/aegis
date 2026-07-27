@@ -142,8 +142,14 @@ The canonical design truth stays where it always was:
   probes cover maximized and 1100 by 700 geometry at 150 percent, focused-choice
   visibility, stage reset, fixed world sidebar, desktop Character, and compact
   Character. Matching dark-theme probes pass for the compact Character and fixed world
-  sidebar. The packaged-extraction check remains before player handoff. No Core
-  behavior moved, so the engine sweep did not trigger.
+  sidebar. The clean
+  `artifacts/aegis-d200-parity-correction-win-x64.zip` checkpoint, built from `2ab338c`,
+  has SHA-256
+  `5D1DCD5C012F74E50FD43BFC2E56E91A841A7D63FB510F7713E979CF0D72FAB3`.
+  Its clean extraction completes creation, reports save v100 and generator 1, serves
+  the structured 120 by 40 frame, exits cleanly, and reloads the exact snapshot. No
+  Core behavior moved, so the engine sweep did not trigger. Packaged player review is
+  the remaining gate.
 - Earlier completed implementation: D-182 Phases 1 and 2 pass. Phase 1 supplies the
   persistent Godot foundation and modern creation flow. Phase 2 adds the responsive
   world rail and drawer, newest-entry activity ribbon, colored full-session History,
@@ -529,8 +535,8 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Finish the D-200 package check, then have the player confirm corrected
-   Character Creation, the permanent world sidebar, Character Ledger, and the existing
+1. Have the player review the D-200 checkpoint and confirm corrected Character
+   Creation, the permanent world sidebar, Character Ledger, and the existing
    Outfitter's Bench candidate.
 2. Continue the approved implementation parity ledger with Conversation Desk, then
    event surfaces, Help, Journal, Settings, Campaign entry, system states, and Field

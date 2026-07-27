@@ -22,7 +22,8 @@ compact flow. The approved mockup architecture is canonical, while
 parity work.
 
 The current player-review checkpoint is
-`artifacts/aegis-d199-character-pack-parity-win-x64.zip`, built from `6e12f2e`.
+`artifacts/aegis-d200-parity-correction-win-x64.zip`, built from `2ab338c`, SHA-256
+`5D1DCD5C012F74E50FD43BFC2E56E91A841A7D63FB510F7713E979CF0D72FAB3`.
 
 ## Development launch
 

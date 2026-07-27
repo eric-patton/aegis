@@ -272,6 +272,13 @@ and 1100 by 700 geometry, 150 percent scale, focused-choice visibility after res
 stage scroll reset, the fixed world sidebar, the desktop ledger, and the compact
 one-at-a-time ledger flow.
 
+The clean Windows x64 checkpoint is
+`artifacts/aegis-d200-parity-correction-win-x64.zip`, built from `2ab338c`, 76,653,652
+bytes, with SHA-256
+`5D1DCD5C012F74E50FD43BFC2E56E91A841A7D63FB510F7713E979CF0D72FAB3`.
+Its clean extraction completes creation, reports save v100 and generator 1, serves the
+structured 120 by 40 frame, exits cleanly, and reloads the exact snapshot.
+
 Deferred: player verdict on the corrected package; Pack parity verdict; Conversation
 Desk as the next parity family; remaining approved screen families; and the canonical
 map-glyph palette.

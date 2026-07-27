@@ -956,7 +956,15 @@ Newest first. Log when a feature is checked off, or when new work is added to th
   repeated Overview menu with one composed summary, uses dense active-record rows and
   one inspector on desktop, and uses a section selector plus one-at-a-time
   browse-to-inspect flow at narrow width or high scale. All three remain `[~]` until the
-  corrected package receives a player verdict.
+  corrected package receives a player verdict. Release builds without warnings, 72
+  focused Host tests and all 1,057 tests pass, and light and dark background probes
+  pass. The clean
+  `artifacts/aegis-d200-parity-correction-win-x64.zip` checkpoint, built from
+  `2ab338c` with SHA-256
+  `5D1DCD5C012F74E50FD43BFC2E56E91A841A7D63FB510F7713E979CF0D72FAB3`,
+  completes creation, reports save v100 and generator 1, serves the structured frame,
+  exits cleanly, and reloads the exact snapshot. No Core behavior moved, so the engine
+  sweep did not trigger.
 - 2026-07-27: **D-199 player review rejects the current Character parity candidate and
   finds three shell regressions.** Character Creation does not keep the keyboard-focused
   choice visible, does not reset to the top between stages, and renders substantially

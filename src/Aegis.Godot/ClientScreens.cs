@@ -136,6 +136,7 @@ internal sealed partial class CreationScreen : MarginContainer
             SizeFlagsVertical = SizeFlags.ExpandFill,
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
         };
+        _choiceScroll.Resized += OnChoiceScrollResized;
         _stack.AddChild(_choiceScroll);
         _choiceGutter = new MarginContainer
         {
@@ -194,15 +195,15 @@ internal sealed partial class CreationScreen : MarginContainer
     {
         _scale = scale;
         _palette = palette;
-        AddThemeConstantOverride("margin_left", scale.Space4);
-        AddThemeConstantOverride("margin_right", scale.Space4);
-        AddThemeConstantOverride("margin_top", scale.Space3);
-        AddThemeConstantOverride("margin_bottom", scale.Space3);
-        _stack.AddThemeConstantOverride("separation", scale.Space2);
-        _inner.AddThemeConstantOverride("margin_left", scale.Space4);
-        _inner.AddThemeConstantOverride("margin_right", scale.Space4);
-        _inner.AddThemeConstantOverride("margin_top", scale.Space3);
-        _inner.AddThemeConstantOverride("margin_bottom", scale.Space3);
+        AddThemeConstantOverride("margin_left", scale.Space3);
+        AddThemeConstantOverride("margin_right", scale.Space3);
+        AddThemeConstantOverride("margin_top", scale.Space2);
+        AddThemeConstantOverride("margin_bottom", scale.Space2);
+        _stack.AddThemeConstantOverride("separation", scale.Space1);
+        _inner.AddThemeConstantOverride("margin_left", scale.Space3);
+        _inner.AddThemeConstantOverride("margin_right", scale.Space3);
+        _inner.AddThemeConstantOverride("margin_top", scale.Space2);
+        _inner.AddThemeConstantOverride("margin_bottom", scale.Space2);
         _footer.AddThemeConstantOverride("separation", scale.Space2);
         _route.AddThemeConstantOverride("separation", scale.Space1);
         _choices.AddThemeConstantOverride("h_separation", scale.Space2);
@@ -232,7 +233,7 @@ internal sealed partial class CreationScreen : MarginContainer
     public void ApplyLayout(float viewportWidth)
     {
         _viewportWidth = viewportWidth;
-        _choices.Columns = viewportWidth >= 1280 && _scale.Scale < 1.5f ? 2 : 1;
+        _choices.Columns = viewportWidth >= 1040 && _scale.Scale < 1.5f ? 2 : 1;
         RefreshChoiceCardLayout();
         bool expandedRoute = viewportWidth >= 1180 && _scale.Scale < 1.5f;
         _route.Visible = expandedRoute;
@@ -288,10 +289,11 @@ internal sealed partial class CreationScreen : MarginContainer
 
         if (becameVisible || stageChanged)
         {
+            ResetStageScroll();
             if (textStage)
                 RequestEntryFocus();
             else
-                FirstEnabledChoice()?.CallDeferred(Control.MethodName.GrabFocus);
+                RevealChoice(FirstEnabledChoice());
         }
     }
 
@@ -325,6 +327,9 @@ internal sealed partial class CreationScreen : MarginContainer
         card.Selection.GrabFocus();
         return true;
     }
+
+    public bool MoveSelection(int delta) =>
+        MoveChoice(delta < 0 ? ChoiceGridDirection.Up : ChoiceGridDirection.Down);
 
     private void SynchronizeEntry(string authoritative, bool force)
     {
@@ -475,7 +480,7 @@ internal sealed partial class CreationScreen : MarginContainer
         }
 
         SelectChoice(buttons[next]);
-        buttons[next].GrabFocus();
+        RevealChoice(buttons[next]);
         return true;
     }
 
@@ -508,8 +513,40 @@ internal sealed partial class CreationScreen : MarginContainer
             card.SetStacked(stackCard);
             card.CustomMinimumSize = new Vector2(
                 width,
-                Math.Max(112, _scale.Space4 * 3));
+                Math.Max(84, _scale.Space3 * 3));
         }
+    }
+
+    private void OnChoiceScrollResized()
+    {
+        RefreshChoiceWidths();
+        Button? selected = _selectedKey is { } key
+            && _choiceCards.TryGetValue(key, out CreationChoiceCard? card)
+                ? card.Selection
+                : null;
+        RevealChoice(selected);
+    }
+
+    private void RevealChoice(Button? button)
+    {
+        if (button is null)
+            return;
+        Callable.From(() =>
+        {
+            if (!GodotObject.IsInstanceValid(button) || !button.IsVisibleInTree())
+                return;
+            button.GrabFocus();
+            _choiceScroll.EnsureControlVisible(button);
+        }).CallDeferred();
+    }
+
+    private void ResetStageScroll()
+    {
+        Callable.From(() =>
+        {
+            _choiceScroll.ScrollVertical = 0;
+            _review.ScrollToLine(0);
+        }).CallDeferred();
     }
 
     private void RequestEntryFocus()
@@ -521,7 +558,7 @@ internal sealed partial class CreationScreen : MarginContainer
     private bool RefreshChoiceCardLayout()
     {
         bool stacked =
-            _viewportWidth / Math.Max(1, _choices.Columns) < 760 * _scale.Scale;
+            _viewportWidth / Math.Max(1, _choices.Columns) < 520 * _scale.Scale;
         foreach (CreationChoiceCard card in _choiceCards.Values)
             card.SetStacked(stacked);
         return stacked;
@@ -576,7 +613,6 @@ internal sealed partial class WorldScreen : Control
     private UiPalette _palette;
     private bool _lightTheme;
     private int _mapZoomIndex;
-    private bool _sidebarOpen;
 
     public event Action<int>? MapZoomChanged;
 
@@ -733,16 +769,12 @@ internal sealed partial class WorldScreen : Control
 
     public void ApplyLayout(float viewportWidth)
     {
-        ResponsiveClientLayout layout = ResponsiveClientLayout.Resolve(
-            (int)MathF.Round(viewportWidth),
-            _scale.Scale);
-        bool docked = layout.WorldRail == WorldRailPresentation.Docked;
-        float width = Math.Min(
-            Math.Max(0, Size.X - _scale.Space4 * 2),
-            Math.Max(330, 360 * _scale.Scale));
-        _sidebarButton.Visible = !docked;
-        _sidebarClose.Visible = !docked;
-        _sidebar.Visible = docked || _sidebarOpen;
+        float minimumMapWidth = Math.Min(720, Math.Max(480, viewportWidth * 0.56f));
+        float preferredWidth = Math.Max(330, 360 * Math.Min(_scale.Scale, 1.25f));
+        float width = Math.Min(preferredWidth, Math.Max(300, viewportWidth - minimumMapWidth));
+        _sidebarButton.Visible = false;
+        _sidebarClose.Visible = false;
+        _sidebar.Visible = true;
 
         _sidebar.SetAnchor(Side.Left, 1);
         _sidebar.SetAnchor(Side.Top, 0);
@@ -756,7 +788,7 @@ internal sealed partial class WorldScreen : Control
             Math.Max(0, width - _scale.Space1),
             0);
 
-        _mapRegion.OffsetRight = docked ? -width - _scale.Space2 : 0;
+        _mapRegion.OffsetRight = -width - _scale.Space2;
     }
 
     public void UpdateView(
@@ -795,8 +827,7 @@ internal sealed partial class WorldScreen : Control
 
     public void ToggleSidebar()
     {
-        _sidebarOpen = !_sidebarOpen;
-        ApplyLayout(Size.X);
+        _sidebar.Visible = true;
     }
 
     private static Label CurrencyLabel() => new()

@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-27, D-199 Character and Pack parity candidates verified)
+# Aegis handoff (updated 2026-07-27, D-200 parity correction verified)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,10 +8,10 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-199 currently at its head), then the parking lot of open
+  newest-first block (D-200 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-199)". Bump it whenever a decision lands.
+  "(D-001 through D-200)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence is complete;
   V1-09 is built, and D-175 supersedes its terminal candidate.
 - `design/plan-1.0.md`: the canonical ten-card implementation queue. V1-01 through V1-08
@@ -128,6 +128,22 @@ The canonical design truth stays where it always was:
   A clean extraction completes creation, reports save v100 and generator 1, serves the
   structured 120 by 40 frame, exits cleanly, and reloads the exact snapshot. Packaged
   player review remains the gate.
+- D-200 records that D-199 did not faithfully follow the approved Character reference
+  and corrects the review process as well as the screens. Approved images are now
+  acceptance references for structure, density, hierarchy, responsive behavior, and
+  interaction, with a running side-by-side check required before packaging. Character
+  Creation restores compact two-column density, follows keyboard focus and resize
+  inside the choice scroll owner, and resets scroll position on stage changes. The
+  world Activity sidebar remains permanently visible at every supported width and
+  scale. Character uses the canonical identity rail, dense active-record list, and deep
+  inspector; Overview is one composed summary, and narrow or high-scale layouts show
+  the list or inspector one at a time beneath a section selector. Release builds with
+  zero warnings, 72 focused Host tests and all 1,057 tests pass. Light-theme background
+  probes cover maximized and 1100 by 700 geometry at 150 percent, focused-choice
+  visibility, stage reset, fixed world sidebar, desktop Character, and compact
+  Character. Matching dark-theme probes pass for the compact Character and fixed world
+  sidebar. The packaged-extraction check remains before player handoff. No Core
+  behavior moved, so the engine sweep did not trigger.
 - Earlier completed implementation: D-182 Phases 1 and 2 pass. Phase 1 supplies the
   persistent Godot foundation and modern creation flow. Phase 2 adds the responsive
   world rail and drawer, newest-entry activity ribbon, colored full-session History,
@@ -513,8 +529,9 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Package D-199 and have the player confirm the attribute-shaping Enter repair,
-   Character Ledger, and Outfitter's Bench.
+1. Finish the D-200 package check, then have the player confirm corrected
+   Character Creation, the permanent world sidebar, Character Ledger, and the existing
+   Outfitter's Bench candidate.
 2. Continue the approved implementation parity ledger with Conversation Desk, then
    event surfaces, Help, Journal, Settings, Campaign entry, system states, and Field
    Drawers.

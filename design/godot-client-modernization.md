@@ -1,11 +1,11 @@
 # Aegis Godot client modernization
 
 Status: Approved under D-182, Phases 1 through 3 implemented and verified through
-D-199; Character and Pack parity review is next
+D-200; corrected Character Creation, world rail, and Character parity review is next
 
 ## Implementation status
 
-Phases 1 through 3 plus the D-196 through D-199 review remediation are complete. The persistent screen foundation, typed creation projection,
+Phases 1 through 3 plus the D-196 through D-200 review remediation are complete. The persistent screen foundation, typed creation projection,
 Atkinson font system, five discrete UI scales, dark and light palettes, custom
 square-cell map control, native creation fields, complete descriptions, resize probes,
 responsive world shell, structured colored History, repaired conversation behavior,
@@ -28,7 +28,8 @@ approves the centered reusable world-event sheet
 with independently scrolling Event and Your Choices panes plus a fixed explanation and
 confirmation band. D-187 approves Character Ledger as the dedicated Character
 architecture: a section navigator, complete browse list, and deep inspector with
-independent scrolling and a stacked high-scale fallback. D-188 approves Pack and
+independent desktop scrolling. D-200 supersedes its stacked high-scale fallback with a
+section selector and one-at-a-time browse-to-inspect flow. D-188 approves Pack and
 equipment as Outfitter's Bench, with an unmistakable
 under-requirement warning that does not block Equip. D-189 approves Journal as
 Chronicle Desk, with complete current-session History, shared Activity state,
@@ -592,9 +593,10 @@ structured 120 by 40 frame, exits without stderr, and reloads the created save e
 - [x] Preserve every canonical menu action (D-197).
 - [x] Add empty, under-met, pending-choice, and long-content states (D-197).
 
-Semantic screens landed under D-197, and D-199 brings their layout and interaction
-hierarchy to the approved images. Character now uses the identity and section rail,
-filtered record list, and deep inspector. Pack now uses the three-slot shelf,
+Semantic screens landed under D-197. D-199 brought Pack to its current player-review
+candidate but missed the Character reference. D-200 corrects Character with the
+identity and section rail, dense active-record list, composed Overview, and deep
+inspector, plus a one-at-a-time compact flow. Pack continues to use the three-slot shelf,
 sortable and filterable gear table, selected-versus-equipped inspector, explicit
 warning, and secondary resource band. Light, dark, desktop, narrow, and 150 percent
 background probes pass. The Release build is warning-free, 72 focused Host tests and

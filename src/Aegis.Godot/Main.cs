@@ -683,6 +683,8 @@ public sealed partial class Main : Control, IFrameSink
 
     private void MoveFocus(int delta)
     {
+        if (_creation.Visible && _creation.MoveSelection(delta))
+            return;
         if (_conversation.Visible && _conversation.MoveSelection(delta))
             return;
         if (_task.Visible && _task.MoveSelection(delta))

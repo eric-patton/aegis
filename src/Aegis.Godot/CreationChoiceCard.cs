@@ -179,8 +179,8 @@ internal sealed partial class CreationChoiceCard : PanelContainer
 
         _contentMargin.AddThemeConstantOverride("margin_left", scale.Space2);
         _contentMargin.AddThemeConstantOverride("margin_right", scale.Space2);
-        _contentMargin.AddThemeConstantOverride("margin_top", scale.Space2);
-        _contentMargin.AddThemeConstantOverride("margin_bottom", scale.Space2);
+        _contentMargin.AddThemeConstantOverride("margin_top", scale.Space1);
+        _contentMargin.AddThemeConstantOverride("margin_bottom", scale.Space1);
         _layout.AddThemeConstantOverride("h_separation", scale.Space2);
         _layout.AddThemeConstantOverride("v_separation", scale.Space2);
         _identity.AddThemeConstantOverride("separation", scale.Space1);
@@ -194,7 +194,7 @@ internal sealed partial class CreationChoiceCard : PanelContainer
             UiThemeFactory.BorderBox(palette.Panel, palette.Accent, scale, scale.Space1));
         _mechanicsPanel.AddThemeStyleboxOverride(
             "panel",
-            UiThemeFactory.BorderBox(palette.Panel, quietBorder, scale, scale.Space2));
+            UiThemeFactory.BorderBox(palette.Panel, quietBorder, scale, scale.Space1));
 
         _key.AddThemeFontOverride("font", _fonts.MonoSemibold);
         _key.AddThemeFontSizeOverride("font_size", scale.Metadata);

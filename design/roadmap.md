@@ -248,15 +248,19 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     before Phase 3 implementation (D-183 through D-194)
   - [~] Implement and player-verify the canonical mockup suite, tracked screen by screen
     in the implementation parity ledger in `design/godot-ui-mockup-review.md`
-    - [~] World screen: canonical structure exists; map palette and final visual parity
-      remain
-    - [~] Character Creation: complete route exists; exact visual parity remains
+    - [~] World screen: D-200 keeps the approved right sidebar permanently visible at
+      every supported width and scale; player verdict, map palette, and final visual
+      parity remain
+    - [~] Character Creation: D-200 restores compact approved density, scrolls the
+      focused choice into view during keyboard navigation and resize, and resets choice
+      or review scrolling at every stage transition; player verdict remains
     - [~] Conversation Desk: structured implementation exists; direct parity review
       remains
     - [~] Centered Field Sheet: structured scenes exist; remaining event surfaces remain
-    - [~] Character Ledger: approved hierarchy, independent panes, responsive stack,
-      and both themes are implemented and background-verified under D-199; packaged
-      player verdict remains
+    - [~] Character Ledger: D-200 replaces D-199's rejected repeated Overview cards and
+      nested responsive stack with the canonical desktop rail, dense active-record
+      list, and deep inspector. Narrow or high-scale layouts use a section selector and
+      one-at-a-time browse-to-inspect path. Player verdict remains.
     - [~] Outfitter's Bench: approved shelf, gear table, inspector, resources,
       responsive stack, and both themes are implemented and background-verified under
       D-199; packaged player verdict remains
@@ -945,6 +949,22 @@ decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-27: **D-200 corrects the rejected D-199 parity pass and makes approved
+  screenshots the visual acceptance gate.** Character Creation restores compact
+  two-column density, focused-choice scrolling, resize follow, and stage scroll reset.
+  The world Activity sidebar remains permanently visible. Character replaces the
+  repeated Overview menu with one composed summary, uses dense active-record rows and
+  one inspector on desktop, and uses a section selector plus one-at-a-time
+  browse-to-inspect flow at narrow width or high scale. All three remain `[~]` until the
+  corrected package receives a player verdict.
+- 2026-07-27: **D-199 player review rejects the current Character parity candidate and
+  finds three shell regressions.** Character Creation does not keep the keyboard-focused
+  choice visible, does not reset to the top between stages, and renders substantially
+  larger than the approved focused-question reference. The responsive world hides the
+  approved fixed Activity sidebar behind a button. Character repeats section summaries
+  as a second card list and stacks nested scrolling regions at high scale, obscuring the
+  relationship between selection and detail. These remain `[~]` parity work, not
+  player-verified completion.
 - 2026-07-27: **D-199 implements the first two exact screen-parity candidates.**
   Character now opens on the approved Character Ledger Overview with identity and
   meters in the left rail, a filtered and counted record list in the middle, and a

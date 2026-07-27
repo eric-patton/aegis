@@ -231,6 +231,51 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-200: The reference is the gate: creation, world rail, and Character correction (2026-07-27)
+
+The player rejects D-199 as a faithful Character parity candidate. The canonical
+screenshots were present, but implementation treated them as general direction and
+preserved incompatible existing structures. Functional verification then replaced the
+required side-by-side visual acceptance pass. This decision corrects both the screens
+and the review standard: an approved image is an acceptance reference for structure,
+density, hierarchy, responsive behavior, and interaction. A candidate does not reach a
+player package until the running screen has been compared against that reference.
+
+Character Creation returns to the compact D-184 focused-question geometry. At ordinary
+scale, six choices form the approved two-column field with identity and mechanics kept
+side by side. At narrow width or high scale, the focused card is always brought into
+the choice viewport after keyboard movement and after resize. Every stage transition
+resets choice or review reading position to the top. The prompt, selected explanation,
+and footer remain fixed outside the choice scroll owner.
+
+The D-183 world sidebar is permanent at every supported width and scale. Condition and
+currencies remain fixed, Activity alone owns the middle scrollbar, and the map yields
+space to the rail instead of replacing it with an Activity button.
+
+Character again follows the D-187 ledger rather than presenting a menu inside a menu.
+Desktop keeps the compact identity and resource rail, one dense list containing the
+active section's actual records, and one deep inspector. Overview is a single composed
+summary spanning the browse workspace, not a repeated card list of the same section
+names. Skill rows expose level-use progress at ledger density, and the inspector
+separates current progress, meaning, growth, and next-level context. At narrow width or
+high scale, the section rail becomes one top-level selector and the content shows
+either the list or the inspector with an explicit Back to list action. Two scrolling
+regions never stack into one ambiguous page. Pointer selection and keyboard selection
+share the same visible state, and directional movement keeps its selected row visible.
+This responsive rule supersedes D-187's original list-above-inspector fallback.
+
+D-200 changes only the Godot presentation. No Core behavior, canonical key, turn rule,
+RNG draw, journal meaning, save, generator, or worldgen changes, so the conditional
+engine sweep does not apply. The Release solution builds with zero warnings, 72 focused
+Host tests and all 1,057 tests pass. Background light and dark probes cover maximized
+and 1100 by 700 geometry, 150 percent scale, focused-choice visibility after resize,
+stage scroll reset, the fixed world sidebar, the desktop ledger, and the compact
+one-at-a-time ledger flow.
+
+Deferred: player verdict on the corrected package; Pack parity verdict; Conversation
+Desk as the next parity family; remaining approved screen families; and the canonical
+map-glyph palette.
+
 ### D-199: The record takes its approved shape: Character and Pack parity (2026-07-27)
 
 The player confirms the D-198 creation-focus, fixed-rail, and bow-direction repairs.

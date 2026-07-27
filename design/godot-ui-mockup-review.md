@@ -83,14 +83,14 @@ not implemented.
 
 1. [~] World screen, canonical
    `artifacts/d182-game-screen-architectures-v1/06-map-workspace-sidebar-icons.png`.
-   The map workspace, fixed rail, Activity, currencies, and map footer exist. The
-   production map-glyph palette remains open, and the packaged review found a whole-rail
-   scrollbar that must be removed in favor of a fixed condition region, flexible
-   Activity, and fixed currencies.
+   D-200 keeps the rail permanently visible at every supported width and scale.
+   Condition and currencies remain fixed while Activity alone owns the flexible middle
+   scrollbar. The production map-glyph palette and player verdict remain open.
 2. [~] Character Creation, canonical
    `artifacts/d183-character-creation-architectures-v1/05-focused-question-explained-selection.png`.
-   The complete route, cards, selected explanation, text entry, and review exist.
-   Packaged review reopened exact visual hierarchy and reliable Face-to-Name focus.
+   D-200 restores compact two-column density, selected explanation, focused-choice
+   scrolling through keyboard movement and resize, and top reset on every stage
+   transition. Player verdict remains.
 3. [~] Conversation and commerce, canonical
    `artifacts/d184-conversation-commerce-architectures-v1/01-conversation-desk.png`.
    Structured actions, transcript, resources, scoped focus, and follow-tail exist.
@@ -101,10 +101,11 @@ not implemented.
    Structured scenes use the split sheet. Remaining world-event and action surfaces
    still need migration and parity review.
 5. [~] Character, canonical
-   `artifacts/d186-character-architectures-v1/02-character-ledger.png`. D-199 implements
-   the approved left identity and section rail, filtered and counted record list, deep
-   inspector, independent desktop scrolling, light and dark themes, and stacked
-   high-scale fallback. Packaged player verdict remains.
+   `artifacts/d186-character-architectures-v1/02-character-ledger.png`. D-200 corrects
+   D-199's rejected candidate with the approved left identity and section rail, one
+   dense active-record list, a deep inspector, and a composed Overview. Narrow or
+   high-scale layouts use a section selector and show the list or inspector one at a
+   time. Packaged player verdict remains.
 6. [~] Pack and equipment, canonical
    `artifacts/d187-pack-equipment-architectures-v1/01-outfitters-bench.png`. D-199
    implements the approved three-slot shelf, sortable and filterable six-column gear
@@ -343,7 +344,8 @@ pointer parity; and narrow or high-scale fallbacks.
 - Pending progression stays visible and opens as a focused, fully explained decision in
   the inspector.
 - Narrow or high-scale layouts replace the left rail with a compact section control and
-  stack the selected list above its inspector.
+  show either the selected list or its inspector. Selecting a record opens the
+  inspector, and Back to list restores the browse region without nested scrolling.
 - Exact icons, tokens, density, breakpoints, and generated content remain implementation
   work and may not change the approved hierarchy.
 

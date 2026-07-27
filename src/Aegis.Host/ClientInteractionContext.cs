@@ -21,7 +21,8 @@ public sealed record ClientAction(
     int X,
     int Y,
     int Width,
-    bool Enabled = true);
+    bool Enabled = true,
+    string Detail = "");
 
 public sealed record CreationChoice(
     char Key,
@@ -30,7 +31,8 @@ public sealed record CreationChoice(
     string Detail,
     bool Enabled = true,
     string DisabledReason = "",
-    string Explanation = "");
+    string Explanation = "",
+    string Projection = "");
 
 public sealed record TaskPresentation(
     string Title,
@@ -43,7 +45,11 @@ public sealed record CreationPresentation(
     string Prompt,
     string Entry,
     CreationChoice[] Choices,
-    string[] ReviewLines);
+    string[] ReviewLines)
+{
+    public string Guidance { get; init; } = "";
+    public string PhaseLabel { get; init; } = "";
+}
 
 public sealed record ClientInteractionContext(
     ClientSurface Surface,
@@ -73,6 +79,7 @@ public sealed record ClientInteractionContext(
         {
             ClientSurface.World or ClientSurface.DirectionPrompt => [],
             ClientSurface.Conversation => ConversationActions(game),
+            ClientSurface.Menu when game.InScene => SceneActions(game),
             ClientSurface.CreationChoice => CreationChoices(game)
                 .Select(choice => new ClientAction(
                     choice.Key,
@@ -87,6 +94,7 @@ public sealed record ClientInteractionContext(
         string title = surface switch
         {
             ClientSurface.Conversation when game.TalkNpc is { } npc => $"{npc.Name}, {npc.Role}",
+            ClientSurface.Menu when game.InScene => game.SceneTitle,
             ClientSurface.Character => "Character",
             ClientSurface.Equipment => "Inventory and equipment",
             ClientSurface.CreationReview => "Review your character",
@@ -110,12 +118,23 @@ public sealed record ClientInteractionContext(
                     CreationPrompt(game),
                     game.NameEntry,
                     CreationChoices(game),
-                    CreationReview(game)),
+                    CreationReview(game))
+                {
+                    Guidance = CreationGuidance(game),
+                    PhaseLabel = CreationPhaseLabel(game),
+                },
             };
         }
         else if (surface is ClientSurface.Menu or ClientSurface.Character or ClientSurface.Equipment)
         {
-            context = context with { Task = TaskPresentationFrom(frame, actions, title) };
+            context = context with
+            {
+                Task = game.InScene
+                    ? new TaskPresentation(
+                        game.SceneTitle,
+                        string.Join("\n\n", game.SceneProse.Select(line => line.Text)))
+                    : TaskPresentationFrom(frame, actions, title),
+            };
             if (context.Title.Length == 0 && context.Task.Title.Length > 0)
                 context = context with { Title = context.Task.Title };
         }
@@ -140,8 +159,9 @@ public sealed record ClientInteractionContext(
     {
         CreationStage.Folk => "What folk bore you?",
         CreationStage.Past => "What were your hands before?",
-        CreationStage.ShapeRaise => $"Where did your body rise? {game.ShapingsLeft} shaping choices remain.",
-        CreationStage.ShapePay => $"What paid for the rise in {AttributeSet.NameOf(game.ShapeRaise!.Value)}?",
+        CreationStage.ShapeRaise => "Choose an attribute to raise.",
+        CreationStage.ShapePay =>
+            $"Choose what balances the rise in {AttributeSet.NameOf(game.ShapeRaise!.Value)}.",
         CreationStage.Thing => game.PickingSecondThing
             ? "What else came through?"
             : "What came through with you?",
@@ -151,6 +171,22 @@ public sealed record ClientInteractionContext(
         CreationStage.Name => "What is your character called?",
         CreationStage.Review => "Review your character before beginning.",
         _ => "Character creation",
+    };
+
+    private static string CreationGuidance(Game game) => game.CreationStage switch
+    {
+        CreationStage.ShapeRaise =>
+            $"Add 1 point now, then choose a different attribute to lower by 1. {game.ShapingsLeft} shaping choices remain.",
+        CreationStage.ShapePay =>
+            $"{AttributeSet.NameOf(game.ShapeRaise!.Value)} has risen by 1. Choose a different attribute to lower by 1 and complete this shaping.",
+        _ => "",
+    };
+
+    private static string CreationPhaseLabel(Game game) => game.CreationStage switch
+    {
+        CreationStage.ShapeRaise => "SHAPING  ·  RAISE",
+        CreationStage.ShapePay => "SHAPING  ·  BALANCE",
+        _ => "",
     };
 
     private static string CreationDetail(Game game) => game.CreationStage switch
@@ -216,12 +252,17 @@ public sealed record ClientInteractionContext(
                         (char)('1' + index),
                         AttributeSet.NameOf(attribute),
                         AttributeSet.DescriptionOf(attribute),
-                        $"Current value {player.Attributes[attribute]}",
+                        $"Current  {player.Attributes[attribute]}",
                         enabled,
                         reason,
                         game.CreationStage == CreationStage.ShapeRaise
                             ? $"Raises {AttributeSet.NameOf(attribute)} by 1. {AttributeSet.DescriptionOf(attribute)}"
-                            : $"Lowers {AttributeSet.NameOf(attribute)} by 1. {AttributeSet.DescriptionOf(attribute)}");
+                            : $"Lowers {AttributeSet.NameOf(attribute)} by 1. {AttributeSet.DescriptionOf(attribute)}",
+                        enabled
+                            ? game.CreationStage == CreationStage.ShapeRaise
+                                ? $"{player.Attributes[attribute]}  →  {player.Attributes[attribute] + 1}"
+                                : $"{player.Attributes[attribute]}  →  {player.Attributes[attribute] - 1}"
+                            : "");
                 }),
                 .. game.CreationStage == CreationStage.ShapeRaise
                     ? new[]
@@ -417,6 +458,17 @@ public sealed record ClientInteractionContext(
 
         return [.. actions];
     }
+
+    private static ClientAction[] SceneActions(Game game) =>
+        game.SceneChoices
+            .Select((choice, index) => new ClientAction(
+                (char)('1' + index),
+                choice.Label,
+                0,
+                0,
+                0,
+                Detail: choice.Tag))
+            .ToArray();
 
     private static ClientAction[] ScanActions(Frame frame)
     {

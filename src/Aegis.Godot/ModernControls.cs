@@ -204,11 +204,27 @@ internal sealed partial class ActivityLogView : VBoxContainer
         foreach ((ActivityFilter filter, Button button) in _filters)
         {
             Color color = FilterColor(filter, palette);
+            Color activeText = palette.Background;
             button.AddThemeColorOverride("font_color", color);
             button.AddThemeColorOverride("font_hover_color", color);
-            button.AddThemeColorOverride("font_pressed_color", palette.Background);
+            button.AddThemeColorOverride("font_focus_color", color);
+            button.AddThemeColorOverride("font_pressed_color", activeText);
+            button.AddThemeColorOverride("font_hover_pressed_color", activeText);
+            button.AddThemeStyleboxOverride(
+                "normal",
+                UiThemeFactory.BorderBox(palette.Raised, color, scale, scale.Space1));
+            button.AddThemeStyleboxOverride(
+                "hover",
+                UiThemeFactory.BorderBox(
+                    UiThemeFactory.Mix(palette.Raised, color, 0.08f),
+                    color,
+                    scale,
+                    scale.Space1));
             button.AddThemeStyleboxOverride(
                 "pressed",
+                UiThemeFactory.BorderBox(color, color, scale, scale.Space1));
+            button.AddThemeStyleboxOverride(
+                "hover_pressed",
                 UiThemeFactory.BorderBox(color, color, scale, scale.Space1));
         }
         _log.AddThemeFontOverride("normal_font", _fonts.Body);
@@ -276,9 +292,14 @@ internal sealed partial class ActivityLogView : VBoxContainer
     };
 }
 
-internal sealed partial class ModernTaskScreen : MarginContainer
+internal sealed partial class ModernTaskScreen : Control
 {
     private readonly ClientFonts _fonts;
+    private readonly Control _workspace;
+    private readonly ColorRect _scrim;
+    private readonly PanelContainer _sheet;
+    private readonly MarginContainer _sheetMargin;
+    private readonly Label _eyebrow;
     private readonly Label _title;
     private readonly RichTextLabel _body;
     private readonly VBoxContainer _actions;
@@ -288,6 +309,7 @@ internal sealed partial class ModernTaskScreen : MarginContainer
     private UiScaleTokens _scale;
     private UiPalette _palette;
     private char? _selectedKey;
+    private bool _contextual;
 
     public event Action<char>? KeyRequested;
 
@@ -296,9 +318,34 @@ internal sealed partial class ModernTaskScreen : MarginContainer
         _fonts = fonts;
         _scale = scale;
         _palette = palette;
+        MouseFilter = MouseFilterEnum.Ignore;
 
-        var stack = new VBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
-        AddChild(stack);
+        _workspace = new Control { MouseFilter = MouseFilterEnum.Ignore };
+        _workspace.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        AddChild(_workspace);
+        _scrim = new ColorRect { MouseFilter = MouseFilterEnum.Stop };
+        _scrim.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        _workspace.AddChild(_scrim);
+        var center = new CenterContainer { MouseFilter = MouseFilterEnum.Ignore };
+        center.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        _workspace.AddChild(center);
+        _sheet = new PanelContainer
+        {
+            MouseFilter = MouseFilterEnum.Stop,
+            SizeFlagsHorizontal = SizeFlags.ShrinkCenter,
+            SizeFlagsVertical = SizeFlags.ShrinkCenter,
+        };
+        center.AddChild(_sheet);
+        _sheetMargin = new MarginContainer();
+        _sheet.AddChild(_sheetMargin);
+        var stack = new VBoxContainer
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+        };
+        _sheetMargin.AddChild(stack);
+        _eyebrow = new Label { Text = "WORLD EVENT" };
+        stack.AddChild(_eyebrow);
         _title = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
         stack.AddChild(_title);
 
@@ -362,12 +409,19 @@ internal sealed partial class ModernTaskScreen : MarginContainer
     {
         _scale = scale;
         _palette = palette;
-        AddThemeConstantOverride("margin_left", scale.Space3);
-        AddThemeConstantOverride("margin_right", scale.Space3);
-        AddThemeConstantOverride("margin_top", scale.Space3);
-        AddThemeConstantOverride("margin_bottom", scale.Space3);
+        Color scrim = palette.Background;
+        scrim.A = 0.58f;
+        _scrim.Color = scrim;
+        _sheet.AddThemeStyleboxOverride(
+            "panel",
+            UiThemeFactory.BorderBox(palette.Raised, palette.Accent, scale, 0));
+        _sheetMargin.AddThemeConstantOverride("margin_left", scale.Space3);
+        _sheetMargin.AddThemeConstantOverride("margin_right", scale.Space3);
+        _sheetMargin.AddThemeConstantOverride("margin_top", scale.Space3);
+        _sheetMargin.AddThemeConstantOverride("margin_bottom", scale.Space3);
         _layout.AddThemeConstantOverride("h_separation", scale.Space2);
         _layout.AddThemeConstantOverride("v_separation", scale.Space2);
+        UiThemeFactory.Mark(_eyebrow, "eyebrow", _fonts, scale, palette);
         UiThemeFactory.Mark(_title, "heading", _fonts, scale, palette);
         _selected.AddThemeColorOverride("font_color", palette.Muted);
     }
@@ -376,6 +430,26 @@ internal sealed partial class ModernTaskScreen : MarginContainer
     {
         bool split = viewportWidth >= 1400 && _scale.Scale < 1.5f;
         _layout.Columns = split ? 2 : 1;
+        ResponsiveClientLayout responsive = ResponsiveClientLayout.Resolve(
+            (int)MathF.Round(viewportWidth),
+            _scale.Scale);
+        bool docked = _contextual
+            && responsive.WorldRail == WorldRailPresentation.Docked;
+        float sidebarWidth = Math.Min(
+            Math.Max(0, Size.X - _scale.Space4 * 2),
+            Math.Max(330, 360 * _scale.Scale));
+        _workspace.OffsetRight = docked ? -sidebarWidth - _scale.Space2 : 0;
+        float availableWidth = Math.Max(
+            320,
+            Size.X + _workspace.OffsetRight - _scale.Space4 * 2);
+        float availableHeight = Math.Max(
+            320,
+            Size.Y - _scale.Space4 * 2);
+        float targetWidth = _contextual ? 1180 * _scale.Scale : availableWidth;
+        float targetHeight = _contextual ? 720 * _scale.Scale : availableHeight;
+        _sheet.CustomMinimumSize = new Vector2(
+            Math.Min(availableWidth, targetWidth),
+            Math.Min(availableHeight, targetHeight));
         foreach (Control child in _layout.GetChildren().OfType<Control>())
         {
             child.CustomMinimumSize = split
@@ -386,12 +460,24 @@ internal sealed partial class ModernTaskScreen : MarginContainer
 
     public void UpdateView(ClientInteractionContext context, bool becameVisible)
     {
+        _contextual = context.Surface == ClientSurface.Menu;
+        _scrim.Visible = _contextual;
+        _eyebrow.Text = _contextual
+            ? "WORLD EVENT"
+            : context.Surface == ClientSurface.Character
+                ? "CHARACTER"
+                : "PACK";
         _title.Text = context.Task?.Title.Length > 0
             ? context.Task.Title
             : context.Title.Length > 0
                 ? context.Title
                 : "Choose";
         _body.Text = context.Task?.Body ?? context.Detail;
+        _cancel.Text = context.Actions.Length == 0 ? "Continue  Esc" : "Cancel  Esc";
+        _cancel.Visible = !_contextual || context.Actions.Length == 0;
+        _selected.Text = context.Actions.Length == 0
+            ? "Continue when you are ready."
+            : "Choose an action.";
         RebuildActions(context.Actions, becameVisible);
     }
 
@@ -425,7 +511,9 @@ internal sealed partial class ModernTaskScreen : MarginContainer
         {
             var button = new Button
             {
-                Text = $"{action.Key}  {action.Label}",
+                Text = action.Detail.Length > 0
+                    ? $"{action.Key}  {action.Label}\n{action.Detail}"
+                    : $"{action.Key}  {action.Label}",
                 Disabled = !action.Enabled,
                 Alignment = HorizontalAlignment.Left,
                 AutowrapMode = TextServer.AutowrapMode.WordSmart,
@@ -433,8 +521,8 @@ internal sealed partial class ModernTaskScreen : MarginContainer
             };
             button.SetMeta("canonical_key", action.Key.ToString());
             button.SetMeta("action_label", action.Label);
+            button.SetMeta("action_detail", action.Detail);
             button.FocusEntered += () => Select(button);
-            button.MouseEntered += () => Select(button);
             char key = action.Key;
             button.Pressed += () => KeyRequested?.Invoke(key);
             _actions.AddChild(button);
@@ -460,7 +548,9 @@ internal sealed partial class ModernTaskScreen : MarginContainer
     private void Select(Button button)
     {
         _selectedKey = ButtonKey(button);
-        _selected.Text = button.GetMeta("action_label", "Choose an action.").AsString();
+        string label = button.GetMeta("action_label", "Choose an action.").AsString();
+        string detail = button.GetMeta("action_detail", "").AsString();
+        _selected.Text = detail.Length > 0 ? $"{label}  ·  {detail}" : label;
     }
 
     private static char? ButtonKey(Button button)

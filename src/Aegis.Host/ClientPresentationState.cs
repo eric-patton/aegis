@@ -22,6 +22,44 @@ public enum WorldDirectionalKey
     Right,
 }
 
+public enum ChoiceGridDirection
+{
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+public static class ChoiceGridNavigation
+{
+    public static int Neighbor(
+        int index,
+        int count,
+        int columns,
+        ChoiceGridDirection direction)
+    {
+        if (count <= 0)
+            return -1;
+
+        int normalizedColumns = Math.Max(1, columns);
+        int normalizedIndex = Math.Clamp(index, 0, count - 1);
+        int row = normalizedIndex / normalizedColumns;
+        int column = normalizedIndex % normalizedColumns;
+        return direction switch
+        {
+            ChoiceGridDirection.Up when row > 0 =>
+                Math.Min((row - 1) * normalizedColumns + column, count - 1),
+            ChoiceGridDirection.Down when (row + 1) * normalizedColumns < count =>
+                Math.Min((row + 1) * normalizedColumns + column, count - 1),
+            ChoiceGridDirection.Left when column > 0 => normalizedIndex - 1,
+            ChoiceGridDirection.Right
+                when column + 1 < normalizedColumns && normalizedIndex + 1 < count =>
+                normalizedIndex + 1,
+            _ => normalizedIndex,
+        };
+    }
+}
+
 public static class WorldInputChord
 {
     public static char Map(WorldDirectionalKey key, bool control, bool alt)
@@ -136,6 +174,41 @@ public static class MapZoom
     };
 
     public static int Percent(int index) => (int)MathF.Round(Factor(index) * 100);
+}
+
+public readonly record struct MapGridOrigin(int X, int Y);
+
+public static class MapViewport
+{
+    public static MapGridOrigin Place(
+        int viewportWidth,
+        int viewportHeight,
+        int columns,
+        int rows,
+        int cellSize,
+        int? focusColumn = null,
+        int? focusRow = null)
+    {
+        int width = Math.Max(0, viewportWidth);
+        int height = Math.Max(0, viewportHeight);
+        int gridWidth = Math.Max(1, columns) * Math.Max(1, cellSize);
+        int gridHeight = Math.Max(1, rows) * Math.Max(1, cellSize);
+        int centeredX = (width - gridWidth) / 2;
+        int centeredY = (height - gridHeight) / 2;
+
+        int originX = focusColumn is { } column && gridWidth > width
+            ? width / 2 - column * cellSize - cellSize / 2
+            : centeredX;
+        int originY = focusRow is { } row && gridHeight > height
+            ? height / 2 - row * cellSize - cellSize / 2
+            : centeredY;
+
+        if (gridWidth > width)
+            originX = Math.Clamp(originX, width - gridWidth, 0);
+        if (gridHeight > height)
+            originY = Math.Clamp(originY, height - gridHeight, 0);
+        return new MapGridOrigin(originX, originY);
+    }
 }
 
 public sealed class FollowTailState

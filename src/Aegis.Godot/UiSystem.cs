@@ -221,7 +221,7 @@ internal static class UiThemeFactory
         return box;
     }
 
-    private static StyleBoxFlat FocusBox(Color border, UiScaleTokens scale)
+    internal static StyleBoxFlat FocusBox(Color border, UiScaleTokens scale)
     {
         var box = new StyleBoxFlat { BgColor = Colors.Transparent, BorderColor = border };
         box.SetBorderWidthAll(Math.Max(2, (int)MathF.Round(2 * scale.Scale)));
@@ -238,13 +238,13 @@ internal static class UiThemeFactory
         return box;
     }
 
-    private static Color WithAlpha(Color color, float alpha)
+    internal static Color WithAlpha(Color color, float alpha)
     {
         color.A = alpha;
         return color;
     }
 
-    private static Color Mix(Color first, Color second, float amount) => new(
+    internal static Color Mix(Color first, Color second, float amount) => new(
         Mathf.Lerp(first.R, second.R, amount),
         Mathf.Lerp(first.G, second.G, amount),
         Mathf.Lerp(first.B, second.B, amount),

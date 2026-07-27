@@ -1,17 +1,17 @@
 # Aegis Godot client modernization
 
 Status: Approved under D-182, Phases 1 and 2 plus packaged-review remediation
-implemented and verified through D-195; Phase 3 is next
+implemented and verified through D-196; Phase 3 is next
 
 ## Implementation status
 
-Phases 1 and 2 plus the D-195 review remediation are complete. The persistent screen foundation, typed creation projection,
+Phases 1 and 2 plus the D-196 review remediation are complete. The persistent screen foundation, typed creation projection,
 Atkinson font system, five discrete UI scales, dark and light palettes, custom
 square-cell map control, native creation fields, complete descriptions, resize probes,
 responsive world shell, structured colored History, repaired conversation behavior,
 map-only zoom, searchable Help, and complete world input ownership are built and
 verified. The default world shell no longer carries the iron rose or permanent control
-text. The warning-free Release build, 55 focused Host tests, and all 1,040 tests pass.
+text. The warning-free Release build, 66 focused Host tests, and all 1,051 tests pass.
 
 The Phase 2 packaged review found creation spacing and focus defects, incomplete runtime
 theme refresh, a remaining legacy interaction surface, global rather than map-only
@@ -40,7 +40,12 @@ Chronicle Desk, with complete current-session History, shared Activity state,
   under `artifacts/d193-responsive-theme-parity-review-v1/`, including the Field Drawer
   operational defaults. D-195 implements the Phase 2 review remediation without
   changing Core behavior, save v100, generator 1, or canonical keys. Dedicated
-  Character, Inventory, and Equipment surfaces are next. The reference map-glyph
+  Character, Inventory, and Equipment surfaces are next. D-196 repairs the first
+  packaged-review findings: selection is click or grid-aware keyboard focus rather than
+  hover, creation cards and shaping expose a clear information hierarchy and projected
+  values, map zoom keeps the player visible, every Activity filter state has explicit
+  contrast, and D-186 structured scenes now use the approved split event sheet instead
+  of fixed-frame scraping. The reference map-glyph
   colors remain provisional pending the separate implementation-token review.
 
 ## Purpose
@@ -564,6 +569,14 @@ reachability are verified. The fresh Windows checkpoint is
 `0259F45839FC175AF6F5184D267F79EDEC428DE6A788774C2DB5FC9B7BBF8B4D`.
 Its clean extraction reports save v100 and generator 1, serves the structured frame,
 completes creation, exits cleanly, and reloads the created save exactly.
+
+D-196 follow-up remediation passes with click-only pointer selection, explicit
+two-column navigation, hierarchical creation cards, projected shaping values,
+player-following map zoom, complete Activity filter contrast, and direct structured
+scene projection into the approved D-186 split event sheet. Both themes are verified at
+1920 by 1040, with additional 1296 by 839 creation and shaping probes. The Release build
+is warning-free, 66 focused Host tests and all 1,051 tests pass, and no Core change
+triggers an engine sweep.
 
 ### Phase 3: character and inventory
 

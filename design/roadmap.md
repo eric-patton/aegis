@@ -57,11 +57,11 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   Implemented under D-174, but its terminal candidate is superseded by D-175. V1-10 is
   Implemented under D-177, and its clean candidate is built under D-178. The bounded
   D-181 Godot presentation spike is built and verified, D-182 approves the complete
-  modernization contract, and D-183 through D-195 lock and begin implementing the world, Character Creation,
+  modernization contract, and D-183 through D-196 lock and begin implementing the world, Character Creation,
   Conversation, reusable event-sheet, Character, Pack, Journal, Help, Settings, Campaign
   entry, boundary-state bases, focused tasks, and the complete responsive and theme
   parity contract. Phases 1 and 2 plus the packaged-review remediation are built and
-  verified under D-195. Phases 3 through 5, the replacement candidate, a fresh guided
+  verified under D-196. Phases 3 through 5, the replacement candidate, a fresh guided
   campaign, and explicit signoff remain
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
@@ -218,10 +218,15 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     floating launcher, and map-only context footer (D-195)
   - [ ] Define the canonical light and dark map-glyph palette on the D-183 geometry
   - [x] D-182 Phase 2 review: repair creation padding and step-9 text focus (D-195)
+  - [x] Packaged-review interaction repair: hover previews without selecting, click and
+    grid-aware keyboard selection, hierarchical creation cards, explicit shaping phases
+    and projected values, player-following map zoom, readable Activity filters, and the
+    structured D-186 event sheet (D-196)
   - [x] D-182 Phase 2 review: make runtime light/dark switching refresh every surface
     (D-195)
   - [x] D-182 Phase 2 review: remove the remaining legacy world-screen fallback and
-    keep world tasks inside the modern shell (D-195; D-186 semantic event depth remains)
+    keep world tasks inside the modern shell (D-195; D-196 implements D-186 structured
+    scene-event depth, complete Field Drawer variants remain)
   - [x] D-182 Phase 2 review: separate map zoom from text size and bind Ctrl+minus,
     Ctrl+plus, and Ctrl+0 (D-195)
   - [x] D-182 Phase 2 review: make compact Activity and expanded History one scrollable,
@@ -909,6 +914,15 @@ decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-27: **D-196 repairs the first D-195 packaged-review interaction defects.**
+  Hover no longer selects; click and grid-aware keyboard focus do. Creation cards
+  separate identity, description, and mechanics, while shaping explains the raise and
+  balance phases with current and projected values. Map zoom follows the player and
+  clamps at edges. Activity filter text is readable in every light-theme state. Structured
+  scenes now use the approved split D-186 sheet instead of scraped fixed-frame output.
+  Both themes pass background desktop probes. The warning-free Release build, 66 focused
+  Host tests, and all 1,051 tests pass. Core behavior did not move, so the engine sweep
+  did not trigger. The canonical map-glyph palette remains open.
 - 2026-07-26: **D-195 completes the Phase 2 packaged-review remediation.** The Godot
   client now carries the approved map workspace, fixed or drawer Activity sidebar,
   icon-led Health, Stamina, and Focus meters, bottom currencies, map-only footer and

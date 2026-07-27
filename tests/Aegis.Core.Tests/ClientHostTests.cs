@@ -64,16 +64,21 @@ public class ClientHostTests
             creation,
             Presenter.Render(creation, 120, 40));
         Assert.Equal(ClientSurface.CreationChoice, creationContext.Surface);
-        Assert.Equal("What paid for the rise in Might?", creationContext.Prompt);
+        Assert.Equal("Choose what balances the rise in Might.", creationContext.Prompt);
         Assert.Equal(3, creationContext.ProgressStep);
         Assert.Equal(10, creationContext.ProgressTotal);
         Assert.NotNull(creationContext.Creation);
         Assert.Equal(CreationStage.ShapePay, creationContext.Creation.Stage);
+        Assert.Equal("SHAPING  ·  BALANCE", creationContext.Creation.PhaseLabel);
+        Assert.Contains("different attribute", creationContext.Creation.Guidance);
         Assert.All(
             creationContext.Creation.Choices,
             choice => Assert.False(string.IsNullOrWhiteSpace(choice.Description)));
         Assert.Contains(creationContext.Actions, a => a.Key == '1' && !a.Enabled);
         Assert.Contains(creationContext.Actions, a => a.Key == '2' && a.Enabled);
+        Assert.Equal(
+            "5  →  4",
+            creationContext.Creation.Choices.Single(choice => choice.Key == '2').Projection);
 
         var talk = new Game(176);
         Npc npc = talk.World.Npcs.First();
@@ -177,6 +182,91 @@ public class ClientHostTests
         Assert.Equal(expectedY, layout.OriginY);
         Assert.Equal(columns * expectedCell, layout.Columns * layout.CellSize);
         Assert.Equal(rows * expectedCell, layout.Rows * layout.CellSize);
+    }
+
+    [Theory]
+    [InlineData(0, 6, 2, ChoiceGridDirection.Down, 2)]
+    [InlineData(2, 6, 2, ChoiceGridDirection.Up, 0)]
+    [InlineData(0, 6, 2, ChoiceGridDirection.Right, 1)]
+    [InlineData(1, 6, 2, ChoiceGridDirection.Left, 0)]
+    [InlineData(4, 5, 2, ChoiceGridDirection.Right, 4)]
+    [InlineData(3, 5, 2, ChoiceGridDirection.Down, 4)]
+    public void ChoiceGridNavigation_PreservesRowsAndColumns(
+        int index,
+        int count,
+        int columns,
+        ChoiceGridDirection direction,
+        int expected)
+    {
+        Assert.Equal(
+            expected,
+            ChoiceGridNavigation.Neighbor(index, count, columns, direction));
+    }
+
+    [Theory]
+    [InlineData(1000, 500, 80, 25, 10, 40, 12, 100, 125)]
+    [InlineData(500, 300, 80, 25, 10, 60, 20, -300, 25)]
+    [InlineData(500, 300, 80, 25, 10, 0, 0, 0, 25)]
+    [InlineData(500, 300, 80, 25, 10, 79, 24, -300, 25)]
+    public void MapViewport_CentersOrClampsAroundThePlayer(
+        int viewportWidth,
+        int viewportHeight,
+        int columns,
+        int rows,
+        int cellSize,
+        int playerColumn,
+        int playerRow,
+        int expectedX,
+        int expectedY)
+    {
+        MapGridOrigin origin = MapViewport.Place(
+            viewportWidth,
+            viewportHeight,
+            columns,
+            rows,
+            cellSize,
+            playerColumn,
+            playerRow);
+
+        Assert.Equal(new MapGridOrigin(expectedX, expectedY), origin);
+    }
+
+    [Fact]
+    public void SceneProjection_UsesStructuredProseChoicesAndVisibleChecks()
+    {
+        var game = new Game(176);
+        game.OpenScene(
+            new Scene(
+                "projection_test",
+                "A measured choice",
+                [
+                    new SceneNode
+                    {
+                        Id = "start",
+                        Lines = [("A concise event body.", LogTone.Info)],
+                        Choices =
+                        [
+                            new SceneChoice(
+                                "Commit",
+                                "",
+                                SceneCheck.OfAttr(Attr.Presence)),
+                            new SceneChoice("Leave", ""),
+                        ],
+                    },
+                ]),
+            []);
+
+        ClientInteractionContext context = ClientInteractionContext.From(
+            game,
+            Presenter.Render(game, 120, 40));
+
+        Assert.Equal(ClientSurface.Menu, context.Surface);
+        Assert.Equal("A measured choice", context.Title);
+        Assert.Equal("A concise event body.", context.Task!.Body);
+        Assert.Equal(["Commit", "Leave"], context.Actions.Select(action => action.Label));
+        Assert.Contains("Presence", context.Actions[0].Detail);
+        Assert.Equal("", context.Actions[1].Detail);
+        Assert.DoesNotContain("AEGIS", context.Task.Body);
     }
 
     [Theory]

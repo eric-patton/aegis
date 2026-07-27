@@ -13,7 +13,9 @@ internal sealed partial class CreationScreen : MarginContainer
     private readonly List<PanelContainer> _routeSteps = [];
     private readonly List<Label> _routeLabels = [];
     private readonly ProgressBar _progress;
+    private readonly Label _phase;
     private readonly Label _prompt;
+    private readonly Label _guidance;
     private readonly LineEdit _entry;
     private readonly RichTextLabel _review;
     private readonly ScrollContainer _choiceScroll;
@@ -27,12 +29,13 @@ internal sealed partial class CreationScreen : MarginContainer
     private readonly PanelContainer _detailPanel;
     private readonly Label _selectedDetail;
     private readonly HBoxContainer _footer;
-    private readonly Dictionary<char, Button> _choiceButtons = [];
+    private readonly Dictionary<char, CreationChoiceCard> _choiceCards = [];
     private CreationStage? _stage;
     private char? _selectedKey;
     private string _submittedText = "";
     private bool _suppressEntry;
     private int _currentStep = 1;
+    private float _viewportWidth = 1280;
     private UiScaleTokens _scale;
     private UiPalette _palette;
 
@@ -92,8 +95,16 @@ internal sealed partial class CreationScreen : MarginContainer
         };
         _stack.AddChild(_progress);
 
+        _phase = new Label { Visible = false };
+        _stack.AddChild(_phase);
         _prompt = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
         _stack.AddChild(_prompt);
+        _guidance = new Label
+        {
+            Visible = false,
+            AutowrapMode = TextServer.AutowrapMode.WordSmart,
+        };
+        _stack.AddChild(_guidance);
 
         _entry = new LineEdit
         {
@@ -185,15 +196,21 @@ internal sealed partial class CreationScreen : MarginContainer
             "panel",
             UiThemeFactory.BorderBox(palette.Panel, palette.Accent, scale, 0));
         UiThemeFactory.Mark(_eyebrow, "eyebrow", _fonts, scale, palette);
+        UiThemeFactory.Mark(_phase, "eyebrow", _fonts, scale, palette);
         UiThemeFactory.Mark(_prompt, "heading", _fonts, scale, palette);
+        UiThemeFactory.Mark(_guidance, "muted", _fonts, scale, palette);
         UiThemeFactory.Mark(_hint, "muted", _fonts, scale, palette);
         _selectedDetail.AddThemeColorOverride("font_color", palette.Text);
+        foreach (CreationChoiceCard card in _choiceCards.Values)
+            card.ApplyVisuals(scale, palette);
         RefreshRouteVisuals();
     }
 
     public void ApplyLayout(float viewportWidth)
     {
+        _viewportWidth = viewportWidth;
         _choices.Columns = viewportWidth >= 1280 && _scale.Scale < 1.5f ? 2 : 1;
+        RefreshChoiceCardLayout();
         bool expandedRoute = viewportWidth >= 1180 && _scale.Scale < 1.5f;
         _route.Visible = expandedRoute;
         _progress.Visible = !expandedRoute;
@@ -213,6 +230,10 @@ internal sealed partial class CreationScreen : MarginContainer
         _progress.Value = creation.Step;
         RefreshRouteVisuals();
         _prompt.Text = creation.Prompt;
+        _phase.Text = creation.PhaseLabel;
+        _phase.Visible = creation.PhaseLabel.Length > 0;
+        _guidance.Text = creation.Guidance;
+        _guidance.Visible = creation.Guidance.Length > 0;
         _back.Disabled = creation.Step == 1;
 
         bool textStage = creation.Stage is CreationStage.Face or CreationStage.Name;
@@ -257,13 +278,24 @@ internal sealed partial class CreationScreen : MarginContainer
             SubmitSelection();
             return true;
         }
+        ChoiceGridDirection? direction = key.Keycode switch
+        {
+            Key.Up => ChoiceGridDirection.Up,
+            Key.Down => ChoiceGridDirection.Down,
+            Key.Left => ChoiceGridDirection.Left,
+            Key.Right => ChoiceGridDirection.Right,
+            _ => null,
+        };
+        if (direction is { } gridDirection)
+            return MoveChoice(gridDirection);
         if (key.Unicode <= 0 || key.Unicode > char.MaxValue)
             return false;
         char value = (char)key.Unicode;
-        if (!_choiceButtons.TryGetValue(value, out Button? button) || button.Disabled)
+        if (!_choiceCards.TryGetValue(value, out CreationChoiceCard? card)
+            || card.Selection.Disabled)
             return false;
-        SelectChoice(button);
-        button.GrabFocus();
+        SelectChoice(card.Selection);
+        card.Selection.GrabFocus();
         return true;
     }
 
@@ -327,26 +359,14 @@ internal sealed partial class CreationScreen : MarginContainer
             _choices.RemoveChild(child);
             child.QueueFree();
         }
-        _choiceButtons.Clear();
+        _choiceCards.Clear();
         _choices.AddThemeConstantOverride("separation", _scale.Space1);
 
         var buttons = new List<Button>();
         foreach (CreationChoice choice in choices)
         {
-            string detail = choice.Detail.Length > 0 ? $"\n{choice.Detail}" : "";
-            string reason = !choice.Enabled && choice.DisabledReason.Length > 0
-                ? $"\nUnavailable: {choice.DisabledReason}"
-                : "";
-            var button = new Button
-            {
-                Text = $"{choice.Key}  {choice.Name}\n{choice.Description}{detail}{reason}",
-                Disabled = !choice.Enabled,
-                ToggleMode = true,
-                Alignment = HorizontalAlignment.Left,
-                AutowrapMode = TextServer.AutowrapMode.WordSmart,
-                TextOverrunBehavior = TextServer.OverrunBehavior.NoTrimming,
-                CustomMinimumSize = new Vector2(0, Math.Max(84, _scale.Space4 * 3)),
-            };
+            var card = new CreationChoiceCard(choice, _fonts, _scale, _palette);
+            Button button = card.Selection;
             char key = choice.Key;
             button.SetMeta("canonical_key", key.ToString());
             button.SetMeta(
@@ -358,33 +378,27 @@ internal sealed partial class CreationScreen : MarginContainer
                         : choice.Description);
             button.Pressed += () => SelectChoice(button);
             button.FocusEntered += () => SelectChoice(button);
-            button.MouseEntered += () => SelectChoice(button);
-            _choices.AddChild(button);
+            _choices.AddChild(card);
             buttons.Add(button);
-            _choiceButtons[key] = button;
+            _choiceCards[key] = card;
         }
 
-        if (buttons.Count > 1)
-        {
-            for (int index = 0; index < buttons.Count; index++)
-            {
-                buttons[index].FocusNeighborTop = buttons[(index - 1 + buttons.Count) % buttons.Count].GetPath();
-                buttons[index].FocusNeighborBottom = buttons[(index + 1) % buttons.Count].GetPath();
-            }
-        }
         Button? selected = _selectedKey is { } selectedKey
-            && _choiceButtons.TryGetValue(selectedKey, out Button? selectedButton)
-                ? selectedButton
+            && _choiceCards.TryGetValue(selectedKey, out CreationChoiceCard? selectedCard)
+                ? selectedCard.Selection
                 : null;
         if (selected is not null)
             SelectChoice(selected);
         else
             _selectedDetail.Text = "Select a choice to see what it changes.";
+        RefreshChoiceCardLayout();
         Callable.From(RefreshChoiceWidths).CallDeferred();
     }
 
     private Button? FirstEnabledChoice() =>
-        _choices.GetChildren().OfType<Button>().FirstOrDefault(button => !button.Disabled);
+        _choiceCards.Values
+            .Select(card => card.Selection)
+            .FirstOrDefault(button => !button.Disabled);
 
     private void SelectChoice(Button button)
     {
@@ -392,12 +406,51 @@ internal sealed partial class CreationScreen : MarginContainer
         if (key.Length != 1 || button.Disabled)
             return;
         _selectedKey = key[0];
-        foreach (Button choice in _choiceButtons.Values)
-            choice.SetPressedNoSignal(ReferenceEquals(choice, button));
+        foreach (CreationChoiceCard choice in _choiceCards.Values)
+            choice.Selection.SetPressedNoSignal(ReferenceEquals(choice.Selection, button));
         _selectedDetail.Text = button.GetMeta(
             "explanation",
             "Select a choice to see what it changes.").AsString();
         _continue.Disabled = false;
+    }
+
+    private bool MoveChoice(ChoiceGridDirection direction)
+    {
+        Button[] buttons = _choiceCards.Values
+            .Select(card => card.Selection)
+            .ToArray();
+        if (buttons.Length == 0)
+            return false;
+
+        Control? focusOwner = GetViewport().GuiGetFocusOwner();
+        int index = Array.IndexOf(buttons, focusOwner);
+        if (index < 0 && _selectedKey is { } selected)
+            index = Array.FindIndex(
+                buttons,
+                button => button.GetMeta("canonical_key", "").AsString() == selected.ToString());
+        if (index < 0)
+            index = Array.FindIndex(buttons, button => !button.Disabled);
+        if (index < 0)
+            return false;
+
+        int next = index;
+        while (true)
+        {
+            int candidate = ChoiceGridNavigation.Neighbor(
+                next,
+                buttons.Length,
+                _choices.Columns,
+                direction);
+            if (candidate == next)
+                return true;
+            next = candidate;
+            if (!buttons[next].Disabled)
+                break;
+        }
+
+        SelectChoice(buttons[next]);
+        buttons[next].GrabFocus();
+        return true;
     }
 
     private void SubmitSelection()
@@ -418,10 +471,23 @@ internal sealed partial class CreationScreen : MarginContainer
             320,
             (available - (_choices.Columns - 1) * _scale.Space2) / _choices.Columns);
         _choices.CustomMinimumSize = new Vector2(available, 0);
-        foreach (Button button in _choiceButtons.Values)
-            button.CustomMinimumSize = new Vector2(
+        bool stackCard = RefreshChoiceCardLayout();
+        foreach (CreationChoiceCard card in _choiceCards.Values)
+        {
+            card.SetStacked(stackCard);
+            card.CustomMinimumSize = new Vector2(
                 width,
-                Math.Max(96, _scale.Space4 * 3));
+                Math.Max(112, _scale.Space4 * 3));
+        }
+    }
+
+    private bool RefreshChoiceCardLayout()
+    {
+        bool stacked =
+            _viewportWidth / Math.Max(1, _choices.Columns) < 760 * _scale.Scale;
+        foreach (CreationChoiceCard card in _choiceCards.Values)
+            card.SetStacked(stacked);
+        return stacked;
     }
 
     private void RefreshRouteVisuals()
@@ -931,7 +997,6 @@ internal sealed partial class ConversationScreen : MarginContainer
             button.SetMeta("canonical_key", key.ToString());
             button.SetMeta("action_label", action.Label);
             button.FocusEntered += () => Select(button);
-            button.MouseEntered += () => Select(button);
             _actions.AddChild(button);
             buttons.Add(button);
         }

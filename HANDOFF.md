@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-26, D-195 Phase 2 remediation verified)
+# Aegis handoff (updated 2026-07-27, D-196 packaged-review remediation verified)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,10 +8,10 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-195 currently at its head), then the parking lot of open
+  newest-first block (D-196 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-195)". Bump it whenever a decision lands.
+  "(D-001 through D-196)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence is complete;
   V1-09 is built, and D-175 supersedes its terminal candidate.
 - `design/plan-1.0.md`: the canonical ten-card implementation queue. V1-01 through V1-08
@@ -56,6 +56,17 @@ The canonical design truth stays where it always was:
   `0259F45839FC175AF6F5184D267F79EDEC428DE6A788774C2DB5FC9B7BBF8B4D`.
   A clean extraction completes creation, reports save v100 and generator 1, serves the
   structured 120 by 40 frame, exits cleanly, and reloads the created save exactly.
+- D-196 repairs the first D-195 packaged-review findings. Pointer hover is visual only;
+  click and grid-aware keyboard focus select. Character Creation now uses hierarchical
+  cards, explicit raise and balance guidance, projected values, and unmistakable
+  unavailable reasons. Map zoom follows the player and clamps at map edges. Activity
+  filters carry explicit contrast in every state. Structured scenes project their own
+  prose, choices, and visible checks into the approved D-186 split event sheet instead
+  of scraping the legacy frame. Light and dark background probes cover click, hover,
+  exact Down navigation, shaping, active and inactive All filters, 200 percent map zoom,
+  and 1920 by 1040 event geometry. The Release build is warning-free, 66 focused Host
+  tests and all 1,051 tests pass. No Core behavior moved, so the engine sweep did not
+  trigger. The canonical map-glyph palette remains open.
 - Earlier completed implementation: D-182 Phases 1 and 2 pass. Phase 1 supplies the
   persistent Godot foundation and modern creation flow. Phase 2 adds the responsive
   world rail and drawer, newest-entry activity ribbon, colored full-session History,
@@ -207,7 +218,7 @@ The canonical design truth stays where it always was:
   comments in `src/Aegis.Core/SaveCodec.cs`).
 - Generator format: campaign-scoped generator 1, recorded separately in v100 saves.
 - Product version: 1.0.0.
-- Tests: 1,040 green (`dotnet test Aegis.slnx -c Release --no-build`).
+- Tests: 1,051 green (`dotnet test Aegis.slnx -c Release --no-build`).
 - D-181 Release build is zero-warning. Its 22 focused Host tests and all 1,007 tests
   pass. The exported Godot client reports save v100 and generator 1, accepts pilot and
   background pointer input, and exits cleanly. Two real save loads produced exact

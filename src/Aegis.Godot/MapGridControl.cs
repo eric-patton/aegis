@@ -64,8 +64,17 @@ internal sealed partial class MapGridControl : Control
             (int)MathF.Round(layout.CellSize * MapZoom.Factor(_zoomIndex)),
             1,
             64);
-        int originX = (int)MathF.Round((Size.X - columns * cellSize) / 2f);
-        int originY = (int)MathF.Round((Size.Y - rows * cellSize) / 2f);
+        (int? playerColumn, int? playerRow) = FindPlayer(columns, rows);
+        MapGridOrigin origin = MapViewport.Place(
+            (int)MathF.Floor(Size.X),
+            (int)MathF.Floor(Size.Y),
+            columns,
+            rows,
+            cellSize,
+            playerColumn,
+            playerRow);
+        int originX = origin.X;
+        int originY = origin.Y;
         int fontSize = Math.Max(1, cellSize - Math.Max(1, cellSize / 9));
         float fontHeight = _font.GetHeight(fontSize);
         float ascent = _font.GetAscent(fontSize);
@@ -97,6 +106,22 @@ internal sealed partial class MapGridControl : Control
                     _palette.MapColor(cell.Fg, _lightTheme));
             }
         }
+    }
+
+    private (int? Column, int? Row) FindPlayer(int columns, int rows)
+    {
+        if (_frame is null)
+            return (null, null);
+        for (int row = 0; row < rows; row++)
+        {
+            int sourceY = row + 1;
+            for (int column = 0; column < columns; column++)
+            {
+                if (_frame[column, sourceY].Ch == '@')
+                    return (column, row);
+            }
+        }
+        return (null, null);
     }
 
     private void OnMapInput(InputEvent @event)

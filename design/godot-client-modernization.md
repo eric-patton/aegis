@@ -1,7 +1,7 @@
 # Aegis Godot client modernization
 
-Status: Approved under D-182, Phases 1 through 3 implemented and verified through
-D-197; packaged Phase 3 review is next
+Status: Approved under D-182, Phases 1 through 3 implemented, verified, and packaged
+through D-197; Phase 3 player review is next
 
 ## Implementation status
 
@@ -595,8 +595,13 @@ structured 120 by 40 frame, exits without stderr, and reloads the created save e
 Checkpoint implemented and screenshot-verified under D-197. The D-187 Character Ledger
 and D-188 Outfitter's Bench now consume typed Host projections instead of the fixed
 terminal frame. The Release build is warning-free, 68 focused Host tests and all 1,053
-tests pass, and no Core change triggers an engine sweep. The packaged
-information-screen review is the next gate before Phase 4 proceeds.
+tests pass, and no Core change triggers an engine sweep. The packaged checkpoint is
+`artifacts/aegis-d197-phase3-information-screens-win-x64.zip`, built from `2dff334`,
+SHA-256
+`C4CFB2360922DCBB98F09434D2658F6F726E488F291A1DA740688F0614D9CCF0`.
+Its clean extraction completes creation, reports save v100 and generator 1, serves the
+structured 120 by 40 frame, exits cleanly, and reloads the exact snapshot. Player
+review is the next gate before Phase 4 proceeds.
 
 ### Phase 4: journal knowledge
 

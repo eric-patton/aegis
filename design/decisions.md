@@ -270,6 +270,14 @@ step-9 focus, the Character Ledger, the Outfitter's Bench, Help, resource meters
 the consolidated world shell. No Core file, canonical key, journal meaning, turn rule,
 RNG draw, save, or generator changed, so the engine sweep did not trigger.
 
+The packaged Phase 3 checkpoint is
+`artifacts/aegis-d197-phase3-information-screens-win-x64.zip`, built from `2dff334`,
+SHA-256
+`C4CFB2360922DCBB98F09434D2658F6F726E488F291A1DA740688F0614D9CCF0`.
+A clean extraction completes creation, reports save v100 and generator 1, serves the
+structured 120 by 40 frame, exits cleanly, and reloads the created save to the exact
+same snapshot. This is the information-screen player-review gate, not release signoff.
+
 Options set aside: continuing to scrape the fixed frame; treating focus as selection;
 using color alone for selected or under-requirement state; blocking gear the engine
 permits; duplicating place and weather in three regions; rebuilding the full Help

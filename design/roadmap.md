@@ -928,8 +928,13 @@ Newest first. Log when a feature is checked off, or when new work is added to th
   and resource-meter theme coverage are repaired, while repeated world context is
   consolidated into the icon-led map footer. The warning-free Release build, 68 focused
   Host tests, and all 1,053 tests pass. No Core behavior changed, so the engine sweep
-  did not trigger. The full D-190 Help Center, canonical map palette, and Phases 4 and 5
-  remain.
+  did not trigger. The packaged checkpoint is
+  `artifacts/aegis-d197-phase3-information-screens-win-x64.zip`, built from `2dff334`,
+  SHA-256
+  `C4CFB2360922DCBB98F09434D2658F6F726E488F291A1DA740688F0614D9CCF0`.
+  Its clean extraction completes creation, reports save v100 and generator 1, serves
+  the structured 120 by 40 frame, exits cleanly, and reloads the exact snapshot. The
+  full D-190 Help Center, canonical map palette, and Phases 4 and 5 remain.
 - 2026-07-27: **The D-196 checkpoint review opens the final creation hardening and
   confirms Phase 3 is next.** Selection persists but is not visually distinct enough,
   the outward card focus border clips at the choice viewport, light placeholders and

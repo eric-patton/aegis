@@ -81,7 +81,13 @@ The canonical design truth stays where it always was:
   fixed frame. Help and resource-meter theme coverage are repaired, and world context
   is consolidated into the map footer. The warning-free Release build, 68 focused Host
   tests, and all 1,053 tests pass. No Core behavior moved, so the engine sweep did not
-  trigger. The packaged information-screen checkpoint is the next review gate.
+  trigger. The packaged checkpoint is
+  `artifacts/aegis-d197-phase3-information-screens-win-x64.zip`, built from `2dff334`,
+  SHA-256
+  `C4CFB2360922DCBB98F09434D2658F6F726E488F291A1DA740688F0614D9CCF0`.
+  A clean extraction completes creation, reports save v100 and generator 1, serves the
+  structured 120 by 40 frame, exits cleanly, and reloads the created save exactly.
+  Player review of this checkpoint is the next gate.
 - Earlier completed implementation: D-182 Phases 1 and 2 pass. Phase 1 supplies the
   persistent Godot foundation and modern creation flow. Phase 2 adds the responsive
   world rail and drawer, newest-entry activity ribbon, colored full-session History,
@@ -258,6 +264,14 @@ The canonical design truth stays where it always was:
   A clean extraction reports save v100 and generator 1, creates its named save, then
   exits through pilot with code 0. This checkpoint is for world, conversation, logs,
   movement, and packaged player review, not release signoff.
+- D-197 Phase 3 checkpoint:
+  `artifacts/aegis-d197-phase3-information-screens-win-x64.zip`, built from `2dff334`,
+  SHA-256
+  `C4CFB2360922DCBB98F09434D2658F6F726E488F291A1DA740688F0614D9CCF0`.
+  A clean extraction completes creation, reports save v100 and generator 1, serves the
+  structured 120 by 40 frame, exits cleanly, and reloads the exact snapshot. This
+  checkpoint is for Character Creation, Character, Pack, Help, meter, and shell-polish
+  review, not release signoff.
 - The 2026-07-24 second packaged review found release-blocking font scaling, dark-only
   presentation, creation clutter, lost compass mode, incomplete wrapping, and
   conversation clipping. Automated gates remain green, but the candidate is not
@@ -443,7 +457,8 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Build and present the D-197 packaged information-screen checkpoint for player review.
+1. Present the D-197 packaged information-screen checkpoint for player review and
+   record the player's findings.
 2. Settle the open D-194 canonical map-glyph palette review when the player answers.
 3. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
    review gate.

@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-27, D-198 packaged-review input and rail repairs verified)
+# Aegis handoff (updated 2026-07-27, D-199 Character and Pack parity candidates verified)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,10 +8,10 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-198 currently at its head), then the parking lot of open
+  newest-first block (D-199 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-198)". Bump it whenever a decision lands.
+  "(D-001 through D-199)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence is complete;
   V1-09 is built, and D-175 supersedes its terminal candidate.
 - `design/plan-1.0.md`: the canonical ten-card implementation queue. V1-01 through V1-08
@@ -109,6 +109,19 @@ The canonical design truth stays where it always was:
   A clean extraction asserts focus on both creation text stages, reports save v100 and
   generator 1, serves the structured 120 by 40 frame, exits cleanly, and reloads the
   created save exactly.
+- D-199 implements the first two exact parity candidates. Character now follows the
+  approved D-187 Character Ledger with an Overview default, identity and resource
+  meters in the left section rail, a filtered and counted middle list, and a deep right
+  inspector. Pack now follows the approved D-188 Outfitter's Bench with three fixed
+  equipped slots, a sortable and filterable six-column gear list,
+  selected-versus-equipped inspection, explicit reduced-benefit warnings, and
+  secondary resources. Both use independent desktop panes and one-axis stacked
+  fallback at narrow widths or 150 percent. Creation also owns Enter before submission
+  and blocks duplicate same-frame dispatch, so choosing the raised attribute advances
+  to its cost without selecting the disabled same attribute. Release builds without
+  warnings, 72 focused Host tests and all 1,057 tests pass. Light, dark, high-scale,
+  and physical-Enter background probes pass. No Core behavior moved, so the engine
+  sweep did not trigger. Packaged player review remains the gate.
 - Earlier completed implementation: D-182 Phases 1 and 2 pass. Phase 1 supplies the
   persistent Godot foundation and modern creation flow. Phase 2 adds the responsive
   world rail and drawer, newest-entry activity ribbon, colored full-session History,
@@ -486,11 +499,11 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Present the D-198 package and have the player confirm the Face-to-Name focus, fixed
-   world rail, and bow direction prompt.
-2. Work the approved mockup implementation parity ledger systematically, beginning with
-   the Character Ledger and Outfitter's Bench, then Conversation, event surfaces, Help,
-   Journal, Settings, Campaign entry, system states, and Field Drawers.
+1. Package D-199 and have the player confirm the attribute-shaping Enter repair,
+   Character Ledger, and Outfitter's Bench.
+2. Continue the approved implementation parity ledger with Conversation Desk, then
+   event surfaces, Help, Journal, Settings, Campaign entry, system states, and Field
+   Drawers.
 3. Settle the open D-194 canonical map-glyph palette review when the player answers.
 4. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
    review gate.

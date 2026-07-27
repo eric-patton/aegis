@@ -1,19 +1,19 @@
 # Aegis Godot client modernization
 
-Status: Approved under D-182, Phases 1 through 3 implemented, verified, and packaged
-through D-197; Phase 3 player review is next
+Status: Approved under D-182, Phases 1 through 3 implemented and verified through
+D-199; Character and Pack parity review is next
 
 ## Implementation status
 
-Phases 1 through 3 plus the D-196 and D-197 review remediation are complete. The persistent screen foundation, typed creation projection,
+Phases 1 through 3 plus the D-196 through D-199 review remediation are complete. The persistent screen foundation, typed creation projection,
 Atkinson font system, five discrete UI scales, dark and light palettes, custom
 square-cell map control, native creation fields, complete descriptions, resize probes,
 responsive world shell, structured colored History, repaired conversation behavior,
 map-only zoom, searchable Help, and complete world input ownership are built and
 verified. The default world shell no longer carries the iron rose or permanent control
-text. Character and Pack now use typed semantic projections and dedicated D-187 and
-D-188 information screens. The warning-free Release build, 68 focused Host tests, and
-all 1,053 tests pass.
+text. Character and Pack now use typed semantic projections and faithful D-187 and
+D-188 parity candidates. The warning-free Release build, 72 focused Host tests, and
+all 1,057 tests pass.
 
 The Phase 2 packaged review found creation spacing and focus defects, incomplete runtime
 theme refresh, a remaining legacy interaction surface, global rather than map-only
@@ -592,16 +592,20 @@ structured 120 by 40 frame, exits without stderr, and reloads the created save e
 - [x] Preserve every canonical menu action (D-197).
 - [x] Add empty, under-met, pending-choice, and long-content states (D-197).
 
-Checkpoint implemented and screenshot-verified under D-197. The D-187 Character Ledger
-and D-188 Outfitter's Bench now consume typed Host projections instead of the fixed
-terminal frame. The Release build is warning-free, 68 focused Host tests and all 1,053
-tests pass, and no Core change triggers an engine sweep. The packaged checkpoint is
+Semantic screens landed under D-197, and D-199 brings their layout and interaction
+hierarchy to the approved images. Character now uses the identity and section rail,
+filtered record list, and deep inspector. Pack now uses the three-slot shelf,
+sortable and filterable gear table, selected-versus-equipped inspector, explicit
+warning, and secondary resource band. Light, dark, desktop, narrow, and 150 percent
+background probes pass. The Release build is warning-free, 72 focused Host tests and
+all 1,057 tests pass, and no Core change triggers an engine sweep. The earlier packaged
+checkpoint is
 `artifacts/aegis-d197-phase3-information-screens-win-x64.zip`, built from `2dff334`,
 SHA-256
 `C4CFB2360922DCBB98F09434D2658F6F726E488F291A1DA740688F0614D9CCF0`.
 Its clean extraction completes creation, reports save v100 and generator 1, serves the
-structured 120 by 40 frame, exits cleanly, and reloads the exact snapshot. Player
-review is the next gate before Phase 4 proceeds.
+structured 120 by 40 frame, exits cleanly, and reloads the exact snapshot. A new D-199
+parity package is the player gate before Conversation Desk proceeds.
 
 ### Phase 4: journal knowledge
 

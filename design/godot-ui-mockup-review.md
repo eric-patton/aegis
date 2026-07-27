@@ -101,14 +101,16 @@ not implemented.
    Structured scenes use the split sheet. Remaining world-event and action surfaces
    still need migration and parity review.
 5. [~] Character, canonical
-   `artifacts/d186-character-architectures-v1/02-character-ledger.png`. Typed Character
-   data and semantic sections exist, but the packaged result does not yet match the
-   approved section navigator, list, inspector hierarchy, density, or polish.
+   `artifacts/d186-character-architectures-v1/02-character-ledger.png`. D-199 implements
+   the approved left identity and section rail, filtered and counted record list, deep
+   inspector, independent desktop scrolling, light and dark themes, and stacked
+   high-scale fallback. Packaged player verdict remains.
 6. [~] Pack and equipment, canonical
-   `artifacts/d187-pack-equipment-architectures-v1/01-outfitters-bench.png`. Typed Pack
-   data, slots, gear, comparison facts, and warnings exist, but the packaged result does
-   not yet match the approved top shelf, gear list, inspector, resource band, density, or
-   polish.
+   `artifacts/d187-pack-equipment-architectures-v1/01-outfitters-bench.png`. D-199
+   implements the approved three-slot shelf, sortable and filterable six-column gear
+   list, selected-versus-equipped inspector, explicit reduced-benefit warning,
+   secondary resources, light and dark themes, and stacked high-scale fallback.
+   Packaged player verdict remains.
 7. [ ] Journal, canonical
    `artifacts/d188-journal-architectures-v1/01-chronicle-desk.png`. Full-session History
    exists as an overlay. The complete History, People, Bestiary, and Threads destination
@@ -133,9 +135,8 @@ not implemented.
     above is implemented and reviewed.
 
 This ledger is the implementation source of truth for the approved visual contract.
-Design approval does not imply implementation completion. D-197's typed Character and
-Pack projections remain valid foundations, but their packaged player review reopens
-visible parity.
+Design approval does not imply implementation completion. D-199 supplies the Character
+and Pack parity candidates, but their rows remain partial until packaged player review.
 
 The canonical PNGs named above and the four D-193 parity boards are intentionally
 versioned at their existing paths even though `artifacts/` is otherwise ignored. The

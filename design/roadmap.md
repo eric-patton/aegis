@@ -61,8 +61,9 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   world, Character Creation, Conversation, reusable event sheet, Character, Pack,
   Journal, Help, Settings, Campaign entry, boundary states, focused tasks, and complete
   responsive and theme parity. D-195 through D-197 implement the foundation through
-  Phase 3, but the D-197 packaged review reopens visible parity for the approved
-  destinations and exposes new focus, rail-layout, and direction-prompt input repairs.
+  Phase 3. D-198 repairs the focus, rail-layout, and direction-prompt regressions, and
+  D-199 implements the first two exact parity candidates, Character Ledger and
+  Outfitter's Bench.
   The implementation parity ledger in `design/godot-ui-mockup-review.md`, Phases 4 and 5,
   the replacement candidate, a fresh guided campaign, and explicit signoff remain
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
@@ -253,10 +254,12 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     - [~] Conversation Desk: structured implementation exists; direct parity review
       remains
     - [~] Centered Field Sheet: structured scenes exist; remaining event surfaces remain
-    - [~] Character Ledger: semantic implementation exists; approved visual hierarchy
-      and polish remain
-    - [~] Outfitter's Bench: semantic implementation exists; approved visual hierarchy
-      and polish remain
+    - [~] Character Ledger: approved hierarchy, independent panes, responsive stack,
+      and both themes are implemented and background-verified under D-199; packaged
+      player verdict remains
+    - [~] Outfitter's Bench: approved shelf, gear table, inspector, resources,
+      responsive stack, and both themes are implemented and background-verified under
+      D-199; packaged player verdict remains
     - [ ] Chronicle Desk Journal destination
     - [~] Help Center: searchable foundation exists; approved destination depth remains
     - [ ] Live Preview Workshop Settings destination
@@ -942,6 +945,19 @@ decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-27: **D-199 implements the first two exact screen-parity candidates.**
+  Character now opens on the approved Character Ledger Overview with identity and
+  meters in the left rail, a filtered and counted record list in the middle, and a
+  deep inspector on the right. Pack now uses the approved Outfitter's Bench with three
+  fixed slots, a sortable and filterable six-column gear list, selected-versus-equipped
+  inspection, explicit reduced-benefit warnings, and secondary resources. Both retain
+  independent desktop panes and one-axis narrow or 150 percent fallbacks in light and
+  dark themes. Creation also owns Enter before submission and blocks duplicate
+  same-frame dispatch, so selecting the raised attribute advances cleanly to its cost
+  instead of immediately trying the disabled same attribute. Release builds without
+  warnings, 72 focused Host tests and all 1,057 tests pass, and background desktop,
+  high-scale, and physical-Enter probes pass. No Core behavior moved, so the engine
+  sweep did not trigger. Character and Pack remain `[~]` until packaged player review.
 - 2026-07-27: **D-198 restores input ownership and separates approved design from
   implementation parity.** Creation text Enter now routes before Godot focus navigation
   and holds focus through the Face-to-Name transition. The D-183 rail removes its outer

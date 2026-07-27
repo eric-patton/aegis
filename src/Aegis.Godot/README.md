@@ -4,7 +4,7 @@ This project is the approved D-182 replacement presentation layer for Aegis. The
 deterministic engine, save format, command language, and verification tools remain in
 their existing projects.
 
-D-182 Phases 1 through 3 and their D-196 and D-197 review remediation are implemented. Creation, the
+D-182 Phases 1 through 3 and their D-196 through D-199 review remediation are implemented. Creation, the
 map-dominant responsive world, shared filtered Activity and History, Conversation, and
 searchable Help use persistent native Godot controls. Character uses the D-187
 Character Ledger and Inventory and Equipment use the D-188 Outfitter's Bench, both fed
@@ -13,7 +13,9 @@ remain in later approved phases, so this is a review checkpoint rather than the 
 release candidate.
 
 D-198 repairs creation focus, fixed world-rail sizing, and direction-prompt arrow
-routing. The approved mockup architecture is canonical, while
+routing. D-199 prevents duplicate attribute-shaping submission and brings Character
+and Pack to the approved three-region Ledger and shelf-plus-table Outfitter
+architectures. The approved mockup architecture is canonical, while
 `design/godot-ui-mockup-review.md` separately tracks which screens still need visible
 parity work.
 

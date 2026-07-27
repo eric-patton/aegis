@@ -467,7 +467,12 @@ public sealed partial class Main : Control, IFrameSink
             SizeFlagsVertical = SizeFlags.ExpandFill,
         };
         _shell.AddChild(_surfacePanel);
-        _screenHost = new Control();
+        _screenHost = new Control
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+        };
+        _screenHost.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         _surfacePanel.AddChild(_screenHost);
 
         _creation = new CreationScreen(_fonts, _scale, _palette);

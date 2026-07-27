@@ -35,6 +35,7 @@ internal sealed partial class CreationScreen : MarginContainer
     private char? _selectedKey;
     private string _submittedText = "";
     private bool _suppressEntry;
+    private bool _submissionLocked;
     private int _entryFocusFramesRemaining;
     private int _currentStep = 1;
     private float _viewportWidth = 1280;
@@ -300,6 +301,7 @@ internal sealed partial class CreationScreen : MarginContainer
             return false;
         if (key.Keycode is Key.Enter or Key.KpEnter)
         {
+            GetViewport().SetInputAsHandled();
             SubmitSelection();
             return true;
         }
@@ -479,6 +481,11 @@ internal sealed partial class CreationScreen : MarginContainer
 
     private void SubmitSelection()
     {
+        if (_submissionLocked)
+            return;
+
+        _submissionLocked = true;
+        Callable.From(() => _submissionLocked = false).CallDeferred();
         if (_stage == CreationStage.Review || _stage is CreationStage.Face or CreationStage.Name)
         {
             KeyRequested?.Invoke('.');

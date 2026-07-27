@@ -27,8 +27,12 @@ internal sealed partial class CharacterLedgerScreen : MarginContainer
     private readonly PanelContainer _sectionPanel;
     private readonly VBoxContainer _sections;
     private readonly PanelContainer _listPanel;
+    private readonly Label _listTitle;
+    private readonly Label _listCount;
+    private readonly LineEdit _filter;
     private readonly VBoxContainer _entries;
     private readonly PanelContainer _inspectorPanel;
+    private readonly ScrollContainer _inspectorScroll;
     private readonly VBoxContainer _inspector;
     private readonly Label _inspectorKicker;
     private readonly Label _inspectorTitle;
@@ -43,11 +47,13 @@ internal sealed partial class CharacterLedgerScreen : MarginContainer
     private CharacterPresentation? _presentation;
     private int _selectedSection;
     private int _selectedEntry;
+    private string _filterText = "";
     private UiScaleTokens _scale;
     private UiPalette _palette;
 
     private static readonly string[] SectionNames =
     [
+        "Overview",
         "Attributes",
         "Skills",
         "Knacks",
@@ -71,29 +77,6 @@ internal sealed partial class CharacterLedgerScreen : MarginContainer
         _stack = new VBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
         _panel.AddChild(WorldScreen.Wrap(_stack));
 
-        var heading = new HBoxContainer();
-        _stack.AddChild(heading);
-        var identityStack = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        heading.AddChild(identityStack);
-        var eyebrow = new Label { Text = "CHARACTER LEDGER" };
-        identityStack.AddChild(eyebrow);
-        _name = new Label();
-        identityStack.AddChild(_name);
-        _identity = new Label();
-        identityStack.AddChild(_identity);
-        _close = new Button { Text = "Return  Esc" };
-        _close.Pressed += () => KeyRequested?.Invoke('q');
-        heading.AddChild(_close);
-
-        var meters = new HBoxContainer();
-        _stack.AddChild(meters);
-        _health = new ResourceMeter("♥") { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        _stamina = new ResourceMeter("◆") { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        _focus = new ResourceMeter("◉") { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        meters.AddChild(_health);
-        meters.AddChild(_stamina);
-        meters.AddChild(_focus);
-
         _bodyScroll = new ScrollContainer
         {
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
@@ -113,7 +96,22 @@ internal sealed partial class CharacterLedgerScreen : MarginContainer
         _body.AddChild(_sectionPanel);
         _sections = new VBoxContainer();
         _sectionPanel.AddChild(WorldScreen.Wrap(_sections));
-        var sectionEyebrow = new Label { Text = "SECTIONS" };
+        var identityStack = new VBoxContainer();
+        _sections.AddChild(identityStack);
+        var eyebrow = new Label { Text = "CHARACTER" };
+        identityStack.AddChild(eyebrow);
+        _name = new Label();
+        identityStack.AddChild(_name);
+        _identity = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        identityStack.AddChild(_identity);
+        _health = new ResourceMeter("♥");
+        identityStack.AddChild(_health);
+        _stamina = new ResourceMeter("◆");
+        identityStack.AddChild(_stamina);
+        _focus = new ResourceMeter("◉");
+        identityStack.AddChild(_focus);
+        _sections.AddChild(new HSeparator());
+        var sectionEyebrow = new Label { Text = "RECORD" };
         _sections.AddChild(sectionEyebrow);
         for (int index = 0; index < SectionNames.Length; index++)
         {
@@ -129,13 +127,34 @@ internal sealed partial class CharacterLedgerScreen : MarginContainer
             _sections.AddChild(button);
             _sectionButtons.Add(button);
         }
+        var sectionSpacer = new Control { SizeFlagsVertical = SizeFlags.ExpandFill };
+        _sections.AddChild(sectionSpacer);
+        _close = new Button { Text = "Return to world  Esc" };
+        _close.Pressed += () => KeyRequested?.Invoke('q');
+        _sections.AddChild(_close);
 
         _listPanel = new PanelContainer { CustomMinimumSize = new Vector2(430, 0) };
         _body.AddChild(_listPanel);
         var listStack = new VBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
         _listPanel.AddChild(WorldScreen.Wrap(listStack));
-        var listEyebrow = new Label { Text = "COMPLETE LIST" };
-        listStack.AddChild(listEyebrow);
+        var listHeader = new HBoxContainer();
+        listStack.AddChild(listHeader);
+        _listTitle = new Label { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        listHeader.AddChild(_listTitle);
+        _listCount = new Label();
+        listHeader.AddChild(_listCount);
+        _filter = new LineEdit
+        {
+            PlaceholderText = "Filter this section",
+            ClearButtonEnabled = true,
+        };
+        _filter.TextChanged += value =>
+        {
+            _filterText = value.Trim();
+            _selectedEntry = 0;
+            RebuildEntries();
+        };
+        listStack.AddChild(_filter);
         var listScroll = new ScrollContainer
         {
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
@@ -152,8 +171,17 @@ internal sealed partial class CharacterLedgerScreen : MarginContainer
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
         };
         _body.AddChild(_inspectorPanel);
-        _inspector = new VBoxContainer();
-        _inspectorPanel.AddChild(WorldScreen.Wrap(_inspector));
+        _inspectorScroll = new ScrollContainer
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+        };
+        _inspectorPanel.AddChild(_inspectorScroll);
+        _inspector = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        var inspectorMargin = WorldScreen.Wrap(_inspector);
+        inspectorMargin.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        _inspectorScroll.AddChild(inspectorMargin);
         _inspectorKicker = new Label();
         _inspector.AddChild(_inspectorKicker);
         _inspectorTitle = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
@@ -176,7 +204,8 @@ internal sealed partial class CharacterLedgerScreen : MarginContainer
 
         UiThemeFactory.Mark(eyebrow, "eyebrow", fonts, scale, palette);
         UiThemeFactory.Mark(sectionEyebrow, "eyebrow", fonts, scale, palette);
-        UiThemeFactory.Mark(listEyebrow, "eyebrow", fonts, scale, palette);
+        UiThemeFactory.Mark(_listTitle, "eyebrow", fonts, scale, palette);
+        UiThemeFactory.Mark(_listCount, "muted", fonts, scale, palette);
         ApplyVisuals(scale, palette);
     }
 
@@ -223,6 +252,10 @@ internal sealed partial class CharacterLedgerScreen : MarginContainer
             UiThemeFactory.BorderBox(palette.Raised, palette.Accent, scale, 0));
         UiThemeFactory.Mark(_name, "heading", _fonts, scale, palette);
         UiThemeFactory.Mark(_identity, "muted", _fonts, scale, palette);
+        UiThemeFactory.Mark(_listTitle, "eyebrow", _fonts, scale, palette);
+        UiThemeFactory.Mark(_listCount, "muted", _fonts, scale, palette);
+        _filter.AddThemeFontOverride("font", _fonts.Body);
+        _filter.AddThemeFontSizeOverride("font_size", scale.Control);
         UiThemeFactory.Mark(_inspectorKicker, "eyebrow", _fonts, scale, palette);
         UiThemeFactory.Mark(_inspectorTitle, "heading", _fonts, scale, palette);
         UiThemeFactory.Mark(_inspectorSummary, "muted", _fonts, scale, palette);
@@ -237,8 +270,11 @@ internal sealed partial class CharacterLedgerScreen : MarginContainer
     public void ApplyLayout(float viewportWidth)
     {
         bool stacked = viewportWidth < 1180 || _scale.Scale >= 1.5f;
+        _bodyScroll.VerticalScrollMode = stacked
+            ? ScrollContainer.ScrollMode.Auto
+            : ScrollContainer.ScrollMode.Disabled;
         _body.Columns = stacked ? 1 : 3;
-        _sectionPanel.CustomMinimumSize = new Vector2(stacked ? 0 : 220, stacked ? 220 : 0);
+        _sectionPanel.CustomMinimumSize = new Vector2(stacked ? 0 : 250, stacked ? 400 : 0);
         _listPanel.CustomMinimumSize = new Vector2(stacked ? 0 : 430, stacked ? 360 : 0);
         _inspectorPanel.CustomMinimumSize = new Vector2(stacked ? 0 : 360, stacked ? 320 : 0);
         _body.CustomMinimumSize = new Vector2(
@@ -260,7 +296,10 @@ internal sealed partial class CharacterLedgerScreen : MarginContainer
     {
         _selectedSection = index;
         _selectedEntry = 0;
+        if (_filter.Text.Length > 0)
+            _filter.Text = "";
         RebuildEntries();
+        _inspectorScroll.ScrollVertical = 0;
         if (_entryButtons.Count > 0)
             _entryButtons[0].GrabFocus();
     }
@@ -273,7 +312,12 @@ internal sealed partial class CharacterLedgerScreen : MarginContainer
             child.QueueFree();
         }
         _entryButtons.Clear();
-        foreach ((LedgerEntry entry, int index) in EntriesForSection().Select((value, index) => (value, index)))
+        LedgerEntry[] entries = FilteredEntries();
+        _listTitle.Text = _selectedSection == 0
+            ? "CHARACTER OVERVIEW"
+            : SectionNames[_selectedSection].ToUpperInvariant();
+        _listCount.Text = $"{entries.Length} {(entries.Length == 1 ? "entry" : "entries")}";
+        foreach ((LedgerEntry entry, int index) in entries.Select((value, index) => (value, index)))
         {
             int selected = index;
             var button = new Button
@@ -303,6 +347,7 @@ internal sealed partial class CharacterLedgerScreen : MarginContainer
             _selectedEntry = Math.Clamp(_selectedEntry, 0, _entryButtons.Count - 1);
             SelectEntry(_selectedEntry);
         }
+        RefreshSectionLabels();
         RefreshButtonVisuals();
     }
 
@@ -312,14 +357,47 @@ internal sealed partial class CharacterLedgerScreen : MarginContainer
             return [];
         return _selectedSection switch
         {
-            0 => _presentation.Attributes
+            0 =>
+            [
+                new LedgerEntry(
+                    "Identity",
+                    "OVERVIEW",
+                    _presentation.Identity.Length > 0 ? _presentation.Identity : "No history recorded",
+                    "The character's chosen origin and prior calling."),
+                new LedgerEntry(
+                    "Attributes",
+                    "OVERVIEW",
+                    $"{_presentation.Attributes.Length} attributes",
+                    "The seven attributes describe lasting strengths and tradeoffs."),
+                new LedgerEntry(
+                    "Skills",
+                    "OVERVIEW",
+                    $"{_presentation.Skills.Length} skills",
+                    "Skills grow through meaningful use. Open Skills to inspect level and progress."),
+                new LedgerEntry(
+                    "Knacks and lessons",
+                    "OVERVIEW",
+                    $"{_presentation.Knacks.Length} knacks, {_presentation.Lessons.Length} lessons",
+                    "Knacks record chosen ways of practice. Lessons record knowledge kept."),
+                new LedgerEntry(
+                    "Burden and scars",
+                    "OVERVIEW",
+                    _presentation.Burden,
+                    $"Burden: {_presentation.Burden}\nScars: {_presentation.Scars}"),
+                new LedgerEntry(
+                    "Standing",
+                    "OVERVIEW",
+                    _presentation.Standing,
+                    "Standing reflects the legend this character has accumulated."),
+            ],
+            1 => _presentation.Attributes
                 .Select(item => new LedgerEntry(
                     item.Name,
                     "ATTRIBUTE",
                     $"Current value {item.Value}",
                     item.Description))
                 .ToArray(),
-            1 => _presentation.Skills
+            2 => _presentation.Skills
                 .Select(item => new LedgerEntry(
                     item.Name,
                     $"SKILL  LEVEL {item.Level}",
@@ -328,18 +406,18 @@ internal sealed partial class CharacterLedgerScreen : MarginContainer
                     item.Uses,
                     item.NextLevelUses))
                 .ToArray(),
-            2 => _presentation.Knacks
+            3 => _presentation.Knacks
                 .Select(item => new LedgerEntry(item.Name, "KNACK", item.Detail, "Kept for good."))
                 .ToArray(),
-            3 => _presentation.Lessons
+            4 => _presentation.Lessons
                 .Select(item => new LedgerEntry(item.Name, "LESSON", item.Detail, "Learned knowledge travels with the character."))
                 .ToArray(),
-            4 =>
+            5 =>
             [
                 new LedgerEntry("Burden", "CHARACTER", _presentation.Burden, "A lasting part of this character."),
                 new LedgerEntry("Scars", "CHARACTER", _presentation.Scars, "Marks carried by the character."),
             ],
-            5 =>
+            6 =>
             [
                 new LedgerEntry("Standing", "LEGEND", _presentation.Standing, "Standing grows from accumulated legend."),
             ],
@@ -361,7 +439,7 @@ internal sealed partial class CharacterLedgerScreen : MarginContainer
 
     private void SelectEntry(int index)
     {
-        LedgerEntry[] entries = EntriesForSection().ToArray();
+        LedgerEntry[] entries = FilteredEntries();
         if (index < 0 || index >= entries.Length)
             return;
         _selectedEntry = index;
@@ -382,6 +460,45 @@ internal sealed partial class CharacterLedgerScreen : MarginContainer
         _inspectorAction.SetMeta("canonical_key", entry.ActionKey?.ToString() ?? "");
         RefreshButtonVisuals();
     }
+
+    private LedgerEntry[] FilteredEntries()
+    {
+        IEnumerable<LedgerEntry> entries = EntriesForSection();
+        if (_filterText.Length > 0)
+        {
+            entries = entries.Where(entry =>
+                entry.Title.Contains(_filterText, StringComparison.OrdinalIgnoreCase)
+                || entry.Summary.Contains(_filterText, StringComparison.OrdinalIgnoreCase)
+                || entry.Detail.Contains(_filterText, StringComparison.OrdinalIgnoreCase));
+        }
+        return entries.ToArray();
+    }
+
+    private void RefreshSectionLabels()
+    {
+        for (int index = 0; index < _sectionButtons.Count; index++)
+        {
+            int count = SectionCount(index);
+            _sectionButtons[index].Text = count > 0
+                ? $"{SectionNames[index]}  {count}"
+                : SectionNames[index];
+        }
+    }
+
+    private int SectionCount(int section) =>
+        _presentation is null
+            ? 0
+            : section switch
+            {
+                0 => 0,
+                1 => _presentation.Attributes.Length,
+                2 => _presentation.Skills.Length,
+                3 => _presentation.Knacks.Length,
+                4 => _presentation.Lessons.Length,
+                5 => 0,
+                6 => 0,
+                _ => _presentation.PendingKnacks.Length,
+            };
 
     private void ActivateInspector()
     {
@@ -431,17 +548,97 @@ internal sealed partial class CharacterLedgerScreen : MarginContainer
     }
 }
 
+internal sealed partial class GearRow : Button
+{
+    private static readonly float[] ColumnWidths = [190, 76, 118, 178, 92, 136];
+    private readonly Label[] _cells;
+    private readonly bool _warning;
+
+    public GearRow(GearPresentation gear, string state)
+    {
+        Text = "";
+        ToggleMode = true;
+        SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        CustomMinimumSize = new Vector2(0, 62);
+        _warning = !gear.MeetsRequirement;
+
+        var margin = new MarginContainer { MouseFilter = MouseFilterEnum.Ignore };
+        margin.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
+        AddChild(margin);
+        var grid = new GridContainer
+        {
+            Columns = 6,
+            MouseFilter = MouseFilterEnum.Ignore,
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+        };
+        margin.AddChild(grid);
+        string[] values =
+        [
+            $"{gear.Key}  {gear.Name}",
+            gear.Slot,
+            gear.Benefit,
+            gear.Requirement,
+            $"{gear.MaximumWear - gear.Wear}/{gear.MaximumWear}",
+            state,
+        ];
+        _cells = values.Select((value, index) =>
+        {
+            var label = new Label
+            {
+                Text = value,
+                CustomMinimumSize = new Vector2(ColumnWidths[index], 0),
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+                VerticalAlignment = VerticalAlignment.Center,
+                MouseFilter = MouseFilterEnum.Ignore,
+            };
+            grid.AddChild(label);
+            return label;
+        }).ToArray();
+    }
+
+    public void ApplyRowVisuals(
+        ClientFonts fonts,
+        UiScaleTokens scale,
+        UiPalette palette,
+        bool selected)
+    {
+        CustomMinimumSize = new Vector2(0, Math.Max(62, 62 * scale.Scale));
+        foreach ((Label cell, int index) in _cells.Select((value, index) => (value, index)))
+        {
+            cell.AddThemeFontOverride(
+                "font",
+                index is 0 or 5 ? fonts.BodySemibold : fonts.Body);
+            cell.AddThemeFontSizeOverride("font_size", scale.Control);
+            cell.AddThemeColorOverride(
+                "font_color",
+                _warning && (index == 3 || index == 5)
+                    ? palette.Danger
+                    : selected && index == 0
+                        ? palette.Accent
+                        : palette.Text);
+            cell.CustomMinimumSize = new Vector2(ColumnWidths[index], 0);
+        }
+    }
+}
+
 internal sealed partial class PackScreen : MarginContainer
 {
     private readonly ClientFonts _fonts;
     private readonly PanelContainer _panel;
+    private readonly ScrollContainer _rootScroll;
     private readonly VBoxContainer _stack;
     private readonly GridContainer _shelf;
     private readonly GridContainer _body;
     private readonly PanelContainer _listPanel;
     private readonly VBoxContainer _gearList;
+    private readonly Dictionary<Button, int> _gearIndices = [];
+    private readonly List<int> _visibleGearIndices = [];
+    private readonly Dictionary<string, Button> _filterButtons = [];
+    private readonly OptionButton _sort;
     private readonly PanelContainer _inspectorPanel;
+    private readonly ScrollContainer _inspectorScroll;
     private readonly Label _inspectorKicker;
+    private readonly Label _equippedItem;
     private readonly Label _inspectorTitle;
     private readonly Label _benefit;
     private readonly Label _requirement;
@@ -455,6 +652,8 @@ internal sealed partial class PackScreen : MarginContainer
     private readonly List<Button> _gearButtons = [];
     private PackPresentation? _presentation;
     private int _selectedGear;
+    private string _gearFilter = "All";
+    private int _sortMode;
     private UiScaleTokens _scale;
     private UiPalette _palette;
 
@@ -469,31 +668,30 @@ internal sealed partial class PackScreen : MarginContainer
         _panel.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         AddChild(_panel);
         _stack = new VBoxContainer { SizeFlagsVertical = SizeFlags.ExpandFill };
-        var rootScroll = new ScrollContainer
+        _rootScroll = new ScrollContainer
         {
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
             SizeFlagsVertical = SizeFlags.ExpandFill,
             HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            FollowFocus = false,
         };
-        _panel.AddChild(rootScroll);
+        _panel.AddChild(_rootScroll);
         var rootMargin = WorldScreen.Wrap(_stack);
         rootMargin.SizeFlagsHorizontal = SizeFlags.ExpandFill;
-        rootScroll.AddChild(rootMargin);
+        rootMargin.SizeFlagsVertical = SizeFlags.ExpandFill;
+        _rootScroll.AddChild(rootMargin);
 
-        var header = new HBoxContainer();
-        _stack.AddChild(header);
-        var titleStack = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
-        header.AddChild(titleStack);
-        var eyebrow = new Label { Text = "OUTFITTER'S BENCH" };
-        titleStack.AddChild(eyebrow);
-        var title = new Label { Text = "Inventory and equipment" };
-        titleStack.AddChild(title);
-        var subtitle = new Label { Text = "Compare what you carry with what is serving now." };
-        titleStack.AddChild(subtitle);
-        var close = new Button { Text = "Return  Esc" };
+        var shelfHeader = new HBoxContainer();
+        _stack.AddChild(shelfHeader);
+        var eyebrow = new Label
+        {
+            Text = "EQUIPPED",
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+        };
+        shelfHeader.AddChild(eyebrow);
+        var close = new Button { Text = "Return to world  Esc" };
         close.Pressed += () => KeyRequested?.Invoke('q');
-        header.AddChild(close);
-
+        shelfHeader.AddChild(close);
         _shelf = new GridContainer { Columns = 3 };
         _stack.AddChild(_shelf);
         for (int index = 0; index < 3; index++)
@@ -523,6 +721,51 @@ internal sealed partial class PackScreen : MarginContainer
         _listPanel.AddChild(WorldScreen.Wrap(listStack));
         var listEyebrow = new Label { Text = "CARRIED GEAR" };
         listStack.AddChild(listEyebrow);
+        var listTools = new HBoxContainer();
+        listStack.AddChild(listTools);
+        foreach (string filter in new[] { "All", "Weapon", "Armor", "Ranged" })
+        {
+            var button = new Button
+            {
+                Text = filter,
+                ToggleMode = true,
+            };
+            button.Pressed += () => SetGearFilter(filter);
+            listTools.AddChild(button);
+            _filterButtons[filter] = button;
+        }
+        var toolSpacer = new Control { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        listTools.AddChild(toolSpacer);
+        var sortLabel = new Label
+        {
+            Text = "Sort",
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+        listTools.AddChild(sortLabel);
+        _sort = new OptionButton();
+        _sort.AddItem("Pack order");
+        _sort.AddItem("Item A-Z");
+        _sort.AddItem("Slot");
+        _sort.ItemSelected += value =>
+        {
+            _sortMode = (int)value;
+            RebuildGear();
+        };
+        listTools.AddChild(_sort);
+        var columns = new GridContainer { Columns = 6 };
+        listStack.AddChild(columns);
+        float[] headingWidths = [190, 76, 118, 178, 92, 136];
+        foreach ((string column, int index) in new[] { "ITEM", "SLOT", "BENEFIT", "REQUIREMENT", "WEAR", "STATE" }
+            .Select((value, index) => (value, index)))
+        {
+            var label = new Label
+            {
+                Text = column,
+                CustomMinimumSize = new Vector2(headingWidths[index], 0),
+            };
+            UiThemeFactory.Mark(label, "eyebrow", fonts, scale, palette);
+            columns.AddChild(label);
+        }
         var listScroll = new ScrollContainer
         {
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
@@ -532,6 +775,11 @@ internal sealed partial class PackScreen : MarginContainer
         listStack.AddChild(listScroll);
         _gearList = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
         listScroll.AddChild(_gearList);
+        listStack.AddChild(new HSeparator());
+        var resourcesEyebrow = new Label { Text = "CARRIED RESOURCES" };
+        listStack.AddChild(resourcesEyebrow);
+        _resources = new FlowContainer();
+        listStack.AddChild(_resources);
 
         _inspectorPanel = new PanelContainer
         {
@@ -540,10 +788,22 @@ internal sealed partial class PackScreen : MarginContainer
             SizeFlagsVertical = SizeFlags.ExpandFill,
         };
         _body.AddChild(_inspectorPanel);
-        var inspector = new VBoxContainer();
-        _inspectorPanel.AddChild(WorldScreen.Wrap(inspector));
+        _inspectorScroll = new ScrollContainer
+        {
+            SizeFlagsHorizontal = SizeFlags.ExpandFill,
+            SizeFlagsVertical = SizeFlags.ExpandFill,
+            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
+            FollowFocus = false,
+        };
+        _inspectorPanel.AddChild(_inspectorScroll);
+        var inspector = new VBoxContainer { SizeFlagsHorizontal = SizeFlags.ExpandFill };
+        var inspectorMargin = WorldScreen.Wrap(inspector);
+        inspectorMargin.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+        _inspectorScroll.AddChild(inspectorMargin);
         _inspectorKicker = new Label();
         inspector.AddChild(_inspectorKicker);
+        _equippedItem = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
+        inspector.AddChild(_equippedItem);
         _inspectorTitle = new Label { AutowrapMode = TextServer.AutowrapMode.WordSmart };
         inspector.AddChild(_inspectorTitle);
         _benefit = FactLabel(inspector);
@@ -560,18 +820,7 @@ internal sealed partial class PackScreen : MarginContainer
         _equip.Pressed += ActivateSelected;
         inspector.AddChild(_equip);
 
-        var resourcesPanel = new PanelContainer();
-        _stack.AddChild(resourcesPanel);
-        var resourcesStack = new VBoxContainer();
-        resourcesPanel.AddChild(WorldScreen.Wrap(resourcesStack));
-        var resourcesEyebrow = new Label { Text = "CARRIED RESOURCES" };
-        resourcesStack.AddChild(resourcesEyebrow);
-        _resources = new FlowContainer();
-        resourcesStack.AddChild(_resources);
-
         UiThemeFactory.Mark(eyebrow, "eyebrow", fonts, scale, palette);
-        UiThemeFactory.Mark(title, "heading", fonts, scale, palette);
-        UiThemeFactory.Mark(subtitle, "muted", fonts, scale, palette);
         UiThemeFactory.Mark(listEyebrow, "eyebrow", fonts, scale, palette);
         UiThemeFactory.Mark(resourcesEyebrow, "eyebrow", fonts, scale, palette);
         ApplyVisuals(scale, palette);
@@ -589,7 +838,15 @@ internal sealed partial class PackScreen : MarginContainer
         RebuildGear();
         RebuildResources();
         if (becameVisible && _gearButtons.Count > 0)
-            _gearButtons[_selectedGear].CallDeferred(Control.MethodName.GrabFocus);
+        {
+            int visible = Math.Max(0, _visibleGearIndices.IndexOf(_selectedGear));
+            _gearButtons[visible].CallDeferred(Control.MethodName.GrabFocus);
+            Callable.From(() =>
+            {
+                if (_rootScroll.VerticalScrollMode == ScrollContainer.ScrollMode.Disabled)
+                    _rootScroll.ScrollVertical = 0;
+            }).CallDeferred();
+        }
     }
 
     public void ApplyVisuals(UiScaleTokens scale, UiPalette palette)
@@ -626,18 +883,44 @@ internal sealed partial class PackScreen : MarginContainer
             label.AddThemeColorOverride("font_color", palette.Text);
         }
         UiThemeFactory.Mark(_inspectorKicker, "eyebrow", _fonts, scale, palette);
+        UiThemeFactory.Mark(_equippedItem, "muted", _fonts, scale, palette);
         UiThemeFactory.Mark(_inspectorTitle, "heading", _fonts, scale, palette);
         _warning.AddThemeFontOverride("font", _fonts.BodySemibold);
         _warning.AddThemeColorOverride("font_color", palette.Danger);
+        foreach ((string filter, Button button) in _filterButtons)
+        {
+            bool selected = filter == _gearFilter;
+            button.SetPressedNoSignal(selected);
+            button.AddThemeColorOverride(
+                "font_color",
+                selected ? palette.Raised : palette.Text);
+            button.AddThemeColorOverride(
+                "font_pressed_color",
+                selected ? palette.Raised : palette.Text);
+            button.AddThemeStyleboxOverride(
+                "normal",
+                selected
+                    ? UiThemeFactory.BorderBox(palette.Accent, palette.Accent, scale, scale.Space2)
+                    : UiThemeFactory.BorderBox(palette.Raised, palette.Muted, scale, scale.Space2));
+            button.AddThemeStyleboxOverride(
+                "pressed",
+                UiThemeFactory.BorderBox(palette.Accent, palette.Accent, scale, scale.Space2));
+        }
         RefreshGearButtons();
     }
 
     public void ApplyLayout(float viewportWidth)
     {
-        bool stacked = viewportWidth < 1180 || _scale.Scale >= 1.5f;
+        bool stacked = viewportWidth < 1450 || _scale.Scale >= 1.5f;
+        _rootScroll.VerticalScrollMode = stacked
+            ? ScrollContainer.ScrollMode.Auto
+            : ScrollContainer.ScrollMode.Disabled;
+        if (!stacked)
+            _rootScroll.ScrollVertical = 0;
         _body.Columns = stacked ? 1 : 2;
-        _listPanel.CustomMinimumSize = new Vector2(stacked ? 0 : 520, stacked ? 300 : 0);
-        _inspectorPanel.CustomMinimumSize = new Vector2(stacked ? 0 : 460, stacked ? 320 : 0);
+        _listPanel.CustomMinimumSize = new Vector2(stacked ? 0 : 800, stacked ? 360 : 0);
+        _inspectorPanel.CustomMinimumSize = new Vector2(stacked ? 0 : 500, stacked ? 360 : 0);
+        _body.CustomMinimumSize = new Vector2(0, stacked ? 760 : 540);
         _shelf.Columns = stacked ? 1 : 3;
     }
 
@@ -645,9 +928,14 @@ internal sealed partial class PackScreen : MarginContainer
     {
         if (_gearButtons.Count == 0)
             return false;
-        _selectedGear = (_selectedGear + delta + _gearButtons.Count) % _gearButtons.Count;
+        int visible = _visibleGearIndices.IndexOf(_selectedGear);
+        if (visible < 0)
+            visible = 0;
+        else
+            visible = (visible + delta + _gearButtons.Count) % _gearButtons.Count;
+        _selectedGear = _visibleGearIndices[visible];
         SelectGear(_selectedGear);
-        _gearButtons[_selectedGear].GrabFocus();
+        _gearButtons[visible].GrabFocus();
         return true;
     }
 
@@ -659,6 +947,8 @@ internal sealed partial class PackScreen : MarginContainer
             child.QueueFree();
         }
         _gearButtons.Clear();
+        _gearIndices.Clear();
+        _visibleGearIndices.Clear();
         if (_presentation is null || _presentation.Gear.Length == 0)
         {
             var empty = new Label { Text = "No gear is currently carried." };
@@ -667,24 +957,60 @@ internal sealed partial class PackScreen : MarginContainer
             ClearInspector();
             return;
         }
-        for (int index = 0; index < _presentation.Gear.Length; index++)
+
+        IEnumerable<int> indices = Enumerable.Range(0, _presentation.Gear.Length)
+            .Where(index => _gearFilter == "All"
+                || _presentation.Gear[index].Slot.Equals(
+                    _gearFilter,
+                    StringComparison.OrdinalIgnoreCase));
+        indices = _sortMode switch
+        {
+            1 => indices.OrderBy(index => _presentation.Gear[index].Name),
+            2 => indices
+                .OrderBy(index => _presentation.Gear[index].Slot)
+                .ThenBy(index => _presentation.Gear[index].Name),
+            _ => indices,
+        };
+        foreach (int index in indices)
         {
             int selected = index;
             GearPresentation gear = _presentation.Gear[index];
-            string state = gear.Equipped ? "EQUIPPED" : gear.MeetsRequirement ? "READY" : "UNDER REQUIREMENT";
-            var button = new Button
-            {
-                Text = $"{gear.Key}  {gear.Name}\n{gear.Slot}  |  {gear.Benefit}  |  {state}",
-                Alignment = HorizontalAlignment.Left,
-                ToggleMode = true,
-                SizeFlagsHorizontal = SizeFlags.ExpandFill,
-            };
+            string state = gear.Equipped
+                ? "Equipped"
+                : gear.MeetsRequirement
+                    ? "Ready"
+                    : "⚠ Reduced benefit";
+            var button = new GearRow(gear, state);
             button.Pressed += () => SelectGear(selected);
             _gearList.AddChild(button);
             _gearButtons.Add(button);
+            _gearIndices[button] = index;
+            _visibleGearIndices.Add(index);
         }
-        _selectedGear = Math.Clamp(_selectedGear, 0, _gearButtons.Count - 1);
+        if (_gearButtons.Count == 0)
+        {
+            var empty = new Label
+            {
+                Text = "No carried gear matches this filter.",
+                AutowrapMode = TextServer.AutowrapMode.WordSmart,
+            };
+            _gearList.AddChild(empty);
+            UiThemeFactory.Mark(empty, "muted", _fonts, _scale, _palette);
+            ClearInspector();
+            return;
+        }
+        if (!_visibleGearIndices.Contains(_selectedGear))
+            _selectedGear = _visibleGearIndices[0];
         SelectGear(_selectedGear);
+    }
+
+    private void SetGearFilter(string filter)
+    {
+        _gearFilter = filter;
+        RebuildGear();
+        ApplyVisuals(_scale, _palette);
+        if (_gearButtons.Count > 0)
+            _gearButtons[0].GrabFocus();
     }
 
     private void RebuildResources()
@@ -719,16 +1045,27 @@ internal sealed partial class PackScreen : MarginContainer
             return;
         _selectedGear = index;
         GearPresentation gear = _presentation.Gear[index];
-        _inspectorKicker.Text = gear.Equipped ? $"{gear.Slot.ToUpperInvariant()}  |  EQUIPPED" : gear.Slot.ToUpperInvariant();
+        GearPresentation? equipped = _presentation.Gear.FirstOrDefault(item =>
+            item.Equipped
+            && item.Slot.Equals(gear.Slot, StringComparison.OrdinalIgnoreCase));
+        _inspectorKicker.Text = "COMPARE AND EQUIP";
+        _equippedItem.Text = equipped is null
+            ? $"EQUIPPED {gear.Slot.ToUpperInvariant()}\nEmpty"
+            : $"EQUIPPED {gear.Slot.ToUpperInvariant()}\n{equipped.Name}";
         _inspectorTitle.Text = gear.Name;
-        _benefit.Text = $"Benefit\n{gear.Benefit}";
-        _requirement.Text = $"Requirement\n{gear.Requirement}";
-        _condition.Text = $"Condition\n{gear.MaximumWear - gear.Wear} of {gear.MaximumWear} uses remain";
-        _craft.Text = $"Craft\n{gear.Craft}  |  {gear.Move}";
+        _benefit.Text =
+            $"BENEFIT\nEquipped: {equipped?.Benefit ?? "None"}\nSelected: {gear.Benefit}";
+        _requirement.Text =
+            $"REQUIREMENT\nEquipped: {equipped?.Requirement ?? "None"}\nSelected: {gear.Requirement}";
+        _condition.Text =
+            $"WEAR\nEquipped: {ConditionOf(equipped)}\nSelected: {ConditionOf(gear)}";
+        _craft.Text =
+            $"PRACTICE AND MOVE\nEquipped: {CraftOf(equipped)}\nSelected: {CraftOf(gear)}";
         _warning.Visible = !gear.MeetsRequirement;
         _warning.Text = gear.MeetsRequirement
             ? ""
-            : "UNDER REQUIREMENT\nYou may equip this item, but its benefit is reduced until the requirement is met.";
+            : $"⚠ REDUCED BENEFIT\n{gear.Requirement}. You may equip this item, but its canonical benefit is reduced until the requirement is met.";
+        _equip.Visible = true;
         _equip.Disabled = gear.Equipped;
         _equip.Text = gear.Equipped ? "Equipped" : $"Equip  {gear.Key}";
         _equip.SetMeta("canonical_key", gear.Key.ToString());
@@ -745,6 +1082,7 @@ internal sealed partial class PackScreen : MarginContainer
     private void ClearInspector()
     {
         _inspectorKicker.Text = "GEAR";
+        _equippedItem.Text = "";
         _inspectorTitle.Text = "Nothing carried";
         _benefit.Text = "Your hands are empty.";
         _requirement.Text = "";
@@ -754,12 +1092,21 @@ internal sealed partial class PackScreen : MarginContainer
         _equip.Visible = false;
     }
 
+    private static string ConditionOf(GearPresentation? gear) =>
+        gear is null
+            ? "None"
+            : $"{gear.MaximumWear - gear.Wear} of {gear.MaximumWear} uses remain";
+
+    private static string CraftOf(GearPresentation? gear) =>
+        gear is null ? "None" : $"{gear.Craft}  |  {gear.Move}";
+
     private void RefreshGearButtons()
     {
         for (int index = 0; index < _gearButtons.Count; index++)
         {
             Button button = _gearButtons[index];
-            bool selected = index == _selectedGear;
+            bool selected = _gearIndices.TryGetValue(button, out int gearIndex)
+                && gearIndex == _selectedGear;
             button.SetPressedNoSignal(selected);
             StyleBoxFlat selectedBox = UiThemeFactory.BorderBox(
                 UiThemeFactory.Mix(_palette.Raised, _palette.Accent, 0.16f),
@@ -777,6 +1124,10 @@ internal sealed partial class PackScreen : MarginContainer
             button.AddThemeStyleboxOverride("focus", UiThemeFactory.InsetFocusBox(_palette.Accent, _scale));
             button.AddThemeColorOverride("font_color", selected ? _palette.Accent : _palette.Text);
             button.AddThemeColorOverride("font_pressed_color", _palette.Accent);
+            button.AddThemeFontOverride("font", _fonts.MonoSemibold);
+            button.AddThemeFontSizeOverride("font_size", _scale.Metadata);
+            if (button is GearRow row)
+                row.ApplyRowVisuals(_fonts, _scale, _palette, selected);
         }
     }
 

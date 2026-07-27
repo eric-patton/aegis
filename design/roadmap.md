@@ -957,7 +957,13 @@ Newest first. Log when a feature is checked off, or when new work is added to th
   instead of immediately trying the disabled same attribute. Release builds without
   warnings, 72 focused Host tests and all 1,057 tests pass, and background desktop,
   high-scale, and physical-Enter probes pass. No Core behavior moved, so the engine
-  sweep did not trigger. Character and Pack remain `[~]` until packaged player review.
+  sweep did not trigger. The clean
+  `artifacts/aegis-d199-character-pack-parity-win-x64.zip` package, built from
+  `6e12f2e` with SHA-256
+  `E690534CBBA7F1CB09980B9AEA26FB03B88CCCFF6BBCF237494197F8671C21E5`,
+  completes creation, reports save v100 and generator 1, serves the structured frame,
+  exits cleanly, and reloads the exact snapshot. Character and Pack remain `[~]` until
+  packaged player review.
 - 2026-07-27: **D-198 restores input ownership and separates approved design from
   implementation parity.** Creation text Enter now routes before Godot focus navigation
   and holds focus through the Face-to-Name transition. The D-183 rail removes its outer

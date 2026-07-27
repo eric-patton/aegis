@@ -266,6 +266,14 @@ screenshots verify both approved desktop hierarchies. Separate 1100 by 700 probe
 rule, RNG draw, journal, save, generator, or worldgen changed, so the conditional
 engine sweep does not apply.
 
+The packaged parity checkpoint is
+`artifacts/aegis-d199-character-pack-parity-win-x64.zip`, built from `6e12f2e`,
+SHA-256
+`E690534CBBA7F1CB09980B9AEA26FB03B88CCCFF6BBCF237494197F8671C21E5`.
+A clean extraction completes creation, reports save v100 and generator 1, serves the
+structured 120 by 40 frame, exits cleanly, and reloads the created save to the exact
+same snapshot. This is the Character and Pack player-review gate, not release signoff.
+
 The two ledger rows remain partial until the player reviews the packaged checkpoint.
 Deferred: that player verdict; Conversation Desk as the next parity family; the
 remaining event, Help, Journal, Settings, Campaign, system-state, and Field Drawer

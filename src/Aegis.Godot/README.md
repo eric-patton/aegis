@@ -19,6 +19,9 @@ architectures. The approved mockup architecture is canonical, while
 `design/godot-ui-mockup-review.md` separately tracks which screens still need visible
 parity work.
 
+The current player-review checkpoint is
+`artifacts/aegis-d199-character-pack-parity-win-x64.zip`, built from `6e12f2e`.
+
 ## Development launch
 
 From this directory:

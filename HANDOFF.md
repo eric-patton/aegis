@@ -121,7 +121,13 @@ The canonical design truth stays where it always was:
   to its cost without selecting the disabled same attribute. Release builds without
   warnings, 72 focused Host tests and all 1,057 tests pass. Light, dark, high-scale,
   and physical-Enter background probes pass. No Core behavior moved, so the engine
-  sweep did not trigger. Packaged player review remains the gate.
+  sweep did not trigger. The packaged parity checkpoint is
+  `artifacts/aegis-d199-character-pack-parity-win-x64.zip`, built from `6e12f2e`,
+  SHA-256
+  `E690534CBBA7F1CB09980B9AEA26FB03B88CCCFF6BBCF237494197F8671C21E5`.
+  A clean extraction completes creation, reports save v100 and generator 1, serves the
+  structured 120 by 40 frame, exits cleanly, and reloads the exact snapshot. Packaged
+  player review remains the gate.
 - Earlier completed implementation: D-182 Phases 1 and 2 pass. Phase 1 supplies the
   persistent Godot foundation and modern creation flow. Phase 2 adds the responsive
   world rail and drawer, newest-entry activity ribbon, colored full-session History,
@@ -313,6 +319,14 @@ The canonical design truth stays where it always was:
   A clean extraction asserts focus on both creation text stages, reports save v100 and
   generator 1, serves the structured 120 by 40 frame, exits cleanly, and reloads the
   exact snapshot. This checkpoint is for creation focus, fixed-rail, and bow-direction
+  review, not release signoff.
+- D-199 Character and Pack parity checkpoint:
+  `artifacts/aegis-d199-character-pack-parity-win-x64.zip`, built from `6e12f2e`,
+  SHA-256
+  `E690534CBBA7F1CB09980B9AEA26FB03B88CCCFF6BBCF237494197F8671C21E5`.
+  A clean extraction completes creation, reports save v100 and generator 1, serves the
+  structured 120 by 40 frame, exits cleanly, and reloads the exact snapshot. This
+  checkpoint is for attribute-shaping Enter, Character Ledger, and Outfitter's Bench
   review, not release signoff.
 - The 2026-07-24 second packaged review found release-blocking font scaling, dark-only
   presentation, creation clutter, lost compass mode, incomplete wrapping, and

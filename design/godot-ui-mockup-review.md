@@ -137,6 +137,11 @@ Design approval does not imply implementation completion. D-197's typed Characte
 Pack projections remain valid foundations, but their packaged player review reopens
 visible parity.
 
+The canonical PNGs named above and the four D-193 parity boards are intentionally
+versioned at their existing paths even though `artifacts/` is otherwise ignored. The
+unselected exploration variants remain local review artifacts. This keeps the approved
+visual contract durable without treating every generated option as product source.
+
 ## Architecture-first correction
 
 The first screen suite mixed several visual languages. That inconsistency is not an

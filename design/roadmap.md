@@ -951,7 +951,12 @@ Newest first. Log when a feature is checked off, or when new work is added to th
   gain a separate implementation parity ledger: semantic foundations no longer count as
   visible completion. Release builds without warnings, 72 focused Host tests and all
   1,057 tests pass; live focus and background rail probes pass. No Core behavior moved,
-  so the engine sweep did not trigger.
+  so the engine sweep did not trigger. The clean
+  `artifacts/aegis-d198-input-rail-remediation-win-x64.zip` package, built from
+  `4e7ed2e` with SHA-256
+  `FE83A8DEF324B7FA2A01DFA2C1A54B727A0676444DE6AA8ECAD241B2F529ACC0`,
+  asserts focus on both creation text stages, reports save v100 and generator 1, serves
+  the structured frame, exits cleanly, and reloads the exact snapshot.
 - 2026-07-27: **Packaged feedback exposes the melee-hunting access gap.** D-070
   deliberately gives fleeing quarry the player's speed, so an ordinary melee chase
   cannot close. Its bowless fallback is terrain herding, but the focused tests only

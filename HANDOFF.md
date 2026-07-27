@@ -94,13 +94,21 @@ The canonical design truth stays where it always was:
   whole: Condition and currencies remain fixed while Activity expands and owns the only
   scrollbar. World and DirectionPrompt share explicit directional-arrow routing, so bow
   aiming sends the chosen line instead of moving button focus. The approved mockups were
-  never removed; `design/godot-ui-mockup-review.md` now separates all twelve approved
-  design families from their actual implementation parity. Character, Pack,
+  never removed. The twelve canonical destination images and four D-193 parity boards
+  are now force-tracked through the otherwise ignored artifacts tree, and
+  `design/godot-ui-mockup-review.md` separates all twelve approved design families from
+  their actual implementation parity. Character, Pack,
   Conversation, events, Help, and focused tasks remain partial; Journal, Settings,
   Campaign entry, and system states remain unimplemented. The warning-free Release
   build, 72 focused Host tests, all 1,057 tests, live focus checks, and the background
   fixed-rail probe pass. No canonical command meaning or engine behavior changed, so the
-  engine sweep did not trigger.
+  engine sweep did not trigger. The packaged repair checkpoint is
+  `artifacts/aegis-d198-input-rail-remediation-win-x64.zip`, built from `4e7ed2e`,
+  SHA-256
+  `FE83A8DEF324B7FA2A01DFA2C1A54B727A0676444DE6AA8ECAD241B2F529ACC0`.
+  A clean extraction asserts focus on both creation text stages, reports save v100 and
+  generator 1, serves the structured 120 by 40 frame, exits cleanly, and reloads the
+  created save exactly.
 - Earlier completed implementation: D-182 Phases 1 and 2 pass. Phase 1 supplies the
   persistent Godot foundation and modern creation flow. Phase 2 adds the responsive
   world rail and drawer, newest-entry activity ribbon, colored full-session History,
@@ -252,7 +260,7 @@ The canonical design truth stays where it always was:
   comments in `src/Aegis.Core/SaveCodec.cs`).
 - Generator format: campaign-scoped generator 1, recorded separately in v100 saves.
 - Product version: 1.0.0.
-- Tests: 1,053 green (`dotnet test Aegis.slnx -c Release --no-build`).
+- Tests: 1,057 green (`dotnet test Aegis.slnx -c Release --no-build`).
 - D-181 Release build is zero-warning. Its 22 focused Host tests and all 1,007 tests
   pass. The exported Godot client reports save v100 and generator 1, accepts pilot and
   background pointer input, and exits cleanly. Two real save loads produced exact
@@ -284,6 +292,14 @@ The canonical design truth stays where it always was:
   A clean extraction completes creation, reports save v100 and generator 1, serves the
   structured 120 by 40 frame, exits cleanly, and reloads the exact snapshot. This
   checkpoint is for Character Creation, Character, Pack, Help, meter, and shell-polish
+  review, not release signoff.
+- D-198 input and rail repair checkpoint:
+  `artifacts/aegis-d198-input-rail-remediation-win-x64.zip`, built from `4e7ed2e`,
+  SHA-256
+  `FE83A8DEF324B7FA2A01DFA2C1A54B727A0676444DE6AA8ECAD241B2F529ACC0`.
+  A clean extraction asserts focus on both creation text stages, reports save v100 and
+  generator 1, serves the structured 120 by 40 frame, exits cleanly, and reloads the
+  exact snapshot. This checkpoint is for creation focus, fixed-rail, and bow-direction
   review, not release signoff.
 - The 2026-07-24 second packaged review found release-blocking font scaling, dark-only
   presentation, creation clutter, lost compass mode, incomplete wrapping, and
@@ -470,8 +486,8 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Package D-198 and have the player confirm the Face-to-Name focus, fixed world rail,
-   and bow direction prompt.
+1. Present the D-198 package and have the player confirm the Face-to-Name focus, fixed
+   world rail, and bow direction prompt.
 2. Work the approved mockup implementation parity ledger systematically, beginning with
    the Character Ledger and Outfitter's Bench, then Conversation, event surfaces, Help,
    Journal, Settings, Campaign entry, system states, and Field Drawers.

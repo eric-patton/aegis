@@ -258,7 +258,9 @@ implementation parity ledger for all twelve screen families. Character, Pack,
 Conversation, events, Help, and focused tasks are partial; Journal, Settings, Campaign
 entry, and shared system states remain unimplemented. D-197's typed projections remain
 valid foundations, but no screen closes visual parity merely because its data is
-semantic.
+semantic. The twelve canonical destination images and four D-193 parity boards are
+force-tracked through the otherwise ignored artifacts tree, so the approved contract
+survives a clean clone while unselected exploration variants remain local.
 
 Verification is presentation-proportionate. The Release solution builds with zero
 warnings, 72 focused Host tests and all 1,057 tests pass. A focus-free live Godot probe
@@ -267,9 +269,18 @@ keeps its condition and currency regions visible with only Activity scrolling. N
 file, canonical command meaning, turn rule, RNG draw, journal, save, generator, or
 worldgen changed, so the conditional engine sweep does not apply.
 
-Deferred: player confirmation of physical typing and bow aiming in the next package;
-the open map-glyph palette; every partial or unimplemented row in the parity ledger; and
-the separately parked melee-hunting access decision.
+The packaged repair checkpoint is
+`artifacts/aegis-d198-input-rail-remediation-win-x64.zip`, built from `4e7ed2e`,
+SHA-256
+`FE83A8DEF324B7FA2A01DFA2C1A54B727A0676444DE6AA8ECAD241B2F529ACC0`.
+A clean extraction asserts focus on both creation text stages, reports save v100 and
+generator 1, serves the structured 120 by 40 frame, exits cleanly, and reloads the
+created save to the exact same snapshot. This is the input and fixed-rail player-review
+gate, not release signoff.
+
+Deferred: player confirmation of physical typing and bow aiming in the packaged
+checkpoint; the open map-glyph palette; every partial or unimplemented row in the
+parity ledger; and the separately parked melee-hunting access decision.
 
 ### D-197: The ledger leaves the old frame: Phase 3 information screens (2026-07-27)
 

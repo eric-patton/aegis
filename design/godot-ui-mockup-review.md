@@ -75,6 +75,68 @@ reviewed.
 11. [x] Remaining focused task-surface variants (D-193).
 12. [x] Complete responsive and light/dark parity matrix (D-194).
 
+## Implementation parity ledger
+
+Status key: `[x]` visually implemented and player-verified against the canonical image,
+`[~]` semantic or structural implementation exists but visible parity remains, `[ ]`
+not implemented.
+
+1. [~] World screen, canonical
+   `artifacts/d182-game-screen-architectures-v1/06-map-workspace-sidebar-icons.png`.
+   The map workspace, fixed rail, Activity, currencies, and map footer exist. The
+   production map-glyph palette remains open, and the packaged review found a whole-rail
+   scrollbar that must be removed in favor of a fixed condition region, flexible
+   Activity, and fixed currencies.
+2. [~] Character Creation, canonical
+   `artifacts/d183-character-creation-architectures-v1/05-focused-question-explained-selection.png`.
+   The complete route, cards, selected explanation, text entry, and review exist.
+   Packaged review reopened exact visual hierarchy and reliable Face-to-Name focus.
+3. [~] Conversation and commerce, canonical
+   `artifacts/d184-conversation-commerce-architectures-v1/01-conversation-desk.png`.
+   Structured actions, transcript, resources, scoped focus, and follow-tail exist.
+   Direct image-parity review of modes, selected-action detail, and responsive stacking
+   remains.
+4. [~] World-event sheet, canonical
+   `artifacts/d185-world-event-action-sheet-architectures-v1/04-centered-field-sheet-split-scroll.png`.
+   Structured scenes use the split sheet. Remaining world-event and action surfaces
+   still need migration and parity review.
+5. [~] Character, canonical
+   `artifacts/d186-character-architectures-v1/02-character-ledger.png`. Typed Character
+   data and semantic sections exist, but the packaged result does not yet match the
+   approved section navigator, list, inspector hierarchy, density, or polish.
+6. [~] Pack and equipment, canonical
+   `artifacts/d187-pack-equipment-architectures-v1/01-outfitters-bench.png`. Typed Pack
+   data, slots, gear, comparison facts, and warnings exist, but the packaged result does
+   not yet match the approved top shelf, gear list, inspector, resource band, density, or
+   polish.
+7. [ ] Journal, canonical
+   `artifacts/d188-journal-architectures-v1/01-chronicle-desk.png`. Full-session History
+   exists as an overlay. The complete History, People, Bestiary, and Threads destination
+   does not.
+8. [~] Help, canonical
+   `artifacts/d189-help-architectures-v1/01-help-center.png`. Search and basic topics
+   exist. The approved category, topic, article, quick-reference, and Settings route
+   remain incomplete.
+9. [ ] Settings and accessibility, canonical
+   `artifacts/d190-settings-accessibility-architectures-v1/01-live-preview-workshop.png`.
+   Temporary theme and scale shortcuts exist, but the approved destination does not.
+10. [ ] Campaign entry and system states, canonical
+    `artifacts/d191-campaign-entry-system-states-architectures-v1/01-campaign-shelf.png`
+    and `04-system-state-grammar.png`.
+11. [~] Focused tasks, canonical
+    `artifacts/d192-focused-task-surface-architectures-v1/03-field-drawer-system.png`.
+    A generic semantic task host exists. The complete Field Drawer variants and
+    commitment grammar do not.
+12. [~] Responsive and theme parity, canonical boards under
+    `artifacts/d193-responsive-theme-parity-review-v1/`. Existing screens support the
+    approved minimum and scale range, but parity cannot close until every destination
+    above is implemented and reviewed.
+
+This ledger is the implementation source of truth for the approved visual contract.
+Design approval does not imply implementation completion. D-197's typed Character and
+Pack projections remain valid foundations, but their packaged player review reopens
+visible parity.
+
 ## Architecture-first correction
 
 The first screen suite mixed several visual languages. That inconsistency is not an

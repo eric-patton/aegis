@@ -57,13 +57,14 @@ holes**: none untouched; all four activity families have broken ground, and **cr
   Implemented under D-174, but its terminal candidate is superseded by D-175. V1-10 is
   Implemented under D-177, and its clean candidate is built under D-178. The bounded
   D-181 Godot presentation spike is built and verified, D-182 approves the complete
-  modernization contract, and D-183 through D-197 lock and implement the world, Character Creation,
-  Conversation, reusable event-sheet, Character, Pack, Journal, Help, Settings, Campaign
-  entry, boundary-state bases, focused tasks, and the complete responsive and theme
-  parity contract. Phases 1 and 2 plus the packaged-review remediation are built and
-  verified under D-196. Phase 3 and its information-screen repairs are verified under
-  D-197. Phases 4 and 5, the replacement candidate, a fresh guided
-  campaign, and explicit signoff remain
+  modernization contract. D-183 through D-194 lock the approved visual contract for the
+  world, Character Creation, Conversation, reusable event sheet, Character, Pack,
+  Journal, Help, Settings, Campaign entry, boundary states, focused tasks, and complete
+  responsive and theme parity. D-195 through D-197 implement the foundation through
+  Phase 3, but the D-197 packaged review reopens visible parity for the approved
+  destinations and exposes new focus, rail-layout, and direction-prompt input repairs.
+  The implementation parity ledger in `design/godot-ui-mockup-review.md`, Phases 4 and 5,
+  the replacement candidate, a fresh guided campaign, and explicit signoff remain
 - **Factions begun (D-076..D-089, D-105, D-106, D-109..D-112):** the local-reputation foundation is in (the home stead's
   regard, a per-world Fame earned by perceivable deeds), it pays (D-077, the friend's welcome),
   the ledger went keyed with a second faction (D-078, the raiders' wrath: one notch per
@@ -244,6 +245,24 @@ holes**: none untouched; all four activity families have broken ground, and **cr
     individual screen mockups
   - [x] Review and approve the visual contract in `design/godot-ui-mockup-review.md`
     before Phase 3 implementation (D-183 through D-194)
+  - [~] Implement and player-verify the canonical mockup suite, tracked screen by screen
+    in the implementation parity ledger in `design/godot-ui-mockup-review.md`
+    - [~] World screen: canonical structure exists; map palette and final visual parity
+      remain
+    - [~] Character Creation: complete route exists; exact visual parity remains
+    - [~] Conversation Desk: structured implementation exists; direct parity review
+      remains
+    - [~] Centered Field Sheet: structured scenes exist; remaining event surfaces remain
+    - [~] Character Ledger: semantic implementation exists; approved visual hierarchy
+      and polish remain
+    - [~] Outfitter's Bench: semantic implementation exists; approved visual hierarchy
+      and polish remain
+    - [ ] Chronicle Desk Journal destination
+    - [~] Help Center: searchable foundation exists; approved destination depth remains
+    - [ ] Live Preview Workshop Settings destination
+    - [ ] Campaign Shelf and shared system states
+    - [~] Field Drawer System: generic task host exists; complete variants remain
+    - [~] Complete responsive and theme parity closes only after all destinations above
   - [x] Design player-facing campaign entry: title, Continue, New campaign, campaign
     slots, load, safe deletion, version, and quit
     (D-192)
@@ -902,6 +921,12 @@ decision promotes one into a release.
 
 - ◇ D-194 implementation-token review: settle the canonical map-glyph palette in light
   and dark themes without changing the approved world architecture or semantic states
+- ◇ Melee hunting access, promoted by packaged playtest feedback: ordinary pursuit is
+  intentionally speed-locked under D-070, terrain herding is too obscure and unreliable
+  as the only bowless path, and D-162 soft tread currently refuses the non-hostile hunt.
+  Decide whether two-tick soft tread should become the primary melee stalking path,
+  with Grace, Stealth, armor noise, and existing Stealth knacks controlling how closely
+  the player can approach before the quarry bolts
 - ◇ Folk cultures: how worldgen recultures the five folk per world, and whether factions read folk (D-017, D-092)
 - ◇ Spell list growth past the seven V1-07 workings / school-shaped content, if any
   (D-022, D-091, D-163)
@@ -917,6 +942,24 @@ decision promotes one into a release.
 
 Newest first. Log when a feature is checked off, or when new work is added to this file.
 
+- 2026-07-27: **D-198 restores input ownership and separates approved design from
+  implementation parity.** Creation text Enter now routes before Godot focus navigation
+  and holds focus through the Face-to-Name transition. The D-183 rail removes its outer
+  scrollbar so Condition and currencies stay fixed while Activity alone resizes and
+  scrolls. World and DirectionPrompt now share explicit directional-arrow routing, so
+  bow aiming cannot fall into UI focus navigation. The twelve approved mockup families
+  gain a separate implementation parity ledger: semantic foundations no longer count as
+  visible completion. Release builds without warnings, 72 focused Host tests and all
+  1,057 tests pass; live focus and background rail probes pass. No Core behavior moved,
+  so the engine sweep did not trigger.
+- 2026-07-27: **Packaged feedback exposes the melee-hunting access gap.** D-070
+  deliberately gives fleeing quarry the player's speed, so an ordinary melee chase
+  cannot close. Its bowless fallback is terrain herding, but the focused tests only
+  prove a strike after debug placement beside the quarry, not that ordinary play can
+  reliably create that position. D-162's later two-tick soft tread does not compose
+  because hunting ground is classified as non-hostile. The release question is now
+  parked explicitly: extend soft tread into hunting as the readable melee stalking
+  path, or choose another bounded catch rule before changing the deterministic engine.
 - 2026-07-27: **D-197 replaces the last legacy information frames and closes Phase 3.**
   Creation selection is persistent and unmistakable, card focus no longer clips at the
   viewport edge, light placeholders are readable, and steps 8 and 9 regain text focus

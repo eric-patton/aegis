@@ -231,6 +231,46 @@ Tooling, paying the exact debt D-061 named in its own verification note and D-06
 ### D-063: The journey-bot goes deep: clearing the sites, raising at the shrine, and the honest ceiling (2026-07-18)
 Pays D-062's own named deferral, teaching the autopilot the deeper sites, so it plays each world the way a bearer would instead of beelining the gate. The pilot now takes a skip-set and, in every world, clears the nearest tenanted site before the arch: not just the goblin camp that gates the crossing but the barrow, hollow, quarry, hall, ringfort, and leaguer besides. Dormant foes are handled by walking up and bumping them awake (a graven man wakes when neared or struck, a warder's whole line wakes as one), and the navigation falls back to bumping straight through a foe when routing around the others boxes it in. The runner owns the give-up logic: each site carries a cumulative key and death budget across the world (defaults 3000 keys, 8 deaths), so a hard but winnable site gets real attempts while an unwinnable one is written off and left standing. The camp is never written off (the arch needs it, and goblins are always winnable). A dead end that is not the camp (the nearest foe genuinely unreachable, a sling-warder keeping its distance across the mere) writes that one site off and the climb continues, rather than halting the whole run as the first cut did. The bot also plays the core progression loop now: standing on the shrine with essence to spend or a wound to mend (which also catches the shrine it wakes on after every death), it drives the raise menu, spending banked essence on Vigor and Might, kept level, leaning to Vigor on a tie. Deliberately not Wits: raising Wits would offset the D-061 dulling and hold a mastered kind Keen, a real and interesting alternate demonstration but one that would hide the base softening the report exists to show, so it is left for a future toggle. The report grew a per-world site line (cleared versus left standing) and the crossing bestiary table now spans every kind the bot read. Results on the master seed: it clears camp, barrow, hollow, quarry, hall, and ringfort at every tier through seven, leaves only the leaguer standing (bare fists cannot corner a warder that retreats and lofts stone over water), and reads the full eight-kind bestiary (goblin, wight, severed, graven, hound, carl, boar, warder), every kind showing the re-sharpen-then-soften loop across the crossings, the warder among them even though its site was left standing, because the bot engages and learns the tell before giving up. Shrine raising cut the deep-tier death toll (tier 5 from 14 to 7, tier 6 from 22 to 17, the seven-crossing total from 74 to 57); the deaths that remain are the honest cost of a deliberately simple bare-fisted policy with no weapon, not the game being brutal (a bearer who arms clears these far more gently). Verified: two runs byte-identical, the emit-keys string replayed through `sim` reproduces the exact end state (cycle 6, seven kinds banked, all softened to Read, every key applied), robust across seeds, all 314 tests unchanged, no engine touched, nothing near the save format. Options set aside: dying forever on an unwinnable site (the skip budgets and the null-writes-off-the-site rule turn a spin into an honest "left standing"); raising Wits or every attribute (Vigor and Might are the survivability the deep sites ask for, and holding Wits at baseline keeps the dulling legible); clearing via the debug hooks the tests use (rejected on the same ground as D-062, a live proof must drive the real key path). Deferred: arming the bot at the smith so the leaguer and the tier-7 forts stop costing so many deaths (the smith trades through the talk menu, whose buy-digit shifts with the topic count, so it wants a careful robust driver unlike the fixed-digit shrine, and buying auto-equips an empty slot so the mechanics are easy once the digit is found); the bow verb so a ranged foe can be answered at range; teaching the threshold and the Severed so the bot can auto-verify D-060's restore path and oath-crossings (both need the arc's reveal ladder climbed first, a bigger lift); a Wits-raising mode to demonstrate the perception-build identity; and a machine-readable report for a sweep or CI to consume the crossings as data.
 
+### D-198: The field keeps the keys: creation focus, fixed rail, and direction prompts (2026-07-27)
+
+The D-197 packaged review found three client regressions and one tracking failure. The
+Face-to-Name transition could leave the second LineEdit without real keyboard ownership
+after Enter. The right rail wrapped Condition, Activity, and currencies in one outer
+ScrollContainer even though D-183 fixes the first and last regions. Arrow keys were
+routed only on the ordinary World surface, so setting a shaft changed the Host surface
+to DirectionPrompt and let Godot move button focus instead of sending the chosen line.
+Finally, the roadmap treated design approval and semantic implementation as if they
+proved visible parity with every approved mockup.
+
+Enter and Escape on creation text stages now route through the root input owner before
+LineEdit navigation can move focus. A text-stage transition schedules a bounded
+post-layout focus hold, and the focus-free pilot can assert that the entry owns focus.
+The world rail removes its outer scrollbar: Condition and currencies keep natural fixed
+height while Activity expands, shrinks, and owns the only scrolling region. Host now
+defines that both World and DirectionPrompt accept directional arrows; Godot uses that
+contract, while map zoom remains World-only. This restores bow aiming and every other
+direction prompt to the same canonical HJKL line without changing what those characters
+mean.
+
+The approved images remain under their canonical `artifacts/d182-*` through
+`artifacts/d193-*` directories. `design/godot-ui-mockup-review.md` now carries a separate
+implementation parity ledger for all twelve screen families. Character, Pack,
+Conversation, events, Help, and focused tasks are partial; Journal, Settings, Campaign
+entry, and shared system states remain unimplemented. D-197's typed projections remain
+valid foundations, but no screen closes visual parity merely because its data is
+semantic.
+
+Verification is presentation-proportionate. The Release solution builds with zero
+warnings, 72 focused Host tests and all 1,057 tests pass. A focus-free live Godot probe
+asserts entry ownership on both text stages. A background screenshot proves the rail
+keeps its condition and currency regions visible with only Activity scrolling. No Core
+file, canonical command meaning, turn rule, RNG draw, journal, save, generator, or
+worldgen changed, so the conditional engine sweep does not apply.
+
+Deferred: player confirmation of physical typing and bow aiming in the next package;
+the open map-glyph palette; every partial or unimplemented row in the parity ledger; and
+the separately parked melee-hunting access decision.
+
 ### D-197: The ledger leaves the old frame: Phase 3 information screens (2026-07-27)
 
 The D-196 checkpoint review exposed one remaining interaction layer and the exact
@@ -3694,6 +3734,11 @@ approved layouts, responsive behavior, themes, or interaction rules.
 
 - D-194 implementation-token review: settle the canonical map-glyph palette in light
   and dark themes without changing the approved world architecture or semantic states
+- Melee hunting access, promoted by packaged playtest feedback: D-070 intentionally
+  speed-locks ordinary pursuit and leaves terrain herding as the only bowless catch,
+  while D-162 soft tread refuses the non-hostile hunt. Decide whether two-tick soft
+  tread should become the primary melee stalking path, with Grace, Stealth, armor
+  noise, and existing Stealth knacks controlling the final approach
 - Folk cultures: how worldgen recultures the five folk per world, and whether factions
   read folk (D-017, D-092)
 - Spell list growth past the seven V1-07 workings / magic schools content design

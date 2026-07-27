@@ -408,6 +408,18 @@ public class ClientHostTests
         Assert.Equal(expected, WorldInputChord.Map(key, control, alt));
     }
 
+    [Theory]
+    [InlineData(ClientSurface.World, true)]
+    [InlineData(ClientSurface.DirectionPrompt, true)]
+    [InlineData(ClientSurface.Conversation, false)]
+    [InlineData(ClientSurface.CreationChoice, false)]
+    public void WorldInputChord_RoutesArrowsThroughWorldAndDirectionPrompts(
+        ClientSurface surface,
+        bool expected)
+    {
+        Assert.Equal(expected, WorldInputChord.AcceptsDirectionalKeys(surface));
+    }
+
     [Fact]
     public void FollowTailState_PausesAndReportsNewEntriesUntilResumed()
     {

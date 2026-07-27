@@ -62,6 +62,9 @@ public static class ChoiceGridNavigation
 
 public static class WorldInputChord
 {
+    public static bool AcceptsDirectionalKeys(ClientSurface surface) =>
+        surface is ClientSurface.World or ClientSurface.DirectionPrompt;
+
     public static char Map(WorldDirectionalKey key, bool control, bool alt)
     {
         if (control && key == WorldDirectionalKey.Left) return 'y';

@@ -1,4 +1,4 @@
-# Aegis handoff (updated 2026-07-27, D-197 Phase 3 information screens verified)
+# Aegis handoff (updated 2026-07-27, D-198 packaged-review input and rail repairs verified)
 
 This file exists so any assistant (or human) can pick the project up cold and keep
 moving. It records the things that were living only in session memory: working
@@ -8,10 +8,10 @@ The canonical design truth stays where it always was:
 - `CLAUDE.md` (repo root): project instructions, roadmap discipline, operating notes.
 - `design/roadmap.md`: the living feature tracker. Check items off as they land.
 - `design/decisions.md`: numbered decision log. D-001..D-063 ascending, then a
-  newest-first block (D-197 currently at its head), then the parking lot of open
+  newest-first block (D-198 currently at its head), then the parking lot of open
   questions at the end. New decisions go at the HEAD of the newest-first block.
 - `design/vision.md`: the unified design doc. Line 5 carries the counter, currently
-  "(D-001 through D-197)". Bump it whenever a decision lands.
+  "(D-001 through D-198)". Bump it whenever a decision lands.
 - `design/plan-2026-07.md`: the current build plan. The original sequence is complete;
   V1-09 is built, and D-175 supersedes its terminal candidate.
 - `design/plan-1.0.md`: the canonical ten-card implementation queue. V1-01 through V1-08
@@ -88,6 +88,19 @@ The canonical design truth stays where it always was:
   A clean extraction completes creation, reports save v100 and generator 1, serves the
   structured 120 by 40 frame, exits cleanly, and reloads the created save exactly.
   Player review of this checkpoint is the next gate.
+- D-198 repairs the next packaged-review regressions without changing Core. Creation
+  text Enter and Escape route before Godot focus navigation, and a bounded post-layout
+  hold keeps the Face-to-Name transition focused. The right rail no longer scrolls as a
+  whole: Condition and currencies remain fixed while Activity expands and owns the only
+  scrollbar. World and DirectionPrompt share explicit directional-arrow routing, so bow
+  aiming sends the chosen line instead of moving button focus. The approved mockups were
+  never removed; `design/godot-ui-mockup-review.md` now separates all twelve approved
+  design families from their actual implementation parity. Character, Pack,
+  Conversation, events, Help, and focused tasks remain partial; Journal, Settings,
+  Campaign entry, and system states remain unimplemented. The warning-free Release
+  build, 72 focused Host tests, all 1,057 tests, live focus checks, and the background
+  fixed-rail probe pass. No canonical command meaning or engine behavior changed, so the
+  engine sweep did not trigger.
 - Earlier completed implementation: D-182 Phases 1 and 2 pass. Phase 1 supplies the
   persistent Godot foundation and modern creation flow. Phase 2 adds the responsive
   world rail and drawer, newest-entry activity ribbon, colored full-session History,
@@ -276,8 +289,8 @@ The canonical design truth stays where it always was:
   presentation, creation clutter, lost compass mode, incomplete wrapping, and
   conversation clipping. Automated gates remain green, but the candidate is not
   approved. D-181 settled the host question, D-182 Phases 1 and 2 are verified, and
-  Phase 3 is implemented under D-197. Its packaged information-screen review is the
-  next gate before Phase 4 proceeds.
+  Phase 3 is implemented under D-197. D-198 repairs the first findings and reopens
+  visible parity against the approved mockups before Phase 4 proceeds.
 
 ## Working conventions (were in user-level config, not visible to a new tool)
 
@@ -457,12 +470,15 @@ the D-178 baseline.
 
 ## What is next (queued, in recommended order)
 
-1. Present the D-197 packaged information-screen checkpoint for player review and
-   record the player's findings.
-2. Settle the open D-194 canonical map-glyph palette review when the player answers.
-3. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
+1. Package D-198 and have the player confirm the Face-to-Name focus, fixed world rail,
+   and bow direction prompt.
+2. Work the approved mockup implementation parity ledger systematically, beginning with
+   the Character Ledger and Outfitter's Bench, then Conversation, event surfaces, Help,
+   Journal, Settings, Campaign entry, system states, and Field Drawers.
+3. Settle the open D-194 canonical map-glyph palette review when the player answers.
+4. Continue Phases 4 and 5 through the replacement candidate and remaining packaged
    review gate.
-4. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
+5. Restart the fresh packaged manual campaign in `design/release-audit-1.0.0.md`. Only
    explicit user approval can make V1-09 and V1-10 Verified and close Aegis 1.0.
 
 ## Handoff hygiene

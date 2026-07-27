@@ -124,6 +124,14 @@ public sealed partial class Main : Control, IFrameSink
             return;
         }
 
+        if (_interaction.IsCreationText
+            && key.Keycode is Key.Enter or Key.KpEnter or Key.Escape)
+        {
+            SendKey(key.Keycode == Key.Escape ? '[' : '.');
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
         if (_interaction.Surface == ClientSurface.CreationChoice && _creation.HandleKey(key))
         {
             GetViewport().SetInputAsHandled();
@@ -159,22 +167,28 @@ public sealed partial class Main : Control, IFrameSink
             return;
         }
 
-        if (_interaction.Surface != ClientSurface.World)
+        if (!WorldInputChord.AcceptsDirectionalKeys(_interaction.Surface))
             return;
 
-        if (key.CtrlPressed && key.Keycode is Key.Minus or Key.KpSubtract)
+        if (_interaction.Surface == ClientSurface.World
+            && key.CtrlPressed
+            && key.Keycode is Key.Minus or Key.KpSubtract)
         {
             _world.SetZoom((_settings?.MapZoomIndex ?? 0) - 1);
             GetViewport().SetInputAsHandled();
             return;
         }
-        if (key.CtrlPressed && key.Keycode is Key.Equal or Key.KpAdd)
+        if (_interaction.Surface == ClientSurface.World
+            && key.CtrlPressed
+            && key.Keycode is Key.Equal or Key.KpAdd)
         {
             _world.SetZoom((_settings?.MapZoomIndex ?? 0) + 1);
             GetViewport().SetInputAsHandled();
             return;
         }
-        if (key.CtrlPressed && key.Keycode == Key.Key0)
+        if (_interaction.Surface == ClientSurface.World
+            && key.CtrlPressed
+            && key.Keycode == Key.Key0)
         {
             _world.SetZoom(0);
             GetViewport().SetInputAsHandled();
@@ -376,6 +390,14 @@ public sealed partial class Main : Control, IFrameSink
                 return new PilotResponse { Ok = true };
             case "stress":
                 return new PilotResponse { Ok = true };
+            case "focus-check":
+                return _creation.EntryHasFocus
+                    ? new PilotResponse { Ok = true }
+                    : new PilotResponse
+                    {
+                        Ok = false,
+                        Error = "the creation text entry does not own keyboard focus",
+                    };
             case "close":
                 if (_historyOpen)
                     CloseHistory();

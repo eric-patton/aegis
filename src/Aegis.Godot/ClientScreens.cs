@@ -35,12 +35,14 @@ internal sealed partial class CreationScreen : MarginContainer
     private char? _selectedKey;
     private string _submittedText = "";
     private bool _suppressEntry;
+    private int _entryFocusFramesRemaining;
     private int _currentStep = 1;
     private float _viewportWidth = 1280;
     private UiScaleTokens _scale;
     private UiPalette _palette;
 
     public event Action<char>? KeyRequested;
+    public bool EntryHasFocus => _entry.Visible && _entry.HasFocus();
 
     public CreationScreen(ClientFonts fonts, UiScaleTokens scale, UiPalette palette)
     {
@@ -115,7 +117,6 @@ internal sealed partial class CreationScreen : MarginContainer
             ContextMenuEnabled = true,
         };
         _entry.TextChanged += OnEntryChanged;
-        _entry.TextSubmitted += _ => KeyRequested?.Invoke('.');
         _stack.AddChild(_entry);
 
         _review = new RichTextLabel
@@ -175,6 +176,17 @@ internal sealed partial class CreationScreen : MarginContainer
         _footer.AddChild(_continue);
 
         ApplyVisuals(scale, palette);
+    }
+
+    public override void _Process(double delta)
+    {
+        if (_entryFocusFramesRemaining <= 0)
+            return;
+        _entryFocusFramesRemaining--;
+        if (!_entry.Visible || !IsVisibleInTree())
+            return;
+        _entry.GrabFocus();
+        _entry.CaretColumn = _entry.Text.Length;
     }
 
     public void ApplyVisuals(UiScaleTokens scale, UiPalette palette)
@@ -276,7 +288,7 @@ internal sealed partial class CreationScreen : MarginContainer
         if (becameVisible || stageChanged)
         {
             if (textStage)
-                FocusEntryAfterLayout();
+                RequestEntryFocus();
             else
                 FirstEnabledChoice()?.CallDeferred(Control.MethodName.GrabFocus);
         }
@@ -493,16 +505,10 @@ internal sealed partial class CreationScreen : MarginContainer
         }
     }
 
-    private async void FocusEntryAfterLayout()
+    private void RequestEntryFocus()
     {
-        for (int pass = 0; pass < 3; pass++)
-        {
-            await ToSignal(GetTree(), SceneTree.SignalName.ProcessFrame);
-            if (!_entry.Visible || !IsVisibleInTree())
-                return;
-            _entry.GrabFocus();
-            _entry.CaretColumn = _entry.Text.Length;
-        }
+        _entryFocusFramesRemaining = 12;
+        _entry.CallDeferred(Control.MethodName.GrabFocus);
     }
 
     private bool RefreshChoiceCardLayout()
@@ -635,15 +641,6 @@ internal sealed partial class WorldScreen : Control
 
         _sidebar = new PanelContainer { MouseFilter = MouseFilterEnum.Stop };
         AddChild(_sidebar);
-        var sidebarScroll = new ScrollContainer
-        {
-            HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled,
-            VerticalScrollMode = ScrollContainer.ScrollMode.Auto,
-            FollowFocus = true,
-            SizeFlagsHorizontal = SizeFlags.ExpandFill,
-            SizeFlagsVertical = SizeFlags.ExpandFill,
-        };
-        _sidebar.AddChild(sidebarScroll);
         var sidebarStack = new VBoxContainer
         {
             SizeFlagsHorizontal = SizeFlags.ExpandFill,
@@ -652,7 +649,7 @@ internal sealed partial class WorldScreen : Control
         _sidebarMargin = Wrap(sidebarStack);
         _sidebarMargin.SizeFlagsHorizontal = SizeFlags.ExpandFill;
         _sidebarMargin.SizeFlagsVertical = SizeFlags.ExpandFill;
-        sidebarScroll.AddChild(_sidebarMargin);
+        _sidebar.AddChild(_sidebarMargin);
         var sidebarHeader = new HBoxContainer();
         sidebarStack.AddChild(sidebarHeader);
         var title = new Label
@@ -712,9 +709,7 @@ internal sealed partial class WorldScreen : Control
         _stamina.ApplyVisuals(_fonts, scale, palette, palette.Stamina);
         _focus.ApplyVisuals(_fonts, scale, palette, palette.Accent);
         _activity.ApplyVisuals(scale, palette);
-        _activity.CustomMinimumSize = new Vector2(
-            0,
-            240 * Math.Min(scale.Scale, 1.5f));
+        _activity.CustomMinimumSize = Vector2.Zero;
         _sidebarMargin.AddThemeConstantOverride("margin_left", scale.Space3);
         _sidebarMargin.AddThemeConstantOverride("margin_right", scale.Space3);
         _sidebarMargin.AddThemeConstantOverride("margin_top", scale.Space2);
@@ -752,7 +747,7 @@ internal sealed partial class WorldScreen : Control
         _sidebar.OffsetBottom = 0;
         _sidebarMargin.CustomMinimumSize = new Vector2(
             Math.Max(0, width - _scale.Space1),
-            Math.Max(0, Size.Y - _scale.Space1));
+            0);
 
         _mapRegion.OffsetRight = docked ? -width - _scale.Space2 : 0;
     }

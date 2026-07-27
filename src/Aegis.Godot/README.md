@@ -12,6 +12,11 @@ by typed Host projections. Journal knowledge sections, Settings, and campaign en
 remain in later approved phases, so this is a review checkpoint rather than the final
 release candidate.
 
+D-198 repairs creation focus, fixed world-rail sizing, and direction-prompt arrow
+routing. The approved mockup architecture is canonical, while
+`design/godot-ui-mockup-review.md` separately tracks which screens still need visible
+parity work.
+
 ## Development launch
 
 From this directory:
@@ -42,8 +47,13 @@ dotnet run --project ..\Aegis.Cli -- pilot --session godot-client ui scale
 dotnet run --project ..\Aegis.Cli -- pilot --session godot-client ui zoom-in
 dotnet run --project ..\Aegis.Cli -- pilot --session godot-client ui zoom-out
 dotnet run --project ..\Aegis.Cli -- pilot --session godot-client ui zoom-reset
+dotnet run --project ..\Aegis.Cli -- pilot --session godot-client ui focus-check
 dotnet run --project ..\Aegis.Cli -- pilot --session godot-client frame
 ```
+
+`focus-check` succeeds only while a visible Character Creation text field owns keyboard
+focus. It supports background verification of the remembered-person and character-name
+transitions without taking over the user's desktop.
 
 ## Player controls
 

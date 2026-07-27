@@ -576,7 +576,12 @@ player-following map zoom, complete Activity filter contrast, and direct structu
 scene projection into the approved D-186 split event sheet. Both themes are verified at
 1920 by 1040, with additional 1296 by 839 creation and shaping probes. The Release build
 is warning-free, 66 focused Host tests and all 1,051 tests pass, and no Core change
-triggers an engine sweep.
+triggers an engine sweep. The fresh Windows checkpoint is
+`artifacts/aegis-d196-player-review-remediation-win-x64.zip`, built from `203e405`,
+SHA-256
+`DCE9C84C610AF2594A5B55ED2E4DF5AEC1BFF4AB96C7656878ABD1361392F6B6`.
+Its clean extraction completes creation, reports save v100 and generator 1, serves the
+structured 120 by 40 frame, exits without stderr, and reloads the created save exactly.
 
 ### Phase 3: character and inventory
 

@@ -66,7 +66,13 @@ The canonical design truth stays where it always was:
   exact Down navigation, shaping, active and inactive All filters, 200 percent map zoom,
   and 1920 by 1040 event geometry. The Release build is warning-free, 66 focused Host
   tests and all 1,051 tests pass. No Core behavior moved, so the engine sweep did not
-  trigger. The canonical map-glyph palette remains open.
+  trigger. The fresh checkpoint is
+  `artifacts/aegis-d196-player-review-remediation-win-x64.zip`, built from `203e405`,
+  SHA-256
+  `DCE9C84C610AF2594A5B55ED2E4DF5AEC1BFF4AB96C7656878ABD1361392F6B6`.
+  A clean extraction completes creation, reports save v100 and generator 1, serves the
+  structured 120 by 40 frame, exits without stderr, and reloads the created save to the
+  exact same snapshot. The canonical map-glyph palette remains open.
 - Earlier completed implementation: D-182 Phases 1 and 2 pass. Phase 1 supplies the
   persistent Godot foundation and modern creation flow. Phase 2 adds the responsive
   world rail and drawer, newest-entry activity ribbon, colored full-session History,

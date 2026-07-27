@@ -262,6 +262,14 @@ and split event geometry in light and dark themes. No Core file, canonical key, 
 meaning, turn rule, RNG draw, save, or generator changed, so the engine sweep did not
 trigger.
 
+The fresh Windows checkpoint is
+`artifacts/aegis-d196-player-review-remediation-win-x64.zip`, built from `203e405`,
+SHA-256
+`DCE9C84C610AF2594A5B55ED2E4DF5AEC1BFF4AB96C7656878ABD1361392F6B6`.
+Its clean extraction completes creation, reports save v100 and generator 1, serves the
+structured 120 by 40 frame, exits without stderr, and reloads the created save to the
+exact same snapshot.
+
 Options set aside: hover selecting merely because the pointer crossed a card; automatic
 spatial focus guesses from Godot; one undifferentiated multiline button label; zooming
 around the whole frame while losing the player; continuing to parse event content from

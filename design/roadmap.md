@@ -922,7 +922,10 @@ Newest first. Log when a feature is checked off, or when new work is added to th
   scenes now use the approved split D-186 sheet instead of scraped fixed-frame output.
   Both themes pass background desktop probes. The warning-free Release build, 66 focused
   Host tests, and all 1,051 tests pass. Core behavior did not move, so the engine sweep
-  did not trigger. The canonical map-glyph palette remains open.
+  did not trigger. The clean D-196 Windows checkpoint creates and reloads a v100 campaign
+  over pilot and is archived with SHA-256
+  `DCE9C84C610AF2594A5B55ED2E4DF5AEC1BFF4AB96C7656878ABD1361392F6B6`.
+  The canonical map-glyph palette remains open.
 - 2026-07-26: **D-195 completes the Phase 2 packaged-review remediation.** The Godot
   client now carries the approved map workspace, fixed or drawer Activity sidebar,
   icon-led Health, Stamina, and Focus meters, bottom currencies, map-only footer and

@@ -4,6 +4,17 @@ Aegis is a single-player turn-based tiled role-playing game for Windows.
 Every campaign is generated from a seed and saved as an append-only action journal.
 It makes no network calls and has no telemetry.
 
+## Status
+
+The packaged Windows build on the Releases page is tagged `v1.0.0-rc1`: a complete,
+feature-finished release candidate that has not yet cleared its final manual playthrough
+gate. The ten-card guided playtest that gate depends on lives in
+`artifacts/release-review-1.0.0/`. It will be retagged `v1.0.0` when that passes.
+
+Development since the candidate was packaged (decisions D-181 through D-200) has moved
+the player client from SadConsole to Godot under the contract in
+`design/godot-client-modernization.md`. The candidate build ships the SadConsole client.
+
 ## Run
 
 Extract the release zip to a writable folder and run `aegis.exe`.
@@ -62,3 +73,9 @@ to the normal game command.
 Version 1.0 has no installer, updater, cloud save, networking, code signing, Linux
 package, or macOS package. Keep the extracted folder and your save directory backed up
 like any other local game data.
+
+## License
+
+Source code is [MIT](LICENSE). That grant covers the code in this repository only.
+Fonts, bundled runtime libraries and every other third-party component are covered by
+their own terms, listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).

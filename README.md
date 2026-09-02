@@ -4,6 +4,37 @@ Aegis is a single-player turn-based tiled role-playing game for Windows.
 Every campaign is generated from a seed and saved as an append-only action journal.
 It makes no network calls and has no telemetry.
 
+![Aegis: the world map of Thrumamora, with the bearer's condition, coin and contextual controls in the sidebar and the night's rumor in the log](docs/images/overworld.png)
+
+*The shipped `v1.0.0-rc1` client. Every frame here is a real session, seed 42, captured through the pilot channel described in [`docs/dev-harness.md`](docs/dev-harness.md).*
+
+<details>
+<summary><b>More screenshots</b> (character creation, conversation, combat, the character sheet, the log)</summary>
+
+<br>
+
+**Character creation is ten questions, not a stat allocator.** Each answer is a sentence about who you were, and the mechanical effect is stated in the same breath. Attribute rises are paid for out of another attribute, so a build is a set of trades rather than a pile of points.
+
+![Step 5 of character creation, offering three burdens: an old wound, a hunted past, a marked face, each with its mechanical cost stated](docs/images/creation.png)
+
+**Conversation keeps a transcript.** Topics on the left, everything said so far on the right, and villagers answer about the things this particular world is doing rather than from a fixed script.
+
+![Talking to Orunrin, herbwife of Vorhythe: six topics on the left and the running conversation on the right](docs/images/conversation.png)
+
+**Combat is turn-based and telegraphed.** Enemies wind up a heavier attack a turn before it lands, and the sidebar names the tell while it is readable, which is what the Wits attribute buys. Guard pressure, stamina and stance all sit in the same panel as your health.
+
+![Fighting a goblin inside the cave: the foe highlighted in red, "Foes here 3", and a telegraph warning that a goblin is filling its lungs](docs/images/combat.png)
+
+**Seven attributes and eighteen skills**, with skills levelling from use rather than from spent points. Every attribute line states exactly what part of play it changes.
+
+![The character sheet: seven attributes with their effects, eighteen skills with use counters, and current condition](docs/images/character.png)
+
+**The log is the game's memory, and it is written rather than reported.** Killing the camp's leader does not print a victory line; it prints what the dens now know, and who has just risen to replace him.
+
+![The log after killing Drork, showing the raiders mustering over their dead and Maurk rising to a place with a grudge already in it](docs/images/log.png)
+
+</details>
+
 ## Status
 
 The packaged Windows build on the Releases page is tagged `v1.0.0-rc1`: a complete,
